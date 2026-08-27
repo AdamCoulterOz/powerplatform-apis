@@ -5,9 +5,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
-    <!-- Plain asset names: this is served from a static host with no mapping
-         layer, and the app's own index.html references _framework directly. -->
-    <WasmFingerprintAssets>false</WasmFingerprintAssets>
+    <!-- Fingerprinted asset names. Stable names break returning visitors on
+         every deploy: the browser keeps a cached copy of the one assembly that
+         changed, its hash no longer matches, and the app fails to boot until a
+         hard refresh. -->
+    <WasmFingerprintAssets>true</WasmFingerprintAssets>
     <StaticWebAssetSpaFallbackEnabled>true</StaticWebAssetSpaFallbackEnabled>
   </PropertyGroup>
 

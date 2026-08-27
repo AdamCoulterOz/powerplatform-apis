@@ -51,6 +51,9 @@ jobs:
       - name: Publish the browser
         run: dotnet publish app/Browser -c Release -o app/dist
 
+      - name: Point the loader at the fingerprinted runtime
+        run: python3 app/fingerprint-importmap.py app/dist/wwwroot
+
       - name: Assemble the site
         # The browser is the site root. Everything it fetches at runtime, and
         # the markdown mirrors that are worth keeping addressable, are copied
@@ -92,6 +95,13 @@ jobs:
           PY
           grep -q 'base href="/powerplatform-apis/"' _site/index.html \
             || { echo 'base href is not the site root'; exit 1; }
+          # Assets are fingerprinted so a deploy cannot serve a returning
+          # visitor a stale assembly. That only works if the loader is actually
+          # pointed at this build's runtime, so check the mapping resolves.
+          runtime=$(grep -oE '_framework/dotnet\.[a-z0-9]+\.js' _site/index.html | tail -1)
+          [ -n "$runtime" ] || { echo 'index.html does not map the fingerprinted runtime'; exit 1; }
+          [ -f "_site/$runtime" ] || { echo "index.html points at $runtime, which is not deployed"; exit 1; }
+          echo "loader mapped to $runtime"
           echo "site assembled: $(du -sh _site | cut -f1)"
 
       - uses: actions/upload-pages-artifact@v3

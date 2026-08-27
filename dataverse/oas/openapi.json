@@ -3,7 +3,7 @@
  "info": {
   "title": "Dataverse Web API (admin subset)",
   "version": "v9.2",
-  "description": "Unofficial, and deliberately partial.\n\nThe Dataverse Web API is the per-environment OData v4 endpoint at `https://{organization}.crm{n}.dynamics.com/api/data/v9.2/`. Every table in every environment is addressable through it and the model differs per environment, so a complete document is neither possible nor useful. **This is a curated admin/ALM subset** \u2014 the operation surface an infrastructure client actually uses: table definitions, generic record CRUD and query, relationship manipulation, solutions and solution import, environment variables, publishers, users and security roles, and organization settings. For the full per-environment model, fetch that environment's own CSDL at `GET /api/data/v9.2/$metadata`, which is authoritative and machine-readable; Microsoft Learn documents the same surface in prose.\n\nDerived from the wire behaviour encoded in microsoft/terraform-provider-power-platform's client (`internal/clients/dataverse`), then **probed against a live tenant**, then corrected and extended against **recorded first-party UI traffic** \u2014 HAR captures of the Power Platform admin centre, the maker portal and the Link to Fabric wizard driving several real organizations. Envelope and annotation shapes, paging and count behaviour, option-set values, api-version routing and error bodies were all confirmed against a real environment; those operations carry `x-probe-verified: true`, which now covers both live probing and recorded production traffic \u2014 a recorded 200 is treated as confirmation. Operations that mutate solutions, settings or users are marked `x-probe-verified: false` \u2014 they are documented from the client and from public behaviour, not from a live write.\n\n## Host and audience\n\nThe host is per environment, so `servers` carries a placeholder. Resolve the real one from the admin APIs \u2014 BAPI's environment record, or the `instanceApiUrl` of the Power Platform API's environment resource \u2014 rather than deriving it from an environment id. The OAuth audience is the environment's own URL, so the scope is `https://{host}/.default`. (A token minted for one environment was observed to be accepted by a sibling environment in the same tenant. Do not build on that; mint per host.)\n\n## Conventions that hold everywhere\n\nStated once here rather than repeated on every operation.\n\n- **Collection names route, logical names do not.** Records live under the table's `EntitySetName` (`accounts`), while callers usually hold the logical name (`account`). Resolve one to the other through `EntityDefinitions` before building a URL.\n- **Envelope.** Collections return `@odata.context`, `value`, and `@odata.nextLink` when truncated. Single records return the row itself with a `/$entity` context and no wrapper. Function results return neither \u2014 their context ends in `#Microsoft.Dynamics.CRM.<Name>Response`. Every row carries `@odata.etag`.\n- **Lookups are asymmetric.** Read `_{navProperty}_value`; write `{navProperty}@odata.bind` with a relative URL; filter on the `_\u2026_value` shadow with the guid unquoted.\n- **Creates answer with an empty body** and put the new id in the `OData-EntityId` header. `Prefer: return=representation` swaps that for the row itself, echoed in `Preference-Applied`.\n- **PATCH upserts.** A PATCH against an id that does not exist creates the record; `If-Match: *` makes it update-only.\n- **Counts saturate at 5000.** Both `@odata.count` and `@Microsoft.Dynamics.CRM.totalrecordcount` cap there, with `@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded: true` as the signal.\n- **Metadata endpoints are not entity sets.** `EntityDefinitions` and its children accept `$top` and ignore it, and never page.\n- **Errors** are `{\"error\":{\"code\",\"message\"}}` with a hexadecimal `code`. Messages are localized and interpolated; match on codes. Two failures escape that envelope: a 401 has an empty body and reports itself in headers, and a request with no api-version segment answers `{\"Message\": \"...\"}` from below the OData layer.\n- **Throttling** is per user per environment over a rolling five-minute window, so parallelising a job across records makes 429s more likely rather than less.\n\n## API versions\n\n`v9.0`, `v9.1` and `v9.2` all route and, for the operations here, answer identically \u2014 the segment selects the CSDL a client validates against rather than different behaviour. Paths are pinned to the version the provider uses in the field: `v9.2` throughout, except `RetrieveSolutionImportResult`, `RetrieveSettingList()`, `SaveSettingValue()` and `organizations`, which it calls on `v9.0`. `v9.3` is not served.\n\nThe recordings show the first-party clients are not consistent about this either, and where they disagree with the provider it is flagged on the operation. `datalakefolders` is the case that matters: the provider pins `v9.1`, the current portal calls `v9.2`, and both answer identically \u2014 the segment is not what makes the difference there. Operations added from the recordings carry `x-observed-api-versions` listing the segments actually seen on the wire, and **their paths pin the segment observed** rather than claiming the whole family \u2014 unless more than one segment was seen, in which case the path is parameterised, or unless the operation joins a family this spec already parameterises. So a `v9.0` in a path added from a recording means it is where the segment was seen, not the only place it routes.\n\nOne consequence is visible in Users and Roles, where operations the provider calls are pinned at `v9.2` and operations only the portal calls are pinned at `v9.0`. Both were observed against the same table on the same environment.",
+  "description": "Unofficial, and deliberately partial.\n\nThe Dataverse Web API is the per-environment OData v4 endpoint at `https://{organization}.crm{n}.dynamics.com/api/data/v9.2/`. Every table in every environment is addressable through it and the model differs per environment, so a complete document is neither possible nor useful. **This is a curated admin/ALM subset** \u2014 the operation surface an infrastructure client actually uses: table definitions, generic record CRUD and query, relationship manipulation, solutions and solution import, environment variables, publishers, users and security roles, and organization settings. For the full per-environment model, fetch that environment's own CSDL at `GET /api/data/v9.2/$metadata`, which is authoritative and machine-readable; Microsoft Learn documents the same surface in prose.\n\nDerived from the wire behaviour encoded in microsoft/terraform-provider-power-platform's client (`internal/clients/dataverse`), then **probed against a live tenant**, then corrected and extended against **recorded first-party UI traffic** \u2014 HAR captures of the Power Platform admin centre, the maker portal and the Link to Fabric wizard driving several real organizations. Envelope and annotation shapes, paging and count behaviour, option-set values, api-version routing and error bodies were all confirmed against a real environment; those operations carry `x-probe-verified: true`, which now covers both live probing and recorded production traffic \u2014 a recorded 200 is treated as confirmation. Operations that mutate solutions, settings or users are marked `x-probe-verified: false` \u2014 they are documented from the client and from public behaviour, not from a live write.\n\nA third body of evidence was added afterwards: the **decompiled `Microsoft.PowerPlatform.Dataverse.Client` SDK shipped inside the Power Platform CLI** (`pac` 2.11.2). A first-party client's own source states route templates, wire names, enumerations, headers and retry rules exactly, but it is not an observation \u2014 the build can be older than the service. Anything sourced only from it carries `x-source: pac-cli` and is deliberately **not** `x-probe-verified`. That is where the whole Discovery tag comes from, and it is why nothing under it claims verification.\n\n## Host and audience\n\nThe host is per environment, so `servers` carries a placeholder. Resolve the real one from the admin APIs \u2014 BAPI's environment record, or the `instanceApiUrl` of the Power Platform API's environment resource \u2014 or from the **Discovery** tag in this document, which is the one route that needs neither an admin permission nor an environment id. Do not try to derive the host from an environment id; there is no rule that does it. The OAuth audience is the environment's own URL, so the scope is `https://{host}/.default`. (A token minted for one environment was observed to be accepted by a sibling environment in the same tenant. Do not build on that; mint per host.)\n\n## Conventions that hold everywhere\n\nStated once here rather than repeated on every operation.\n\n- **Collection names route, logical names do not.** Records live under the table's `EntitySetName` (`accounts`), while callers usually hold the logical name (`account`). Resolve one to the other through `EntityDefinitions` before building a URL.\n- **Envelope.** Collections return `@odata.context`, `value`, and `@odata.nextLink` when truncated. Single records return the row itself with a `/$entity` context and no wrapper. Function results return neither \u2014 their context ends in `#Microsoft.Dynamics.CRM.<Name>Response`. Every row carries `@odata.etag`.\n- **Lookups are asymmetric.** Read `_{navProperty}_value`; write `{navProperty}@odata.bind` with a relative URL; filter on the `_\u2026_value` shadow with the guid unquoted.\n- **Creates answer with an empty body** and put the new id in the `OData-EntityId` header. `Prefer: return=representation` swaps that for the row itself, echoed in `Preference-Applied`.\n- **PATCH upserts.** A PATCH against an id that does not exist creates the record; `If-Match: *` makes it update-only.\n- **Counts saturate at 5000.** Both `@odata.count` and `@Microsoft.Dynamics.CRM.totalrecordcount` cap there, with `@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded: true` as the signal.\n- **Metadata endpoints are not entity sets.** `EntityDefinitions` and its children accept `$top` and ignore it, and never page.\n- **Errors** are `{\"error\":{\"code\",\"message\"}}` with a hexadecimal `code`. Messages are localized and interpolated; match on codes. Two failures escape that envelope: a 401 has an empty body and reports itself in headers, and a request with no api-version segment answers `{\"Message\": \"...\"}` from below the OData layer.\n- **Throttling** is per user per environment over a rolling five-minute window, so parallelising a job across records makes 429s more likely rather than less.\n\n## API versions\n\n`v9.0`, `v9.1` and `v9.2` all route and, for the operations here, answer identically \u2014 the segment selects the CSDL a client validates against rather than different behaviour. Paths are pinned to the version the provider uses in the field: `v9.2` throughout, except `RetrieveSolutionImportResult`, `RetrieveSettingList()`, `SaveSettingValue()` and `organizations`, which it calls on `v9.0`. `v9.3` is not served.\n\nThe recordings show the first-party clients are not consistent about this either, and where they disagree with the provider it is flagged on the operation. `datalakefolders` is the case that matters: the provider pins `v9.1`, the current portal calls `v9.2`, and both answer identically \u2014 the segment is not what makes the difference there. Operations added from the recordings carry `x-observed-api-versions` listing the segments actually seen on the wire, and **their paths pin the segment observed** rather than claiming the whole family \u2014 unless more than one segment was seen, in which case the path is parameterised, or unless the operation joins a family this spec already parameterises. So a `v9.0` in a path added from a recording means it is where the segment was seen, not the only place it routes.\n\nOne consequence is visible in Users and Roles, where operations the provider calls are pinned at `v9.2` and operations only the portal calls are pinned at `v9.0`. Both were observed against the same table on the same environment.\n\n## Two things beside this API that are not in it\n\n**Discovery is here; SOAP is not.** The Discovery tag documents `globaldisco.*`, a genuinely separate service on its own host with its own audience, because it is how a caller gets from a token to the per-environment host every other operation needs. It is OData, so it belongs. The older per-region discovery service at `disco.crm{n}.dynamics.com/XRMServices/2011/Discovery.svc` is SOAP and is not documented, though its region-to-host mapping is \u2014 that table is the only published record of which CRM region number is which geography.\n\n**The SOAP organization service is real and out of scope.** Every environment also serves `https://{host}/XRMServices/2011/Organization.svc`, and the CLI still speaks it: `System.ServiceModel.*` assemblies ship inside `pac`, and its SDK falls back to SOAP for every message it cannot express as a Web API call \u2014 which is most of them. Only `Create`, `Update`, `Delete`, `WhoAmI`, `RetrieveVersion`, `RetrieveCurrentOrganization`, `RetrieveOrganizationInfo`, `ExportSolution`, `ImportSolution` and `StageSolution` are translated to HTTP at all. This spec covers the OData Web API only; if an operation you need is not here, the reason may be that the first-party tooling reaches it over SOAP.",
   "x-api-versions": [
    "v9.0",
    "v9.1",
@@ -33,6 +33,10 @@
   {
    "name": "Identity",
    "description": "Resolving a bearer token to the Dataverse user, business unit and organization it maps to inside one environment."
+  },
+  {
+   "name": "Discovery",
+   "description": "Which Dataverse organizations does this token's user have access to, and what is each one's Web API URL?\n\nThis is the boundary that turns an identity into a set of environment hosts. It matters because the rest of this spec has nowhere to start without it: the Web API's host is per environment and **not derivable from an environment id**, so a caller either learns it from the admin APIs ([bapi](../bapi), [ppapi](../ppapi)) or learns it here. Discovery is the route that needs no admin permission and no environment id \u2014 just a token.\n\nIt is a separate service on its own hosts, with its own audience and its own OData model. It is not part of any environment's `$metadata`, and an environment's token is not accepted by it.\n\n**Service principals are not admitted.** App-only identities have no access to the Global Discovery Service; the CLI short-circuits and returns an empty set for them rather than calling, and treats a 401 from an `AzureIdentity` profile as evidence that the identity is really a service principal \u2014 falling back to BAPI's environment list. Plan for app-only clients to discover environments through BAPI, not here.\n\n## Global versus regional discovery\n\nThere are two generations of discovery service, and they are easy to confuse.\n\n- **Global discovery**, documented here, is the OData v4 service at `https://globaldisco.{cloud}/api/discovery/v2.0/`. It answers for every region at once, and it is what a modern client should use.\n- **Regional discovery** is the older per-region SOAP endpoint at `https://disco.crm{n}.dynamics.com/XRMServices/2011/Discovery.svc`. It is out of scope for this spec \u2014 it is SOAP, not OData \u2014 but the region-to-host mapping below is the only place in this repo that records which CRM region number is which geography, so it is reproduced in full.\n\nThree regions the CLI marks as *requiring* regional discovery have their own global discovery host and are reached through that instead: China, US Gov High and US Gov DoD, plus the North America 2 scale group. Germany (the sovereign `microsoftdynamics.de` cloud) is marked as requiring regional discovery but is given **no** global discovery host, so global discovery cannot reach it at all.\n\n## Region map\n\n| Geo code | Short name | Region | Regional discovery host (SOAP) | Regional global discovery host |\n|---|---|---|---|---|\n| APAC | APAC | Asia Pacific Area | `disco.crm5.dynamics.com` | \u2014 |\n| CAN | CAN | Canada | `disco.crm3.dynamics.com` | \u2014 |\n| CHN | CHN | China | `disco.crm.dynamics.cn` | `globaldisco.crm.dynamics.cn` |\n| EMEA | EMEA | Europe, Middle East and Africa | `disco.crm4.dynamics.com` | \u2014 |\n| FRA | FRA | France | `disco.crm12.dynamics.com` | \u2014 |\n| GER | GER | Germany (Go Local) | `disco.crm16.dynamics.com` | \u2014 |\n| DEU | DEU | Germany (sovereign) | `disco.crm.microsoftdynamics.de` | \u2014 (regional only) |\n| IND | IND | India | `disco.crm8.dynamics.com` | \u2014 |\n| JPN | JPN | Japan | `disco.crm7.dynamics.com` | \u2014 |\n| KOR | KOR | Korea | `disco.crm21.dynamics.com` | \u2014 |\n| \u2014 | NorthAmerica | North America | `disco.crm.dynamics.com` | \u2014 |\n| \u2014 | NorthAmerica2 | North America 2 | `disco.crm9.dynamics.com` | `globaldisco.crm9.dynamics.com` |\n| NOR | NOR | Norway | `disco.crm19.dynamics.com` | \u2014 |\n| OCE | Oceania | Oceania | `disco.crm6.dynamics.com` | \u2014 |\n| SGP | SGP | Singapore | `disco.crm20.dynamics.com` | \u2014 |\n| ZAF | ZAF | South Africa | `disco.crm14.dynamics.com` | \u2014 |\n| LATAM | SouthAmerica | South America | `disco.crm2.dynamics.com` | \u2014 |\n| CHE | Switzerland | Switzerland | `disco.crm17.dynamics.com` | \u2014 |\n| UAE | UAE | United Arab Emirates | `disco.crm15.dynamics.com` | \u2014 |\n| GBR | GBR | United Kingdom | `disco.crm11.dynamics.com` | \u2014 |\n| DOD | DoD | US Gov DoD | `disco.crm.appsplatform.us` | `globaldisco.crm.appsplatform.us` |\n| USG | USG | US Gov High | `disco.crm.microsoftdynamics.us` | `globaldisco.crm.microsoftdynamics.us` |\n\nTwo things this table is not. It is not a complete list of Microsoft's region numbers \u2014 `crm10` and `crmtest` exist as pre-production and test rings, and `crm13`, `crm18` and `crm22` upwards are simply absent from this build, whether because they do not exist or because the client has not been updated. And the geo code is not the same thing as the short name: `Oceania` carries geo `OCE`, `SouthAmerica` carries `LATAM`, and the two North America entries carry no geo code at all, so a lookup by geo will never find them.\n\nThe same region number appears in an organization's own hostname \u2014 `contoso.crm11.dynamics.com` is United Kingdom \u2014 which is how a client infers a region from a URL without asking anything. The rule the SDK uses is to drop the leftmost label, drop any `api` label, and match the remainder against the discovery hosts above."
   },
   {
    "name": "Table Definitions",
@@ -72,7 +76,7 @@
   },
   {
    "name": "Organization Settings",
-   "description": "Environment-level configuration, which lives in two unrelated places: the very wide `organization` row, and a weakly-typed list of backend feature switches beside it."
+   "description": "Environment-level configuration, which lives in three unrelated places: the very wide `organization` row, the weakly-typed OrgDB bag of backend feature switches beside it, and the `settingdefinitions` catalogue with its typed defaults. Beside the configuration surface sit the read-only functions by which an environment describes itself \u2014 its build, its instance type, its installed solutions, and the discovery record naming its own organization id and Power Platform environment id."
   },
   {
    "name": "Feature Control",
@@ -146,6 +150,9 @@
      },
      {
       "$ref": "#/components/parameters/retrieveAllSettings"
+     },
+     {
+      "$ref": "#/components/parameters/consistency"
      }
     ],
     "responses": {
@@ -201,6 +208,9 @@
      },
      {
       "$ref": "#/components/parameters/expandRelationships"
+     },
+     {
+      "$ref": "#/components/parameters/consistency"
      }
     ],
     "responses": {
@@ -259,6 +269,9 @@
      },
      {
       "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/consistency"
      }
     ],
     "responses": {
@@ -400,6 +413,15 @@
      },
      {
       "$ref": "#/components/parameters/preferHeader"
+     },
+     {
+      "$ref": "#/components/parameters/consistency"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmCallerId"
+     },
+     {
+      "$ref": "#/components/parameters/callerObjectId"
      }
     ],
     "responses": {
@@ -450,6 +472,21 @@
      },
      {
       "$ref": "#/components/parameters/preferHeader"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmSolutionUniqueName"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmBypassCustomPluginExecution"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmSuppressDuplicateDetection"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmCallerId"
+     },
+     {
+      "$ref": "#/components/parameters/callerObjectId"
      }
     ],
     "requestBody": {
@@ -574,6 +611,15 @@
      },
      {
       "$ref": "#/components/parameters/preferHeader"
+     },
+     {
+      "$ref": "#/components/parameters/consistency"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmCallerId"
+     },
+     {
+      "$ref": "#/components/parameters/callerObjectId"
      }
     ],
     "responses": {
@@ -633,6 +679,21 @@
      },
      {
       "$ref": "#/components/parameters/ifNoneMatch"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmSolutionUniqueName"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmBypassCustomPluginExecution"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmSuppressDuplicateDetection"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmCallerId"
+     },
+     {
+      "$ref": "#/components/parameters/callerObjectId"
      }
     ],
     "requestBody": {
@@ -733,6 +794,15 @@
      },
      {
       "$ref": "#/components/parameters/ifMatch"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmBypassCustomPluginExecution"
+     },
+     {
+      "$ref": "#/components/parameters/mscrmCallerId"
+     },
+     {
+      "$ref": "#/components/parameters/callerObjectId"
      }
     ],
     "responses": {
@@ -3648,7 +3718,7 @@
      "Organization Settings"
     ],
     "summary": "Version Read",
-    "description": "Reports the Dataverse build serving this environment.\n\nAn unbound function, so a plain GET with no arguments. Environments in one tenant are upgraded on their own schedules, so this is a per-environment answer and not a tenant fact \u2014 the right check before relying on a feature whose availability is release-gated.\n\nThe build's major.minor is the platform version family, not the Web API version segment in the URL: an environment reporting `9.2.x` still routes `v9.0` and `v9.1` paths.",
+    "description": "Reports the Dataverse build serving this environment.\n\nAn unbound function, so a plain GET with no arguments. Environments in one tenant are upgraded on their own schedules, so this is a per-environment answer and not a tenant fact \u2014 the right check before relying on a feature whose availability is release-gated.\n\nThe build's major.minor is the platform version family, not the Web API version segment in the URL: an environment reporting `9.2.x` still routes `v9.0` and `v9.1` paths.\n\nIt is also the input to base-path construction. The SDK calls this during connect and uses the result's major.minor as the version segment for every subsequent request, which makes it the first call a generic client makes and the reason a client's segment choice tracks the environment rather than the client.",
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.0"
@@ -4084,13 +4154,318 @@
      }
     }
    }
+  },
+  "/api/discovery/v{discoveryVersion}/Instances": {
+   "servers": [
+    {
+     "url": "https://{discoveryHost}",
+     "description": "The Global Discovery Service. Unlike the rest of this spec it is not per environment \u2014 one host serves a whole cloud, and it is the service that tells a caller which environment hosts exist.",
+     "variables": {
+      "discoveryHost": {
+       "default": "globaldisco.crm.dynamics.com",
+       "enum": [
+        "globaldisco.crm.dynamics.com",
+        "globaldisco.crm9.dynamics.com",
+        "globaldisco.crm.dynamics.cn",
+        "globaldisco.crm.microsoftdynamics.us",
+        "globaldisco.crm.appsplatform.us",
+        "globaldisco.crm10.dynamics.com",
+        "globaldisco.crmtest.dynamics.com"
+       ],
+       "description": "Global discovery host for the cloud the identity lives in. `globaldisco.crm.dynamics.com` serves worldwide commercial. The others are separate services, not mirrors: a token for one is not accepted by another, and a commercial token sees nothing in a sovereign cloud. `globaldisco.crm9.dynamics.com` fronts the North America 2 scale group (US Gov community), `globaldisco.crm10.dynamics.com` and `globaldisco.crmtest.dynamics.com` are Microsoft's own pre-production and test rings and will not answer for a customer tenant. Sovereign clouds are inferred from the last three host labels: `crm.dynamics.cn` \u2192 China, `crm.microsoftdynamics.us` \u2192 US Gov High, `crm.appsplatform.us` \u2192 US Gov DoD, `crm9.dynamics.com` \u2192 US Gov, `crm10.dynamics.com` \u2192 pre-production, `crmtest.dynamics.com` \u2192 test, anything else ending `.dynamics.com` \u2192 commercial."
+      }
+     }
+    }
+   ],
+   "get": {
+    "operationId": "discovery_listInstances",
+    "tags": [
+     "Discovery"
+    ],
+    "summary": "Instances List",
+    "description": "Every Dataverse organization the token's user can reach, across every region of this cloud at once \u2014 there is no per-region call to make and no paging to follow.\n\nEach entry carries both `Url` (the model-driven app the user browses to) and `ApiUrl` (the host the API endpoints hang off). They are usually different hosts: `ApiUrl` carries an extra `api` label. Build the Web API base as `{ApiUrl}/api/data/v{major}.{minor}/` using the entry's own `Version` truncated to two parts \u2014 an organization reporting `9.2.\u2026` gets `/api/data/v9.2/` \u2014 which is exactly how this spec's per-environment `servers` value is meant to be resolved.\n\nThe result is not filtered to healthy environments. Entries can arrive `State: 1` (disabled), with a malformed or empty `Url`, or with no `EnvironmentId` at all; the first-party clients drop those rows rather than surfacing them, and a caller should do the same.\n\nThe SDK issues a bare `GET` with no query options. Whether the collection honours `$filter`, `$select` or `$top` is not established here \u2014 nothing in the CLI asks it to.",
+    "x-source": "pac-cli",
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/discoveryVersion"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every instance visible to the caller. An identity with access to nothing answers 200 with an empty `value`, not 404.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DiscoveryInstanceCollection"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The token was rejected. Two very different causes share this status. Either the token is for the wrong audience \u2014 discovery's audience is the discovery host, not an environment \u2014 in which case `WWW-Authenticate` names the right one; or the identity is a **service principal**, which the Global Discovery Service does not admit at all. The CLI cannot distinguish them either: it treats a 401 on an app-only-capable profile as the second case and falls back to BAPI's environment list.",
+      "headers": {
+       "WWW-Authenticate": {
+        "description": "`Bearer authorization_uri=\u2026, resource_id=https://{discoveryHost}/`.",
+        "schema": {
+         "type": "string",
+         "example": "Bearer authorization_uri=https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/oauth2/authorize, resource_id=https://globaldisco.crm.dynamics.com/"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/discovery/v{discoveryVersion}/Instances({instanceId})": {
+   "servers": [
+    {
+     "url": "https://{discoveryHost}",
+     "description": "The Global Discovery Service. Unlike the rest of this spec it is not per environment \u2014 one host serves a whole cloud, and it is the service that tells a caller which environment hosts exist.",
+     "variables": {
+      "discoveryHost": {
+       "default": "globaldisco.crm.dynamics.com",
+       "enum": [
+        "globaldisco.crm.dynamics.com",
+        "globaldisco.crm9.dynamics.com",
+        "globaldisco.crm.dynamics.cn",
+        "globaldisco.crm.microsoftdynamics.us",
+        "globaldisco.crm.appsplatform.us",
+        "globaldisco.crm10.dynamics.com",
+        "globaldisco.crmtest.dynamics.com"
+       ],
+       "description": "Global discovery host for the cloud the identity lives in. `globaldisco.crm.dynamics.com` serves worldwide commercial. The others are separate services, not mirrors: a token for one is not accepted by another, and a commercial token sees nothing in a sovereign cloud. `globaldisco.crm9.dynamics.com` fronts the North America 2 scale group (US Gov community), `globaldisco.crm10.dynamics.com` and `globaldisco.crmtest.dynamics.com` are Microsoft's own pre-production and test rings and will not answer for a customer tenant. Sovereign clouds are inferred from the last three host labels: `crm.dynamics.cn` \u2192 China, `crm.microsoftdynamics.us` \u2192 US Gov High, `crm.appsplatform.us` \u2192 US Gov DoD, `crm9.dynamics.com` \u2192 US Gov, `crm10.dynamics.com` \u2192 pre-production, `crmtest.dynamics.com` \u2192 test, anything else ending `.dynamics.com` \u2192 commercial."
+      }
+     }
+    }
+   ],
+   "get": {
+    "operationId": "discovery_readInstance",
+    "tags": [
+     "Discovery"
+    ],
+    "summary": "Instance Read",
+    "description": "One instance by organization id.\n\n**The SDK builds this URL but never issues it.** The template is declared beside the collection URL and left unused in this build, so the route is evidence of the service's shape rather than of a call anyone makes. A client that needs one organization can filter the collection client-side, which is what the first-party clients actually do.\n\nThe response shape is assumed to be a single `DiscoveryInstance` by analogy with the collection; that assumption is untested.",
+    "x-source": "pac-cli",
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/discoveryVersion"
+     },
+     {
+      "$ref": "#/components/parameters/instanceId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The instance.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DiscoveryInstance"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The token was rejected. Two very different causes share this status. Either the token is for the wrong audience \u2014 discovery's audience is the discovery host, not an environment \u2014 in which case `WWW-Authenticate` names the right one; or the identity is a **service principal**, which the Global Discovery Service does not admit at all. The CLI cannot distinguish them either: it treats a 401 on an app-only-capable profile as the second case and falls back to BAPI's environment list.",
+      "headers": {
+       "WWW-Authenticate": {
+        "description": "`Bearer authorization_uri=\u2026, resource_id=https://{discoveryHost}/`.",
+        "schema": {
+         "type": "string",
+         "example": "Bearer authorization_uri=https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/oauth2/authorize, resource_id=https://globaldisco.crm.dynamics.com/"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/aad/challenge": {
+   "servers": [
+    {
+     "url": "https://{discoveryHost}",
+     "description": "The Global Discovery Service. Unlike the rest of this spec it is not per environment \u2014 one host serves a whole cloud, and it is the service that tells a caller which environment hosts exist.",
+     "variables": {
+      "discoveryHost": {
+       "default": "globaldisco.crm.dynamics.com",
+       "enum": [
+        "globaldisco.crm.dynamics.com",
+        "globaldisco.crm9.dynamics.com",
+        "globaldisco.crm.dynamics.cn",
+        "globaldisco.crm.microsoftdynamics.us",
+        "globaldisco.crm.appsplatform.us",
+        "globaldisco.crm10.dynamics.com",
+        "globaldisco.crmtest.dynamics.com"
+       ],
+       "description": "Global discovery host for the cloud the identity lives in. `globaldisco.crm.dynamics.com` serves worldwide commercial. The others are separate services, not mirrors: a token for one is not accepted by another, and a commercial token sees nothing in a sovereign cloud. `globaldisco.crm9.dynamics.com` fronts the North America 2 scale group (US Gov community), `globaldisco.crm10.dynamics.com` and `globaldisco.crmtest.dynamics.com` are Microsoft's own pre-production and test rings and will not answer for a customer tenant. Sovereign clouds are inferred from the last three host labels: `crm.dynamics.cn` \u2192 China, `crm.microsoftdynamics.us` \u2192 US Gov High, `crm.appsplatform.us` \u2192 US Gov DoD, `crm9.dynamics.com` \u2192 US Gov, `crm10.dynamics.com` \u2192 pre-production, `crmtest.dynamics.com` \u2192 test, anything else ending `.dynamics.com` \u2192 commercial."
+      }
+     }
+    }
+   ],
+   "get": {
+    "operationId": "discovery_readAuthChallenge",
+    "tags": [
+     "Discovery"
+    ],
+    "summary": "Auth Challenge Read",
+    "description": "Ask the service, without a token, which authority to authenticate against and which audience to ask that authority for.\n\nThis is how a client avoids hard-coding either. Send **no** `Authorization` header; the 401 that comes back carries `WWW-Authenticate: Bearer authorization_uri=\u2026, resource_id=\u2026`, and those two values are the whole answer. The SDK then builds its scope from `resource_id`: `{resource_id}/user_impersonation` for a delegated sign-in, `{resource_id}.default` for a certificate or client-secret identity.\n\nThe dedicated path is not the only way to get the challenge \u2014 any unauthenticated request to the service produces the same header, and the CLI in fact probes `/api/discovery` on a discovery host and `/api/data/v9.0` on an environment host. Use whichever is convenient; this path exists because the SDK addresses it by name during global discovery sign-in.\n\nTwo details of the SDK's parsing are worth copying. It rewrites the advertised authority, stripping the trailing `oauth2/authorize` and replacing a `common` tenant segment with `organizations`. And it treats **404 and 400 as failures** rather than reading the header from them \u2014 so a challenge probe that lands on a path the service does not route is a dead end, not a fallback.",
+    "x-source": "pac-cli",
+    "security": [],
+    "responses": {
+     "401": {
+      "description": "The expected answer, and the point of the call. Both values live in `WWW-Authenticate`; a response missing either key is treated as malformed by the SDK rather than retried.",
+      "headers": {
+       "WWW-Authenticate": {
+        "description": "`Bearer authorization_uri=\u2026, resource_id=\u2026`, comma-separated. `authorization_uri` is the Entra authority; `resource_id` is the audience, and is the service's own origin with a trailing slash.",
+        "schema": {
+         "type": "string",
+         "example": "Bearer authorization_uri=https://login.microsoftonline.com/common/oauth2/authorize, resource_id=https://globaldisco.crm.dynamics.com/"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/data/{apiVersion}/RetrieveCurrentOrganization(AccessType='{accessType}')": {
+   "get": {
+    "operationId": "organizationSettings_readCurrentOrganization",
+    "tags": [
+     "Organization Settings"
+    ],
+    "summary": "Current Organization Read",
+    "description": "The discovery record for *this* environment, read from inside it.\n\nThis is the inverse of the Discovery tag: rather than asking a central service which organizations exist, a caller already holding one environment's host asks that host to describe itself. The answer carries the same identity fields discovery publishes \u2014 organization id, unique name, environment id, tenant id, geo, version and the endpoint addresses \u2014 which makes it the cheapest way to get from a Dataverse hostname back to a Power Platform environment id without any admin permission.\n\nAn unbound function, so a GET with the argument inline in the path. The SDK spells every unbound function argument as `Name='value'` regardless of the argument's type, which is why an enumeration value appears quoted here; whether the service also accepts the unquoted or namespace-qualified OData spelling is untested.\n\nThe `Endpoints` collection is the part to treat carefully \u2014 see the schema.",
+    "x-source": "pac-cli",
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/apiVersion"
+     },
+     {
+      "$ref": "#/components/parameters/accessType"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "This environment's organization detail.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RetrieveCurrentOrganizationResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/{apiVersion}/RetrieveOrganizationInfo": {
+   "get": {
+    "operationId": "organizationSettings_readOrganizationInfo",
+    "tags": [
+     "Organization Settings"
+    ],
+    "summary": "Organization Info Read",
+    "description": "What kind of environment this is, and which first-party solutions are installed in it.\n\nA narrower answer than `RetrieveCurrentOrganization` and a different one: no URLs and no ids beyond the solutions', but it names the instance type \u2014 production, trial, developer, Teams \u2014 and enumerates installed solutions with their versions and publishers. For a client deciding whether an environment is safe to write to, the instance type is the check that matters and this is the one call that returns it.\n\nAn unbound function taking no arguments, so a plain GET.\n\nThe response property is spelled **`organizationInfo`, lower-case initial** \u2014 unlike every other response property on this API. That is the name the SDK reads and it looks like a service-side slip rather than a convention, so do not normalise it.",
+    "x-source": "pac-cli",
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/apiVersion"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environment's instance type and installed solutions.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RetrieveOrganizationInfoResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/{apiVersion}/ExportSolution": {
+   "post": {
+    "operationId": "solutions_export",
+    "tags": [
+     "Solutions"
+    ],
+    "summary": "Export",
+    "description": "Package a solution out of this environment and return the `.zip` inline.\n\nThe counterpart to the Solution Import tag, and deliberately unlike it: export is **synchronous**, so the whole package comes back base64-encoded in the response body of a single call rather than through a job to poll. That is fine for a small unmanaged solution and a problem for a large one \u2014 there is no streaming, no `Location` to follow and no progress to report, so expect long request times and size a client's timeout accordingly.\n\n`SolutionName` is the solution's **unique name**, not its display name. `Managed` decides which of the two packages is produced, and the two are not interchangeable: an unmanaged export is a development artefact, a managed export is what gets deployed.\n\nThe `Export*` booleans each pull one category of *environment* settings into the package alongside the solution's own components. They default to `false`, and turning one on means the package will overwrite that category of setting in whatever environment it is later imported into \u2014 which is occasionally what you want and usually not.\n\nAn unbound action, so a POST whose body is the argument set flattened to top-level properties.",
+    "x-source": "pac-cli",
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/apiVersion"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ExportSolutionRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The solution package, base64-encoded in the body.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ExportSolutionResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
   }
  },
  "components": {
   "securitySchemes": {
    "entra_auth": {
     "type": "oauth2",
-    "description": "Microsoft Entra ID OAuth2. The audience is the environment's own URL, so the scope is per environment \u2014 `https://{organizationHost}/.default`. A 401 advertises both the authority and the expected audience in its `WWW-Authenticate` header, which is the reliable way to discover them.",
+    "description": "Microsoft Entra ID OAuth2. The audience is the environment's own URL, so the scope is per environment \u2014 `https://{organizationHost}/.default`. A 401 advertises both the authority and the expected audience in its `WWW-Authenticate` header, which is the reliable way to discover them. The SDK builds its scope from that header's `resource_id` rather than from configuration, and the suffix depends on the credential: `{resource_id}/user_impersonation` for a delegated sign-in, `{resource_id}.default` for a certificate or client-secret identity. It also rewrites the advertised authority before use, dropping a trailing `oauth2/authorize` and replacing a `common` tenant segment with `organizations`.",
     "flows": {
      "authorizationCode": {
       "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
@@ -4107,7 +4482,7 @@
     "name": "apiVersion",
     "in": "path",
     "required": true,
-    "description": "Web API version segment. `v9.2` is current and what generic clients use; `v9.0` and `v9.1` remain routable and answer identically for the operations here \u2014 the segment selects the CSDL a client validates against, not different behaviour.",
+    "description": "Web API version segment. `v9.2` is current and what generic clients use; `v9.0` and `v9.1` remain routable and answer identically for the operations here \u2014 the segment selects the CSDL a client validates against, not different behaviour.\n\nThe SDK does not pin a segment: it takes the environment's own build \u2014 from `RetrieveVersion`, or from a discovery instance's `Version` \u2014 truncates it to major.minor and composes `{host}/api/data/v{major}.{minor}/`, falling back to `9.0` when it has no version and refusing the Web API entirely below major 8. That is why observed traffic scatters across segments: the caller is echoing whatever the environment reported, not choosing.",
     "schema": {
      "type": "string",
      "default": "v9.2",
@@ -4381,7 +4756,7 @@
     "name": "Prefer",
     "in": "header",
     "required": false,
-    "description": "OData preferences, comma-separated. Three matter on this API:\n\n- `return=representation` \u2014 make a create or update answer with the affected row instead of an empty body.\n- `odata.maxpagesize=N` \u2014 lower the 5000-row server-driven page size.\n- `odata.include-annotations=\"\u2026totalrecordcount,\u2026totalrecordcountlimitexceeded\"` \u2014 add the CRM count annotations to a collection response.\n\nWhatever the service honoured is echoed back in `Preference-Applied`; anything it does not support is dropped without complaint.",
+    "description": "OData preferences, comma-separated. Three matter on this API:\n\n- `return=representation` \u2014 make a create or update answer with the affected row instead of an empty body.\n- `odata.maxpagesize=N` \u2014 lower the 5000-row server-driven page size.\n- `odata.include-annotations=\"\u2026totalrecordcount,\u2026totalrecordcountlimitexceeded\"` \u2014 add the CRM count annotations to a collection response.\n\nWhatever the service honoured is echoed back in `Preference-Applied`; anything it does not support is dropped without complaint.\n\nThe SDK sends `odata.include-annotations=*` on every request it makes, which is the blunt form of the third preference above \u2014 worth knowing when comparing a capture against this document, since it means annotations appear on responses a caller did not explicitly ask to annotate.",
     "schema": {
      "type": "string",
      "example": "return=representation"
@@ -4494,6 +4869,109 @@
      "default": true,
      "example": true
     }
+   },
+   "discoveryVersion": {
+    "name": "discoveryVersion",
+    "in": "path",
+    "required": true,
+    "description": "Global discovery API version segment. The SDK pins `2.0` and has no fallback; version 1.0 was the preview generation and is not addressed by any current client.",
+    "schema": {
+     "type": "string",
+     "default": "2.0",
+     "enum": [
+      "2.0"
+     ]
+    }
+   },
+   "instanceId": {
+    "name": "instanceId",
+    "in": "path",
+    "required": true,
+    "description": "The organization id \u2014 the `Id` of an instance from the collection, and the same value as `organizationid` inside that environment.",
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    }
+   },
+   "accessType": {
+    "name": "accessType",
+    "in": "path",
+    "required": true,
+    "description": "Which endpoint addresses to report. `Default` is what every online caller wants; `Internet` and `Intranet` distinguish the two published address sets an on-premises deployment can have, and are meaningless online.",
+    "schema": {
+     "type": "string",
+     "default": "Default",
+     "enum": [
+      "Default",
+      "Internet",
+      "Intranet"
+     ]
+    }
+   },
+   "mscrmSolutionUniqueName": {
+    "name": "MSCRM.SolutionUniqueName",
+    "in": "header",
+    "required": false,
+    "description": "Add whatever this request creates to the named solution, by unique name. Without it a newly created customizable component lands in the environment's default solution, which is the usual reason a component created by automation cannot later be exported.",
+    "schema": {
+     "type": "string"
+    }
+   },
+   "mscrmBypassCustomPluginExecution": {
+    "name": "MSCRM.BypassCustomPluginExecution",
+    "in": "header",
+    "required": false,
+    "description": "Skip custom (non-Microsoft) plug-ins and real-time workflows for this request. Intended for bulk data movement where business logic would be wrong or ruinously slow; it needs the `prvBypassCustomBusinessLogic` privilege, and it changes what the data means, so it is not a performance knob to reach for casually. Requires platform 9.1.0.20918 or later \u2014 the SDK checks the environment's version and silently drops the header below that.",
+    "schema": {
+     "type": "boolean",
+     "example": true
+    }
+   },
+   "mscrmSuppressDuplicateDetection": {
+    "name": "MSCRM.SuppressDuplicateDetection",
+    "in": "header",
+    "required": false,
+    "description": "`false` runs duplicate-detection rules on this create or update and **fails the request** when one matches, rather than writing a duplicate. `true` suppresses them. Only meaningful where duplicate-detection rules are published for the table.",
+    "schema": {
+     "type": "boolean",
+     "example": false
+    }
+   },
+   "consistency": {
+    "name": "Consistency",
+    "in": "header",
+    "required": false,
+    "description": "`Strong` forces the request to see the server's current metadata rather than a cached copy. Worth sending on the read that immediately follows a schema change \u2014 without it a freshly created column or table can be invisible for a short while. Requires platform 9.1 or later.",
+    "schema": {
+     "type": "string",
+     "enum": [
+      "Strong"
+     ],
+     "example": "Strong"
+    }
+   },
+   "mscrmCallerId": {
+    "name": "MSCRMCallerID",
+    "in": "header",
+    "required": false,
+    "description": "Impersonate a Dataverse user, by `systemuserid`. The request executes with that user's privileges and ownership, and audit records name them rather than the authenticated identity. The authenticated caller needs the `prvActOnBehalfOfAnotherUser` privilege. Use `CallerObjectId` instead when what you hold is an Entra object id.",
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    }
+   },
+   "callerObjectId": {
+    "name": "CallerObjectId",
+    "in": "header",
+    "required": false,
+    "description": "Impersonate a user by their **Entra object id** rather than their `systemuserid`, which saves resolving one to the other first. Same privilege requirement as `MSCRMCallerID`; send one or the other, not both. Requires platform 8.1 or later.",
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    }
    }
   },
   "responses": {
@@ -4567,7 +5045,7 @@
     }
    },
    "429": {
-    "description": "Throttled by service protection limits, which count requests, execution time and concurrency per user per environment over a rolling five-minute window. Because the limits are per user, fanning work out across records makes throttling **more** likely, not less. Honour `Retry-After` rather than backing off on a schedule of your own.",
+    "description": "Throttled by service protection limits, which count requests, execution time and concurrency per user per environment over a rolling five-minute window. Because the limits are per user, fanning work out across records makes throttling **more** likely, not less. Honour `Retry-After` rather than backing off on a schedule of your own.\n\nThree distinct codes share this status and the SDK names them: `0x80072321` time-limit exceeded, `0x80072322` burst request-limit exceeded, and `0x80072326` concurrency-limit exceeded. Only the concurrency one is worth backing off exponentially on \u2014 the other two are windowed, so `Retry-After` is the real answer and the SDK prefers it whenever the header is present.\n\nOne unresolved disagreement: the SDK matches these codes as **decimal signed integers** (`-2147015902`), while every error body observed live on this API spells `code` in hexadecimal. Nobody has captured a live 429 here to settle it, so match on both forms.",
     "headers": {
      "Retry-After": {
       "description": "Seconds to wait before retrying.",
@@ -8419,6 +8897,424 @@
       "items": {
        "$ref": "#/components/schemas/Team"
       }
+     }
+    }
+   },
+   "DiscoveryInstanceCollection": {
+    "type": "object",
+    "description": "An OData collection of instances. Unpaged \u2014 no `@odata.nextLink` is modelled or handled by any client seen here.",
+    "x-source": "pac-cli",
+    "properties": {
+     "@odata.context": {
+      "type": "string",
+      "description": "Metadata context for the collection."
+     },
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DiscoveryInstance"
+      }
+     }
+    }
+   },
+   "DiscoveryInstance": {
+    "type": "object",
+    "description": "One Dataverse organization as global discovery describes it: its identity, its state, its version, and the two URLs a client needs. This is the join between the Power Platform view of an environment (`EnvironmentId`) and the Dataverse view of an organization (`Id`, `UniqueName`).\n\nNo field is marked required: nothing here has been exercised against the live service, so optionality is unproven. The first-party clients defensively treat `Id`, `UniqueName`, `Url` and `EnvironmentId` as capable of arriving empty.",
+    "x-source": "pac-cli",
+    "properties": {
+     "Id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The organization id. The same value as `organizationid` in that environment's `organizations` row, and as `OrganizationId` from `RetrieveCurrentOrganization` \u2014 not the Power Platform environment id, which is `EnvironmentId` below.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "UniqueName": {
+      "type": "string",
+      "description": "The organization's immutable unique name, an opaque `unq`-prefixed hexadecimal string for environments provisioned through Power Platform. Stable across renames, unlike `FriendlyName`, and the key the SDK matches on first when resolving an organization by name."
+     },
+     "UrlName": {
+      "type": "string",
+      "description": "The DNS label the organization occupies \u2014 the leftmost component of `Url`. Renaming an environment's URL changes this.",
+      "example": "contoso"
+     },
+     "FriendlyName": {
+      "type": "string",
+      "description": "Display name. Not unique and not stable; the SDK falls back to `UniqueName` when it is blank."
+     },
+     "State": {
+      "type": "integer",
+      "description": "Lifecycle state, as an integer rather than a name: `0` enabled, `1` disabled. A disabled organization is still listed, and its endpoints still resolve, but it will not serve requests \u2014 filter on this before trying to connect.",
+      "enum": [
+       0,
+       1
+      ],
+      "example": 0
+     },
+     "Version": {
+      "type": "string",
+      "description": "The full platform build of this organization, four parts. Truncate to major.minor to build the Web API base path; the SDK falls back to `8.0` when the string will not parse, and refuses the Web API entirely below major version 8.",
+      "example": "9.2.0.0"
+     },
+     "Url": {
+      "type": "string",
+      "format": "uri",
+      "description": "The model-driven app URL a user browses to. This is the value the CLI surfaces as an environment's `environmentUrl`, and an entry whose `Url` is empty or unparsable is dropped rather than reported.",
+      "example": "https://contoso.crm.dynamics.com/"
+     },
+     "ApiUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "The host the service endpoints hang off, which is **not** the same host as `Url`: it carries an extra `api` label, and the SDK's own region matching strips that label back out before comparing hostnames. Compose `{ApiUrl}/api/data/v{major}.{minor}/` for the OData Web API this spec describes, or `{ApiUrl}/XRMServices/2011/Organization.svc` for the SOAP endpoint it does not.",
+      "example": "https://contoso.api.crm.dynamics.com"
+     },
+     "LastUpdated": {
+      "type": "string",
+      "description": "When the discovery record was last refreshed. Modelled as a plain string, not a date \u2014 the SDK never parses it, so the format is unconfirmed."
+     },
+     "Region": {
+      "type": "string",
+      "description": "Geo code, matching the Geo code column of the region map in this tag's description. Used as a fallback label when a client cannot infer the region from the hostname; note that the two North America entries carry no geo code, so a geo lookup will not resolve them.",
+      "example": "EMEA"
+     },
+     "OrganizationType": {
+      "type": "string",
+      "description": "What kind of organization this is \u2014 a customer environment, a trial, a developer environment, a Teams environment, and so on. The SDK parses it into a closed 17-member enumeration accepting either the member name or its ordinal, so the wire form is not established here; the member names are listed in `x-sdk-values` in declaration order, and a member's position is its ordinal.",
+      "x-sdk-values": [
+       "Customer",
+       "Monitoring",
+       "Support",
+       "BackEnd",
+       "Secondary",
+       "CustomerTest",
+       "CustomerFreeTest",
+       "CustomerPreview",
+       "Placeholder",
+       "TestDrive",
+       "MsftInvestigation",
+       "EmailTrial",
+       "Default",
+       "Developer",
+       "Trial",
+       "Teams",
+       "Platform"
+      ]
+     },
+     "TenantId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Entra tenant that owns the organization.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "EnvironmentId": {
+      "type": "string",
+      "description": "The Power Platform environment id \u2014 the join key to [bapi](../bapi) and [ppapi](../ppapi), and the reason this endpoint is worth calling from an infrastructure client. It can be empty, and the CLI logs a warning and keeps going when it will not parse as an environment identifier, so do not assume every organization has one."
+     },
+     "StatusMessage": {
+      "type": "string",
+      "description": "Free text accompanying a non-enabled `State`."
+     },
+     "TrialExpirationDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When a trial organization expires. Meaningless for non-trial types; the SDK models it as a non-nullable date, so an omitted value becomes the zero date rather than null."
+     },
+     "Purpose": {
+      "type": "string",
+      "description": "The environment's declared purpose, the free-text label set at provisioning time and shown in the admin centre. Carried through discovery unparsed."
+     },
+     "SchemaType": {
+      "type": "string",
+      "description": "The schema variant the organization runs \u2014 which first-party data model was provisioned into it."
+     }
+    }
+   },
+   "OrganizationEndpointCollection": {
+    "type": "object",
+    "description": "The organization's published service addresses, keyed by endpoint kind. Three kinds exist: `OrganizationService` (the SOAP endpoint, `\u2026/XRMServices/2011/Organization.svc`), `OrganizationDataService` (the OData Web API base, `\u2026/api/data/v{major}.{minor}/`) and `WebApplication` (the model-driven app URL).\n\n**How this serialises over the Web API is unresolved.** In the SOAP contract it is a keyed collection, and the SDK reads it by key; whether JSON renders it as an object keyed by those names or as an array of key/value pairs was not determined from the client. It is modelled here as the object form. Verify before depending on it.",
+    "x-source": "pac-cli",
+    "additionalProperties": {
+     "type": "string",
+     "format": "uri"
+    },
+    "example": {
+     "WebApplication": "https://contoso.crm.dynamics.com/",
+     "OrganizationDataService": "https://contoso.api.crm.dynamics.com/api/data/v9.2/",
+     "OrganizationService": "https://contoso.api.crm.dynamics.com/XRMServices/2011/Organization.svc"
+    }
+   },
+   "OrganizationDetail": {
+    "type": "object",
+    "description": "An organization as the discovery contract describes it. The same object the SOAP discovery service returns, which is why its field names are PascalCase and differ from the `organizations` table's lower-case column names for the same facts.",
+    "x-source": "pac-cli",
+    "properties": {
+     "OrganizationId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Organization id \u2014 `organizationid` in the `organizations` row, and `Id` in a discovery instance.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "FriendlyName": {
+      "type": "string"
+     },
+     "OrganizationVersion": {
+      "type": "string",
+      "description": "The platform build, four parts \u2014 the same value `RetrieveVersion` returns.",
+      "example": "9.2.0.0"
+     },
+     "EnvironmentId": {
+      "type": "string",
+      "description": "Power Platform environment id, the join key to the admin APIs. Empty rather than absent when the organization has none."
+     },
+     "DatacenterId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identifies the datacentre hosting the organization. Opaque \u2014 not a documented identifier and not correlatable with an Azure region name."
+     },
+     "Geo": {
+      "type": "string",
+      "description": "Geo code, matching the region map in the Discovery tag's description.",
+      "example": "EMEA"
+     },
+     "TenantId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "UrlName": {
+      "type": "string",
+      "description": "The DNS label the organization occupies.",
+      "example": "contoso"
+     },
+     "UniqueName": {
+      "type": "string",
+      "description": "Immutable unique name; stable across renames."
+     },
+     "Endpoints": {
+      "$ref": "#/components/schemas/OrganizationEndpointCollection"
+     },
+     "State": {
+      "type": "string",
+      "description": "`Enabled` or `Disabled`. Note the difference from discovery's `Instances` collection, which reports the same fact as the integer `0`/`1` \u2014 the SDK converts between them by parsing the integer as the enum's ordinal.",
+      "enum": [
+       "Enabled",
+       "Disabled"
+      ]
+     },
+     "SchemaType": {
+      "type": "string"
+     },
+     "OrganizationType": {
+      "type": "string",
+      "description": "Instance type. The same closed 17-member set as a discovery instance's `OrganizationType`; see that property for the member names."
+     }
+    }
+   },
+   "RetrieveCurrentOrganizationResponse": {
+    "type": "object",
+    "description": "Envelope for the current organization's detail.",
+    "x-source": "pac-cli",
+    "properties": {
+     "@odata.context": {
+      "type": "string"
+     },
+     "Detail": {
+      "$ref": "#/components/schemas/OrganizationDetail"
+     }
+    }
+   },
+   "OrganizationInstalledSolution": {
+    "type": "object",
+    "description": "One installed solution as the organization-info contract reports it. A thinner projection than the `solutions` table's row: identity, version and publisher only, with no managed flag and no install timestamps. Read the `solutions` collection when those matter.",
+    "x-source": "pac-cli",
+    "properties": {
+     "Id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "`solutionid` of the installed solution.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "VersionNumber": {
+      "type": "string",
+      "description": "The solution's version, dotted.",
+      "example": "1.0.0.0"
+     },
+     "SolutionUniqueName": {
+      "type": "string",
+      "description": "The name to pass to `ExportSolution` and to match on; unlike `FriendlyName` it is unique and stable."
+     },
+     "FriendlyName": {
+      "type": "string"
+     },
+     "PublisherId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "PublisherIdName": {
+      "type": "string",
+      "description": "The publisher's display name, denormalised into this record."
+     },
+     "PublisherUniqueName": {
+      "type": "string"
+     }
+    }
+   },
+   "OrganizationInfo": {
+    "type": "object",
+    "description": "What kind of environment this is, and what is installed in it.",
+    "x-source": "pac-cli",
+    "properties": {
+     "InstanceType": {
+      "type": "string",
+      "description": "The environment's type \u2014 the same closed 17-member set as a discovery instance's `OrganizationType`; see that property for the member names. This is the check to make before writing: a `Trial` or `Developer` environment is not a production one."
+     },
+     "Solutions": {
+      "type": "array",
+      "description": "Installed solutions. Declared optional in the contract, unlike `InstanceType`.",
+      "items": {
+       "$ref": "#/components/schemas/OrganizationInstalledSolution"
+      }
+     }
+    }
+   },
+   "RetrieveOrganizationInfoResponse": {
+    "type": "object",
+    "description": "Envelope for the organization info. Note the lower-case initial on the payload property.",
+    "x-source": "pac-cli",
+    "properties": {
+     "@odata.context": {
+      "type": "string"
+     },
+     "organizationInfo": {
+      "$ref": "#/components/schemas/OrganizationInfo"
+     }
+    }
+   },
+   "ExportComponentDetail": {
+    "type": "object",
+    "description": "One component to include in a partial export.",
+    "x-source": "pac-cli",
+    "properties": {
+     "ComponentId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The component's own id in its own table \u2014 a `workflowid`, an `attributeid` and so on, not a `solutioncomponentid`.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "ComponentType": {
+      "type": "integer",
+      "description": "Solution component type code \u2014 the same numeric taxonomy as `solutioncomponent.componenttype` (1 entity, 2 attribute, 29 workflow, and so on). Large and open-ended; read the environment's own option set rather than hard-coding it."
+     },
+     "AddRequiredComponents": {
+      "type": "boolean",
+      "description": "Pull in whatever this component depends on. Leaving it false produces a package that may not import into an environment lacking those dependencies."
+     }
+    }
+   },
+   "ExportComponentsParams": {
+    "type": "object",
+    "description": "Restricts the export to a named set of components rather than everything the solution contains.",
+    "x-source": "pac-cli",
+    "properties": {
+     "ExportComponentsList": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ExportComponentDetail"
+      }
+     }
+    }
+   },
+   "ExportSolutionRequest": {
+    "type": "object",
+    "description": "Which solution to export, in which form, and which categories of environment setting to carry along with it.\n\nNothing is marked required because none of it has been exercised live; `SolutionName` must nevertheless be supplied \u2014 the SDK initialises it to null and the call cannot mean anything without it.",
+    "x-source": "pac-cli",
+    "properties": {
+     "SolutionName": {
+      "type": "string",
+      "description": "The solution's **unique name** \u2014 `uniquename` on the `solutions` row, not `friendlyname`."
+     },
+     "Managed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Produce a managed package rather than an unmanaged one. Managed is what gets deployed to test and production, where its components are locked against direct edits; unmanaged is the development form. The choice is not reversible after import."
+     },
+     "TargetVersion": {
+      "type": "string",
+      "description": "Downgrade the package to be importable by an older platform build, by excluding components that build does not understand. Omit to target the exporting environment's own version.",
+      "example": "9.0"
+     },
+     "ExportAutoNumberingSettings": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's auto-numbering settings in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportCalendarSettings": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's calendar settings in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportCustomizationSettings": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's customization settings in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportEmailTrackingSettings": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's email tracking settings in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportGeneralSettings": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's general settings in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportMarketingSettings": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's marketing settings in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportOutlookSynchronizationSettings": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's Outlook synchronisation settings in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportRelationshipRoles": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's relationship roles in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportIsvConfig": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's ISV configuration in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportSales": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's sales settings in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportExternalApplications": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include this environment's registered external applications in the package. Importing a package that carries them overwrites the target environment's, so leave it off unless moving settings is the point of the export."
+     },
+     "ExportComponentsParams": {
+      "$ref": "#/components/schemas/ExportComponentsParams"
+     }
+    }
+   },
+   "ExportSolutionResponse": {
+    "type": "object",
+    "description": "The exported package, inline.",
+    "x-source": "pac-cli",
+    "properties": {
+     "@odata.context": {
+      "type": "string"
+     },
+     "ExportSolutionFile": {
+      "type": "string",
+      "format": "byte",
+      "description": "The `.zip` package, base64-encoded. There is no streaming form and no separate download URL \u2014 the whole package is this string, so a large solution means a large response."
      }
     }
    }

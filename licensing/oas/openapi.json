@@ -1,0 +1,2479 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "Power Platform Licensing API",
+  "version": "v0.1-alpha + v1.0 + v2.0 (three coexisting route prefixes; see info.x-versioning)",
+  "description": "Unofficial. The Power Platform **licensing** service (`licensing.powerplatform.microsoft.com`) is the tenant-wide store of record for Power Platform entitlements: storage and API capacity, pay-as-you-go billing policies and the Azure subscriptions behind them, per-currency purchase and allocation reports, and per-user product trials. It is entirely undocumented -- it has no Microsoft Learn reference, no `swagger.json`, and no OpenAPI description of any kind -- and it is not the host anyone is told to call.\n\n**Nothing calls it.** `microsoft/terraform-provider-power-platform` declares this hostname as a constant for all seven clouds (`PUBLIC_LICENSING_API_DOMAIN` and its `USDOD`/`USGOV`/`USGOVHIGH`/`CHINA`/`EX`/`RX` siblings in `internal/constants/constants.go`), threads it into every cloud's configuration as `config.ProviderConfigUrls.LicensingUrl`, and then never reads that field. There is no call site. The provider's `internal/services/licensing` package -- billing policies and their environment links -- talks to `api.powerplatform.com/licensing` instead. So the seven hostnames are dead configuration in the provider, and this spec is what is on the other end of them.\n\n**Three version segments coexist on one host, and they are not api-versions.** Routes here are addressed as `/{segment}/tenants/{tenantId}/...` where `{segment}` is one of `v0.1-alpha`, `v1.0` or `v2.0`. The segment is a literal part of the route template, not a version negotiated with the service: every route on this host reports `api-supported-versions: 1.0`, and passing `?api-version=1.0` succeeds on `/v2.0/...` while `?api-version=2.0` is rejected with `400`. Which segments a given route registers is arbitrary and per-route -- `BillingPolicies` answers on `v0.1-alpha` and `v2.0` but not `v1.0`; `CurrencyReports` answers on `v0.1-alpha` and `v1.0` but not `v2.0`; `Environments/{id}/BillingPolicy` answers on all three. Where a route registers more than one segment the representations sometimes differ profoundly and sometimes not at all, so each observed `(route, segment)` pair is written out here as its own path rather than collapsed behind a server variable that would imply a uniformity the service does not have. Operations carry `x-version-segments` listing every segment observed to serve that route, and `x-representation` naming which model the path returns.\n\n**Everything documented here is a read.** Only one write route was located (`refreshProvisioningStatus`, found by a `405` with `Allow: POST`) and it was deliberately not invoked, because billing policies are live tenant billing configuration. `scripts/probe.py` refuses any method other than `GET`/`HEAD`/`OPTIONS` in its transport.\n\n**Five unrelated error envelopes.** A caller must branch on both the status code and the JSON's top-level type before it can read an error: RFC 9110 problem details (`{type, title, status, traceId}`), a nested envelope with per-field targets (`{error: {code, message, details[]}}`), a bare array of `{key, message}` pairs, a Service Fabric envelope (`{error: {namespace, code}}`), and -- for every `401`, `403`, `405`, and for `400` on `api-version` -- no body at all. See `info.x-error-envelopes`.\n\n**Evidence.** Four operations come from recorded first-party UI traffic (the Power Platform admin center and the Power Apps maker portal calling this host directly from the browser); the rest were found by probing outward from them against a live tenant on 2026-08-27. Everything marked `x-probe-verified: true` returned a real `200` with a JSON body. Response schemas carry no `required` list: every field documented was present on every object observed, but the service's own optionality was never proven, and no field here was invented.",
+  "x-versioning": {
+   "description": "The `/{segment}/` prefix is a literal route segment, not an api-version.",
+   "segments": [
+    "v0.1-alpha",
+    "v1.0",
+    "v2.0"
+   ],
+   "evidence": [
+    "Every route on this host, whatever its segment, reports `api-supported-versions: 1.0`.",
+    "`GET /v2.0/tenants/{tenantId}/BillingPolicies?api-version=1.0` returns 200; `?api-version=2.0` returns 400 with an empty body. The segment and the query parameter are independent, and only `1.0` is a valid api-version anywhere.",
+    "`Users/{userId}/Trials` advertises `api-supported-versions: 1.0, 2`, yet `?api-version=2` is rejected with 400. The advertised set is not honoured.",
+    "An `api-version` request *header*, and `Accept: application/json;v=2.0`, are both ignored.",
+    "Route matching -- including the version segment itself -- is case-insensitive: `/V2.0/tenants/{id}/billingpolicies` returns the same 200 as `/v2.0/tenants/{id}/BillingPolicies`."
+   ],
+   "perRouteRegistration": {
+    "BillingPolicies": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "BillingPolicies/{billingPolicyId}": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "BillingPolicies/{billingPolicyId}/Environments": [
+     "v0.1-alpha"
+    ],
+    "BillingPolicies/{billingPolicyId}/Environments/{environmentId}": [
+     "v0.1-alpha"
+    ],
+    "BillingPolicies/{billingPolicyId}/refreshProvisioningStatus": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "Environments/{environmentId}/BillingPolicy": [
+     "v0.1-alpha",
+     "v1.0",
+     "v2.0"
+    ],
+    "Entitlements": [
+     "v0.1-alpha"
+    ],
+    "Entitlements/{entitlementId}": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "TenantCapacity": [
+     "v0.1-alpha"
+    ],
+    "CurrencyReports": [
+     "v0.1-alpha",
+     "v1.0"
+    ],
+    "allocationsByEnvironment": [
+     "v0.1-alpha"
+    ],
+    "allocationsByEnvironment/{environmentId}": [
+     "v0.1-alpha"
+    ],
+    "Users/{userId}/Trials": [
+     "v0.1-alpha",
+     "v1.0"
+    ],
+    "Users/{userId}/Trials/{trialType}": [
+     "v0.1-alpha",
+     "v1.0"
+    ],
+    "IsvContracts": [
+     "v1.0 -- route exists but answered 403 on a tenant with no ISV contracts, so no body was observed and it is not documented as an operation"
+    ]
+   },
+   "representationsDiffer": [
+    "`BillingPolicies` under `v0.1-alpha` models pay-as-you-go as five per-product policy objects with `Enabled`/`Disabled` strings; under `v2.0` the same policy is a flat `payGoEntitlements` array of booleans. Same records, incompatible models.",
+    "`Entitlements/{id}` under `v0.1-alpha` returns scalar `capacity.entitled`/`capacity.consumed`; under `v2.0` those are boxed objects and the response gains `allocated`, `availableQuantity` and `status`.",
+    "`Users/{userId}/Trials` under `v0.1-alpha` returns dates only; under `v1.0` the same trial gains `trialCurrencyUnits` and `trialCount`."
+   ],
+   "representationsIdentical": [
+    "`Environments/{environmentId}/BillingPolicy` returns the `v2.0` billing-policy representation on all three segments, including `v0.1-alpha`."
+   ]
+  },
+  "x-error-envelopes": {
+   "description": "Five unrelated error shapes are emitted by one host. Branch on the status code and then on the JSON's top-level type.",
+   "problemDetails": {
+    "shape": "{type, title, status, traceId}",
+    "contentType": "application/json",
+    "observedOn": "404 on a route that exists but whose bound id has no record -- an environment with no currency allocation, an unknown environment under a billing policy, a recognised entitlement id the tenant holds no entitlement for.",
+    "note": "RFC 9110 section 15.5.5. `traceId` is an ASP.NET Core connection/request id, not a correlation id a caller can hand to support."
+   },
+   "nestedErrorWithDetails": {
+    "shape": "{error: {code, message, details: [{code, message, target}]}}",
+    "contentType": "application/json",
+    "observedOn": "400 when a path segment fails enum binding -- `Trials/{trialType}` with anything other than `AI`.",
+    "note": "`target` names the offending route parameter, which makes this the only envelope a caller can act on programmatically."
+   },
+   "keyMessageArray": {
+    "shape": "[{key, message}]",
+    "contentType": "application/json",
+    "observedOn": "404 on `Entitlements/{entitlementId}` when the id is not a value the entitlement subsystem recognises at all.",
+    "note": "A bare JSON array, not an object. `message` interpolates the tenant id into free text ('<id> - <tenantId> is not valid')."
+   },
+   "serviceFabricError": {
+    "shape": "{error: {namespace, code}}",
+    "contentType": "application/json",
+    "observedOn": "500 when a route parameter cannot be bound at all -- a non-GUID user id, or `Trials/0`.",
+    "note": "`namespace` was `CoreFramework` and `code` `UnknownError` in every instance; a binding failure surfacing as a 500 rather than a 400."
+   },
+   "emptyBody": {
+    "shape": "(no body)",
+    "observedOn": "401, 403, 405, 400 on `?api-version`, and 404 on a route this host does not recognise.",
+    "note": "The commonest outcome. Because an unrecognised route also answers 404 with an empty body, a caller cannot tell 'no such route' from 'forbidden' by the body alone -- see `info.x-route-existence-oracle`."
+   }
+  },
+  "x-write-surface": {
+   "description": "Every method each route accepts, mapped without issuing a single mutating request. HEAD is refused with 405 on every route on this host, and the Allow header that comes back enumerates the methods the route does accept. Nothing below was invoked and nothing below is documented as an operation, because the request and response bodies were never seen.",
+   "method": "HEAD against each route; read the Allow header of the 405.",
+   "allowByRoute": {
+    "BillingPolicies": "GET, POST",
+    "BillingPolicies/{billingPolicyId}": "DELETE, GET, PUT",
+    "BillingPolicies/{billingPolicyId}/Environments": "GET",
+    "BillingPolicies/{billingPolicyId}/Environments/{environmentId}": "GET",
+    "BillingPolicies/{billingPolicyId}/refreshProvisioningStatus": "POST",
+    "Environments/{environmentId}/BillingPolicy": "GET",
+    "Entitlements": "GET",
+    "Entitlements/{entitlementId}": "GET",
+    "TenantCapacity": "GET",
+    "CurrencyReports": "GET",
+    "allocationsByEnvironment": "GET, PATCH",
+    "allocationsByEnvironment/{environmentId}": "GET",
+    "Users/{userId}/Trials": "GET, POST",
+    "Users/{userId}/Trials/{trialType}": "GET"
+   },
+   "readsThis": "Five routes take writes: create and update/delete a billing policy, refresh its provisioning status, PATCH environment currency allocations, and POST a user trial (which is how a trial is started). The Allow values match the shape of the equivalent Power Platform API operations -- `POST /licensing/billingPolicies`, `PUT`/`DELETE /licensing/billingPolicies/{id}`, `PATCH /licensing/allocationsByEnvironment` -- which is further evidence the two hosts front the same service.",
+   "notDocumented": "None of these is written up as an operation here. `scripts/probe.py` refuses every method but GET, HEAD and OPTIONS, so no body was ever observed and guessing one from the ppapi models would be an invention. Use [ppapi](../../ppapi) for writes; it documents them and the Terraform provider exercises them.",
+   "absent": "`BillingPolicies/{id}/Environments/add` and `.../remove`, which ppapi exposes, are **not** routes here: they bind as `{environmentId}` on the GET route instead, which is why they answer 404 with problem details rather than 405."
+  },
+  "x-route-existence-oracle": {
+   "description": "How to tell a route that exists from one that does not, given that both can answer 404 with an empty body.",
+   "test": "The `api-supported-versions` response header is present if and only if the request matched a registered route. A 404 carrying `api-supported-versions: 1.0` means the route exists and the bound id has no record; a 404 without it means this host has no such route.",
+   "corollary": "`x-servicefabric: ResourceNotFound` accompanies both and is not a discriminator.",
+   "falsePositive": "`GET /` answers 200 with a vestigial, empty OData service document, and `GET /$metadata` with an EDMX containing an empty entity container. Neither is part of this API; both will fool a probe that treats 200 as evidence."
+  },
+  "x-sovereign-hosts": {
+   "description": "The seven hostnames the Terraform provider declares for this API, and what each resolves to. Recorded because the provider is the only published source for them and it never calls any of them.",
+   "provenance": "internal/constants/constants.go lines 33 (PUBLIC), 47 (USDOD), 61 (USGOV), 75 (USGOVHIGH), 89 (CHINA), 104 (EX), 119 (RX) of microsoft/terraform-provider-power-platform, pinned by internal/constants/constants_test.go.",
+   "namingIsNotUniform": "Three patterns, not one. The US Government clouds keep the commercial domain and prefix the geo (`gov.`, `high.`); DoD, China and both air-gapped clouds change the entire domain (`licensing.appsplatform.us`, `licensing.partner.microsoftonline.cn`, `licensing.eaglex.ic.gov`, `licensing.microsoft.scloud`). A caller cannot compose these from the commercial host by string substitution.",
+   "dnsVerified2026_08_27": {
+    "licensing.powerplatform.microsoft.com": "CNAME nptn-prod-tm.trafficmanager.net -> Azure Front Door.",
+    "gov.licensing.powerplatform.microsoft.us": "CNAME nptn-gcc-tm.usgovtrafficmanager.net -> Azure Front Door (US Gov).",
+    "high.licensing.powerplatform.microsoft.us": "CNAME nptn-usg-tm.usgovtrafficmanager.net -> Azure Front Door (US Gov).",
+    "licensing.appsplatform.us": "CNAME nptn-dod-tm.usgovtrafficmanager.net -> Azure Front Door (US Gov).",
+    "licensing.partner.microsoftonline.cn": "CNAME nptn-chn-tm.trafficmanager.cn -> neptune.<cluster>.gateway.mooncake.cm.powerapps.cn.",
+    "licensing.eaglex.ic.gov": "NXDOMAIN from the public internet.",
+    "licensing.microsoft.scloud": "NXDOMAIN from the public internet."
+   },
+   "note": "Every resolvable host fronts a Traffic Manager profile named `nptn-<cloud>-tm`, and the China chain names the origin outright: the service's internal codename is **Neptune**. That is the only self-identification this host offers -- there is no service document, no health endpoint and no version endpoint."
+  },
+  "x-relationship-to-power-platform-api": {
+   "description": "How this host relates to `api.powerplatform.com/licensing` (the ppapi spec in this repo), which is the surface Microsoft documents and the Terraform provider actually calls.",
+   "sameResources": {
+    "billing policies": "here `/{segment}/tenants/{tenantId}/BillingPolicies`; on ppapi `/licensing/billingPolicies` (tag *Billing Policy*).",
+    "billing policy environments": "here `/{segment}/tenants/{tenantId}/BillingPolicies/{id}/Environments`; on ppapi `/licensing/billingPolicies/{billingPolicyId}/environments`.",
+    "environment's policy": "here `/{segment}/tenants/{tenantId}/Environments/{id}/BillingPolicy`; on ppapi `/licensing/environments/{environmentId}/billingPolicy`.",
+    "currency reports": "here `/{segment}/tenants/{tenantId}/CurrencyReports`; on ppapi `/licensing/tenantCapacity/currencyReports`.",
+    "allocations by environment": "here `/{segment}/tenants/{tenantId}/allocationsByEnvironment[/{environmentId}]`; on ppapi `/licensing/allocationsByEnvironment[/{environmentId}]`.",
+    "tenant capacity": "here `/{segment}/tenants/{tenantId}/TenantCapacity`; on ppapi `/licensing/tenantCapacity`.",
+    "entitlements": "here `/{segment}/tenants/{tenantId}/Entitlements[/{entitlementId}]`; on ppapi `/licensing/entitlements/{entitlementId}` and its consumption sub-resources.",
+    "ISV contracts": "`/v1.0/tenants/{tenantId}/IsvContracts` exists here and answers 403 for a tenant with no ISV contracts; on ppapi it is `/licensing/isvContracts`."
+   },
+   "differences": [
+    "**Tenant addressing.** Every route here names the tenant in the path. ppapi takes the tenant from the token and has no tenant segment at all.",
+    "**Versioning.** ppapi uses a single `?api-version=2022-03-01-preview` query parameter throughout. Here the version is a literal path segment, and the query parameter is a trap (`400`).",
+    "**Audience.** Distinct Entra resources. A token for `https://api.powerplatform.com/.default` is rejected here with `401 Bearer error=\"invalid_token\"`, and vice versa.",
+    "**Richer records.** The `v2.0` billing policy here carries `type`, `payGoEntitlements[]` and `billingInstrument.provisioningStatus`; ppapi's `BillingPolicyResponseModel` carries none of the three.",
+    "**Write surface.** Both hosts take writes on the same resources -- `info.x-write-surface` maps this one from Allow headers -- but ppapi documents its request bodies and this one does not, so nothing here is written up as a mutation. ppapi additionally has `environments/add` and `environments/remove`, which are not routes on this host at all."
+   ],
+   "whichToUse": "Prefer ppapi. It is documented on Microsoft Learn, versioned coherently, tenant-scoped by token, and it is what the Terraform provider calls. Reach for this host only for what ppapi does not expose -- the per-product `v0.1-alpha` policy representation, `payGoEntitlements`, `billingInstrument.provisioningStatus`, and per-user trials -- or when reading a tenant other than the token's own."
+  }
+ },
+ "servers": [
+  {
+   "url": "https://licensing.powerplatform.microsoft.com",
+   "description": "Commercial cloud. `PUBLIC_LICENSING_API_DOMAIN`. The only host probed; everything marked `x-probe-verified` was verified here."
+  },
+  {
+   "url": "https://gov.licensing.powerplatform.microsoft.us",
+   "description": "US Government Community Cloud (GCC). `USGOV_LICENSING_API_DOMAIN`. Resolves; not probed -- a commercial-cloud token has the wrong audience."
+  },
+  {
+   "url": "https://high.licensing.powerplatform.microsoft.us",
+   "description": "US Government GCC High. `USGOVHIGH_LICENSING_API_DOMAIN`. Resolves; not probed."
+  },
+  {
+   "url": "https://licensing.appsplatform.us",
+   "description": "US Department of Defense. `USDOD_LICENSING_API_DOMAIN`. Resolves; not probed. Note the whole domain changes rather than gaining a `dod.` prefix."
+  },
+  {
+   "url": "https://licensing.partner.microsoftonline.cn",
+   "description": "China (21Vianet). `CHINA_LICENSING_API_DOMAIN`. Resolves; not probed."
+  },
+  {
+   "url": "https://licensing.eaglex.ic.gov",
+   "description": "US Air-Gapped Cloud (EX). `EX_LICENSING_API_DOMAIN`. Not publicly resolvable, as expected for an air-gapped cloud; unverifiable from the internet."
+  },
+  {
+   "url": "https://licensing.microsoft.scloud",
+   "description": "US Air-Gapped Cloud (RX). `RX_LICENSING_API_DOMAIN`. Not publicly resolvable; unverifiable from the internet."
+  }
+ ],
+ "security": [
+  {
+   "azure_auth": [
+    "https://licensing.powerplatform.microsoft.com/.default"
+   ]
+  }
+ ],
+ "tags": [
+  {
+   "name": "Billing Policy",
+   "description": "A pay-as-you-go billing policy: the object that links a set of Power Platform environments to an Azure subscription so that consumption beyond the tenant's licensed capacity is billed to that subscription rather than blocked. A policy names the Azure billing instrument, the geography it may cover, and which product meters are switched into pay-as-you-go. See [Pay-as-you-go overview](https://learn.microsoft.com/power-platform/admin/pay-as-you-go-overview)."
+  },
+  {
+   "name": "Billing Policy to Environment link",
+   "description": "The many-to-one association between environments and a billing policy. An environment has at most one policy; a policy covers any number of environments in its geography. The link is readable from either side, and the two sides live on different route shapes."
+  },
+  {
+   "name": "Entitlement",
+   "description": "A single metered resource the tenant is entitled to -- storage in megabytes, API calls, Windows 365 pay-as-you-go hours -- with what was purchased, what has been consumed, what has been allocated to environments, and which licences contribute to it. This is the per-meter view; *Tenant Capacity* is the same information rolled up."
+  },
+  {
+   "name": "Tenant Capacity",
+   "description": "The tenant-wide capacity rollup that backs the admin center's *Capacity* page: every storage and count meter, its entitlement, its measured consumption, the licences that granted it, and an overall status summary. Consumption figures are snapshots refreshed on a schedule, not live counters."
+  },
+  {
+   "name": "Currency Allocation",
+   "description": "Power Platform *currencies* -- prepaid unit pools such as Windows 365 pay-as-you-go hours or AI Builder credits -- and how a tenant's purchased units are distributed to environments. A currency is purchased at tenant level and then allocated; unallocated units sit in the tenant pool."
+  },
+  {
+   "name": "User Trial",
+   "description": "A per-user product trial: a time-boxed grant of a currency to one user, with its start and expiry and how much of the granted allowance has been consumed. Read by the maker portal to decide whether to offer trial-backed features to the signed-in user."
+  },
+  {
+   "name": "Service Root",
+   "description": "A vestigial OData surface mounted at the host root. It is not part of the licensing API and exposes no data; it is documented only because it answers 200 and will fool route discovery that treats 200 as evidence."
+  }
+ ],
+ "paths": {
+  "/": {
+   "get": {
+    "operationId": "serviceRoot_read",
+    "tags": [
+     "Service Root"
+    ],
+    "summary": "Read",
+    "description": "Returns an empty OData service document. Nothing under it works: `GET /$metadata` answers an EDMX with an empty entity container, and no OData entity set is exposed.\n\nIt is documented because it is a trap. Route discovery on this host relies on a 404 to mean 'no such route', and the root is the one path that answers 200 without being part of the API. Its `@odata.context` names an internal cluster address on a private IP; do not follow it.",
+    "x-version-segments": [
+     "(none -- mounted at the host root, outside the versioned route space)"
+    ],
+    "x-probe-verified": true,
+    "responses": {
+     "200": {
+      "description": "An empty OData service document.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ODataServiceDocument"
+        }
+       }
+      }
+     }
+    },
+    "security": []
+   }
+  },
+  "/v0.1-alpha/tenants/{tenantId}/BillingPolicies": {
+   "get": {
+    "operationId": "billingPolicies_listProductView",
+    "tags": [
+     "Billing Policy"
+    ],
+    "summary": "List (Product Policy Representation)",
+    "description": "The same policies as the v2.0 listing, modelled as five per-product policy objects instead of one flat array of meters. Neither model contains the other: this one groups the three Power Automate meters and collapses the three Dataverse storage meters into a single `storagePolicy`, but has no representation of the `W365APAYGO` meter at all.\n\nUse it when you want a policy's shape as the admin center's older pay-as-you-go pages presented it; use the v2.0 listing otherwise.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "x-representation": "v0.1-alpha -- per-product policy objects",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every billing policy in the tenant, in the per-product representation.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BillingPolicyProductViewList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET, POST"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/BillingPolicies/{billingPolicyId}": {
+   "get": {
+    "operationId": "billingPolicies_readProductView",
+    "tags": [
+     "Billing Policy"
+    ],
+    "summary": "Read (Product Policy Representation)",
+    "description": "Reads one billing policy in the per-product representation. As with the v2.0 twin, the body is one element of the corresponding listing.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "x-representation": "v0.1-alpha -- per-product policy objects",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/billingPolicyId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The billing policy, in the per-product representation.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BillingPolicyProductView"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "DELETE, GET, PUT"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/BillingPolicies/{billingPolicyId}/Environments": {
+   "get": {
+    "operationId": "billingPolicyEnvironments_list",
+    "tags": [
+     "Billing Policy to Environment link"
+    ],
+    "summary": "List",
+    "description": "Lists the environments linked to one billing policy, as a bare JSON array with no envelope and no paging -- note the sibling billing-policy listings wrap their results in `{value: [...]}` and this one does not.\n\nEach row carries only the two ids. To learn anything about an environment, take `environmentId` to BAPI or the Power Platform API.",
+    "x-version-segments": [
+     "v0.1-alpha"
+    ],
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/billingPolicyId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every environment linked to the policy.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/BillingPolicyEnvironment"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/BillingPolicies/{billingPolicyId}/Environments/{environmentId}": {
+   "get": {
+    "operationId": "billingPolicyEnvironments_read",
+    "tags": [
+     "Billing Policy to Environment link"
+    ],
+    "summary": "Read",
+    "description": "Reads one environment's membership of one policy, chiefly as an existence test: the body adds nothing to the ids in the request.\n\nThis is the route that makes the route-existence oracle usable. An environment that is not linked returns a JSON problem-details 404, whereas an unrecognised sub-resource under the same policy returns an empty 404 -- so a body here means the route matched.",
+    "x-version-segments": [
+     "v0.1-alpha"
+    ],
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/billingPolicyId"
+     },
+     {
+      "$ref": "#/components/parameters/environmentId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environment is linked to this policy.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BillingPolicyEnvironment"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "The environment is not linked to this policy, or does not exist.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProblemDetails"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/CurrencyReports": {
+   "get": {
+    "operationId": "currencyReports_list",
+    "tags": [
+     "Currency Allocation"
+    ],
+    "summary": "Reports List",
+    "description": "Lists what the tenant has bought of each Power Platform currency and how much of it has been handed to environments. `purchased - allocated` is the tenant pool still available to allocate.\n\nOnly currencies the tenant actually holds appear, so this cannot be used to enumerate the currency vocabulary. Registered on `v0.1-alpha` and `v1.0`, which return identical bodies.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v1.0"
+    ],
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "One report per currency the tenant holds.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/CurrencyReport"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/Entitlements": {
+   "get": {
+    "operationId": "entitlements_list",
+    "tags": [
+     "Entitlement"
+    ],
+    "summary": "List",
+    "description": "Lists the entitlements the tenant actually holds, as a bare JSON array. Unlike the capacity rollup, which returns every meter the service models, this returns only meters with something behind them -- one entry in the probed tenant against sixteen in the rollup.\n\nRegistered on `v0.1-alpha` only, so the list is available only in the flat representation even though individual entitlements can also be read in the v2.0 one.",
+    "x-version-segments": [
+     "v0.1-alpha"
+    ],
+    "x-representation": "v0.1-alpha -- flat capacity scalars",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Entitlements the tenant holds.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/EntitlementProductView"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/Entitlements/{entitlementId}": {
+   "get": {
+    "operationId": "entitlements_readProductView",
+    "tags": [
+     "Entitlement"
+    ],
+    "summary": "Read (Flat Capacity Representation)",
+    "description": "The same entitlement in the v0.1-alpha representation: `capacity.entitled` and `capacity.consumed` are bare numbers rather than boxed objects, `unit` sits inside `capacity` rather than beside it, and `allocated`, `availableQuantity` and `status` are absent entirely. The unit vocabulary also differs -- the Windows 365 meter is `Hour` here and `Count` under v2.0 for the same underlying quantity.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "x-representation": "v0.1-alpha -- flat capacity scalars",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/entitlementId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The entitlement, in the flat representation.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EntitlementProductView"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such entitlement for this tenant. As on the v2.0 twin, two unrelated error bodies are possible.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "oneOf": [
+          {
+           "$ref": "#/components/schemas/ProblemDetails"
+          },
+          {
+           "$ref": "#/components/schemas/KeyMessageError"
+          }
+         ]
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/Environments/{environmentId}/BillingPolicy": {
+   "get": {
+    "operationId": "billingPolicyEnvironments_readPolicyForEnvironment",
+    "tags": [
+     "Billing Policy to Environment link"
+    ],
+    "summary": "Policy Read (For Environment)",
+    "description": "Reads the billing policy covering one environment -- the link from the environment's side, and the only way to answer 'who pays for this environment?' without listing every policy's environments.\n\nThe full policy record comes back, not just its id. This route is registered on all three version segments and, unusually, returns the **v2.0** representation on every one of them, `v0.1-alpha` included: the segment makes no difference here. An environment with no billing policy is a problem-details 404, which is a normal answer rather than an error.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v1.0",
+     "v2.0"
+    ],
+    "x-representation": "v2.0 -- flat payGoEntitlements array, on all three segments",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/environmentId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The policy covering this environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BillingPolicy"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "The environment has no billing policy, does not exist, or is not in this tenant. All three are the same answer.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProblemDetails"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/TenantCapacity": {
+   "get": {
+    "operationId": "tenantCapacity_read",
+    "tags": [
+     "Tenant Capacity"
+    ],
+    "summary": "Read",
+    "description": "Returns the tenant's whole capacity position in one document: a summary verdict plus one entry per metered resource, each with its entitlement broken into base, incremental and add-on layers and its consumption snapshot.\n\nEvery meter the service models is returned whether or not the tenant is entitled to it, so the response is a fixed-size document and an absent meter means a service change, not a tenant difference. Consumption figures are scheduled snapshots sharing a single timestamp across all meters; read `consumption.rated`, not `consumption.actual`, when comparing against entitlement.",
+    "x-version-segments": [
+     "v0.1-alpha"
+    ],
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The tenant's capacity position.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TenantCapacity"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/Users/{userId}/Trials": {
+   "get": {
+    "operationId": "trials_listDatesOnly",
+    "tags": [
+     "User Trial"
+    ],
+    "summary": "List (Dates Only)",
+    "description": "The same trials, stripped to `trialType`, `startDate` and `expiryDate`. `trialCurrencyUnits` and `trialCount` are omitted, so this segment cannot answer how much allowance is left -- use the `v1.0` listing for that.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v1.0"
+    ],
+    "x-representation": "v0.1-alpha -- dates only",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/userId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The user's trials, dates only.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/TrialDatesOnly"
+         }
+        }
+       }
+      }
+     },
+     "500": {
+      "description": "A route parameter could not be bound at all -- a non-GUID id, or an out-of-range enum ordinal. A binding failure surfacing as a server error.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ServiceFabricError"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET, POST"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/Users/{userId}/Trials/{trialType}": {
+   "get": {
+    "operationId": "trials_readDatesOnly",
+    "tags": [
+     "User Trial"
+    ],
+    "summary": "Read (Dates Only)",
+    "description": "Reads one trial in the dates-only representation. Identical binding behaviour to the `v1.0` twin; only the response body is narrower.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v1.0"
+    ],
+    "x-representation": "v0.1-alpha -- dates only",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/userId"
+     },
+     {
+      "$ref": "#/components/parameters/trialType"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The trial, dates only.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TrialDatesOnly"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "A path segment failed enum binding. `error.details[].target` names the offending parameter.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ValidationError"
+        }
+       }
+      }
+     },
+     "500": {
+      "description": "A route parameter could not be bound at all -- a non-GUID id, or an out-of-range enum ordinal. A binding failure surfacing as a server error.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ServiceFabricError"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/allocationsByEnvironment": {
+   "get": {
+    "operationId": "currencyAllocations_list",
+    "tags": [
+     "Currency Allocation"
+    ],
+    "summary": "Allocations List (By Environment)",
+    "description": "Lists every environment-level currency allocation in the tenant.\n\n**The item schema is unknown.** The probed tenant allocates no currency to any environment, so this returned an empty array on every attempt, and the per-environment read 404s for the same reason. Nothing is documented below the array because nothing was observed -- the item is deliberately left untyped rather than guessed at from the ppapi model, which addresses the same resource but through a different envelope.\n\nThe path accepts `PATCH` as well as `GET`, matching ppapi's `PATCH /licensing/allocationsByEnvironment`; the patch body was not observed and is not documented.",
+    "x-version-segments": [
+     "v0.1-alpha"
+    ],
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Environment currency allocations. Observed empty; the item shape is unverified.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "type": "object"
+         },
+         "description": "Untyped: no allocation was ever observed."
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET, PATCH"
+  },
+  "/v0.1-alpha/tenants/{tenantId}/allocationsByEnvironment/{environmentId}": {
+   "get": {
+    "operationId": "currencyAllocations_read",
+    "tags": [
+     "Currency Allocation"
+    ],
+    "summary": "Allocations Read (By Environment)",
+    "description": "Reads one environment's currency allocations.\n\nThis is one of the four operations recorded in first-party UI traffic, and in that recording -- as in every probe since -- it answered 404: the maker portal calls it speculatively for the environment being edited and treats the 404 as 'nothing allocated'. **No 200 has ever been observed**, so the success body is undocumented and the operation is marked unverified. Note the two failure modes differ. Every long-lived environment in the probed tenant answered problem-details 404 -- the route matched, there is simply no allocation. An id the service cannot resolve answers 403 with an empty body, and that included a newly provisioned environment as well as ids from outside the tenant, so a 403 here is 'not visible to this service yet or at all' rather than a clean permission verdict.",
+    "x-version-segments": [
+     "v0.1-alpha"
+    ],
+    "x-probe-verified": false,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/environmentId"
+     }
+    ],
+    "responses": {
+     "404": {
+      "description": "The environment has no currency allocations. The normal answer for most environments, and the only one observed.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProblemDetails"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  },
+  "/v1.0/tenants/{tenantId}/Users/{userId}/Trials": {
+   "get": {
+    "operationId": "trials_list",
+    "tags": [
+     "User Trial"
+    ],
+    "summary": "List",
+    "description": "Lists every product trial the named user has taken, with its currency allowances and how much of each has been spent.\n\nExpired trials are returned rather than filtered out, so a caller must compare `expiryDate` against the current time itself; and a trial can be exhausted before it expires, when `trialConsumedUnits` reaches `trialUnits`. The maker portal calls this to decide whether to offer trial-backed features to the signed-in user.\n\nThe path also accepts `POST` (`Allow: GET, POST`), which is presumably how a trial is started. It was not invoked and its body is not documented.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v1.0"
+    ],
+    "x-representation": "v1.0 -- includes currency units and count",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/userId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The user's trials.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/Trial"
+         }
+        }
+       }
+      }
+     },
+     "500": {
+      "description": "A route parameter could not be bound at all -- a non-GUID id, or an out-of-range enum ordinal. A binding failure surfacing as a server error.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ServiceFabricError"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET, POST"
+  },
+  "/v1.0/tenants/{tenantId}/Users/{userId}/Trials/{trialType}": {
+   "get": {
+    "operationId": "trials_read",
+    "tags": [
+     "User Trial"
+    ],
+    "summary": "Read",
+    "description": "Reads one trial by name. The body is one element of the listing, so there is nothing here the listing does not give.\n\n`trialType` is bound as a .NET enum and the binder is generous: `ai`, `Ai` and `AI ` all resolve, and so does the ordinal `1`. Ordinal `0` and the literal `None` bind to a value the handler has no case for and produce a 500.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v1.0"
+    ],
+    "x-representation": "v1.0 -- includes currency units and count",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/userId"
+     },
+     {
+      "$ref": "#/components/parameters/trialType"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The trial.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Trial"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "A path segment failed enum binding. `error.details[].target` names the offending parameter.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ValidationError"
+        }
+       }
+      }
+     },
+     "500": {
+      "description": "A route parameter could not be bound at all -- a non-GUID id, or an out-of-range enum ordinal. A binding failure surfacing as a server error.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ServiceFabricError"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  },
+  "/v2.0/tenants/{tenantId}/BillingPolicies": {
+   "get": {
+    "operationId": "billingPolicies_list",
+    "tags": [
+     "Billing Policy"
+    ],
+    "summary": "List",
+    "description": "Lists every pay-as-you-go billing policy in the tenant, richest representation first.\n\nUnpaged and unfiltered: there is no `nextLink` and no continuation token, and `$top` -- along with any other query parameter -- is accepted and ignored. The one query parameter that is *not* ignored is `api-version`: `1.0` is accepted, anything else is rejected.\n\nThis path also accepts `POST` (`Allow: GET, POST`), and the item path `PUT` and `DELETE`, so policies can be created and changed here -- but no request body was ever observed and none is documented. Prefer the [Power Platform API](../../ppapi) for writes, and for reads too unless you specifically need `type`, `payGoEntitlements` or `billingInstrument.provisioningStatus`, none of which it returns.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "x-representation": "v2.0 -- flat payGoEntitlements array",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every billing policy in the tenant.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BillingPolicyList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "An `api-version` query parameter other than `1.0` was supplied. The body is empty. The `/v2.0/` in the path is a route segment, not an api-version, and asking for api-version `2.0` here is an error."
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET, POST"
+  },
+  "/v2.0/tenants/{tenantId}/BillingPolicies/{billingPolicyId}": {
+   "get": {
+    "operationId": "billingPolicies_read",
+    "tags": [
+     "Billing Policy"
+    ],
+    "summary": "Read",
+    "description": "Reads one billing policy. The body is exactly one element of the listing -- there is nothing here the listing does not already return, so listing once beats reading each policy.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "x-representation": "v2.0 -- flat payGoEntitlements array",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/billingPolicyId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The billing policy.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BillingPolicy"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The caller cannot administer this tenant, **or** the policy id does not exist. An unknown policy id returns 403 with an empty body, not 404, so a wrong id and a permission failure are indistinguishable here -- unlike every other id on this host, which 404s."
+     }
+    }
+   },
+   "x-allowed-methods": "DELETE, GET, PUT"
+  },
+  "/v2.0/tenants/{tenantId}/BillingPolicies/{billingPolicyId}/refreshProvisioningStatus": {
+   "post": {
+    "operationId": "billingPolicies_refreshProvisioningStatus",
+    "tags": [
+     "Billing Policy"
+    ],
+    "summary": "Provisioning Status Refresh",
+    "description": "Re-reads the policy's Azure billing instrument and updates `billingInstrument.provisioningStatus`. Call it after fixing the underlying `Microsoft.PowerPlatform/accounts` resource, rather than waiting for the service to notice.\n\n**This operation was never invoked.** Its existence is established indirectly: a `GET` against the path returns `405` with `Allow: POST`, which proves a POST route is registered without submitting anything. The request body, the response body and the success status code are all unknown and none is documented here; the equivalent operation on the [Power Platform API](../../ppapi) (`POST /licensing/billingPolicies/{billingPolicyId}/refreshProvisioningStatus`) is the better-described sibling. `scripts/probe.py` cannot issue this call -- its transport refuses every method but GET, HEAD and OPTIONS.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "x-probe-verified": false,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/billingPolicyId"
+     }
+    ],
+    "responses": {
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "POST"
+  },
+  "/v2.0/tenants/{tenantId}/Entitlements/{entitlementId}": {
+   "get": {
+    "operationId": "entitlements_read",
+    "tags": [
+     "Entitlement"
+    ],
+    "summary": "Read",
+    "description": "Reads one meter's entitlement, consumption, allocation and remaining headroom.\n\nThe id vocabulary is narrower than it looks. Of the eleven `entitlementId` values a billing policy enumerates, only `Database`, `File`, `Log` and `W365APAYGO` resolve; the rest 404. Worse, they 404 in two different shapes -- some return problem details and some return the bare `[{key, message}]` array -- so the two vocabularies overlap only partially and a client cannot reuse ids across the two subsystems.",
+    "x-version-segments": [
+     "v0.1-alpha",
+     "v2.0"
+    ],
+    "x-representation": "v2.0 -- boxed quantities, plus allocated/available/status",
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/tenantId"
+     },
+     {
+      "$ref": "#/components/parameters/entitlementId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The entitlement.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Entitlement"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such entitlement for this tenant. Two unrelated bodies are returned here: problem details when the id is one the entitlement subsystem recognises but the tenant does not hold, and a bare `[{key, message}]` array when the id is not recognised at all. Branch on the JSON's top-level type.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "oneOf": [
+          {
+           "$ref": "#/components/schemas/ProblemDetails"
+          },
+          {
+           "$ref": "#/components/schemas/KeyMessageError"
+          }
+         ]
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, a malformed one, or a token minted for another audience. The body is empty and the challenge is `WWW-Authenticate: Bearer error=\"invalid_token\"`. A Power Platform API token (`https://api.powerplatform.com/.default`) lands here: the two services are distinct Entra resources and their tokens are not interchangeable."
+     },
+     "403": {
+      "description": "The token is valid but the tenant in the path is not its tenant, or the caller lacks the tenant-level licensing role. The body is empty, and a malformed tenant id produces the same response, so 403 covers both authorisation failure and a badly formed path."
+     }
+    }
+   },
+   "x-allowed-methods": "GET"
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "azure_auth": {
+    "type": "oauth2",
+    "description": "Microsoft Entra ID. The scope is `https://licensing.powerplatform.microsoft.com/.default`, a resource of its own: the delegated token it mints carries `aud: https://licensing.powerplatform.microsoft.com` and the single legacy scope `user_impersonation` -- there are no granular scopes to request, so any token that works here works for the whole surface. A token for `https://api.powerplatform.com/.default` is rejected with 401 even though that API serves the same resources under `/licensing/`.",
+    "flows": {
+     "authorizationCode": {
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+      "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      "scopes": {
+       "https://licensing.powerplatform.microsoft.com/.default": "Read the tenant's licensing position: entitlements, capacity, billing policies, currency allocations and user trials"
+      }
+     }
+    }
+   }
+  },
+  "parameters": {
+   "billingPolicyId": {
+    "name": "billingPolicyId",
+    "in": "path",
+    "required": true,
+    "description": "Billing policy id, as returned by the list operation.",
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "33333333-3333-3333-3333-333333333333"
+    }
+   },
+   "entitlementId": {
+    "name": "entitlementId",
+    "in": "path",
+    "required": true,
+    "description": "The metered resource to read. Matched case-insensitively. This vocabulary is **not** the one `BillingPolicy.payGoEntitlements[].entitlementId` uses: of the eleven ids a billing policy lists, only `Database`, `File`, `Log` and `W365APAYGO` resolve here.",
+    "schema": {
+     "type": "string",
+     "example": "Database",
+     "x-observed-values": [
+      "Database",
+      "File",
+      "Log",
+      "W365APAYGO"
+     ]
+    }
+   },
+   "environmentId": {
+    "name": "environmentId",
+    "in": "path",
+    "required": true,
+    "description": "Power Platform environment id -- the same id BAPI and the Power Platform API use, not the Dataverse organization id.",
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "11111111-1111-1111-1111-111111111111"
+    }
+   },
+   "tenantId": {
+    "name": "tenantId",
+    "in": "path",
+    "required": true,
+    "description": "Entra tenant whose licensing position is being read. Unlike the Power Platform API, this service does *not* take the tenant from the token: it must be named in the path, and it must match the token's tenant -- any other value, including a malformed one, answers 403 with an empty body.",
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    }
+   },
+   "trialType": {
+    "name": "trialType",
+    "in": "path",
+    "required": true,
+    "description": "Which trial to read. Bound as a .NET enum: matched case-insensitively, tolerant of trailing whitespace, and also accepted as the ordinal `1`. `AI` is the only name that binds.",
+    "schema": {
+     "type": "string",
+     "enum": [
+      "AI"
+     ],
+     "example": "AI"
+    }
+   },
+   "userId": {
+    "name": "userId",
+    "in": "path",
+    "required": true,
+    "description": "Entra object id of the user. Must be a well-formed GUID: anything else is a 500, not a 400.",
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "22222222-2222-2222-2222-222222222222"
+    }
+   }
+  },
+  "schemas": {
+   "AllocatedQuantity": {
+    "description": "How much of a tenant-level entitlement has been handed down to environments. Only the v2.0 representation reports allocation.",
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "number",
+      "format": "double",
+      "description": "Total allocated to environments."
+     },
+     "autoAllocated": {
+      "type": "number",
+      "format": "double",
+      "description": "The part of `value` the service assigned by itself rather than an administrator, under auto-allocation."
+     }
+    }
+   },
+   "BillingInstrument": {
+    "description": "The Azure resource that consumption under this policy is billed to: a `Microsoft.PowerPlatform/accounts` resource in the tenant's own Azure subscription. Deleting or moving that Azure resource is what breaks a billing policy, which is why `provisioningStatus` is reported alongside it.",
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "description": "Full Azure resource id of the `Microsoft.PowerPlatform/accounts` resource. Composed from the other two fields plus the account name, which the API does not return separately -- the account name is the trailing segment.",
+      "example": "/subscriptions/44444444-4444-4444-4444-444444444444/resourceGroups/contoso-rg/providers/Microsoft.PowerPlatform/accounts/ContosoPayGo"
+     },
+     "resourceGroup": {
+      "type": "string",
+      "description": "Resource group holding the account resource.",
+      "example": "contoso-rg"
+     },
+     "subscriptionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Azure subscription that receives the charges. It must belong to the same tenant.",
+      "example": "44444444-4444-4444-4444-444444444444"
+     },
+     "provisioningStatus": {
+      "type": "string",
+      "description": "State of the underlying Azure resource as the licensing service last saw it. A policy whose instrument is not `Succeeded` will not bill. This field has no counterpart in the ppapi representation of the same record.",
+      "x-observed-values": [
+       "Succeeded"
+      ],
+      "x-enum-evidence": "Both policies in the probed tenant were `Succeeded`. Azure provisioning states (`Failed`, `Accepted`, `Deleting`) are the obvious rest of the set but were not observed, so no `enum` is asserted."
+     }
+    }
+   },
+   "BillingPolicy": {
+    "description": "A pay-as-you-go billing policy in the v2.0 representation: metadata, the Azure billing instrument, and a flat array of per-meter pay-as-you-go switches. This is the richer of the two representations the host offers and the one to prefer.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "example": "33333333-3333-3333-3333-333333333333"
+     },
+     "name": {
+      "type": "string",
+      "description": "Administrator-chosen name. Not unique and not an identifier; it is also the trailing segment of the Azure account resource id in `billingInstrument.id`.",
+      "example": "Contoso Pay-As-You-Go"
+     },
+     "type": {
+      "type": "string",
+      "description": "Who owns the policy. A tenant's own policies bill to that tenant's Azure subscription; an ISV-owned policy bills a publisher instead.",
+      "x-observed-values": [
+       "TenantOwned"
+      ],
+      "x-enum-evidence": "Only `TenantOwned` was observed; the probed tenant has no ISV contracts. The field is absent from the ppapi representation entirely."
+     },
+     "status": {
+      "type": "string",
+      "description": "Whether the policy is currently billing. A disabled policy keeps its environment links but stops absorbing overage.",
+      "enum": [
+       "Enabled",
+       "Disabled"
+      ],
+      "x-enum-evidence": "`Enabled` observed live; `Disabled` from the ppapi `BillingPolicyStatus` schema for the same record."
+     },
+     "location": {
+      "type": "string",
+      "description": "Power Platform geography the policy may cover. An environment can only be linked to a policy in its own geography, so this is a hard constraint on the environment link operations, not a label.",
+      "example": "unitedstates"
+     },
+     "payGoEntitlements": {
+      "type": "array",
+      "description": "Per-meter pay-as-you-go switches, exhaustive.",
+      "items": {
+       "$ref": "#/components/schemas/PayGoEntitlement"
+      }
+     },
+     "billingInstrument": {
+      "$ref": "#/components/schemas/BillingInstrument"
+     },
+     "createdOn": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "createdBy": {
+      "$ref": "#/components/schemas/LicensingPrincipal"
+     },
+     "lastModifiedOn": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "lastModifiedBy": {
+      "$ref": "#/components/schemas/LicensingPrincipal"
+     }
+    }
+   },
+   "BillingPolicyEnvironment": {
+    "description": "One environment's membership of a billing policy. The record carries nothing but the two ids -- no environment name, no state, no date the link was made -- so it is a join row, not a resource with substance.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "environmentId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "11111111-1111-1111-1111-111111111111"
+     },
+     "billingPolicyId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "33333333-3333-3333-3333-333333333333"
+     }
+    }
+   },
+   "BillingPolicyList": {
+    "description": "Envelope around the tenant's billing policies. There is no paging: no `nextLink`, no continuation token, and `$top` is accepted and ignored.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/BillingPolicy"
+      }
+     }
+    }
+   },
+   "BillingPolicyProductView": {
+    "description": "The same billing policy record as `BillingPolicy`, in the v0.1-alpha representation: pay-as-you-go is modelled as five per-product objects carrying `Enabled`/`Disabled` strings rather than one flat array of booleans. Neither model is a subset of the other -- v0.1-alpha groups the three Power Automate meters and drops the three Dataverse meters into a single `storagePolicy`, while v2.0 lists all eleven meters individually but loses the grouping.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "example": "33333333-3333-3333-3333-333333333333"
+     },
+     "name": {
+      "type": "string",
+      "example": "Contoso Pay-As-You-Go"
+     },
+     "type": {
+      "type": "string",
+      "x-observed-values": [
+       "TenantOwned"
+      ],
+      "description": "Who owns the policy."
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "Enabled",
+       "Disabled"
+      ],
+      "description": "Whether the policy is currently billing."
+     },
+     "location": {
+      "type": "string",
+      "description": "Power Platform geography the policy may cover.",
+      "example": "unitedstates"
+     },
+     "powerAutomatePolicy": {
+      "$ref": "#/components/schemas/PowerAutomatePayAsYouGoPolicy"
+     },
+     "powerAppsPolicy": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ProductPayAsYouGoPolicy"
+       }
+      ],
+      "description": "Power Apps app passes. Corresponds to the `AppPass` entitlement in the v2.0 representation."
+     },
+     "storagePolicy": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ProductPayAsYouGoPolicy"
+       }
+      ],
+      "description": "Dataverse storage. One switch here corresponds to *three* v2.0 entitlements -- `Database`, `File` and `Log` -- which the service keeps in lockstep."
+     },
+     "powerPagesPolicy": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ProductPayAsYouGoPolicy"
+       }
+      ],
+      "description": "Power Pages. One switch here covers both the `PowerPagesAuthenticated` and `PowerPagesAnonymous` v2.0 entitlements."
+     },
+     "powerVirtualAgentPolicy": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ProductPayAsYouGoPolicy"
+       }
+      ],
+      "description": "Copilot Studio (formerly Power Virtual Agents) messages. Corresponds to `MCSMessages`. Note there is no v0.1-alpha counterpart for the `W365APAYGO` entitlement at all."
+     },
+     "billingInstrument": {
+      "$ref": "#/components/schemas/BillingInstrument"
+     },
+     "createdOn": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "createdBy": {
+      "$ref": "#/components/schemas/LicensingPrincipal"
+     },
+     "lastModifiedOn": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "lastModifiedBy": {
+      "$ref": "#/components/schemas/LicensingPrincipal"
+     }
+    }
+   },
+   "BillingPolicyProductViewList": {
+    "description": "Envelope around the tenant's billing policies in the v0.1-alpha representation. Unpaged, like its v2.0 twin.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/BillingPolicyProductView"
+      }
+     }
+    }
+   },
+   "CapacityConsumption": {
+    "description": "What has actually been used against a meter. Both figures are periodically refreshed snapshots, not live counters -- the timestamps say how stale they are, and they were identical across every meter in one response, so the whole rollup is computed in a single scheduled pass.",
+    "type": "object",
+    "properties": {
+     "actual": {
+      "type": "number",
+      "format": "double",
+      "description": "Raw measured consumption in the meter's `capacityUnits`."
+     },
+     "rated": {
+      "type": "number",
+      "format": "double",
+      "description": "Consumption after the service's own rating rules -- the figure billing and overage decisions use. It can be far below `actual` (observed roughly one tenth for file storage), so comparing `actual` against entitlement will overstate overage."
+     },
+     "actualUpdatedOn": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When `actual` was last recomputed."
+     },
+     "ratedUpdatedOn": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When `rated` was last recomputed."
+     }
+    }
+   },
+   "CapacityEntitlement": {
+    "description": "One layer of a meter's entitlement. A meter's total is the sum of its layers: a `...Base` layer from the tenant's baseline grant, an `...Incremental` layer accruing per licensed user, and an `...AddOn` layer from separately purchased capacity packs. Layers with no licences still appear, with `totalCapacity` zero.",
+    "type": "object",
+    "properties": {
+     "capacityType": {
+      "type": "string",
+      "enum": [
+       "ApiCallCount",
+       "CapacityPass",
+       "Database",
+       "File",
+       "FinOpsDatabase",
+       "FinOpsFile",
+       "Log",
+       "M365Database",
+       "M365EnvironmentCount",
+       "SubscriptionTrialDatabase",
+       "SubscriptionTrialEnvironmentCount",
+       "SubscriptionTrialFile",
+       "SubscriptionTrialLog",
+       "TrialDatabase",
+       "TrialFile",
+       "TrialLog"
+      ],
+      "description": "Repeats the parent meter's type."
+     },
+     "capacitySubType": {
+      "type": "string",
+      "enum": [
+       "ApiCallCountBase",
+       "ApiCallCountIncremental",
+       "CapacityPassBase",
+       "DatabaseAddOn",
+       "DatabaseBase",
+       "DatabaseIncremental",
+       "FileAddOn",
+       "FileBase",
+       "FileIncremental",
+       "FinOpsDatabaseBase",
+       "FinOpsDatabaseIncremental",
+       "FinOpsFileBase",
+       "FinOpsFileIncremental",
+       "LogAddOn",
+       "LogBase",
+       "LogIncremental",
+       "M365DatabaseBase",
+       "M365DatabaseIncremental",
+       "M365EnvironmentCountBase",
+       "M365EnvironmentCountIncremental",
+       "SubscriptionTrialDatabaseBase",
+       "SubscriptionTrialEnvironmentCountBase",
+       "SubscriptionTrialEnvironmentCountIncremental",
+       "SubscriptionTrialFileBase",
+       "SubscriptionTrialLogBase",
+       "TrialDatabaseBase",
+       "TrialFileBase",
+       "TrialLogBase"
+      ],
+      "description": "Which layer this is. The suffix is the meaning: `Base` is the tenant baseline, `Incremental` accrues per licensed user, `AddOn` is purchased capacity.",
+      "x-enum-evidence": "The full set emitted across all sixteen meters of one tenant's rollup; the service lists every layer it models, including empty ones."
+     },
+     "totalCapacity": {
+      "type": "number",
+      "format": "double",
+      "description": "Capacity this layer contributes, in the parent meter's `capacityUnits`."
+     },
+     "licenses": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/CapacityLicense"
+      },
+      "description": "The licences that produced this layer. Empty for baseline layers a tenant holds by default."
+     }
+    }
+   },
+   "CapacityLicense": {
+    "description": "One licence SKU contributing storage or count capacity to the tenant, as reported by the capacity rollup. This is a different shape from the licence record returned under an entitlement -- the two subsystems do not share a model.",
+    "type": "object",
+    "properties": {
+     "entitlementCode": {
+      "type": "string",
+      "description": "Microsoft's internal service-plan code for the grant, which is what actually identifies the capacity source; the SKU alone does not.",
+      "x-observed-values": [
+       "D365_cds_Viral",
+       "D365_cds_Dev_Viral"
+      ]
+     },
+     "displayName": {
+      "type": "string",
+      "description": "Friendly SKU name. Returned as an empty string for every licence observed, so do not rely on it for display."
+     },
+     "servicePlanId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Entra service-plan id, joinable against Microsoft Graph `subscribedSkus`.",
+      "example": "66666666-6666-6666-6666-666666666666"
+     },
+     "skuId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Entra SKU id the service plan belongs to.",
+      "example": "55555555-5555-5555-5555-555555555555"
+     },
+     "paid": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/LicenseQuantityBreakdown"
+       }
+      ],
+      "description": "Seat counts for purchased licences of this SKU."
+     },
+     "trial": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/LicenseQuantityBreakdown"
+       }
+      ],
+      "description": "Seat counts for trial licences of this SKU, counted separately because trial capacity expires."
+     },
+     "totalCapacity": {
+      "type": "number",
+      "format": "double",
+      "description": "Capacity this licence grants, in the parent meter's `capacityUnits`."
+     },
+     "capabilityStatus": {
+      "type": "string",
+      "description": "Whether the grant is currently in force.",
+      "x-observed-values": [
+       "Enabled"
+      ]
+     }
+    }
+   },
+   "CapacitySummary": {
+    "description": "Tenant-wide capacity verdict, and the text the admin center shows above the capacity table. The message strings are prose meant for display; the `...Code` fields are what to branch on.",
+    "type": "object",
+    "properties": {
+     "status": {
+      "type": "string",
+      "enum": [
+       "Available",
+       "NotAvailable",
+       "None"
+      ],
+      "description": "Worst status across all meters."
+     },
+     "statusMessage": {
+      "type": "string",
+      "description": "Display sentence explaining `status`, already localised for the caller.",
+      "example": "Database, Log and File storage are over capacity. This will impact certain environment operations."
+     },
+     "statusMessageCode": {
+      "type": "string",
+      "description": "Stable code behind `statusMessage`. Branch on this, not on the prose.",
+      "x-observed-values": [
+       "AllCapacityOver"
+      ]
+     },
+     "finOpsStatus": {
+      "type": "string",
+      "enum": [
+       "Available",
+       "NotAvailable",
+       "None"
+      ],
+      "description": "Separate verdict for Dynamics 365 Finance and Operations storage, which is reported alongside but not folded into `status`."
+     },
+     "finOpsStatusMessage": {
+      "type": "string",
+      "description": "Display sentence for the Finance and Operations verdict."
+     },
+     "finOpsStatusMessageCode": {
+      "type": "string",
+      "description": "Stable code behind `finOpsStatusMessage`.",
+      "x-observed-values": [
+       "FinOpsNotAvailable"
+      ]
+     }
+    }
+   },
+   "ConsumedQuantity": {
+    "description": "A consumed amount together with how it was measured.",
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "number",
+      "format": "double",
+      "description": "Amount consumed, in the entitlement's unit."
+     },
+     "consumptionType": {
+      "type": "string",
+      "description": "How the figure is derived. `Snapshot` is a point-in-time measurement of a stock (storage in use); `NotSpecified` is returned for meters measured as a flow, where the value is a running total.",
+      "x-observed-values": [
+       "Snapshot",
+       "NotSpecified"
+      ]
+     },
+     "lastUpdatedOn": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the snapshot was taken. Absent on `NotSpecified` meters."
+     },
+     "writeOff": {
+      "type": "number",
+      "format": "double",
+      "description": "Consumption Microsoft has waived and will not bill or count against entitlement."
+     }
+    }
+   },
+   "CurrencyReport": {
+    "description": "Purchase and allocation position for one Power Platform currency at tenant level. `purchased - allocated` is what is left in the tenant pool for new environment allocations.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "currencyType": {
+      "type": "string",
+      "description": "The prepaid unit pool.",
+      "x-observed-values": [
+       "W365APAYGO",
+       "AI"
+      ],
+      "x-enum-evidence": "`W365APAYGO` from the currency report of the probed tenant, `AI` from a trial record on the same tenant. The full vocabulary is larger and was not enumerable -- the service reports only currencies the tenant holds."
+     },
+     "purchased": {
+      "type": "number",
+      "format": "double",
+      "description": "Units bought at tenant level."
+     },
+     "allocated": {
+      "type": "number",
+      "format": "double",
+      "description": "Units already handed to environments. Never exceeds `purchased`."
+     }
+    }
+   },
+   "Entitlement": {
+    "description": "One metered resource the tenant is entitled to, in the v2.0 representation.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "entitlementId": {
+      "type": "string",
+      "description": "The meter, echoing the path.",
+      "example": "Database"
+     },
+     "productCategories": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "Products this meter belongs to. Returned empty for the storage meters and populated for product-specific ones, so an empty array does not mean 'unknown'.",
+      "x-observed-values": [
+       "W365"
+      ]
+     },
+     "entitlement": {
+      "type": "object",
+      "description": "The two sides of the meter, licensed and pay-as-you-go.",
+      "properties": {
+       "unit": {
+        "type": "string",
+        "description": "Unit for the whole entitlement.",
+        "x-observed-values": [
+         "MB",
+         "Count"
+        ]
+       },
+       "capacity": {
+        "$ref": "#/components/schemas/EntitlementCapacity"
+       },
+       "payGo": {
+        "$ref": "#/components/schemas/EntitlementPayGo"
+       }
+      }
+     }
+    }
+   },
+   "EntitlementCapacity": {
+    "description": "The licensed side of an entitlement in the v2.0 representation: what was granted, what is used, what is allocated, and what is left.",
+    "type": "object",
+    "properties": {
+     "entitled": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/Quantity"
+       }
+      ],
+      "description": "Total granted by licences."
+     },
+     "consumed": {
+      "$ref": "#/components/schemas/ConsumedQuantity"
+     },
+     "unit": {
+      "type": "string",
+      "description": "Unit for the quantities here. Repeated from the parent, and observed to disagree with it: the parent reported `Count` for a meter whose capacity block said `NotSpecified`.",
+      "x-observed-values": [
+       "MB",
+       "NotSpecified"
+      ]
+     },
+     "allocated": {
+      "$ref": "#/components/schemas/AllocatedQuantity"
+     },
+     "availableQuantity": {
+      "type": "number",
+      "format": "double",
+      "description": "Entitlement still free, after consumption and allocation."
+     },
+     "status": {
+      "type": "string",
+      "description": "Whether the meter is inside its entitlement.",
+      "enum": [
+       "WithinCapacity",
+       "Overage"
+      ],
+      "x-enum-evidence": "Both values observed live -- `WithinCapacity` on an unused meter, `Overage` on storage past its grant."
+     },
+     "licenses": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/EntitlementLicense"
+      },
+      "description": "Licences contributing the entitlement. Empty on the storage meters of the probed tenant even where entitlement was non-zero."
+     }
+    }
+   },
+   "EntitlementFlatCapacity": {
+    "description": "The licensed side of an entitlement in the v0.1-alpha representation: bare numbers where v2.0 boxes them, and no `allocated`, `availableQuantity` or `status` at all.",
+    "type": "object",
+    "properties": {
+     "entitled": {
+      "type": "number",
+      "format": "double",
+      "description": "Total granted by licences."
+     },
+     "consumed": {
+      "type": "number",
+      "format": "double",
+      "description": "Amount used. Where v2.0 attaches a measurement type and timestamp, this representation gives the number alone."
+     },
+     "writeOff": {
+      "type": "number",
+      "format": "double",
+      "description": "Consumption Microsoft has waived."
+     },
+     "unit": {
+      "type": "string",
+      "description": "Unit for the quantities here.",
+      "x-observed-values": [
+       "MB",
+       "Hour"
+      ]
+     },
+     "licenses": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/EntitlementLicense"
+      }
+     }
+    }
+   },
+   "EntitlementLicense": {
+    "description": "One licence contributing to an entitlement. Note this is a different shape from `CapacityLicense`, which describes the same underlying idea for the capacity rollup: the field names, the quantity model and the status vocabulary all differ.",
+    "type": "object",
+    "properties": {
+     "licenseQuantityDetails": {
+      "$ref": "#/components/schemas/LicenseQuantityBreakdown"
+     },
+     "skuId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "55555555-5555-5555-5555-555555555555"
+     },
+     "productName": {
+      "type": "string",
+      "description": "Friendly SKU name. Unlike `CapacityLicense.displayName` this is actually populated.",
+      "example": "Contoso PayGo Seeded W365APAYGO"
+     },
+     "licenseQuantity": {
+      "type": "integer",
+      "description": "Seats held. Equals the sum of `licenseQuantityDetails`."
+     },
+     "entitled": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/Quantity"
+       }
+      ],
+      "description": "Capacity these seats grant, in the entitlement's unit."
+     },
+     "licenseTier": {
+      "type": "string",
+      "description": "Whether the seats were bought or granted.",
+      "x-observed-values": [
+       "Paid"
+      ]
+     },
+     "licenseStatus": {
+      "type": "string",
+      "description": "Current lifecycle state of the seats.",
+      "x-observed-values": [
+       "Enabled"
+      ]
+     },
+     "nextLifecycleStatus": {
+      "type": "string",
+      "description": "State the seats move to next if nothing changes -- typically `Warning` at the renewal date, then `Suspended`.",
+      "x-observed-values": [
+       "Warning"
+      ]
+     },
+     "nextLifecycleDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When `nextLifecycleStatus` takes effect. Returned as `0001-01-01T00:00:00` -- .NET's `DateTime.MinValue` -- when no transition is scheduled. Note this sentinel carries no timezone designator, unlike every other timestamp on this API."
+     }
+    }
+   },
+   "EntitlementPayGo": {
+    "description": "The pay-as-you-go side of an entitlement: consumption billed to a billing policy's Azure subscription rather than drawn from licensed capacity. A tenant with no billing policy still gets this block, with zeroes.",
+    "type": "object",
+    "properties": {
+     "entitled": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/Quantity"
+       }
+      ],
+      "description": "Pay-as-you-go allowance. Observed as zero throughout; pay-as-you-go is uncapped, so this is not a ceiling."
+     },
+     "consumed": {
+      "$ref": "#/components/schemas/ConsumedQuantity"
+     }
+    }
+   },
+   "EntitlementProductView": {
+    "description": "The same entitlement record as `Entitlement`, in the v0.1-alpha representation. Beyond the flattened capacity block, note `unit` moves from the entitlement to inside `capacity`, and `Hour` appears here as a unit where v2.0 reports `Count` for the same meter.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "entitlementId": {
+      "type": "string",
+      "example": "W365APAYGO"
+     },
+     "productCategories": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "entitlement": {
+      "type": "object",
+      "properties": {
+       "capacity": {
+        "$ref": "#/components/schemas/EntitlementFlatCapacity"
+       },
+       "payGo": {
+        "$ref": "#/components/schemas/EntitlementPayGo"
+       }
+      }
+     }
+    }
+   },
+   "ErrorDetail": {
+    "description": "One field-level validation failure.",
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string",
+      "x-observed-values": [
+       "InvalidValue"
+      ]
+     },
+     "message": {
+      "type": "string",
+      "description": "Human-readable reason, quoting the rejected value.",
+      "example": "The value 'Copilot' is not valid."
+     },
+     "target": {
+      "type": "string",
+      "description": "Name of the route parameter or field that failed. The only machine-actionable pointer any error envelope on this host provides.",
+      "example": "trialType"
+     }
+    }
+   },
+   "KeyMessageError": {
+    "description": "A bare JSON array of key/message pairs -- neither of the object envelopes. Returned on a 404 from `Entitlements/{entitlementId}` when the id is not a value the entitlement subsystem recognises. A client must test the top-level JSON type before reading any error on this host.",
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "key": {
+       "type": "string",
+       "x-observed-values": [
+        "InvalidValue"
+       ]
+      },
+      "message": {
+       "type": "string",
+       "description": "Free text that interpolates the rejected value and the tenant id.",
+       "example": "ZZZ - 00000000-0000-0000-0000-000000000000 is not valid"
+      }
+     }
+    }
+   },
+   "LicenseQuantityBreakdown": {
+    "description": "How many licence seats of a kind are in each lifecycle state. The three add up to the seats purchased; only `enabled` seats contribute capacity.",
+    "type": "object",
+    "properties": {
+     "enabled": {
+      "type": "integer",
+      "description": "Seats in good standing."
+     },
+     "warning": {
+      "type": "integer",
+      "description": "Seats past their renewal date but still inside the grace period -- capacity they granted is still honoured but will lapse."
+     },
+     "suspended": {
+      "type": "integer",
+      "description": "Seats past the grace period. They no longer grant capacity."
+     }
+    }
+   },
+   "LicensingPrincipal": {
+    "description": "Whoever created or last changed a record. Only the directory object id and its kind are given; no display name, mail address or tenant is returned, so resolving the principal takes a Microsoft Graph call.",
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Entra directory object id of the principal.",
+      "example": "22222222-2222-2222-2222-222222222222"
+     },
+     "type": {
+      "type": "string",
+      "description": "Kind of directory principal.",
+      "x-observed-values": [
+       "User"
+      ],
+      "x-enum-evidence": "Only `User` was observed. Service principals almost certainly appear here as another value, so this is deliberately not an `enum`."
+     }
+    }
+   },
+   "ODataServiceDocument": {
+    "description": "The vestigial OData service document at the host root. `value` was empty and `@odata.context` pointed at an internal cluster address on a private IP -- not a URL a caller can or should follow.",
+    "type": "object",
+    "properties": {
+     "@odata.context": {
+      "type": "string",
+      "description": "Points at an internal service endpoint rather than a public one. Do not dereference."
+     },
+     "value": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      },
+      "description": "Entity sets. Empty."
+     }
+    }
+   },
+   "PayGoEntitlement": {
+    "description": "One product meter's pay-as-you-go switch inside a v2.0 billing policy. The array is exhaustive: every meter the policy could cover is listed whether or not it is switched on, so absence from the array means the meter is not supported rather than not enabled.",
+    "type": "object",
+    "properties": {
+     "entitlementId": {
+      "type": "string",
+      "description": "The metered resource this switch governs.",
+      "enum": [
+       "AppPass",
+       "CloudFlowRuns",
+       "Database",
+       "File",
+       "Log",
+       "MCSMessages",
+       "PAAttendedRPA",
+       "PAUnattendedRPA",
+       "PowerPagesAnonymous",
+       "PowerPagesAuthenticated",
+       "W365APAYGO"
+      ],
+      "x-enum-evidence": "Both policies in the probed tenant listed exactly these eleven ids in full. Note this vocabulary is *not* the same as the one the `Entitlements/{entitlementId}` route accepts -- see that operation."
+     },
+     "productCategory": {
+      "type": "string",
+      "description": "Which Power Platform product the meter belongs to.",
+      "enum": [
+       "Dataverse",
+       "PowerApps",
+       "PowerAutomate",
+       "PowerPages",
+       "PowerVirtualAgent",
+       "W365"
+      ],
+      "x-enum-evidence": "The six categories spanned by the exhaustive entitlement list above."
+     },
+     "payAsYouGoState": {
+      "type": "boolean",
+      "description": "Whether overage on this meter is billed to the policy's Azure subscription. `false` means overage is blocked instead. This is the boolean the v0.1-alpha representation writes as an `Enabled`/`Disabled` string."
+     },
+     "value": {
+      "description": "Ceiling on pay-as-you-go spend for this meter, in the meter's own unit. The observed value in every case was `1.7976931348623157e308` -- IEEE-754 `Double.MaxValue`, the service's sentinel for *no ceiling*. A finite value here would be a real cap; treat the sentinel as unlimited rather than as a number.",
+      "type": "number",
+      "format": "double",
+      "example": 1.7976931348623157e+308
+     }
+    }
+   },
+   "PowerAutomatePayAsYouGoPolicy": {
+    "description": "Pay-as-you-go state for Power Automate, which -- unlike every other product family -- splits into three independently switchable meters.",
+    "type": "object",
+    "properties": {
+     "cloudFlowRunsPayAsYouGoState": {
+      "type": "string",
+      "enum": [
+       "Enabled",
+       "Disabled"
+      ],
+      "description": "Billing for cloud flow runs beyond the licensed allowance."
+     },
+     "desktopFlowUnattendedRunsPayAsYouGoState": {
+      "type": "string",
+      "enum": [
+       "Enabled",
+       "Disabled"
+      ],
+      "description": "Billing for unattended desktop-flow (RPA) runs."
+     },
+     "desktopFlowAttendedRunsPayAsYouGoState": {
+      "type": "string",
+      "enum": [
+       "Enabled",
+       "Disabled"
+      ],
+      "description": "Billing for attended desktop-flow (RPA) runs."
+     }
+    }
+   },
+   "ProblemDetails": {
+    "description": "RFC 9110 problem details. Returned on a 404 from a route that exists but whose bound id has no record.",
+    "type": "object",
+    "properties": {
+     "type": {
+      "type": "string",
+      "format": "uri",
+      "example": "https://tools.ietf.org/html/rfc9110#section-15.5.5"
+     },
+     "title": {
+      "type": "string",
+      "example": "Not Found"
+     },
+     "status": {
+      "type": "integer",
+      "example": 404
+     },
+     "traceId": {
+      "type": "string",
+      "description": "ASP.NET Core connection and request id. It identifies the request inside the service's own logs but is not a support-facing correlation id; use the `x-ms-correlation-id` response header for that.",
+      "example": "0HNO3E05TGGCK:000002D1"
+     }
+    }
+   },
+   "ProductPayAsYouGoPolicy": {
+    "description": "Pay-as-you-go state for one product family in the v0.1-alpha representation.",
+    "type": "object",
+    "properties": {
+     "payAsYouGoState": {
+      "type": "string",
+      "description": "Whether overage for this product is billed to the policy's Azure subscription.",
+      "enum": [
+       "Enabled",
+       "Disabled"
+      ],
+      "x-enum-evidence": "Both values observed live in one response (`storagePolicy` Enabled, the rest Disabled)."
+     }
+    }
+   },
+   "Quantity": {
+    "description": "A boxed scalar. The v2.0 representation wraps quantities in an object where v0.1-alpha returns a bare number.",
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "number",
+      "format": "double"
+     }
+    }
+   },
+   "ServiceFabricError": {
+    "description": "Service Fabric fault envelope, returned as a 500 when a route parameter cannot be bound at all. It carries no message, no trace id and no detail, so there is nothing to act on but the status code.",
+    "type": "object",
+    "properties": {
+     "error": {
+      "type": "object",
+      "properties": {
+       "namespace": {
+        "type": "string",
+        "x-observed-values": [
+         "CoreFramework"
+        ]
+       },
+       "code": {
+        "type": "string",
+        "x-observed-values": [
+         "UnknownError"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "TenantCapacity": {
+    "description": "The tenant's complete capacity position: an overall verdict plus one entry per metered resource.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "tenantId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Echoes the tenant id from the path."
+     },
+     "licenseModelType": {
+      "type": "string",
+      "description": "Which licensing model the tenant is on, which determines how entitlement is computed -- `StorageDriven` tenants get capacity from storage grants rather than per-user allowances.",
+      "x-observed-values": [
+       "StorageDriven"
+      ]
+     },
+     "capacitySummary": {
+      "$ref": "#/components/schemas/CapacitySummary"
+     },
+     "tenantCapacities": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TenantCapacityMeter"
+      },
+      "description": "One entry per metered resource, always the full set."
+     }
+    }
+   },
+   "TenantCapacityMeter": {
+    "description": "One metered resource in the tenant capacity rollup, with its entitlement broken into layers and its consumption snapshot.",
+    "type": "object",
+    "properties": {
+     "capacityType": {
+      "type": "string",
+      "enum": [
+       "ApiCallCount",
+       "CapacityPass",
+       "Database",
+       "File",
+       "FinOpsDatabase",
+       "FinOpsFile",
+       "Log",
+       "M365Database",
+       "M365EnvironmentCount",
+       "SubscriptionTrialDatabase",
+       "SubscriptionTrialEnvironmentCount",
+       "SubscriptionTrialFile",
+       "SubscriptionTrialLog",
+       "TrialDatabase",
+       "TrialFile",
+       "TrialLog"
+      ],
+      "description": "The metered resource. `Database`/`File`/`Log` are the three Dataverse storage meters; the `Trial`, `SubscriptionTrial` and `M365` prefixes are the same resources granted by trial, subscription-trial and Microsoft 365 seeded licences respectively and are tracked separately because they expire independently; `ApiCallCount` is the Power Platform request allowance; `FinOps` meters cover Dynamics 365 Finance and Operations storage.",
+      "x-enum-evidence": "All sixteen were returned in a single tenant's rollup; the service emits every meter it models regardless of entitlement, so this is the full set as of 2026-08."
+     },
+     "capacityUnits": {
+      "type": "string",
+      "enum": [
+       "MB",
+       "Unit",
+       "None"
+      ],
+      "description": "Unit for every quantity on this meter. `Unit` is a dimensionless count (environments, API calls); `None` is emitted for meters the tenant has no entitlement to at all."
+     },
+     "totalCapacity": {
+      "type": "number",
+      "format": "double",
+      "description": "Sum of the meter's entitlement layers."
+     },
+     "maxCapacity": {
+      "type": "number",
+      "format": "double",
+      "description": "Hard ceiling for the meter. Returned as `0` for every meter observed, including meters with non-zero `totalCapacity`, so it does not mean what its name suggests and should not be read as a limit."
+     },
+     "consumption": {
+      "$ref": "#/components/schemas/CapacityConsumption"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "Available",
+       "NotAvailable",
+       "None"
+      ],
+      "description": "Per-meter health. `NotAvailable` means consumption exceeds entitlement -- environment operations that need this resource will be refused. `None` means the meter is not in play for this tenant."
+     },
+     "overflowCapacity": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      },
+      "description": "Capacity borrowed from elsewhere to cover overage. Empty on every meter of the probed tenant, so the item shape is unknown and deliberately left untyped rather than invented."
+     },
+     "capacityEntitlements": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/CapacityEntitlement"
+      },
+      "description": "The entitlement layers making up `totalCapacity`."
+     }
+    }
+   },
+   "Trial": {
+    "description": "A per-user product trial with its currency allowances, as returned under the `v1.0` segment.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "trialType": {
+      "type": "string",
+      "enum": [
+       "AI"
+      ],
+      "description": "Which trial. Echoes the path, normalised to canonical casing.",
+      "x-enum-evidence": "`AI` is the only value the route accepts; fifteen other plausible product names were each rejected with 400 InvalidValue."
+     },
+     "startDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the trial was activated for this user."
+     },
+     "expiryDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When it lapses. A past date means the trial is over; expired trials are still returned rather than omitted, so a caller must compare against the current time itself."
+     },
+     "trialCurrencyUnits": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TrialCurrencyUnit"
+      },
+      "description": "Currency allowances the trial granted. Absent from the v0.1-alpha representation."
+     },
+     "trialCount": {
+      "type": "integer",
+      "description": "How many times this user has taken this trial. Absent from the v0.1-alpha representation."
+     }
+    }
+   },
+   "TrialCurrencyUnit": {
+    "description": "One currency granted by a trial, with the allowance and how much of it the user has spent.",
+    "type": "object",
+    "properties": {
+     "currencyType": {
+      "type": "string",
+      "description": "The currency granted.",
+      "x-observed-values": [
+       "AI"
+      ]
+     },
+     "trialUnits": {
+      "type": "integer",
+      "description": "Units granted for the life of the trial."
+     },
+     "trialConsumedUnits": {
+      "type": "integer",
+      "description": "Units spent. The trial is exhausted when this reaches `trialUnits`, independently of `expiryDate`."
+     }
+    }
+   },
+   "TrialDatesOnly": {
+    "description": "The same trial record as `Trial`, in the v0.1-alpha representation: dates only. `trialCurrencyUnits` and `trialCount` are omitted, so a caller that needs the remaining allowance must use the `v1.0` segment.",
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "trialType": {
+      "type": "string",
+      "enum": [
+       "AI"
+      ]
+     },
+     "startDate": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "expiryDate": {
+      "type": "string",
+      "format": "date-time"
+     }
+    }
+   },
+   "ValidationError": {
+    "description": "Nested error envelope with per-field details, returned on a 400 when a path segment fails enum binding.",
+    "type": "object",
+    "properties": {
+     "error": {
+      "type": "object",
+      "properties": {
+       "code": {
+        "type": "string",
+        "x-observed-values": [
+         "InvalidValue"
+        ]
+       },
+       "message": {
+        "type": "string",
+        "example": "One or more errors found. See 'Details' field for more information"
+       },
+       "details": {
+        "type": "array",
+        "items": {
+         "$ref": "#/components/schemas/ErrorDetail"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,287 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "Copilot Studio Bot Management API",
+  "version": "2022-01-15",
+  "description": "Unofficial. The bot-management surface of Copilot Studio (formerly Power Virtual Agents), reached through each Power Platform environment's PowerVirtualAgents runtime endpoint. There is no published reference for it; this spec is reverse-engineered from the wire behaviour encoded in microsoft/terraform-provider-power-platform's client (`internal/clients/copilot`) - itself derived from UI traffic recordings - and then probed against a live tenant. It is a map, not a contract.\n\nOnly the two operations the Terraform provider performs are documented: reading and writing a bot's Application Insights configuration. The service certainly serves more of `/api/botmanagement/2022-01-15/`; nothing else was discoverable without documentation, and unrecognised routes answer with a bare 404.\n\n**What live probing established** (against a real environment, a real bot id and a real per-environment host): the route exists and answers; the host really is per-environment and unguessable; `2022-01-15` is a path segment, not an `api-version` query parameter; the shape of the error envelope; and the authorisation model - 401 `UnauthenticatedUser` without a token, 403 `UserHasNoLicense` with one.\n\n**What it could not establish**: the 200 response bodies. This API is gated on a per-user Copilot Studio licence, which the probing account did not hold; Power Platform tenant-admin rights do not substitute for it. Every request stopped at the licence check, which runs before the tenant header, the environment id and the bot id are examined. Both 200 bodies, and the update operation in full, are therefore provider-derived and carry `x-probe-verified: false`. The update was never executed at all - it is a mutation, and the probe tenant's only bot belongs to the user."
+ },
+ "servers": [
+  {
+   "url": "https://{pvaRuntimeHost}",
+   "description": "Per-environment PowerVirtualAgents runtime endpoint.",
+   "variables": {
+    "pvaRuntimeHost": {
+     "default": "powervamg.eu-il107.gateway.prod.island.powerapps.com",
+     "description": "The environment's PowerVirtualAgents runtime endpoint host. This is not a regional pattern you can compose from a location name: it is an opaque per-environment gateway hostname assigned by the scale unit the environment landed on, and it must be looked up. Read the environment through BAPI (`GET /providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}?api-version=2023-06-01&$expand=properties`) and take `properties.runtimeEndpoints[\"microsoft.PowerVirtualAgents\"]`, then strip the scheme. Hostnames of the form powervamg.<geo>-il<NNN>.gateway.prod.island.powerapps.com that do not correspond to a real scale unit do not resolve in DNS, so guessing fails at the network layer rather than with an HTTP error. Environments in the same scale unit share one host; environments in one tenant routinely span several."
+    }
+   }
+  }
+ ],
+ "security": [
+  {
+   "azure_auth": [
+    "96ff4394-9197-43aa-b393-6a41652e21f8/.default"
+   ]
+  }
+ ],
+ "tags": [
+  {
+   "name": "Application Insights Configuration",
+   "description": "The Application Insights telemetry wiring of a single Copilot Studio bot: the destination connection string and which classes of conversation data are exported to it."
+  }
+ ],
+ "paths": {
+  "/api/botmanagement/2022-01-15/environments/{environmentId}/bots/{botId}/applicationinsightsconfiguration": {
+   "parameters": [
+    {
+     "name": "environmentId",
+     "in": "path",
+     "required": true,
+     "description": "Power Platform environment id, as reported by BAPI - the same id used to look up `pvaRuntimeHost`. The host and the environment id must agree: the gateway serving one scale unit does not answer for environments on another.",
+     "schema": {
+      "type": "string",
+      "format": "uuid"
+     }
+    },
+    {
+     "name": "botId",
+     "in": "path",
+     "required": true,
+     "description": "Primary key of the bot's row in the environment's Dataverse `bot` table. This API has no list endpoint, so callers discover bot ids through the Dataverse Web API: `GET https://{dataverseHost}/api/data/v9.2/bots?$select=botid,name`. `bot` is a solution-provisioned custom table (entity set `bots`, primary id `botid`, primary name `name`) that exists only in environments where Copilot Studio has provisioned it; environments that have never had a bot simply return an empty `value` array. See the dataverse spec in this repo.",
+     "schema": {
+      "type": "string",
+      "format": "uuid"
+     }
+    },
+    {
+     "name": "x-cci-tenantid",
+     "in": "header",
+     "required": true,
+     "description": "Entra tenant id of the environment. Mandatory and easy to miss: it is not derived from the bearer token, and it is spelled in lower case on the wire. Its absence could not be probed independently in this tenant because the licence check answers first, but the Terraform provider sends it on every call and the header is documented here as required on that basis.",
+     "schema": {
+      "type": "string",
+      "format": "uuid"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "appInsightsConfiguration_get",
+    "tags": [
+     "Application Insights Configuration"
+    ],
+    "summary": "Get a bot's Application Insights configuration",
+    "description": "Reads where a Copilot Studio bot ships its conversation telemetry.\n\nThree things are easy to get wrong:\n\n1. **The host is per environment and must be looked up**, not composed - see the `pvaRuntimeHost` server variable.\n2. **`x-cci-tenantid` is mandatory** and is sent under that exact lower-case spelling. It is a plain HTTP header so canonicalisation is not a wire concern, but a client that reads headers back case-sensitively (as Go's `http.Header` map access does) will miss it.\n3. **`2022-01-15` is a path segment, not an `api-version` query parameter.** An `?api-version=` query string is ignored, and substituting a different date in the path produces a bare 404 - the segment is part of the route.\n\nAuthorisation is a per-user *licence* check, not an admin-rights check: a Power Platform tenant administrator with no Copilot Studio licence is refused with 403 `UserHasNoLicense`, and that check runs before the tenant header, the environment id and the bot id are looked at, so a licence-less caller cannot distinguish a bad bot id from a bad tenant header.",
+    "x-probe-verified": false,
+    "x-probe-notes": "Live-verified: the route exists and answers on a real per-environment PVA host; the auth model (401 without a bearer token, 403 with one); the error envelope; the path-segment-not-query-parameter behaviour of 2022-01-15; the bare-404 behaviour of unrecognised routes. Not verified: the 200 response body, which is provider-derived - every request in this tenant stopped at the 403 licence gate.",
+    "responses": {
+     "200": {
+      "description": "The bot's Application Insights configuration. Shape is provider-derived.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AppInsightsConfiguration"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, or a token the service will not accept. Body carries `ErrorCode` 1000 / `UnauthenticatedUser`.",
+      "x-probe-verified": true,
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is authenticated but not licensed for Copilot Studio: `ErrorCode` 4030 / `UserHasNoLicense`. Tenant-admin rights do not substitute for the licence - this is a maker surface, not an admin surface.",
+      "x-probe-verified": true,
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Returned with an empty body, and no error envelope, for any path the gateway does not route - including the parent `.../bots` collection, `.../bots/{botId}` on its own, and a different date in the api-version segment. Whether a well-formed request for a bot that does not exist also 404s could not be established, because the licence check answers first.",
+      "x-probe-verified": true
+     }
+    }
+   },
+   "put": {
+    "operationId": "appInsightsConfiguration_update",
+    "tags": [
+     "Application Insights Configuration"
+    ],
+    "summary": "Update a bot's Application Insights configuration",
+    "description": "Replaces the bot's Application Insights configuration. The whole object is sent, including `environmentId`, `botId` and an empty `errors` - the Terraform provider round-trips the full DTO rather than sending a patch.\n\n**Success is not `200` alone.** Two failure modes hide behind non-4xx statuses, and a client that checks only the status code will treat both as success:\n\n- **`200` with a non-empty `errors` string.** The service reports validation failures in-band; the provider raises the text of `errors` as the error.\n- **`500`.** The provider accepts 500 as a *terminal* status rather than a transient one, deliberately excluding it from retry, and surfaces the raw response body. A 500 here means the update was rejected, not that the service is unhealthy, so retrying it is pointless.\n\nThe `x-cci-tenantid` header and the host-resolution rules are identical to the read.",
+    "x-probe-verified": false,
+    "x-probe-notes": "Entirely provider-derived. Never executed: this is a mutation, the only bot in the probe tenant is a real user-owned bot, and creating a throwaway bot to write against was not possible because the same licence gate that blocks the read blocks bot creation. Request shape, accepted statuses and the in-band `errors` semantics come from the provider client and its unit tests.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AppInsightsConfiguration"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The stored configuration - **or** a rejection carrying `errors`. Check that field before treating the call as successful.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AppInsightsConfiguration"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "No bearer token, or a token the service will not accept.",
+      "x-probe-verified": true,
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not licensed for Copilot Studio.",
+      "x-probe-verified": true,
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "500": {
+      "description": "The update was rejected. Terminal, not transient: do not retry. The body is not guaranteed to be the standard error envelope, so treat it as opaque text."
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "azure_auth": {
+    "type": "oauth2",
+    "description": "Microsoft Entra ID OAuth2. The audience is the fixed first-party application id of the Copilot Studio / Power Virtual Agents service; unlike the other Power Platform boundaries there is no https:// resource URI form, and the scope does not vary by cloud configuration. A token is necessary but not sufficient - the *user* behind it must hold a Copilot Studio licence.",
+    "flows": {
+     "authorizationCode": {
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+      "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      "scopes": {
+       "96ff4394-9197-43aa-b393-6a41652e21f8/.default": "Copilot Studio (Power Virtual Agents)"
+      }
+     }
+    }
+   }
+  },
+  "schemas": {
+   "AppInsightsConfiguration": {
+    "type": "object",
+    "description": "The Application Insights wiring of one Copilot Studio bot: where its conversation telemetry is shipped and how much of each conversation is included. Properties are those the Terraform provider models; the live 200 body could not be captured (see `info.description`), so the service may return more, and no property is marked required.",
+    "properties": {
+     "environmentId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Echoed by the service on both operations, but not necessarily equal to the `environmentId` in the request path - the Terraform provider deliberately overwrites the server-reported value with the one it asked for."
+     },
+     "botId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Echoed by the service; like `environmentId`, the provider overwrites it with the caller's value rather than trusting the response."
+     },
+     "appInsightsConnectionString": {
+      "type": "string",
+      "description": "Application Insights connection string, e.g. `InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://australiaeast-1.in.applicationinsights.azure.com/`. The modern connection-string form, not a bare instrumentation key. Setting it to the empty string is how telemetry export is turned off."
+     },
+     "includeSensitiveInformation": {
+      "type": "boolean",
+      "description": "Include values that may carry user-entered data - variable values and message text - in the exported telemetry. Off by default in the product UI; turning it on exports conversation content to the Application Insights resource."
+     },
+     "includeActivities": {
+      "type": "boolean",
+      "description": "Export the bot's inbound and outbound conversation activities."
+     },
+     "includeActions": {
+      "type": "boolean",
+      "description": "Export the individual topic and node actions executed during a conversation."
+     },
+     "networkIsolation": {
+      "type": "string",
+      "description": "How the bot reaches the Application Insights ingestion endpoint. `PublicNetwork` is the value seen in the Terraform provider's recorded traffic; the full set of accepted values is not known, so this is not modelled as an enum.",
+      "example": "PublicNetwork"
+     },
+     "errors": {
+      "type": "string",
+      "description": "In-band failure text. The update returns HTTP 200 with this field populated when it rejects the configuration, so a 200 is not on its own a success - see the operation description. Empty string when there is nothing to report, and it is sent as `\"\"` on the way in as well."
+     }
+    }
+   },
+   "ErrorResponse": {
+    "type": "object",
+    "description": "The bot-management error envelope. The same body is returned for every failure that reaches the service's own handlers; the flat `ErrorCode`/`ErrorMessage` pair duplicates the nested `Error.Code`/`Error.Message`. Routes the service does not recognise are rejected earlier, with a bare 404 and no body at all.",
+    "x-probe-verified": true,
+    "properties": {
+     "ErrorCode": {
+      "type": "integer",
+      "description": "Numeric error code, distinct from the HTTP status. Observed: 1000 with 401 (UnauthenticatedUser), 4030 with 403 (UserHasNoLicense)."
+     },
+     "ErrorMessage": {
+      "type": "string"
+     },
+     "ErrorInfo": {
+      "nullable": true,
+      "description": "Always null in every observed response."
+     },
+     "Error": {
+      "$ref": "#/components/schemas/ErrorDetail"
+     }
+    }
+   },
+   "ErrorDetail": {
+    "type": "object",
+    "x-probe-verified": true,
+    "properties": {
+     "Code": {
+      "type": "string",
+      "description": "Symbolic error code. Observed: `UnauthenticatedUser`, `UserHasNoLicense`. This is the field worth branching on."
+     },
+     "Message": {
+      "type": "string"
+     },
+     "RetryIn": {
+      "nullable": true,
+      "description": "Set on throttling responses to tell the caller how long to wait; null on every error observed here."
+     },
+     "InnerErrors": {
+      "type": "array",
+      "description": "Empty in every observed response.",
+      "items": {
+       "type": "object"
+      }
+     },
+     "Properties": {
+      "type": "object",
+      "description": "Free-form error context; empty in every observed response.",
+      "additionalProperties": true
+     },
+     "Diagnostics": {
+      "nullable": true
+     }
+    }
+   }
+  }
+ }
+}

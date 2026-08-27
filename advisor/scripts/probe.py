@@ -13,7 +13,7 @@ an environment id, or a token.
 
 Usage
     probe.py                                  # every known public geography
-    probe.py --region australia --region europe
+    probe.py --region unitedstates --region europe
     probe.py --host contoso.api.advisor.powerapps.com
     probe.py --ruleset "AppSource Certification"
     probe.py --skip-negative                  # catalogue survey only
@@ -47,7 +47,7 @@ HOST_TEMPLATE = "{region}.api.advisor.powerapps.com"
 
 # Public-cloud geographies. Sovereign clouds use different hostnames.
 REGIONS = [
-    "asia", "australia", "canada", "europe", "france", "germany", "india",
+    "asia", "unitedstates", "canada", "europe", "france", "germany", "india",
     "japan", "korea", "norway", "singapore", "southafrica", "southamerica",
     "switzerland", "unitedarabemirates", "unitedkingdom", "unitedstates",
 ]

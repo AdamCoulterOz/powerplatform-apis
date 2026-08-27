@@ -21,7 +21,7 @@ advisor/
 
 ```
 scripts/probe.py                                   # survey all 17 geographies
-scripts/probe.py --region australia --region europe
+scripts/probe.py --region unitedstates --region europe
 scripts/probe.py --host <env's PowerAppsAdvisor host>
 scripts/probe.py --ruleset "AppSource Certification"
 ```

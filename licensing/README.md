@@ -155,4 +155,4 @@ Every resolvable host fronts a Traffic Manager profile named `nptn-<cloud>-tm`, 
 
 ## Status
 
-Written from recorded first-party traffic and live probing of one tenant in the `australia` geography (2026-08); validates against `openapi-spec-validator`; rendered by the browser at the repo root. **Nothing was created, modified or deleted** — the harness cannot issue a write, and the write routes it found were left alone. The item schema for environment currency allocations awaits a tenant that allocates one, and the sovereign hosts await a caller in those clouds.
+Written from recorded first-party traffic and live probing of one commercial-cloud tenant (2026-08); validates against `openapi-spec-validator`; rendered by the browser at the repo root. **Nothing was created, modified or deleted** — the harness cannot issue a write, and the write routes it found were left alone. The item schema for environment currency allocations awaits a tenant that allocates one, and the sovereign hosts await a caller in those clouds.

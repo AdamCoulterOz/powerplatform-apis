@@ -337,7 +337,7 @@
        "UAE",
        "ZAF"
       ],
-      "description": "The Dataverse geo code, and the value to pass as the geo parameter to the feature operations. It is a CRM geo, not a Power Platform location, and the two vocabularies do not line up: an environment BAPI reports in location 'australia' is crmGeo 'Oce'. Codes are a mix of region groupings (NA, EMEA, APAC, Oce, SAM) and single-country geos (CAN, IND, GBR, FRA, DEU as GER, JPN, ZAF, UAE, CHE, KOR, NOR, SGP, SWE, ITA, POL).",
+      "description": "The Dataverse geo code, and the value to pass as the geo parameter to the feature operations. It is a CRM geo, not a Power Platform location, and the two vocabularies do not line up: an environment BAPI reports in location 'unitedstates' is crmGeo 'Oce'. Codes are a mix of region groupings (NA, EMEA, APAC, Oce, SAM) and single-country geos (CAN, IND, GBR, FRA, DEU as GER, JPN, ZAF, UAE, CHE, KOR, NOR, SGP, SWE, ITA, POL).",
       "example": "NA"
      },
      "organizationType": {

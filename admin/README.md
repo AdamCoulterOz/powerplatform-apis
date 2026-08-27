@@ -17,7 +17,7 @@ environmentId
   -> GET /api/environments/{organizationId}/features?geo={geo}
 ```
 
-The organization listing is the only place the geo is published, which makes it less a resource than a lookup table. And `crmGeo` is a CRM geo, not a Power Platform location: an environment BAPI reports in `australia` is `Oce` here. The two vocabularies never meet.
+The organization listing is the only place the geo is published, which makes it less a resource than a lookup table. And `crmGeo` is a CRM geo, not a Power Platform location: an environment BAPI reports in `unitedstates` is `Oce` here. The two vocabularies never meet.
 
 ## Layout
 

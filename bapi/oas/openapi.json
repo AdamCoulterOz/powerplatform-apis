@@ -4714,7 +4714,7 @@
      "location": {
       "type": "string",
       "description": "The BAP location name (for example `unitedstates`, `europe`), not an Azure region.",
-      "example": "australia"
+      "example": "unitedstates"
      },
      "name": {
       "type": "string",
@@ -4921,7 +4921,7 @@
      "azureRegion": {
       "type": "string",
       "description": "Concrete Azure region inside the location; assignable at create only where the location lists it.",
-      "example": "australiaeast"
+      "example": "eastus"
      },
      "databaseType": {
       "type": "string",
@@ -5115,7 +5115,7 @@
      "azureRegionHint": {
       "type": "string",
       "description": "The Azure region the environment was *requested* in, kept alongside the region it actually landed in. Returned by the maker scope where the admin scope returns `azureRegion`; the two agree on every environment observed.",
-      "example": "australiasoutheast"
+      "example": "westus"
      },
      "scheduledLifecycleOperations": {
       "type": "array",
@@ -5838,7 +5838,7 @@
      },
      "crmGeo": {
       "type": "string",
-      "description": "Dataverse's own three-letter geo code, which does not match the BAP location name (`OCE` for `australia`).",
+      "description": "Dataverse's own three-letter geo code, which does not match the BAP location name (`OCE` for `unitedstates`).",
       "example": "OCE"
      },
      "instanceApiUrl": {
@@ -6344,22 +6344,22 @@
      "microsoft.BusinessAppPlatform": {
       "type": "string",
       "format": "uri",
-      "example": "https://australia.api.bap.microsoft.com"
+      "example": "https://unitedstates.api.bap.microsoft.com"
      },
      "microsoft.CommonDataModel": {
       "type": "string",
       "format": "uri",
-      "example": "https://australia.api.cds.microsoft.com"
+      "example": "https://unitedstates.api.cds.microsoft.com"
      },
      "microsoft.PowerApps": {
       "type": "string",
       "format": "uri",
-      "example": "https://australia.api.powerapps.com"
+      "example": "https://unitedstates.api.powerapps.com"
      },
      "microsoft.PowerAppsAdvisor": {
       "type": "string",
       "format": "uri",
-      "example": "https://australia.api.advisor.powerapps.com"
+      "example": "https://unitedstates.api.advisor.powerapps.com"
      },
      "microsoft.PowerVirtualAgents": {
       "type": "string",
@@ -6374,7 +6374,7 @@
      "microsoft.Flow": {
       "type": "string",
       "format": "uri",
-      "example": "https://australia.api.flow.microsoft.com"
+      "example": "https://unitedstates.api.flow.microsoft.com"
      }
     },
     "description": "Per-service regional base URLs for this environment. Clients should read the endpoint for a service from here rather than deriving it from the location, because the Power Virtual Agents endpoint is cluster-specific and differs between two environments in the same geo.",
@@ -7290,7 +7290,7 @@
      "countryDisplayName": {
       "type": "string",
       "description": "English country name.",
-      "example": "Australia"
+      "example": "United States"
      },
      "defaultOptIn": {
       "type": "string",
@@ -7339,12 +7339,12 @@
     "properties": {
      "id": {
       "type": "string",
-      "example": "/providers/Microsoft.PowerApps/objectIds/00000000-0000-0000-0000-000000000000/features/AllowD365eCommDeploymentsELO.australia"
+      "example": "/providers/Microsoft.PowerApps/objectIds/00000000-0000-0000-0000-000000000000/features/AllowD365eCommDeploymentsELO.unitedstates"
      },
      "name": {
       "type": "string",
       "description": "The flag name. Geo-scoped flags carry the BAP location as a dotted suffix, so the same feature appears once per enabled geo.",
-      "example": "AllowD365eCommDeploymentsELO.australia"
+      "example": "AllowD365eCommDeploymentsELO.unitedstates"
      },
      "type": {
       "type": "string",

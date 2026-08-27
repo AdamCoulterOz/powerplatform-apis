@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Power Platform APIs</title>
   <meta name="description" content="Browsable OpenAPI reference for the Power Platform admin APIs, reverse-engineered from the public Microsoft Learn documentation.">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stoplight/elements@9.0.24/styles.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@stoplight/elements@9.0.24/web-components.min.js"></script>
   <style>
     html, body { margin: 0; height: 100%; }
     body { display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -19,14 +17,8 @@
     header .links { margin-left: auto; font-size: 13px; display: flex; gap: 14px; }
     header a { color: #0057b8; text-decoration: none; }
     header a:hover { text-decoration: underline; }
-    #app { flex: 1 1 auto; min-height: 0; }
-    elements-api { display: block; height: 100%; }
+    #app { flex: 1 1 auto; min-height: 0; overflow: hidden; }
     #note { padding: 24px; font-size: 14px; }
-    /* Elements' horizontal tab strips (e.g. the response-code selector) show an
-       overlay scrollbar that covers the content; let them wrap instead and hide
-       the bar. The code-sample panels use .sl-code-viewer__scroller and keep theirs. */
-    elements-api .sl-stack--horizontal.sl-overflow-x-auto { flex-wrap: wrap; scrollbar-width: none; -ms-overflow-style: none; }
-    elements-api .sl-stack--horizontal.sl-overflow-x-auto::-webkit-scrollbar { display: none; }
   </style>
 </head>
 <body>
@@ -41,6 +33,7 @@
   </header>
   <div id="note">Loading spec list…</div>
   <div id="app"></div>
+  <script src="https://cdn.jsdelivr.net/npm/redoc@2.5.3/bundles/redoc.standalone.js"></script>
   <script>
     (async () => {
       const note = document.getElementById('note');
@@ -63,7 +56,6 @@
       }
       picker.addEventListener('change', () => {
         try { localStorage.setItem('spec', picker.value); } catch (e) {}
-        // reset the in-spec hash route when switching APIs
         location.href = location.pathname + '?spec=' + encodeURIComponent(picker.value);
       });
 
@@ -72,12 +64,26 @@
       document.title = current.title;
       note.remove();
 
-      const api = document.createElement('elements-api');
-      api.setAttribute('apiDescriptionUrl', current.url);
-      api.setAttribute('router', 'hash');
-      api.setAttribute('layout', 'sidebar');
-      api.setAttribute('hideTryIt', 'true');
-      document.getElementById('app').appendChild(api);
+      if (!window.Redoc) {
+        const d = document.createElement('div');
+        d.id = 'note';
+        d.innerHTML = 'The spec renderer failed to load from the CDN. The raw spec is at <a href="' +
+          current.url + '">' + current.url + '</a>.';
+        document.getElementById('app').appendChild(d);
+        return;
+      }
+      window.Redoc.init(
+        current.url,
+        {
+          hideDownloadButton: true,
+          expandResponses: '200,201',
+          requiredPropsFirst: true,
+          jsonSampleExpandLevel: 3,
+          hideHostname: false,
+          theme: { sidebar: { width: '270px' } }
+        },
+        document.getElementById('app')
+      );
     })();
   </script>
 </body>

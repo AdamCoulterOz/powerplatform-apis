@@ -1,549 +1,549 @@
 {
-  "openapi": "3.0.3",
-  "info": {
-    "title": "Power Platform Admin Centre API",
-    "version": "unversioned",
-    "description": "The Power Platform admin centre API backs the admin centre's release-wave experience: listing the tenant's Dataverse organizations and reading or enabling per-organization release-wave features.\n\nThis API addresses **organizations and a geo**, not Power Platform environment ids. A caller holding an environment id must first read the environment to get its organization id, then find that organization in the listing to learn its geo. There is no `api-version` anywhere on this surface.\n\nUnofficial and reverse-engineered — see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/admin) for how it was derived and which parts are verified."
-  },
-  "servers": [
-    {
-      "url": "https://api.admin.powerplatform.microsoft.com"
-    }
-  ],
-  "security": [
-    {
-      "azure_auth": [
-        "065d9450-1e87-434e-ac2f-69af271549ed/.default"
-      ]
-    }
-  ],
-  "tags": [
-    {
-      "name": "Organization",
-      "description": "A Dataverse organization: the database half of an environment, identified by an organization id that is not the environment id. This resource is also the mapping table the rest of the API depends on -- it is where an environment's organization id is paired with the geo every other operation requires."
-    },
-    {
-      "name": "Release Wave Feature",
-      "description": "Per-organization opt-in to Dataverse release waves -- the admin centre's 'Manage features' surface. Microsoft ships two waves a year, each a bundle of Dataverse and model-driven-app changes that lands automatically on a per-geo date. A wave appears here as a named feature a tenant admin may switch on early, before that date, to test the changes; once on it cannot be switched off."
-    }
-  ],
-  "paths": {
-    "/api/tenants/mytenant/organizations": {
-      "get": {
-        "operationId": "organizations_list",
-        "tags": [
-          "Organization"
-        ],
-        "summary": "List",
-        "description": "Lists every Dataverse organization in the tenant behind the credentials. 'mytenant' is a literal path segment, not a placeholder -- the tenant comes from the token and there is no way to name another one.\n\nThis is the mapping step every other operation depends on. Given a Power Platform environment id, read the environment from BAPI, take properties.linkedEnvironmentMetadata.resourceId, and match it against the id field here; the matching organization's crmGeo is the geo parameter the feature operations require. Nothing else publishes that geo.\n\nOnly environments that have Dataverse appear. An environment without a database -- a Default environment that was never provisioned, for instance -- has no organization and is simply absent, so this listing is shorter than BAPI's environment listing and a missing entry is not an error.\n\nThe response is a bare JSON array: no envelope, no paging, no filter parameters. Unrecognised query parameters are ignored rather than rejected.",
-        "x-probe-verified": true,
-        "responses": {
-          "200": {
-            "description": "Every Dataverse organization in the tenant, unpaged.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Organization"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The bearer token is missing, expired, or was issued for a different audience. A token minted for any other Power Platform scope is rejected here. No WWW-Authenticate challenge is returned, so acquire a token for this API's own scope rather than negotiating."
-          },
-          "403": {
-            "description": "The caller cannot administer this organization, or it does not exist. The two are indistinguishable and neither produces a 404, so a 403 more often means the wrong id was passed -- a Power Platform environment id instead of an organization id -- than a genuine permission problem. The body is empty."
-          }
-        }
-      }
-    },
-    "/api/environments/{organizationId}/features": {
-      "get": {
-        "operationId": "features_list",
-        "tags": [
-          "Release Wave Feature"
-        ],
-        "summary": "List",
-        "description": "Lists every release wave the service knows about for one organization, each with that organization's opt-in state and the geo's rollout dates.\n\nThere is no single-feature read, so a caller wanting one feature lists them all and matches on FeatureName.\n\nBoth parameters need preparing. The path takes an organization id, not an environment id (map via BAPI's properties.linkedEnvironmentMetadata.resourceId), and the geo must be the crmGeo published for that organization by the organization listing. Omitting the geo faults rather than being rejected, because the parameter is bound before it is validated.\n\nThis is also the operation to poll after enabling a wave: watch the feature's AppsUpgradeState until it leaves 'Upgrading'.",
-        "x-notes": [
-          {
-            "note": "The sibling path `/api/environments/{organizationId}/features/{featureName}` reads like a single-feature route and is not one. It falls through to the host's legacy-route fallback and answers 200 with an HTML stub, so a client that trusts the status code hands a web page to its JSON parser.",
-            "source": "live"
-          },
-          {
-            "note": "`count`, `totalCount` and `nextPageToken` describe a paging scheme this route does not implement. `pageSize`, `$top` and `pageToken` are all accepted and all ignored, every request returns the complete set, `count` equals `totalCount`, and `nextPageToken` is always empty. Do not write a paging loop against them.",
-            "source": "live"
-          }
-        ],
-        "x-probe-verified": true,
-        "parameters": [
-          {
-            "name": "organizationId",
-            "in": "path",
-            "required": true,
-            "description": "The Dataverse organization id -- not the Power Platform environment id, despite the /environments/ path segment. Obtain it from this API's organization listing, or from BAPI's properties.linkedEnvironmentMetadata.resourceId. A value that is not a well-formed GUID is rejected outright; a well-formed one belonging to another tenant is refused rather than reported missing.",
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
-              "example": "00000000-0000-0000-0000-000000000000"
-            }
-          },
-          {
-            "name": "geo",
-            "in": "query",
-            "required": true,
-            "description": "The Dataverse geo whose release calendar to answer under, as published by the organization listing's crmGeo. Matched case-insensitively. This selects the *schedule*, not the organization: the same organizationId read under a different geo returns identical opt-in state and a different GeneralAvailabilityDate. Codes belonging to sovereign clouds (CHN, USG, DOD, TIP) are recognised but not served by the public host.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "APAC",
-                "CAN",
-                "CHE",
-                "EMEA",
-                "FRA",
-                "GBR",
-                "GER",
-                "IND",
-                "ITA",
-                "JPN",
-                "KOR",
-                "NA",
-                "NOR",
-                "Oce",
-                "POL",
-                "SAM",
-                "SGP",
-                "SWE",
-                "UAE",
-                "ZAF"
-              ],
-              "example": "NA"
-            },
-            "x-sovereign-only-values": [
-              "CHN",
-              "DOD",
-              "TIP",
-              "USG"
-            ]
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Every release wave feature for the organization, complete in one response. An empty values array means the service publishes no waves for it, not that the organization is unknown.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FeatureCollection"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A path or query parameter failed validation: a malformed organizationId, or a geo that is empty or not a recognised code. The body is a bare JSON array of message strings, with the offending value quoted inside the text. Nothing was changed; correct the parameter and retry.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationMessages"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The bearer token is missing, expired, or was issued for a different audience. A token minted for any other Power Platform scope is rejected here. No WWW-Authenticate challenge is returned, so acquire a token for this API's own scope rather than negotiating."
-          },
-          "403": {
-            "description": "The caller cannot administer this organization, or it does not exist. The two are indistinguishable and neither produces a 404, so a 403 more often means the wrong id was passed -- a Power Platform environment id instead of an organization id -- than a genuine permission problem. The body is empty."
-          },
-          "500": {
-            "description": "An upstream fault. Two causes are deterministic rather than transient: omitting the geo parameter entirely on the feature listing, and asking for a geo served by a sovereign cloud rather than by this host. Otherwise it is worth one retry. Quote the body's requestId together with the x-ms-service-request-id and x-ms-correlation-id response headers when reporting one.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/environments/{organizationId}/features/{featureName}/enable": {
-      "post": {
-        "operationId": "features_enable",
-        "tags": [
-          "Release Wave Feature"
-        ],
-        "summary": "Enable",
-        "description": "Opts one organization in to a release wave ahead of its general-availability date -- the API behind the admin centre's early opt-in checkbox. There is no request body and no request content type; the entire request is the URL.\n\n**This is one-way.** Wave features report CanBeReset: false, and this surface has no disable or reset operation. Once a wave is on for an organization it cannot be turned off through the API, so treat enabling one as permanent.\n\nThe call returns as soon as the request is accepted, with an empty body and no Location or Operation-Location header, but the work behind it is asynchronous: the feature's AppsUpgradeState moves to 'Upgrading' while the organization's model-driven apps are upgraded, and settles when that finishes. Poll features_list until AppsUpgradeState leaves 'Upgrading' before treating the wave as active.\n\nAs with the listing, the path takes an organization id rather than an environment id and the geo must be that organization's crmGeo. Parameter checking is ordered differently here, though: an invalid geo is rejected before the organization is looked at, while an omitted geo passes straight through to the organization check, so this route appears to tolerate the parameter's absence in a way the listing does not. Send it regardless.",
-        "x-probe-verified": false,
-        "parameters": [
-          {
-            "name": "organizationId",
-            "in": "path",
-            "required": true,
-            "description": "The Dataverse organization id -- not the Power Platform environment id, despite the /environments/ path segment. Obtain it from this API's organization listing, or from BAPI's properties.linkedEnvironmentMetadata.resourceId. A value that is not a well-formed GUID is rejected outright; a well-formed one belonging to another tenant is refused rather than reported missing.",
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
-              "example": "00000000-0000-0000-0000-000000000000"
-            }
-          },
-          {
-            "name": "featureName",
-            "in": "path",
-            "required": true,
-            "description": "The wave's FeatureName as features_list reports it. The enum is a snapshot of the waves in their rollout window rather than a fixed vocabulary; the names follow the fixed pattern '<Month><Year>Update' with Month always April or October, so future waves are predictable, but read the listing rather than guessing. The name is checked after the organization, so an organization the caller cannot administer masks an unknown feature name rather than reporting it.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "April2025Update",
-                "October2025Update"
-              ],
-              "pattern": "^(April|October)[0-9]{4}Update$",
-              "example": "October2025Update"
-            }
-          },
-          {
-            "name": "geo",
-            "in": "query",
-            "required": true,
-            "description": "The Dataverse geo whose release calendar to answer under, as published by the organization listing's crmGeo. Matched case-insensitively. This selects the *schedule*, not the organization: the same organizationId read under a different geo returns identical opt-in state and a different GeneralAvailabilityDate. Codes belonging to sovereign clouds (CHN, USG, DOD, TIP) are recognised but not served by the public host.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "APAC",
-                "CAN",
-                "CHE",
-                "EMEA",
-                "FRA",
-                "GBR",
-                "GER",
-                "IND",
-                "ITA",
-                "JPN",
-                "KOR",
-                "NA",
-                "NOR",
-                "Oce",
-                "POL",
-                "SAM",
-                "SGP",
-                "SWE",
-                "UAE",
-                "ZAF"
-              ],
-              "example": "NA"
-            },
-            "x-sovereign-only-values": [
-              "CHN",
-              "DOD",
-              "TIP",
-              "USG"
-            ]
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The opt-in was accepted. The body is empty and carries no operation handle; completion is observed by polling features_list for AppsUpgradeState leaving 'Upgrading'."
-          },
-          "400": {
-            "description": "A path or query parameter failed validation: a malformed organizationId, or a geo that is empty or not a recognised code. The body is a bare JSON array of message strings, with the offending value quoted inside the text. Nothing was changed; correct the parameter and retry.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationMessages"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "The bearer token is missing, expired, or was issued for a different audience. A token minted for any other Power Platform scope is rejected here. No WWW-Authenticate challenge is returned, so acquire a token for this API's own scope rather than negotiating."
-          },
-          "403": {
-            "description": "The caller cannot administer this organization, or it does not exist. The two are indistinguishable and neither produces a 404, so a 403 more often means the wrong id was passed -- a Power Platform environment id instead of an organization id -- than a genuine permission problem. The body is empty."
-          },
-          "500": {
-            "description": "An upstream fault. Two causes are deterministic rather than transient: omitting the geo parameter entirely on the feature listing, and asking for a geo served by a sovereign cloud rather than by this host. Otherwise it is worth one retry. Quote the body's requestId together with the x-ms-service-request-id and x-ms-correlation-id response headers when reporting one.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceError"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "securitySchemes": {
-      "azure_auth": {
-        "type": "oauth2",
-        "description": "Microsoft Entra ID. The scope is a bare first-party application id rather than a URL: 065d9450-1e87-434e-ac2f-69af271549ed/.default. A token minted for any other Power Platform audience is rejected.",
-        "flows": {
-          "authorizationCode": {
-            "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-            "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-            "scopes": {
-              "065d9450-1e87-434e-ac2f-69af271549ed/.default": "Administer Power Platform through the admin centre API"
-            }
-          }
-        }
-      }
-    },
-    "schemas": {
-      "Organization": {
-        "type": "object",
-        "description": "A Dataverse organization as the admin centre sees it: the identity and location of an environment's database, and nothing more. Deliberately thin -- no friendly name, version, state, cluster or capacity, all of which live in BAPI's environment object. Its value here is the id/crmGeo pairing the feature operations need. Every field below was present on every organization observed.",
-        "x-probe-verified": true,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
-            "description": "The organization id, and the id every other operation on this surface takes. Equal to BAPI's properties.linkedEnvironmentMetadata.resourceId for the same environment, and never equal to the environment id.",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "tenantId": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
-            "description": "The tenant owning the organization. Constant across the listing, since the endpoint only ever answers for the token's own tenant.",
-            "example": "00000000-0000-0000-0000-000000000000"
-          },
-          "name": {
-            "type": "string",
-            "pattern": "^unq[0-9a-f]{29}$",
-            "description": "The Dataverse *unique name*, not a display name: literally 'unq' followed by the first 29 hex characters of the organization id with its hyphens removed, giving 32 characters. It carries no information the id does not, and it is not what the admin centre shows a user -- there is no human-readable environment name anywhere in this response.",
-            "example": "unq00000000000000000000000000000"
-          },
-          "crmGeo": {
-            "type": "string",
-            "enum": [
-              "APAC",
-              "CAN",
-              "CHE",
-              "EMEA",
-              "FRA",
-              "GBR",
-              "GER",
-              "IND",
-              "ITA",
-              "JPN",
-              "KOR",
-              "NA",
-              "NOR",
-              "Oce",
-              "POL",
-              "SAM",
-              "SGP",
-              "SWE",
-              "UAE",
-              "ZAF"
-            ],
-            "description": "The Dataverse geo code, and the value to pass as the geo parameter to the feature operations. It is a CRM geo, not a Power Platform location, and the two vocabularies do not line up: an environment BAPI reports in location 'unitedstates' is crmGeo 'Oce'. Codes are a mix of region groupings (NA, EMEA, APAC, Oce, SAM) and single-country geos (CAN, IND, GBR, FRA, DEU as GER, JPN, ZAF, UAE, CHE, KOR, NOR, SGP, SWE, ITA, POL).",
-            "example": "NA"
-          },
-          "organizationType": {
-            "type": "integer",
-            "description": "Dataverse instance type, tracking the environment's SKU. Values 6 and 13 were observed, on Sandbox and Developer environments respectively. The enumeration is not published and other values certainly exist for Production, Trial and Teams environments, so treat unknown values as opaque rather than invalid.",
-            "example": 6,
-            "x-observed-values": {
-              "6": "Sandbox",
-              "13": "Developer"
-            }
-          },
-          "relationType": {
-            "type": "string",
-            "description": "How the tenant relates to the organization -- intended to distinguish an organization the tenant owns from one merely linked to it. 'Unknown' on every organization observed, including ones the caller fully administers, so it is not currently a usable signal. No enum is asserted because only one value has been seen and it is plainly not the whole set.",
-            "example": "Unknown",
-            "x-observed-values": [
-              "Unknown"
-            ]
-          },
-          "url": {
-            "type": "string",
-            "format": "uri",
-            "description": "The organization's Dataverse endpoint, returned with a trailing slash. This is the host the Dataverse Web API and the per-environment OAuth scope are built from.",
-            "example": "https://contoso.crm.dynamics.com/"
-          }
-        }
-      },
-      "FeatureCollection": {
-        "type": "object",
-        "description": "The feature listing's envelope. Only `values` carries information.",
-        "x-probe-verified": true,
-        "properties": {
-          "values": {
-            "type": "array",
-            "description": "The organization's release wave features, always complete -- this is never a page of a larger set.",
-            "items": {
-              "$ref": "#/components/schemas/Feature"
-            }
-          },
-          "count": {
-            "type": "integer",
-            "description": "Items in this response. Always equal to totalCount, since the listing is never split.",
-            "example": 2
-          },
-          "totalCount": {
-            "type": "integer",
-            "description": "Items available in total. Always equal to count.",
-            "example": 2
-          },
-          "nextPageToken": {
-            "type": "string",
-            "description": "Continuation token for a page that never exists: empty on every response observed, including responses to requests carrying pageSize, $top or pageToken. Do not loop on it.",
-            "example": ""
-          }
-        }
-      },
-      "Feature": {
-        "type": "object",
-        "description": "One Dataverse release wave and this organization's relationship to it: whether the wave is on, whether this organization is allowed to turn it on, the window in which it may do so, and when Microsoft will turn it on regardless.",
-        "x-notes": [
-          {
-            "note": "Property names are PascalCase here, unlike the camelCase organization object: the two halves of this API do not share a serializer.",
-            "source": "live"
-          }
-        ],
-        "x-probe-verified": true,
-        "properties": {
-          "FeatureName": {
-            "type": "string",
-            "enum": [
-              "April2025Update",
-              "October2025Update"
-            ],
-            "pattern": "^(April|October)[0-9]{4}Update$",
-            "description": "Stable identifier for the wave, and the value the enable operation takes in its path. Named for the month the wave reaches general availability, which is one half-year after the wave's own number: April2025Update is 2025 release wave 1 and October2025Update is 2025 release wave 2. Each turns on that wave's whole bundle of Dataverse platform and model-driven-app changes for the organization -- it is a release-channel opt-in, not a toggle for any single feature.\n\nThe enum is a snapshot rather than a fixed vocabulary: exactly the waves currently in their opt-in window are listed, and a wave drops out once superseded. The naming pattern holds even as the enum ages.",
-            "example": "October2025Update"
-          },
-          "DisplayName": {
-            "type": "string",
-            "enum": [
-              "2025 release wave 1",
-              "2025 release wave 2"
-            ],
-            "pattern": "^[0-9]{4} release wave [12]$",
-            "description": "The wave's human name as the admin centre shows it, in Microsoft's 'YYYY release wave N' vocabulary -- N is 1 for the April wave and 2 for the October one, so '2025 release wave 2' is October2025Update. Same snapshot caveat as FeatureName.",
-            "example": "2025 release wave 2"
-          },
-          "Enabled": {
-            "type": "boolean",
-            "description": "Whether the wave's changes are live for this organization. True whether it was opted in early by an admin or turned on automatically once GeneralAvailabilityDate passed, so it does not distinguish a deliberate opt-in from the default rollout."
-          },
-          "State": {
-            "type": "string",
-            "enum": [
-              "ON"
-            ],
-            "description": "The wave's own opt-in state, as distinct from the app upgrade it triggers. 'ON' means the organization is on this wave. The enum is open rather than complete: compare against 'ON' rather than assuming a wave still awaiting opt-in reports one of the listed values.",
-            "example": "ON"
-          },
-          "AppsUpgradeState": {
-            "type": "string",
-            "enum": [
-              "ON",
-              "Upgrading"
-            ],
-            "description": "The state of the model-driven-app upgrade that enabling the wave kicks off, and the field to poll after calling enable. 'Upgrading' means the organization's apps are being upgraded and the wave is not yet fully in effect; 'ON' means the upgrade has settled and the wave is live.",
-            "example": "ON"
-          },
-          "IsAllowed": {
-            "type": "boolean",
-            "description": "Whether this organization is permitted to opt in at all, as opposed to whether it has. False is expected where the organization's Dataverse version falls outside MinVersion/MaxVersion or where the wave is withheld from its geo; enabling such a wave should be assumed to fail. True on every feature observed."
-          },
-          "CanBeReset": {
-            "type": "boolean",
-            "description": "Whether the opt-in could be undone. False on every wave feature observed, and this surface exposes no reset operation in any case, so a caller should treat enabling as permanent regardless of what this reports."
-          },
-          "IsOrgGeoOptedIn": {
-            "type": "boolean",
-            "description": "Whether the organization's entire geo has been rolled on to this wave, as distinct from this organization having opted in individually. Turns true once GeneralAvailabilityDate for the geo passes; the distinction is what separates an early adopter from an organization that simply got the wave with everyone else."
-          },
-          "NotBefore": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Opening of the window in which this wave may be opted in to early -- roughly four months before general availability. Enabling before this is not possible. Offset-bearing ISO 8601, always UTC in practice.",
-            "example": "2025-06-22T00:00:00+00:00"
-          },
-          "NotAfter": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Close of that window. Observed as a far-future sentinel (2030-01-01) rather than a real deadline, so it should not be read as a meaningful expiry.",
-            "example": "2030-01-01T00:00:00+00:00"
-          },
-          "GeneralAvailabilityDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When Microsoft turns this wave on for every organization in the requested geo, whether or not it opted in. This is the one field the geo query parameter moves: the same organization read under NA, EMEA and Oce returned three different dates for the same feature, spanning three weeks, because Microsoft staggers the rollout by geo. Read it under the organization's own crmGeo or the date will be someone else's.",
-            "example": "2025-10-21T00:00:00+00:00"
-          },
-          "MinVersion": {
-            "type": "string",
-            "pattern": "^[0-9]+\\.[0-9]+$",
-            "description": "Lowest Dataverse platform version the wave applies to, as a two-part major.minor string. Together with MaxVersion this bounds which organizations the wave is offered to and so drives IsAllowed; observed as 9.0 on every feature, i.e. currently excluding nothing.",
-            "example": "9.0"
-          },
-          "MaxVersion": {
-            "type": "string",
-            "pattern": "^[0-9]+\\.[0-9]+$",
-            "description": "Highest Dataverse platform version the wave applies to, same format as MinVersion. Observed as 9.3 on every feature.",
-            "example": "9.3"
-          },
-          "AppInstallationStatus": {
-            "type": "array",
-            "description": "Per-app progress of the upgrade AppsUpgradeState summarises -- what the admin centre renders as a list of applications being updated. Empty on every response observed, because a settled organization has nothing in flight, so the element shape is unknown and is left unconstrained here rather than guessed at.",
-            "items": {
-              "type": "object"
-            }
-          }
-        }
-      },
-      "ValidationMessages": {
-        "type": "array",
-        "description": "The parameter-validation error body: a bare array of human-readable messages, with no error code, no field name and no envelope. The offending value is quoted inside the message text, which is the only machine-usable part.",
-        "x-probe-verified": true,
-        "items": {
-          "type": "string",
-          "description": "One validation message, e.g. \"The value 'ZZ' is not valid.\""
-        },
-        "example": [
-          "The value 'ZZ' is not valid."
-        ]
-      },
-      "ServiceError": {
-        "type": "object",
-        "description": "The fault body returned for server-side errors. Unrelated in shape to the parameter-validation body, so a client must branch on the JSON's top-level type before reading either.",
-        "x-probe-verified": true,
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "InternalServerError"
-            ],
-            "description": "Machine-readable fault code. 'InternalServerError' is the only value observed, including for causes that are really bad input, so it carries no diagnostic value on its own.",
-            "example": "InternalServerError"
-          },
-          "message": {
-            "type": "string",
-            "description": "Generic prose with no diagnostic detail -- it does not name the parameter or the cause.",
-            "example": "The request could not be completed."
-          },
-          "requestId": {
-            "type": "string",
-            "description": "Server connection and request identifier, distinct from the x-ms-service-request-id and x-ms-correlation-id headers every response carries. Quote all three when reporting a fault to Microsoft.",
-            "example": "0HN00000000AA:00000001"
-          }
-        }
-      }
-    }
+ "openapi": "3.0.3",
+ "info": {
+  "title": "Power Platform Admin Centre API",
+  "version": "unversioned",
+  "description": "The Power Platform admin centre API backs the admin centre's release-wave experience: listing the tenant's Dataverse organizations and reading or enabling per-organization release-wave features.\n\nThis API addresses **organizations and a geo**, not Power Platform environment ids. A caller holding an environment id must first read the environment to get its organization id, then find that organization in the listing to learn its geo. There is no `api-version` anywhere on this surface.\n\nUnofficial and reverse-engineered \u2014 see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/admin) for how it was derived and which parts are verified."
+ },
+ "servers": [
+  {
+   "url": "https://api.admin.powerplatform.microsoft.com"
   }
+ ],
+ "security": [
+  {
+   "azure_auth": [
+    "065d9450-1e87-434e-ac2f-69af271549ed/.default"
+   ]
+  }
+ ],
+ "tags": [
+  {
+   "name": "Organization",
+   "description": "A Dataverse organization: the database half of an environment, identified by an organization id that is not the environment id. This resource is also the mapping table the rest of the API depends on -- it is where an environment's organization id is paired with the geo every other operation requires."
+  },
+  {
+   "name": "Release Wave Feature",
+   "description": "Per-organization opt-in to Dataverse release waves -- the admin centre's 'Manage features' surface. Microsoft ships two waves a year, each a bundle of Dataverse and model-driven-app changes that lands automatically on a per-geo date. A wave appears here as a named feature a tenant admin may switch on early, before that date, to test the changes; once on it cannot be switched off."
+  }
+ ],
+ "paths": {
+  "/api/tenants/mytenant/organizations": {
+   "get": {
+    "operationId": "organizations_list",
+    "tags": [
+     "Organization"
+    ],
+    "summary": "List",
+    "description": "Lists every Dataverse organization in the tenant behind the credentials. 'mytenant' is a literal path segment, not a placeholder -- the tenant comes from the token and there is no way to name another one.\n\nThis is the mapping step every other operation depends on. Given a Power Platform environment id, read the environment from BAPI, take properties.linkedEnvironmentMetadata.resourceId, and match it against the id field here; the matching organization's crmGeo is the geo parameter the feature operations require. Nothing else publishes that geo.\n\nOnly environments that have Dataverse appear. An environment without a database -- a Default environment that was never provisioned, for instance -- has no organization and is simply absent, so this listing is shorter than BAPI's environment listing and a missing entry is not an error.\n\nThe response is a bare JSON array: no envelope, no paging, no filter parameters. Unrecognised query parameters are ignored rather than rejected.",
+    "x-probe-verified": true,
+    "responses": {
+     "200": {
+      "description": "Every Dataverse organization in the tenant, unpaged.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/Organization"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or was issued for a different audience. A token minted for any other Power Platform scope is rejected here. No WWW-Authenticate challenge is returned, so acquire a token for this API's own scope rather than negotiating."
+     },
+     "403": {
+      "description": "The caller cannot administer this organization, or it does not exist. The two are indistinguishable and neither produces a 404, so a 403 more often means the wrong id was passed -- a Power Platform environment id instead of an organization id -- than a genuine permission problem. The body is empty."
+     }
+    }
+   }
+  },
+  "/api/environments/{organizationId}/features": {
+   "get": {
+    "operationId": "features_list",
+    "tags": [
+     "Release Wave Feature"
+    ],
+    "summary": "List",
+    "description": "Lists every release wave the service knows about for one organization, each with that organization's opt-in state and the geo's rollout dates.\n\nThere is no single-feature read, so a caller wanting one feature lists them all and matches on FeatureName.\n\nBoth parameters need preparing. The path takes an organization id, not an environment id (map via BAPI's properties.linkedEnvironmentMetadata.resourceId), and the geo must be the crmGeo published for that organization by the organization listing. Omitting the geo faults rather than being rejected, because the parameter is bound before it is validated.\n\nThis is also the operation to poll after enabling a wave: watch the feature's AppsUpgradeState until it leaves 'Upgrading'.",
+    "x-notes": [
+     {
+      "note": "The sibling path `/api/environments/{organizationId}/features/{featureName}` reads like a single-feature route and is not one. It falls through to the host's legacy-route fallback and answers 200 with an HTML stub, so a client that trusts the status code hands a web page to its JSON parser.",
+      "source": "live"
+     },
+     {
+      "note": "`count`, `totalCount` and `nextPageToken` describe a paging scheme this route does not implement. `pageSize`, `$top` and `pageToken` are all accepted and all ignored, every request returns the complete set, `count` equals `totalCount`, and `nextPageToken` is always empty. Do not write a paging loop against them.",
+      "source": "live"
+     }
+    ],
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "name": "organizationId",
+      "in": "path",
+      "required": true,
+      "description": "The Dataverse organization id -- not the Power Platform environment id, despite the /environments/ path segment. Obtain it from this API's organization listing, or from BAPI's properties.linkedEnvironmentMetadata.resourceId. A value that is not a well-formed GUID is rejected outright; a well-formed one belonging to another tenant is refused rather than reported missing.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+       "example": "00000000-0000-0000-0000-000000000000"
+      }
+     },
+     {
+      "name": "geo",
+      "in": "query",
+      "required": true,
+      "description": "The Dataverse geo whose release calendar to answer under, as published by the organization listing's crmGeo. Matched case-insensitively. This selects the *schedule*, not the organization: the same organizationId read under a different geo returns identical opt-in state and a different GeneralAvailabilityDate. Codes belonging to sovereign clouds (CHN, USG, DOD, TIP) are recognised but not served by the public host.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "APAC",
+        "CAN",
+        "CHE",
+        "EMEA",
+        "FRA",
+        "GBR",
+        "GER",
+        "IND",
+        "ITA",
+        "JPN",
+        "KOR",
+        "NA",
+        "NOR",
+        "Oce",
+        "POL",
+        "SAM",
+        "SGP",
+        "SWE",
+        "UAE",
+        "ZAF"
+       ],
+       "example": "NA"
+      },
+      "x-sovereign-only-values": [
+       "CHN",
+       "DOD",
+       "TIP",
+       "USG"
+      ]
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every release wave feature for the organization, complete in one response. An empty values array means the service publishes no waves for it, not that the organization is unknown.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FeatureCollection"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "A path or query parameter failed validation: a malformed organizationId, or a geo that is empty or not a recognised code. The body is a bare JSON array of message strings, with the offending value quoted inside the text. Nothing was changed; correct the parameter and retry.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ValidationMessages"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or was issued for a different audience. A token minted for any other Power Platform scope is rejected here. No WWW-Authenticate challenge is returned, so acquire a token for this API's own scope rather than negotiating."
+     },
+     "403": {
+      "description": "The caller cannot administer this organization, or it does not exist. The two are indistinguishable and neither produces a 404, so a 403 more often means the wrong id was passed -- a Power Platform environment id instead of an organization id -- than a genuine permission problem. The body is empty."
+     },
+     "500": {
+      "description": "An upstream fault. Two causes are deterministic rather than transient: omitting the geo parameter entirely on the feature listing, and asking for a geo served by a sovereign cloud rather than by this host. Otherwise it is worth one retry. Quote the body's requestId together with the x-ms-service-request-id and x-ms-correlation-id response headers when reporting one.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ServiceError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/environments/{organizationId}/features/{featureName}/enable": {
+   "post": {
+    "operationId": "features_enable",
+    "tags": [
+     "Release Wave Feature"
+    ],
+    "summary": "Enable",
+    "description": "Opts one organization in to a release wave ahead of its general-availability date -- the API behind the admin centre's early opt-in checkbox. There is no request body and no request content type; the entire request is the URL.\n\n**This is one-way.** Wave features report CanBeReset: false, and this surface has no disable or reset operation. Once a wave is on for an organization it cannot be turned off through the API, so treat enabling one as permanent.\n\nThe call returns as soon as the request is accepted, with an empty body and no Location or Operation-Location header, but the work behind it is asynchronous: the feature's AppsUpgradeState moves to 'Upgrading' while the organization's model-driven apps are upgraded, and settles when that finishes. Poll features_list until AppsUpgradeState leaves 'Upgrading' before treating the wave as active.\n\nAs with the listing, the path takes an organization id rather than an environment id and the geo must be that organization's crmGeo. Parameter checking is ordered differently here, though: an invalid geo is rejected before the organization is looked at, while an omitted geo passes straight through to the organization check, so this route appears to tolerate the parameter's absence in a way the listing does not. Send it regardless.",
+    "x-probe-verified": false,
+    "parameters": [
+     {
+      "name": "organizationId",
+      "in": "path",
+      "required": true,
+      "description": "The Dataverse organization id -- not the Power Platform environment id, despite the /environments/ path segment. Obtain it from this API's organization listing, or from BAPI's properties.linkedEnvironmentMetadata.resourceId. A value that is not a well-formed GUID is rejected outright; a well-formed one belonging to another tenant is refused rather than reported missing.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+       "example": "00000000-0000-0000-0000-000000000000"
+      }
+     },
+     {
+      "name": "featureName",
+      "in": "path",
+      "required": true,
+      "description": "The wave's FeatureName as features_list reports it. The enum is a snapshot of the waves in their rollout window rather than a fixed vocabulary; the names follow the fixed pattern '<Month><Year>Update' with Month always April or October, so future waves are predictable, but read the listing rather than guessing. The name is checked after the organization, so an organization the caller cannot administer masks an unknown feature name rather than reporting it.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "April2025Update",
+        "October2025Update"
+       ],
+       "pattern": "^(April|October)[0-9]{4}Update$",
+       "example": "October2025Update"
+      }
+     },
+     {
+      "name": "geo",
+      "in": "query",
+      "required": true,
+      "description": "The Dataverse geo whose release calendar to answer under, as published by the organization listing's crmGeo. Matched case-insensitively. This selects the *schedule*, not the organization: the same organizationId read under a different geo returns identical opt-in state and a different GeneralAvailabilityDate. Codes belonging to sovereign clouds (CHN, USG, DOD, TIP) are recognised but not served by the public host.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "APAC",
+        "CAN",
+        "CHE",
+        "EMEA",
+        "FRA",
+        "GBR",
+        "GER",
+        "IND",
+        "ITA",
+        "JPN",
+        "KOR",
+        "NA",
+        "NOR",
+        "Oce",
+        "POL",
+        "SAM",
+        "SGP",
+        "SWE",
+        "UAE",
+        "ZAF"
+       ],
+       "example": "NA"
+      },
+      "x-sovereign-only-values": [
+       "CHN",
+       "DOD",
+       "TIP",
+       "USG"
+      ]
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The opt-in was accepted. The body is empty and carries no operation handle; completion is observed by polling features_list for AppsUpgradeState leaving 'Upgrading'."
+     },
+     "400": {
+      "description": "A path or query parameter failed validation: a malformed organizationId, or a geo that is empty or not a recognised code. The body is a bare JSON array of message strings, with the offending value quoted inside the text. Nothing was changed; correct the parameter and retry.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ValidationMessages"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or was issued for a different audience. A token minted for any other Power Platform scope is rejected here. No WWW-Authenticate challenge is returned, so acquire a token for this API's own scope rather than negotiating."
+     },
+     "403": {
+      "description": "The caller cannot administer this organization, or it does not exist. The two are indistinguishable and neither produces a 404, so a 403 more often means the wrong id was passed -- a Power Platform environment id instead of an organization id -- than a genuine permission problem. The body is empty."
+     },
+     "500": {
+      "description": "An upstream fault. Two causes are deterministic rather than transient: omitting the geo parameter entirely on the feature listing, and asking for a geo served by a sovereign cloud rather than by this host. Otherwise it is worth one retry. Quote the body's requestId together with the x-ms-service-request-id and x-ms-correlation-id response headers when reporting one.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ServiceError"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "azure_auth": {
+    "type": "oauth2",
+    "description": "Microsoft Entra ID. The scope is a bare first-party application id rather than a URL: 065d9450-1e87-434e-ac2f-69af271549ed/.default. A token minted for any other Power Platform audience is rejected.",
+    "flows": {
+     "authorizationCode": {
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+      "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      "scopes": {
+       "065d9450-1e87-434e-ac2f-69af271549ed/.default": "Administer Power Platform through the admin centre API"
+      }
+     }
+    }
+   }
+  },
+  "schemas": {
+   "Organization": {
+    "type": "object",
+    "description": "A Dataverse organization as the admin centre sees it: the identity and location of an environment's database, and nothing more. Deliberately thin -- no friendly name, version, state, cluster or capacity, all of which live in BAPI's environment object. Its value here is the id/crmGeo pairing the feature operations need. Every field below was present on every organization observed.",
+    "x-probe-verified": true,
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+      "description": "The organization id, and the id every other operation on this surface takes. Equal to BAPI's properties.linkedEnvironmentMetadata.resourceId for the same environment, and never equal to the environment id.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "tenantId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+      "description": "The tenant owning the organization. Constant across the listing, since the endpoint only ever answers for the token's own tenant.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "name": {
+      "type": "string",
+      "pattern": "^unq[0-9a-f]{29}$",
+      "description": "The Dataverse *unique name*, not a display name: literally 'unq' followed by the first 29 hex characters of the organization id with its hyphens removed, giving 32 characters. It carries no information the id does not, and it is not what the admin centre shows a user -- there is no human-readable environment name anywhere in this response.",
+      "example": "unq00000000000000000000000000000"
+     },
+     "crmGeo": {
+      "type": "string",
+      "enum": [
+       "APAC",
+       "CAN",
+       "CHE",
+       "EMEA",
+       "FRA",
+       "GBR",
+       "GER",
+       "IND",
+       "ITA",
+       "JPN",
+       "KOR",
+       "NA",
+       "NOR",
+       "Oce",
+       "POL",
+       "SAM",
+       "SGP",
+       "SWE",
+       "UAE",
+       "ZAF"
+      ],
+      "description": "The Dataverse geo code, and the value to pass as the geo parameter to the feature operations. It is a CRM geo, not a Power Platform location, and the two vocabularies do not line up: an environment BAPI reports in location 'unitedstates' is crmGeo 'Oce'. Codes are a mix of region groupings (NA, EMEA, APAC, Oce, SAM) and single-country geos (CAN, IND, GBR, FRA, DEU as GER, JPN, ZAF, UAE, CHE, KOR, NOR, SGP, SWE, ITA, POL).",
+      "example": "NA"
+     },
+     "organizationType": {
+      "type": "integer",
+      "description": "Dataverse instance type, tracking the environment's SKU. Values 6 and 13 were observed, on Sandbox and Developer environments respectively. The enumeration is not published and other values certainly exist for Production, Trial and Teams environments, so treat unknown values as opaque rather than invalid.",
+      "example": 6,
+      "x-observed-values": {
+       "6": "Sandbox",
+       "13": "Developer"
+      }
+     },
+     "relationType": {
+      "type": "string",
+      "description": "How the tenant relates to the organization -- intended to distinguish an organization the tenant owns from one merely linked to it. 'Unknown' on every organization observed, including ones the caller fully administers, so it is not currently a usable signal. No enum is asserted because only one value has been seen and it is plainly not the whole set.",
+      "example": "Unknown",
+      "x-observed-values": [
+       "Unknown"
+      ]
+     },
+     "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "The organization's Dataverse endpoint, returned with a trailing slash. This is the host the Dataverse Web API and the per-environment OAuth scope are built from.",
+      "example": "https://contoso.crm.dynamics.com/"
+     }
+    }
+   },
+   "FeatureCollection": {
+    "type": "object",
+    "description": "The feature listing's envelope. Only `values` carries information.",
+    "x-probe-verified": true,
+    "properties": {
+     "values": {
+      "type": "array",
+      "description": "The organization's release wave features, always complete -- this is never a page of a larger set.",
+      "items": {
+       "$ref": "#/components/schemas/Feature"
+      }
+     },
+     "count": {
+      "type": "integer",
+      "description": "Items in this response. Always equal to totalCount, since the listing is never split.",
+      "example": 2
+     },
+     "totalCount": {
+      "type": "integer",
+      "description": "Items available in total. Always equal to count.",
+      "example": 2
+     },
+     "nextPageToken": {
+      "type": "string",
+      "description": "Continuation token for a page that never exists: empty on every response observed, including responses to requests carrying pageSize, $top or pageToken. Do not loop on it.",
+      "example": ""
+     }
+    }
+   },
+   "Feature": {
+    "type": "object",
+    "description": "One Dataverse release wave and this organization's relationship to it: whether the wave is on, whether this organization is allowed to turn it on, the window in which it may do so, and when Microsoft will turn it on regardless.",
+    "x-notes": [
+     {
+      "note": "Property names are PascalCase here, unlike the camelCase organization object: the two halves of this API do not share a serializer.",
+      "source": "live"
+     }
+    ],
+    "x-probe-verified": true,
+    "properties": {
+     "FeatureName": {
+      "type": "string",
+      "enum": [
+       "April2025Update",
+       "October2025Update"
+      ],
+      "pattern": "^(April|October)[0-9]{4}Update$",
+      "description": "Stable identifier for the wave, and the value the enable operation takes in its path. Named for the month the wave reaches general availability, which is one half-year after the wave's own number: April2025Update is 2025 release wave 1 and October2025Update is 2025 release wave 2. Each turns on that wave's whole bundle of Dataverse platform and model-driven-app changes for the organization -- it is a release-channel opt-in, not a toggle for any single feature.\n\nThe enum is a snapshot rather than a fixed vocabulary: exactly the waves currently in their opt-in window are listed, and a wave drops out once superseded. The naming pattern holds even as the enum ages.",
+      "example": "October2025Update"
+     },
+     "DisplayName": {
+      "type": "string",
+      "enum": [
+       "2025 release wave 1",
+       "2025 release wave 2"
+      ],
+      "pattern": "^[0-9]{4} release wave [12]$",
+      "description": "The wave's human name as the admin centre shows it, in Microsoft's 'YYYY release wave N' vocabulary -- N is 1 for the April wave and 2 for the October one, so '2025 release wave 2' is October2025Update. Same snapshot caveat as FeatureName.",
+      "example": "2025 release wave 2"
+     },
+     "Enabled": {
+      "type": "boolean",
+      "description": "Whether the wave's changes are live for this organization. True whether it was opted in early by an admin or turned on automatically once GeneralAvailabilityDate passed, so it does not distinguish a deliberate opt-in from the default rollout."
+     },
+     "State": {
+      "type": "string",
+      "enum": [
+       "ON"
+      ],
+      "description": "The wave's own opt-in state, as distinct from the app upgrade it triggers. 'ON' means the organization is on this wave. The enum is open rather than complete: compare against 'ON' rather than assuming a wave still awaiting opt-in reports one of the listed values.",
+      "example": "ON"
+     },
+     "AppsUpgradeState": {
+      "type": "string",
+      "enum": [
+       "ON",
+       "Upgrading"
+      ],
+      "description": "The state of the model-driven-app upgrade that enabling the wave kicks off, and the field to poll after calling enable. 'Upgrading' means the organization's apps are being upgraded and the wave is not yet fully in effect; 'ON' means the upgrade has settled and the wave is live.",
+      "example": "ON"
+     },
+     "IsAllowed": {
+      "type": "boolean",
+      "description": "Whether this organization is permitted to opt in at all, as opposed to whether it has. False is expected where the organization's Dataverse version falls outside MinVersion/MaxVersion or where the wave is withheld from its geo; enabling such a wave should be assumed to fail. True on every feature observed."
+     },
+     "CanBeReset": {
+      "type": "boolean",
+      "description": "Whether the opt-in could be undone. False on every wave feature observed, and this surface exposes no reset operation in any case, so a caller should treat enabling as permanent regardless of what this reports."
+     },
+     "IsOrgGeoOptedIn": {
+      "type": "boolean",
+      "description": "Whether the organization's entire geo has been rolled on to this wave, as distinct from this organization having opted in individually. Turns true once GeneralAvailabilityDate for the geo passes; the distinction is what separates an early adopter from an organization that simply got the wave with everyone else."
+     },
+     "NotBefore": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Opening of the window in which this wave may be opted in to early -- roughly four months before general availability. Enabling before this is not possible. Offset-bearing ISO 8601, always UTC in practice.",
+      "example": "2025-06-22T00:00:00+00:00"
+     },
+     "NotAfter": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Close of that window. Observed as a far-future sentinel (2030-01-01) rather than a real deadline, so it should not be read as a meaningful expiry.",
+      "example": "2030-01-01T00:00:00+00:00"
+     },
+     "GeneralAvailabilityDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When Microsoft turns this wave on for every organization in the requested geo, whether or not it opted in. This is the one field the geo query parameter moves: the same organization read under NA, EMEA and Oce returned three different dates for the same feature, spanning three weeks, because Microsoft staggers the rollout by geo. Read it under the organization's own crmGeo or the date will be someone else's.",
+      "example": "2025-10-21T00:00:00+00:00"
+     },
+     "MinVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Lowest Dataverse platform version the wave applies to, as a two-part major.minor string. Together with MaxVersion this bounds which organizations the wave is offered to and so drives IsAllowed; observed as 9.0 on every feature, i.e. currently excluding nothing.",
+      "example": "9.0"
+     },
+     "MaxVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Highest Dataverse platform version the wave applies to, same format as MinVersion. Observed as 9.3 on every feature.",
+      "example": "9.3"
+     },
+     "AppInstallationStatus": {
+      "type": "array",
+      "description": "Per-app progress of the upgrade AppsUpgradeState summarises -- what the admin centre renders as a list of applications being updated. Empty on every response observed, because a settled organization has nothing in flight, so the element shape is unknown and is left unconstrained here rather than guessed at.",
+      "items": {
+       "type": "object"
+      }
+     }
+    }
+   },
+   "ValidationMessages": {
+    "type": "array",
+    "description": "The parameter-validation error body: a bare array of human-readable messages, with no error code, no field name and no envelope. The offending value is quoted inside the message text, which is the only machine-usable part.",
+    "x-probe-verified": true,
+    "items": {
+     "type": "string",
+     "description": "One validation message, e.g. \"The value 'ZZ' is not valid.\""
+    },
+    "example": [
+     "The value 'ZZ' is not valid."
+    ]
+   },
+   "ServiceError": {
+    "type": "object",
+    "description": "The fault body returned for server-side errors. Unrelated in shape to the parameter-validation body, so a client must branch on the JSON's top-level type before reading either.",
+    "x-probe-verified": true,
+    "properties": {
+     "code": {
+      "type": "string",
+      "enum": [
+       "InternalServerError"
+      ],
+      "description": "Machine-readable fault code. 'InternalServerError' is the only value observed, including for causes that are really bad input, so it carries no diagnostic value on its own.",
+      "example": "InternalServerError"
+     },
+     "message": {
+      "type": "string",
+      "description": "Generic prose with no diagnostic detail -- it does not name the parameter or the cause.",
+      "example": "The request could not be completed."
+     },
+     "requestId": {
+      "type": "string",
+      "description": "Server connection and request identifier, distinct from the x-ms-service-request-id and x-ms-correlation-id headers every response carries. Quote all three when reporting a fault to Microsoft.",
+      "example": "0HN00000000AA:00000001"
+     }
+    }
+   }
+  }
+ }
 }

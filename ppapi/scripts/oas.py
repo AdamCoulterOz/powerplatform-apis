@@ -19,8 +19,14 @@ bodies keep the plain name for the most common variant and qualify the rest as
 {Name}_{namespace}, rewriting refs within that namespace. Models referenced but
 never defined become x-stub schemas so the spec always validates structurally.
 
-Output: oas/openapi.json. Deterministic; no timestamps. Unofficial and not
-verified against the service; a map, not a contract.
+enrichment.json layers hand-curation over the generated result: `operations`
+corrects docs-derived operations, `addOperations` contributes whole operations
+the docs never describe (mined from recorded first-party traffic), `servers`
+declares the tenant- and environment-scoped host forms, `tags` describes
+resources, and `schemas`/`addSchemas` rename, patch and add models.
+
+Output: oas/openapi.json. Deterministic; no timestamps. Docs-derived unless an
+operation or schema carries x-probe-verified; a map, not a contract.
 """
 import json
 import pathlib
@@ -34,6 +40,7 @@ OUT = ROOT / "oas"
 
 ENRICH_PATH = ROOT / "enrichment.json"
 ENRICH = {"operations": {}, "tags": {}}
+DEFAULT_SERVERS = [{"url": "https://api.powerplatform.com"}]
 if ENRICH_PATH.exists():
     ENRICH = json.loads(ENRICH_PATH.read_text(encoding="utf-8"))
 ENRICH_USED = set()
@@ -259,6 +266,32 @@ def verb_last(name):
     return " ".join(p for p in parts if p).strip()
 
 
+def fold_notes(description, notes):
+    """Verified doc-vs-reality findings render as one blockquote callout so a
+    spec browser shows a single note box rather than several."""
+    if not notes:
+        return description
+    block = "\n".join(["> **Verified against the live API**", ">"] + [f"> - {n}" for n in notes])
+    return (description + "\n\n" + block).strip() if description else block
+
+
+def merge_parameters(params, overrides):
+    """Patch parameters by name: an entry matching an existing parameter deep-updates
+    it (schema keys merge, so a default or enum can be corrected without restating
+    the type); an entry naming a parameter the docs never listed is appended."""
+    for name, ov in overrides.items():
+        target = next((p for p in params if p.get("name") == name), None)
+        if target is None:
+            target = {"name": name, "in": ov.get("in", "query"), "required": False, "schema": {"type": "string"}}
+            params.append(target)
+        for k, v in ov.items():
+            if k == "schema" and isinstance(v, dict):
+                target.setdefault("schema", {}).update(v)
+            else:
+                target[k] = v
+    return params
+
+
 def parse_operation(f, paths, schemas, seen):
     ns, group = f.parent.parent.name, f.parent.name
     text = f.read_text(encoding="utf-8")
@@ -383,6 +416,7 @@ def parse_operation(f, paths, schemas, seen):
         tags = enrich.get("tags", tags)
         description = enrich.get("description", description)
         notes = enrich.get("notes", [])
+        merge_parameters(params, enrich.get("parameters", {}))
         # add/override response bodies, headers and status codes from shapes
         # discovered against the live API (the docs model many of these wrongly)
         for code, ov in enrich.get("responses", {}).items():
@@ -415,14 +449,11 @@ def parse_operation(f, paths, schemas, seen):
         "x-ms-namespace": f"{ns}/{group}",
     }
     if notes:
-        # verified doc-vs-reality findings: structured on x-notes, and folded
-        # into the description as a single blockquote (one callout, bulleted)
-        # so a spec browser renders one note box rather than several.
         op["x-notes"] = notes
-        lines = ["> **Verified against the live API**", ">"]
-        lines += [f"> - {n}" for n in notes]
-        block = "\n".join(lines)
-        description = (description + "\n\n" + block).strip() if description else block
+        description = fold_notes(description, notes)
+    for k, v in (enrich or {}).items():
+        if k.startswith("x-"):
+            op[k] = v
     if description:
         op["description"] = description
     if preview:
@@ -432,6 +463,20 @@ def parse_operation(f, paths, schemas, seen):
     op["externalDocs"] = {
         "url": f"https://learn.microsoft.com/en-us/rest/api/power-platform/{ns}/{group}/{f.stem}"}
     paths.setdefault(path, {})[method.lower()] = op
+
+
+def expand_refs(node):
+    """Allow enrichment to write {"$ref": "Name"} for a component schema."""
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k == "$ref" and isinstance(v, str) and not v.startswith("#"):
+                node[k] = f"#/components/schemas/{v}"
+            else:
+                expand_refs(v)
+    elif isinstance(node, list):
+        for item in node:
+            expand_refs(item)
+    return node
 
 
 def rewrite_refs(node, rename):
@@ -471,18 +516,33 @@ def main():
             variants.setdefault(name, {}).setdefault(canon, []).append(ns)
 
     global_schemas = {}
+    origins = {}  # global schema name -> namespaces that contributed that body
     renames = {ns: {} for ns in staged}
     conflicts = 0
     for name, bodies in sorted(variants.items()):
         groups = sorted(bodies.items(), key=lambda kv: (-len(kv[1]), kv[0]))
-        keep_canon = groups[0][0]
+        keep_canon, keep_ns = groups[0]
         global_schemas[name] = json.loads(keep_canon)
+        origins[name] = keep_ns
         for canon, ns_list in groups[1:]:
             conflicts += 1
             qualified = f"{name}_{sorted(ns_list)[0]}"
             global_schemas[qualified] = json.loads(canon)
+            origins[qualified] = ns_list
             for ns in ns_list:
                 renames[ns][name] = qualified
+
+    # a qualified schema must also be referenced by its siblings: a connectivity
+    # model naming "Properties" means Properties_connectivity, not the powerapps
+    # body that won the plain name. Apply a rename only where every namespace
+    # that produced this body agrees on it.
+    for name, schema in global_schemas.items():
+        maps = [renames[ns] for ns in origins.get(name, []) if renames.get(ns)]
+        if len(maps) != len(origins.get(name, [])) or not maps:
+            continue
+        shared = {k: v for k, v in maps[0].items() if all(m.get(k) == v for m in maps[1:])}
+        if shared:
+            rewrite_refs(schema, shared)
 
     all_paths = {}
     all_seen = set()
@@ -511,6 +571,24 @@ def main():
             print(f"WARNING: enrichment schema rename target '{new}' already exists; keeping '{old}'")
             new = old
         target = global_schemas.pop(old)
+        # the docs lowercase the leading letter of every property name; where the
+        # wire proved the real casing, rename in place and keep declaration order
+        for was, now in cfg.get("renameProperties", {}).items():
+            props = target.get("properties", {})
+            if was not in props:
+                print(f"WARNING: enrichment schema '{old}' has no property '{was}' to rename")
+                continue
+            props[now] = props.pop(was)
+        for pname, pschema in cfg.get("properties", {}).items():
+            if pschema is None:
+                target.get("properties", {}).pop(pname, None)
+            else:
+                target.setdefault("properties", {})[pname] = pschema
+        if cfg.get("required") is not None:
+            target["required"] = cfg["required"]
+        for k, v in cfg.items():
+            if k.startswith("x-"):
+                target[k] = v
         if cfg.get("notes"):
             target["x-notes"] = cfg["notes"]
             block = " ".join(cfg["notes"])
@@ -528,7 +606,39 @@ def main():
     for name, schema in ENRICH.get("addSchemas", {}).items():
         if name in global_schemas and not global_schemas[name].get("x-stub"):
             print(f"WARNING: addSchemas '{name}' overwrites an existing schema")
-        global_schemas[name] = schema
+        global_schemas[name] = expand_refs(schema)
+
+    # operations the docs do not describe at all, mined from recorded traffic.
+    # Keyed "METHOD /path"; the value is a complete OAS operation object.
+    added = 0
+    for key, op in ENRICH.get("addOperations", {}).items():
+        method, _, path = key.partition(" ")
+        method = method.lower()
+        if not path.startswith("/") or method not in ("get", "post", "put", "patch", "delete"):
+            print(f"WARNING: addOperations key '{key}' is not 'METHOD /path'")
+            continue
+        if method in all_paths.get(path, {}):
+            print(f"WARNING: addOperations '{key}' collides with a docs-derived operation")
+            continue
+        op = expand_refs(json.loads(json.dumps(op)))
+        # an operation names which host serves it by repeating a server entry; keep
+        # only the url and the variable defaults, since the prose already sits in
+        # the top-level servers list
+        op["servers"] = [{"url": sv["url"],
+                          **({"variables": {k: {"default": v["default"]}
+                                            for k, v in sv["variables"].items()}}
+                             if sv.get("variables") else {})}
+                         for sv in op.get("servers", [])] or None
+        if op["servers"] is None:
+            del op["servers"]
+        notes = op.pop("notes", [])
+        if notes:
+            op["x-notes"] = notes
+            op["description"] = fold_notes(op.get("description", ""), notes)
+        op.setdefault("parameters", [])
+        op.setdefault("responses", {"200": {"description": "OK"}})
+        all_paths.setdefault(path, {})[method] = op
+        added += 1
 
     tag_facets = {}
     for f in DOCS.glob("*/*/*.md"):
@@ -538,26 +648,33 @@ def main():
     tags = []
     for t in used_tags:
         desc = ENRICH.get("tags", {}).get(t, {}).get("description") \
-            or "; ".join(sorted(tag_facets.get(t, {"unmapped"})))
+            or "; ".join(sorted(tag_facets.get(t, set()))) or "unmapped"
+        if t not in tag_facets and t not in ENRICH.get("tags", {}):
+            print(f"WARNING: tag '{t}' has no docs facet and no enrichment description")
         tags.append({"name": t, "description": desc})
 
     versions = sorted({p["schema"]["default"]
                        for ops in all_paths.values() for op in ops.values()
                        for p in op.get("parameters", [])
                        if p.get("name") == "api-version" and "default" in p.get("schema", {})})
+    # the spec version is the newest dated api-version. Bare ordinals ("1", "3")
+    # are per-namespace revision counters, not dates, and must not sort last.
+    dated = [v for v in versions if re.match(r"^\d{4}-\d{2}-\d{2}", v)]
+    spec_version = (dated or versions or ["unversioned"])[-1]
 
     spec = {
         "openapi": "3.0.3",
         "info": {
             "title": "Power Platform API",
-            "version": versions[-1] if versions else "unversioned",
-            "description": "Unofficial. Reverse-engineered from the public Microsoft Learn "
-                           "documentation (learn.microsoft.com) and not verified against the live "
-                           "service. Tags group operations by logical resource; x-ms-namespace "
-                           "records the namespace Microsoft files each under.",
+            "version": spec_version,
+            "description": ENRICH.get("info", {}).get("description",
+                           "Unofficial. Reverse-engineered from the public Microsoft Learn "
+                           "documentation (learn.microsoft.com). Tags group operations by logical "
+                           "resource; x-ms-namespace records the namespace Microsoft files each "
+                           "under."),
             "x-api-versions": versions,
         },
-        "servers": [{"url": "https://api.powerplatform.com"}],
+        "servers": ENRICH.get("servers", DEFAULT_SERVERS),
         "security": [{"azure_auth": ["https://api.powerplatform.com/.default"]}],
         "tags": tags,
         "paths": {k: all_paths[k] for k in sorted(all_paths)},
@@ -565,7 +682,7 @@ def main():
             "securitySchemes": {
                 "azure_auth": {
                     "type": "oauth2",
-                    "description": "Microsoft Entra ID OAuth2",
+                    **ENRICH.get("securityScheme", {"description": "Microsoft Entra ID OAuth2"}),
                     "flows": {"authorizationCode": {
                         "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
                         "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
@@ -582,7 +699,9 @@ def main():
     for k in sorted(stale):
         print(f"WARNING: enrichment key matches no operation (docs renamed?): {k}")
     total_ops = sum(len(v) for v in all_paths.values())
-    print(f"enrichment: {len(ENRICH_USED)}/{total_ops} operations enriched, {len(stale)} stale keys")
+    verified = sum(1 for ops in all_paths.values() for op in ops.values() if op.get("x-probe-verified"))
+    print(f"enrichment: {len(ENRICH_USED)}/{total_ops} docs operations enriched, {added} added from "
+          f"recorded traffic, {verified} marked x-probe-verified, {len(stale)} stale keys")
     stubs = sum(1 for s in global_schemas.values() if s.get("x-stub"))
     nops = sum(len(v) for v in all_paths.values())
     print(f"oas/openapi.json: {nops} operations, {len(tags)} logical-resource tags, "

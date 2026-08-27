@@ -172,19 +172,21 @@
     private static string StatusClass(Response r) =>
         r.IsSuccess ? "status--ok" : r.IsError ? "status--err" : "status--other";
 
+    // Request and response as HTTP files: the request line, the headers, then a
+    // body rendered for its own content type. That is the shape the API speaks,
+    // and it pastes straight into a .http file.
     private IReadOnlyList<KeelCodeBlock.Tab> SampleTabs
     {
         get
         {
             var tabs = new List<KeelCodeBlock.Tab>
             {
-                new("Request", SampleBuilder.Curl(Operation, Server), CodeLanguage.Bash)
+                new("Request", SampleBuilder.HttpRequest(Operation, Server), CodeLanguage.Http)
             };
 
-            var resp = SelectedResponse;
-            if (resp?.Schema is { } schema)
+            if (SelectedResponse is { } resp)
             {
-                tabs.Add(new KeelCodeBlock.Tab($"Response {resp.Code}", SampleBuilder.Json(schema), CodeLanguage.Json));
+                tabs.Add(new KeelCodeBlock.Tab($"Response {resp.Code}", SampleBuilder.HttpResponse(resp), CodeLanguage.Http));
             }
             return tabs;
         }

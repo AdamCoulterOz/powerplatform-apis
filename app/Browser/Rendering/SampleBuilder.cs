@@ -99,27 +99,131 @@ public static class SampleBuilder
 
     private static void Indent(StringBuilder sb, int depth) => sb.Append(' ', depth * 2);
 
-    /// <summary>A runnable curl for the operation, with path and query placeholders in place.</summary>
-    public static string Curl(Operation op, string server)
+    /// <summary>
+    /// The request as an HTTP file: the request line, headers, then the body.
+    /// This is the shape the API actually speaks, and it pastes straight into
+    /// a .http file or REST client, which curl with escaped line breaks does
+    /// not.
+    /// </summary>
+    public static string HttpRequest(Operation op, string server)
     {
         var sb = new StringBuilder();
+
         var query = op.Parameters
             .Where(p => p.In == "query")
             .Select(p => $"{p.Name}={Placeholder(p)}")
             .ToList();
 
-        var url = server + op.Path + (query.Count > 0 ? "?" + string.Join("&", query) : "");
+        sb.Append(op.Method).Append(' ').Append(server).Append(op.Path);
+        if (query.Count > 0) sb.Append('?').Append(string.Join("&", query));
+        sb.Append('\n');
 
-        sb.Append("curl --request ").Append(op.Method).Append(" \\\n");
-        sb.Append("  --url '").Append(url).Append("' \\\n");
-        sb.Append("  --header 'Authorization: Bearer $TOKEN'");
+        sb.Append("Authorization: Bearer $TOKEN\n");
+
+        foreach (var h in op.Parameters.Where(p => p.In == "header"))
+        {
+            sb.Append(h.Name).Append(": ").Append(Placeholder(h)).Append('\n');
+        }
 
         if (op.RequestBody is { Schema: { } schema })
         {
-            sb.Append(" \\\n  --header 'Content-Type: application/json' \\\n");
-            sb.Append("  --data '").Append(Json(schema)).Append('\'');
+            var mediaType = op.RequestBody.MediaType ?? "application/json";
+            sb.Append("Content-Type: ").Append(mediaType).Append('\n');
+            sb.Append('\n');
+            sb.Append(Body(schema, mediaType));
         }
+
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    /// <summary>
+    /// The response in the same form: status line, the headers the spec
+    /// documents, then the body.
+    /// </summary>
+    public static string HttpResponse(Response response)
+    {
+        var sb = new StringBuilder();
+        sb.Append("HTTP/1.1 ").Append(response.Code).Append(' ').Append(ReasonPhrase(response)).Append('\n');
+
+        foreach (var h in response.Headers)
+        {
+            sb.Append(h.Name).Append(": ").Append(HeaderPlaceholder(h)).Append('\n');
+        }
+
+        if (response.Schema is { } schema)
+        {
+            var mediaType = response.MediaType ?? "application/json";
+            sb.Append("Content-Type: ").Append(mediaType).Append('\n');
+            sb.Append('\n');
+            sb.Append(Body(schema, mediaType));
+        }
+
+        return sb.ToString().TrimEnd('\n');
+    }
+
+    /// <summary>Render a body in whatever the content type asks for.</summary>
+    private static string Body(SchemaRef schema, string mediaType)
+    {
+        if (mediaType.Contains("json", StringComparison.OrdinalIgnoreCase)) return Json(schema);
+        if (mediaType.Contains("xml", StringComparison.OrdinalIgnoreCase)) return Xml(schema);
+        if (mediaType.Contains("form-data", StringComparison.OrdinalIgnoreCase)) return FormData(schema);
+        return "<body>";
+    }
+
+    private static string Xml(SchemaRef schema)
+    {
+        var node = schema.Unwrapped;
+        var name = node.RefName ?? "root";
+        var sb = new StringBuilder();
+        sb.Append('<').Append(name).Append(">\n");
+        foreach (var p in node.Target.Properties)
+        {
+            var value = p.Schema.Unwrapped.Target.Type == "object" ? "…" : Scalar(p.Schema.Unwrapped.Target.Type, p.Schema.Unwrapped.Target.Format).Trim('"');
+            sb.Append("  <").Append(p.Name).Append('>').Append(value).Append("</").Append(p.Name).Append(">\n");
+        }
+        sb.Append("</").Append(name).Append('>');
         return sb.ToString();
+    }
+
+    private static string FormData(SchemaRef schema)
+    {
+        var sb = new StringBuilder();
+        foreach (var p in schema.Unwrapped.Target.Properties)
+        {
+            sb.Append("--boundary\n");
+            sb.Append("Content-Disposition: form-data; name=\"").Append(p.Name).Append("\"\n\n");
+            sb.Append(p.Schema.Unwrapped.Target.Format == "binary" ? "<file>" : "value").Append('\n');
+        }
+        sb.Append("--boundary--");
+        return sb.ToString();
+    }
+
+    /// <summary>The reason phrase for the common codes, so the status line reads properly.</summary>
+    private static string ReasonPhrase(Response response) => response.Code switch
+    {
+        "200" => "OK",
+        "201" => "Created",
+        "202" => "Accepted",
+        "204" => "No Content",
+        "400" => "Bad Request",
+        "401" => "Unauthorized",
+        "403" => "Forbidden",
+        "404" => "Not Found",
+        "409" => "Conflict",
+        "429" => "Too Many Requests",
+        "500" => "Internal Server Error",
+        _ => (response.Description ?? "").Split('\n')[0].Trim()
+    };
+
+    private static string HeaderPlaceholder(Header h)
+    {
+        var format = h.Schema?.Target.Format;
+        return format switch
+        {
+            "uri" => "https://…",
+            "date-time" => "2026-01-01T00:00:00Z",
+            _ => "…"
+        };
     }
 
     private static string Placeholder(Parameter p)

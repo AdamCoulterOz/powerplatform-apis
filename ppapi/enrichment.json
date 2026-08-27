@@ -200,7 +200,7 @@
      "schema": {
       "$ref": "RbacRoleAssignment"
      },
-     "description": "The created role assignment. Verified live; the documentation shows 201 with a different envelope."
+     "description": "The created role assignment."
     }
    }
   },
@@ -368,7 +368,7 @@
     "202": {
      "headers": {
       "Location": {
-       "description": "URL of the environment-group lifecycle operation to poll, of the form /environmentmanagement/environmentGroupOperations/{operationId}?api-version=1. Undocumented; verified against the live API.",
+       "description": "URL of the environment-group lifecycle operation to poll, of the form /environmentmanagement/environmentGroupOperations/{operationId}?api-version=1.",
        "schema": {
         "type": "string",
         "format": "uri"
@@ -482,7 +482,7 @@
     "202": {
      "headers": {
       "Location": {
-       "description": "URL of the environment-group lifecycle operation to poll, of the form /environmentmanagement/environmentGroupOperations/{operationId}?api-version=1. Undocumented; verified against the live API.",
+       "description": "URL of the environment-group lifecycle operation to poll, of the form /environmentmanagement/environmentGroupOperations/{operationId}?api-version=1.",
        "schema": {
         "type": "string",
         "format": "uri"
@@ -753,9 +753,15 @@
    "parameters": {
     "api-version": {
      "schema": {
-      "default": "2021-10-01-preview"
+      "default": "2021-10-01-preview",
+      "x-notes": [
+       {
+        "note": "The governance rule-set routes are served under `2021-10-01-preview`, not the `2024-10-01` the published reference lists for them.",
+        "source": "live"
+       }
+      ]
      },
-     "description": "The API version. Send `2021-10-01-preview` on this route. The governance rule-set routes are served under that preview version rather than the `2024-10-01` the published reference lists."
+     "description": "The API version. Send `2021-10-01-preview` on this route."
     }
    },
    "notes": [
@@ -773,9 +779,15 @@
    "parameters": {
     "api-version": {
      "schema": {
-      "default": "2021-10-01-preview"
+      "default": "2021-10-01-preview",
+      "x-notes": [
+       {
+        "note": "The governance rule-set routes are served under `2021-10-01-preview`, not the `2024-10-01` the published reference lists for them.",
+        "source": "live"
+       }
+      ]
      },
-     "description": "The API version. Send `2021-10-01-preview` on this route. The governance rule-set routes are served under that preview version rather than the `2024-10-01` the published reference lists."
+     "description": "The API version. Send `2021-10-01-preview` on this route."
     }
    },
    "notes": [
@@ -3177,7 +3189,7 @@
    ]
   },
   "EnvironmentManagementSetting": {
-   "description": "One environment's management settings, one property per setting.\n\nEvery property name is PascalCase on the wire \u2014 `Id`, `PowerApps_AllowCodeApps` \u2014 and `$select` matches it case-sensitively. The published reference lowercases the leading letter of each name; the service does not. The names below are the wire spelling.\n\nA setting that has never been set is returned as an explicit `null`.",
+   "description": "One environment's management settings, one property per setting.\n\nEvery property name is PascalCase on the wire \u2014 `Id`, `PowerApps_AllowCodeApps` \u2014 and `$select` matches it case-sensitively. The names below are the wire spelling.\n\nA setting that has never been set is returned as an explicit `null`.",
    "x-probe-verified": true,
    "renameProperties": {
     "id": "Id",
@@ -3862,7 +3874,13 @@
   },
   "BapLifecycleOperation": {
    "type": "object",
-   "description": "A Business Application Platform lifecycle operation, returned when polling the Location handed back by an async environment-group membership change. Not documented; shape verified against the live API.",
+   "description": "A Business Application Platform lifecycle operation, returned when polling the Location handed back by an async environment-group membership change.",
+   "x-notes": [
+    {
+     "note": "Undocumented: nothing in the published reference describes the body that comes back from polling an environment-group operation.",
+     "source": "live"
+    }
+   ],
    "properties": {
     "id": {
      "type": "string",
@@ -5244,7 +5262,13 @@
   },
   "RbacRoleAssignment": {
    "type": "object",
-   "description": "A role assignment as returned by the authorization endpoints. Shape verified against the live API; the documentation models the item as a role definition instead.",
+   "description": "A role assignment as returned by the authorization endpoints.",
+   "x-notes": [
+    {
+     "note": "Microsoft's documentation models the item these endpoints return as a role definition. The service returns a role assignment, the shape below.",
+     "source": "live"
+    }
+   ],
    "properties": {
     "@odata.context": {
      "type": "string"

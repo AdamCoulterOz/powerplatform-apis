@@ -95,11 +95,26 @@ scripts/probe.py --environment-id <guid> --bot-id <guid>
 
 Ids come from arguments or `PROBE_ENVIRONMENT_ID`/`PROBE_TENANT_ID`/`PROBE_BOT_ID`; auth is the logged-in Azure CLI session. Output is deliberately shape-only — key names and JSON types, environments numbered rather than named — so a run can be pasted somewhere public.
 
+## What the three flags actually control
+
+Worth stating outside the spec, because the names are close enough to be confused:
+
+| Flag | What it logs |
+|---|---|
+| `includeActivities` | Incoming and outgoing **messages and events** — the conversational transcript's shape and timing. Highest volume. |
+| `includeActions` | An event each time a **node within a topic** executes — which topic triggered, which branch was taken, where it stopped. What makes a broken conversation debuggable. |
+| `includeSensitiveInformation` | The **content** inside the above rather than only their structure: user id, user name, message text. Off, those properties are stripped; on, end-user text and any Dataverse values the bot has echoed into messages leave the environment's compliance boundary for an Application Insights resource with its own retention, geography and access control. |
+
+The connection string is the master switch — empty stops export regardless of the flags. It is also a write credential for the target resource, so reading this configuration is reading a secret.
+
 ## Conventions
 
-- 2 operations over 1 path, one tag, OpenAPI 3.0.3.
+- 2 operations over 1 path, 3 schemas, one tag, OpenAPI 3.0.3.
+- Summaries are bare verbs (`Read`, `Update`) — the tag names the resource. Status-code meanings live in the response entries, never in the operation description.
 - The api-version is baked into the path; there is no version parameter.
-- Nothing is marked `required` in the schemas — the service's optionality could not be probed. The three *parameters* are marked required: two are path segments, and `x-cci-tenantid` is required on the provider's behaviour.
+- Contracts are in the schema where they could be established: `uuid` format and a GUID `pattern` on all three ids, a `key=value` `pattern` and a neutral placeholder `example` on the connection string, `nullable: true` on the three envelope fields observed as explicit nulls.
+- **Two deliberate non-enums.** `ErrorCode` and `Error.Code` carry `x-observed-values` rather than `enum`: the licence gate answered first and hid every other code, so the sets are demonstrably open. `networkIsolation` does carry `enum: ["PublicNetwork"]` — the only value ever evidenced, since the provider hardcodes it on write and every recorded response returns it — but it is marked `x-probe-verified: false` and its description says outright that the real set is probably larger. Treat it as a record of evidence, not a closed contract.
+- Nothing is marked `required` in the schemas, and the flags carry no `default` — the service's optionality was never observable. (The Terraform resource defaults all three flags to `true`; that is the provider's choice, not the service's, so it is not in the spec.) The three *parameters* are required: two are path segments, and `x-cci-tenantid` is required on the provider's behaviour.
 - `x-probe-verified: true` marks what was confirmed live (the error envelope, the 401/403/404 responses). Its absence, or `false`, means provider-derived; `x-probe-notes` on each operation says exactly which is which.
 
 ## Status

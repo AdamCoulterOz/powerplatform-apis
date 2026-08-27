@@ -1,0 +1,37 @@
+name: conform
+
+# The specs are consumed by a browser that parses them without defensive
+# handling, so anything it would silently mis-render is a failure here rather
+# than a rendering surprise there. Runs on every change to a spec, to the
+# catalogue, or to the checker itself.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*/oas/**'
+      - 'specs.json'
+      - 'scripts/conform.py'
+      - '.github/workflows/conform.yml'
+  pull_request:
+    paths:
+      - '*/oas/**'
+      - 'specs.json'
+      - 'scripts/conform.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  conform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check the corpus against the contract
+        run: scripts/conform.py

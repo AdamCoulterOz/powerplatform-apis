@@ -12,15 +12,35 @@ public sealed class SchemaRef
 {
     private readonly JsonElement _e;
     private readonly OpenApiSpec _spec;
+    private readonly string? _missing;
     private SchemaRef? _resolved;
     private bool _resolvedOnce;
 
-    public SchemaRef(JsonElement e, OpenApiSpec spec)
+    public SchemaRef(JsonElement e, OpenApiSpec spec) : this(e, spec, null) { }
+
+    private SchemaRef(JsonElement e, OpenApiSpec spec, string? missing)
     {
         _e = e;
         _spec = spec;
+        _missing = missing;
         Reference = OpenApiSpec.Str(e, "$ref");
     }
+
+    /// <summary>
+    /// A stand-in for a schema the model could not read: a `$ref` that resolved
+    /// to nothing, or a node that declared no schema at all.
+    ///
+    /// It exists so the row still renders. The alternative is what this app used
+    /// to do — return null, let the renderer's null filter drop the row, and
+    /// lose the parameter without a trace. A stand-in that says "unresolved" in
+    /// the type slot is wrong in public, which is the point.
+    /// </summary>
+    internal static SchemaRef Missing(string? unresolvedReference, OpenApiSpec spec) =>
+        new(OpenApiSpec.EmptyObject, spec,
+            unresolvedReference is { } r ? $"unresolved {r}" : "no schema declared");
+
+    /// <summary>True when this node stands in for a schema that could not be read.</summary>
+    public bool IsMissing => _missing is not null;
 
     /// <summary>The `$ref` string, when this node is a reference.</summary>
     public string? Reference { get; }
@@ -109,6 +129,8 @@ public sealed class SchemaRef
     {
         get
         {
+            if (_missing is { } m) return m;
+
             var node = Unwrapped;
             if (node.RefName is { } rn) return rn;
 

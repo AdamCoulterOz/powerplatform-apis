@@ -26,7 +26,7 @@ So [`oas/openapi.json`](oas/openapi.json) is deliberately **a curated admin/ALM 
 | Dataverse Search | whether the environment's index has been provisioned |
 | Fabric and Synapse Link | `datalakefolders`, `synapsedatabases`, `synapselinkexternaltablestates`, `entityanalyticsconfigs` |
 
-Every tag but one lives on the per-environment host. **Discovery does not** — it is a separate service on `globaldisco.*` with its own audience, and those paths carry their own `servers` block. It is in this document anyway because it answers the question every other operation here takes for granted: which host?
+Every tag but one lives on the per-environment host. **Discovery does not** — it is a separate service on `globaldisco.*` with its own audience, and those paths carry their own `servers` block. That block, and the paragraph explaining it, is repeated verbatim on each of the three discovery paths, because OpenAPI 3.0 has no `$ref` for Server objects — a shared component is not available here, so the duplication is the format's, not an oversight. It is in this document anyway because it answers the question every other operation here takes for granted: which host?
 
 ## Finding an environment's Web API URL
 

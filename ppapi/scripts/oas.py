@@ -266,12 +266,23 @@ def verb_last(name):
     return " ".join(p for p in parts if p).strip()
 
 
-def fold_notes(description, notes):
-    """Verified doc-vs-reality findings render as one blockquote callout so a
-    spec browser shows a single note box rather than several."""
+NOTE_HEADINGS = {
+    None: "Verified against the live API",
+    # a decompiled first-party client is strong structural evidence, but it is
+    # not an observation: the build can be older than the service, and it must
+    # never render under the same heading as something seen on the wire
+    "pac-cli": "From Microsoft's own client, not observed live",
+}
+
+
+def fold_notes(description, notes, source=None):
+    """Doc-vs-reality findings render as one blockquote callout so a spec browser
+    shows a single note box rather than several. The heading states the evidence
+    grade, which is what `source` selects."""
     if not notes:
         return description
-    block = "\n".join(["> **Verified against the live API**", ">"] + [f"> - {n}" for n in notes])
+    heading = NOTE_HEADINGS.get(source, NOTE_HEADINGS[None])
+    block = "\n".join([f"> **{heading}**", ">"] + [f"> - {n}" for n in notes])
     return (description + "\n\n" + block).strip() if description else block
 
 
@@ -450,7 +461,7 @@ def parse_operation(f, paths, schemas, seen):
     }
     if notes:
         op["x-notes"] = notes
-        description = fold_notes(description, notes)
+        description = fold_notes(description, notes, (enrich or {}).get("x-source"))
     for k, v in (enrich or {}).items():
         if k.startswith("x-"):
             op[k] = v
@@ -634,7 +645,8 @@ def main():
         notes = op.pop("notes", [])
         if notes:
             op["x-notes"] = notes
-            op["description"] = fold_notes(op.get("description", ""), notes)
+            op["description"] = fold_notes(op.get("description", ""), notes,
+                                           op.get("x-source"))
         op.setdefault("parameters", [])
         op.setdefault("responses", {"200": {"description": "OK"}})
         all_paths.setdefault(path, {})[method] = op

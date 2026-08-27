@@ -23,16 +23,21 @@
                     <h2 class="section__title">Resources</h2>
                     @foreach (var tag in Tags)
                     {
-                        <div class="prop">
-                            <div class="prop__head">
-                                <span class="prop__name">@tag.Tag.Name</span>
-                                <span class="prop__type">@tag.Count operation@(tag.Count == 1 ? "" : "s")</span>
-                            </div>
-                            @if (tag.Tag.Description is { } td)
-                            {
-                                <p class="prop__desc">@td</p>
-                            }
-                        </div>
+                        <button type="button" class="op-row" style="grid-template-columns:minmax(0,1fr)"
+                                @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Resource, tag.Tag.Name))">
+                            <span class="op-row__body">
+                                <span class="op-row__name">
+                                    @tag.Tag.Name
+                                    <span class="prop__meta" style="margin-left:var(--s-2);font-weight:400">
+                                        @tag.Count operation@(tag.Count == 1 ? "" : "s")
+                                    </span>
+                                </span>
+                                @if (tag.Tag.Description is { } td)
+                                {
+                                    <span class="op-row__path" style="font-family:var(--font-sans);font-size:13px">@td</span>
+                                }
+                            </span>
+                        </button>
                     }
                 </section>
             </div>

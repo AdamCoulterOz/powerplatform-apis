@@ -11,20 +11,28 @@
     {
         var expanded = IsExpanded(group.Tag.Name);
         <div class="nav__group">
-            <button class="nav__group-btn" aria-expanded="@expanded" @onclick="() => Toggle(group.Tag.Name)">
-                <svg class="nav__chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 4l4 4-4 4" />
-                </svg>
-                <span>@group.Tag.Name</span>
-                <span class="nav__count">@group.Operations.Count</span>
-            </button>
+            @{ var isCurrentResource = Current.Kind == RouteKind.Resource && Current.Id == group.Tag.Name; }
+            <div class="nav__group-row">
+                <button class="nav__group-toggle" aria-expanded="@(expanded ? "true" : "false")"
+                        aria-label="@(expanded ? "Collapse" : "Expand") @group.Tag.Name"
+                        @onclick="() => Toggle(group.Tag.Name)">
+                    <svg class="nav__chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 4l4 4-4 4" />
+                    </svg>
+                </button>
+                <button class="nav__group-btn" aria-current="@(isCurrentResource ? "true" : "false")"
+                        @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Resource, group.Tag.Name))">
+                    <span>@group.Tag.Name</span>
+                    <span class="nav__count">@group.Operations.Count</span>
+                </button>
+            </div>
 
             @if (expanded)
             {
                 @foreach (var op in group.Operations)
                 {
                     var isCurrent = Current.Kind == RouteKind.Operation && Current.Id == op.OperationId;
-                    <button class="nav__item" aria-current="@isCurrent"
+                    <button class="nav__item" aria-current="@(isCurrent ? "true" : "false")"
                             @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Operation, op.OperationId))">
                         <span class="nav__item-label">@op.Summary</span>
                         <span class="nav__item-method"><span class="method method--@op.Method.ToLowerInvariant()">@op.Method</span></span>
@@ -40,7 +48,7 @@
         @foreach (var name in Schemas)
         {
             var isCurrent = Current.Kind == RouteKind.Schema && Current.Id == name;
-            <button class="nav__item" aria-current="@isCurrent"
+            <button class="nav__item" aria-current="@(isCurrent ? "true" : "false")"
                     @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Schema, name))">
                 <span class="nav__item-label">@name</span>
             </button>

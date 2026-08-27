@@ -22,6 +22,7 @@ public readonly record struct Route(RouteKind Kind, string? Id)
         {
             "operations" when parts.Length > 1 => new Route(RouteKind.Operation, Uri.UnescapeDataString(parts[1])),
             "schemas" when parts.Length > 1 => new Route(RouteKind.Schema, Uri.UnescapeDataString(parts[1])),
+            "resources" when parts.Length > 1 => new Route(RouteKind.Resource, Uri.UnescapeDataString(parts[1])),
             _ => Overview
         };
     }
@@ -30,11 +31,12 @@ public readonly record struct Route(RouteKind Kind, string? Id)
     {
         RouteKind.Operation => $"#/operations/{Id}",
         RouteKind.Schema => $"#/schemas/{Id}",
+        RouteKind.Resource => $"#/resources/{Uri.EscapeDataString(Id ?? "")}",
         _ => "#/"
     };
 }
 
-public enum RouteKind { Overview, Operation, Schema }
+public enum RouteKind { Overview, Operation, Schema, Resource }
 
 /// <summary>
 /// Reads and writes the location hash, and raises <see cref="Changed"/> for

@@ -25,7 +25,7 @@
             {
                 var active = tab.Label == Active.Label;
                 <button type="button" class="keel-cb__tab @(active ? "keel-cb__tab--active" : "")"
-                        aria-selected="@active" @onclick="() => Select(tab)">
+                        aria-selected="@(active ? "true" : "false")" @onclick="() => Select(tab)">
                     @if (active && tab.Language.Dot() is { } dot)
                     {
                         <span class="keel-cb__dot" style="background:@dot"></span>

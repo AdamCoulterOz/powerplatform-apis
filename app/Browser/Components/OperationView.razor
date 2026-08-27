@@ -3,7 +3,21 @@
    it is not, independently of the window size or whether the nav is open. *@
 
 <div class="page">
-    <h1 class="page__title">@Operation.Summary</h1>
+    <h1 class="page__title">
+        @Operation.Summary
+        @if (Operation.DocsUrl is { } docs)
+        {
+            <a class="doc-badge" href="@docs" target="_blank" rel="noopener"
+               aria-label="Microsoft Learn documentation" title="Microsoft Learn documentation">
+                <svg viewBox="0 0 23 23" aria-hidden="true">
+                    <rect x="1" y="1" width="10" height="10" fill="#F25022" />
+                    <rect x="12" y="1" width="10" height="10" fill="#7FBA00" />
+                    <rect x="1" y="12" width="10" height="10" fill="#00A4EF" />
+                    <rect x="12" y="12" width="10" height="10" fill="#FFB900" />
+                </svg>
+            </a>
+        }
+    </h1>
 
     @if (Operation.Prose is { } prose)
     {
@@ -40,51 +54,31 @@
                     </div>
                 }
 
-                @foreach (var group in ParameterGroups)
+                @if (Operation.Parameters.Count > 0 || Operation.RequestBody is not null)
                 {
                     <section class="section">
-                        <h2 class="section__title">@group.Key parameters</h2>
-                        @foreach (var p in group)
-                        {
-                            <div class="prop">
-                                <div class="prop__head">
-                                    <span class="prop__name">@p.Name</span>
-                                    <span class="prop__type">@(p.Schema?.TypeLabel ?? "string")</span>
-                                    @if (p.Required)
-                                    {
-                                        <span class="prop__req">required</span>
-                                    }
-                                </div>
-                                @if (p.Description is { } d)
-                                {
-                                    <p class="prop__desc">@d</p>
-                                }
-                                @{
-                                    var chips = p.Schema?.Constraints.ToList() ?? new List<string>();
-                                }
-                                @if (chips.Count > 0)
-                                {
-                                    <div class="chips">
-                                        @foreach (var c in chips)
-                                        {
-                                            <span class="chip">@c</span>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </section>
-                }
+                        <h2 class="section__title">Request</h2>
 
-                @if (Operation.RequestBody is { Schema: { } bodySchema })
-                {
-                    <section class="section">
-                        <h2 class="section__title">Request body</h2>
-                        @if (Operation.RequestBody.Description is { } bd)
+                        @foreach (var p in OrderedParameters)
                         {
-                            <p class="prop__desc" style="margin-bottom:var(--s-3)">@bd</p>
+                            <PropertyRow Property="@ToProperty(p)" Location="@p.In" OnNavigate="OnNavigate" />
                         }
-                        <SchemaTree Schema="bodySchema" OnNavigate="OnNavigate" />
+
+                        @if (Operation.RequestBody is { Schema: { } bodySchema })
+                        {
+                            <h3 class="section__label">
+                                Body
+                                @if (Operation.RequestBody.MediaType is { } mt)
+                                {
+                                    <span class="prop__meta" style="margin-left:var(--s-2)">@mt</span>
+                                }
+                            </h3>
+                            @if (Operation.RequestBody.Description is { } bd)
+                            {
+                                <p class="prop__desc" style="margin-bottom:var(--s-3)">@((MarkupString)Markdown.ToHtml(bd))</p>
+                            }
+                            <SchemaTree Schema="bodySchema" OnNavigate="OnNavigate" />
+                        }
                     </section>
                 }
 
@@ -95,10 +89,9 @@
                         <div class="status-row" role="tablist">
                             @foreach (var r in Operation.Responses)
                             {
-                                <button class="status-tab" role="tab" aria-selected="@(r.Code == SelectedResponse?.Code)"
-                                        @onclick="() => _selected = r.Code">
-                                    <span class="status @StatusClass(r)">@r.Code</span>
-                                </button>
+                                <button type="button" class="status @StatusClass(r)" role="tab"
+                                        aria-selected="@(r.Code == SelectedResponse?.Code ? "true" : "false")"
+                                        @onclick="() => _selected = r.Code">@r.Code</button>
                             }
                         </div>
 
@@ -111,37 +104,35 @@
 
                             @if (resp.Headers.Count > 0)
                             {
-                                <h3 class="section__title" style="margin-top:var(--s-4)">Headers</h3>
+                                <h3 class="section__label">Headers</h3>
                                 @foreach (var h in resp.Headers)
                                 {
-                                    <div class="prop">
-                                        <div class="prop__head">
-                                            <span class="prop__name">@h.Name</span>
-                                            <span class="prop__type">@(h.Schema?.TypeLabel ?? "string")</span>
+                                    <div class="prop prop--leaf">
+                                        <div class="prop__row">
+                                            <span class="prop__head">
+                                                <span class="prop__name">@h.Name</span>
+                                                <span class="prop__meta">
+                                                    <span class="prop__type">@(h.Schema?.TypeLabel ?? "string")</span>
+                                                </span>
+                                            </span>
+                                            @if (h.Description is { } hd)
+                                            {
+                                                <p class="prop__desc">@((MarkupString)Markdown.ToHtml(hd))</p>
+                                            }
                                         </div>
-                                        @if (h.Description is { } hd)
-                                        {
-                                            <p class="prop__desc">@hd</p>
-                                        }
                                     </div>
                                 }
                             }
 
                             @if (resp.Schema is { } rs)
                             {
-                                <h3 class="section__title" style="margin-top:var(--s-4)">Body</h3>
+                                <h3 class="section__label">Body</h3>
                                 <SchemaTree Schema="rs" OnNavigate="OnNavigate" />
                             }
                         }
                     </section>
                 }
 
-                @if (Operation.DocsUrl is { } docs)
-                {
-                    <a class="keel-btn keel-btn--outline keel-btn--pill" href="@docs" target="_blank" rel="noopener">
-                        Microsoft's documentation
-                    </a>
-                }
             </div>
 
             <aside class="op-split__aside">
@@ -160,10 +151,15 @@
 
     private string Server => Spec.Servers.FirstOrDefault() ?? "";
 
-    private IEnumerable<IGrouping<string, Parameter>> ParameterGroups =>
+    // Path first, then query, then the rest: the same order a reader builds the
+    // call in. The location travels on each row, so this needs no headings.
+    private IEnumerable<Parameter> OrderedParameters =>
         Operation.Parameters
-            .GroupBy(p => p.In)
-            .OrderBy(g => g.Key switch { "path" => 0, "query" => 1, "header" => 2, _ => 3 });
+            .Where(p => p.Schema is not null)   // every generated spec types its parameters
+            .OrderBy(p => p.In switch { "path" => 0, "query" => 1, "header" => 2, _ => 3 })
+            .ThenBy(p => p.Required ? 0 : 1);
+
+    private static SchemaProperty ToProperty(Parameter p) => new(p.Name, p.Schema!, p.Required);
 
     private Response? SelectedResponse =>
         Operation.Responses.FirstOrDefault(r => r.Code == _selected)

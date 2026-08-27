@@ -1,87 +1,41 @@
-@* One property of a schema: name, type, required flag, description, and its
-   children behind a toggle. A property whose type is a named model links to
-   that model's page as well as expanding inline. *@
+@* One property of a schema.
 
-<div class="prop">
-    <div class="prop__head">
-        <span class="prop__name">@Property.Name</span>
+   The whole header is the disclosure control when there is something to open,
+   marked by a chevron in the gutter rather than a "Show items" link. Type,
+   location and optionality share one quiet meta line instead of competing as
+   separate tags. *@
 
-        @if (RefName is { } rn)
-        {
-            <button class="prop__type" style="background:none;border:0;padding:0;cursor:pointer;color:var(--accent)"
-                    @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Schema, rn))">@Node.TypeLabel</button>
-        }
-        else
-        {
-            <span class="prop__type">@Node.TypeLabel</span>
-        }
-
-        @if (Property.Required)
-        {
-            <span class="prop__req">required</span>
-        }
-        @if (Node.Target.Nullable)
-        {
-            <span class="prop__type">nullable</span>
-        }
-    </div>
-
-    @if (Description is { } d)
+<div class="prop @(Expandable ? "prop--expandable" : "prop--leaf")">
+    @if (Expandable)
     {
-        <p class="prop__desc">@((MarkupString)Markdown.ToHtml(d))</p>
-    }
-
-    @{
-        var constraints = Node.Constraints.ToList();
-        var enumValues = Node.Target.Enum;
-    }
-
-    @if (enumValues.Count > 0)
-    {
-        <div class="chips">
-            @foreach (var v in enumValues)
-            {
-                <span class="chip chip--enum">@v</span>
-            }
-        </div>
-    }
-
-    @if (constraints.Count > 0)
-    {
-        <div class="chips">
-            @foreach (var c in constraints)
-            {
-                <span class="chip">@c</span>
-            }
-        </div>
-    }
-
-    @if (Cyclic)
-    {
-        <p class="prop__desc"><em>Recurses into @RefName.</em></p>
-    }
-    else if (Node.IsExpandable && enumValues.Count == 0)
-    {
-        <button class="prop__toggle" @onclick="() => _open = !_open" aria-expanded="@_open">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                 style="width:12px;height:12px;transform:rotate(@(_open ? "90" : "0")deg);transition:transform .14s">
+        <button type="button" class="prop__row" aria-expanded="@(_open ? "true" : "false")" @onclick="() => _open = !_open">
+            <svg class="prop__chev" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M6 4l4 4-4 4" />
             </svg>
-            @(_open ? "Hide" : "Show") @ChildLabel
+            <span>
+                @Header
+            </span>
         </button>
+    }
+    else
+    {
+        <div class="prop__row">
+            @Header
+        </div>
+    }
 
-        @if (_open)
-        {
-            <div class="prop__children">
-                <SchemaTree Schema="Node" OnNavigate="OnNavigate" Visited="Seen" />
-            </div>
-        }
+    @if (Expandable && _open)
+    {
+        <div class="prop__children">
+            <SchemaTree Schema="Node" OnNavigate="OnNavigate" Visited="Seen" />
+        </div>
     }
 </div>
 
 @code {
     [Parameter, EditorRequired] public SchemaProperty Property { get; set; } = default!;
-    [Parameter] public int Depth { get; set; }
+    [Parameter] public string? Location { get; set; }
     [Parameter] public IReadOnlySet<string>? Seen { get; set; }
     [Parameter] public EventCallback<Route> OnNavigate { get; set; }
 
@@ -93,18 +47,78 @@
     /// <summary>A named model already on the path back to the root would expand forever.</summary>
     private bool Cyclic => RefName is { } n && Seen is not null && Seen.Contains(n);
 
+    private IReadOnlyList<string> EnumValues => Node.Target.Enum;
+
+    private bool Expandable => !Cyclic && Node.IsExpandable && EnumValues.Count == 0;
+
     private string? Description =>
         Property.Schema.Description ?? Node.Description ?? Node.Target.Description;
 
-    private string ChildLabel
-    {
-        get
+    private RenderFragment Header => @<text>
+        <span class="prop__head">
+            <span class="prop__name">@Property.Name</span>
+            <span class="prop__meta">
+                @if (RefName is { } rn)
+                {
+                    <a class="prop__type" href="#/schemas/@rn"
+                       @onclick:preventDefault
+                       @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Schema, rn))"
+                       style="color:var(--accent)">@Node.TypeLabel</a>
+                }
+                else
+                {
+                    <span class="prop__type">@Node.TypeLabel</span>
+                }
+
+                @if (Location is { } loc)
+                {
+                    <span class="prop__sep">·</span>
+                    <span>@loc</span>
+                }
+                @if (Property.Required)
+                {
+                    <span class="prop__sep">·</span>
+                    <span class="prop__req">required</span>
+                }
+                @if (Node.Target.Nullable)
+                {
+                    <span class="prop__sep">·</span>
+                    <span>nullable</span>
+                }
+                @if (Cyclic)
+                {
+                    <span class="prop__sep">·</span>
+                    <span>recurses</span>
+                }
+            </span>
+        </span>
+
+        @if (Description is { } d)
         {
-            var t = Node.Target;
-            if (t.Properties.Count > 0) return $"{t.Properties.Count} propert{(t.Properties.Count == 1 ? "y" : "ies")}";
-            if (t.Items is not null) return "items";
-            if (t.AdditionalProperties is not null) return "values";
-            return "detail";
+            <p class="prop__desc">@((MarkupString)Markdown.ToHtml(d))</p>
         }
-    }
+
+        @if (EnumValues.Count > 0)
+        {
+            <div class="chips">
+                @foreach (var v in EnumValues)
+                {
+                    <span class="chip chip--enum">@v</span>
+                }
+            </div>
+        }
+
+        @{
+            var constraints = Node.Constraints.ToList();
+        }
+        @if (constraints.Count > 0)
+        {
+            <div class="chips">
+                @foreach (var c in constraints)
+                {
+                    <span class="chip">@c</span>
+                }
+            </div>
+        }
+    </text>;
 }

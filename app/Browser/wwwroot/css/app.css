@@ -264,8 +264,7 @@ html, body {
   padding: var(--s-3);
   margin-bottom: var(--s-5);
   border-radius: var(--radius-lg, 12px);
-  background: var(--surface-sunken);
-  border: 1px solid var(--border-subtle);
+  background: var(--surface-subtle);
 }
 .endpoint__path {
   font-family: var(--mono);
@@ -300,24 +299,27 @@ html, body {
   }
 }
 
-.section { margin-bottom: var(--s-6); }
+.section { margin-bottom: var(--s-7); }
 .section__title {
-  margin: 0 0 var(--s-3);
-  font-size: 12px;
+  margin: 0 0 var(--s-4);
+  font-size: 17px;
   font-weight: 700;
-  letter-spacing: .07em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+/* a quieter label for a group inside a section (Body, Headers) */
+.section__label {
+  margin: var(--s-5) 0 var(--s-3);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 /* ------------------------------------------------------------ properties - */
 
-.prop {
-  padding: var(--s-3) 0;
-  border-top: 1px solid var(--border-subtle);
-  min-width: 0;
-}
-.prop:first-child { border-top: 0; }
+/* Rows are separated by space, not rules. A long list of hairlines reads as
+   a table nobody asked for; whitespace groups just as well and stays quiet. */
+.prop { padding: var(--s-3) 0; min-width: 0; }
 
 .prop__head {
   display: flex;
@@ -328,38 +330,61 @@ html, body {
 }
 .prop__name {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
-.prop__type { font-size: 12px; color: var(--text-secondary); font-family: var(--mono); }
-.prop__req { font-size: 11px; font-weight: 700; color: var(--warning, #C0863B); letter-spacing: .04em; }
-.prop__desc { margin: var(--s-1) 0 0; font-size: 13px; color: var(--text-secondary); max-width: 72ch; }
 
-.prop__toggle {
+/* one quiet meta line carries type, location and optionality, instead of
+   three separate coloured tags */
+.prop__meta {
   display: inline-flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+}
+.prop__type { font-family: var(--mono); color: var(--text-secondary); }
+.prop__sep { opacity: .5; }
+.prop__req { color: var(--warning, #C0863B); }
+.prop__desc { margin: var(--s-1) 0 0; font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); max-width: 72ch; }
+
+/* disclosure: the whole header is the control, marked by a chevron in the
+   gutter. No "Show items" / "Hide items" text to read and re-read. */
+.prop--expandable > .prop__row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
   gap: var(--s-1);
+  width: 100%;
   padding: 0;
-  margin-top: var(--s-2);
   font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
+  color: inherit;
+  text-align: left;
   background: none;
   border: 0;
   cursor: pointer;
 }
+.prop__chev {
+  margin-top: 3px;
+  width: 13px; height: 13px;
+  color: var(--text-tertiary);
+  transition: transform var(--dur-fast, .14s) var(--ease-out);
+}
+.prop--expandable > .prop__row[aria-expanded="true"] .prop__chev { transform: rotate(90deg); }
+.prop--expandable > .prop__row:hover .prop__chev { color: var(--accent); }
+
+/* non-expandable rows align with expandable ones so names form a column */
+.prop--leaf > .prop__row { padding-left: calc(18px + var(--s-1)); }
 
 /* nesting uses a hairline rather than indentation alone, so deep trees stay
    legible on narrow screens where indentation would eat the width */
 .prop__children {
-  margin-top: var(--s-3);
-  margin-left: var(--s-2);
-  padding-left: var(--s-3);
-  border-left: 2px solid var(--border-subtle);
+  margin: var(--s-2) 0 var(--s-3) var(--s-2);
+  padding-left: var(--s-4);
+  border-left: 1px solid var(--border-subtle);
 }
-@media (min-width: 700px) { .prop__children { margin-left: var(--s-3); padding-left: var(--s-4); } }
 
 .chips { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-top: var(--s-2); }
 .chip {
@@ -392,37 +417,43 @@ html, body {
 .method--delete { background: #D14343; }
 .method--head, .method--options, .method--trace { background: var(--text-tertiary); }
 
-/* in the nav the method is a label, not a filled badge, to keep the list calm */
+/* in the nav the verb is coloured text rather than a filled badge: the colour
+   still carries the method at a glance, without a row of solid blocks */
 .nav__item-method .method {
   background: none;
-  color: var(--text-tertiary);
   padding: 0;
   font-size: 10px;
 }
-.nav__item[aria-current="true"] .nav__item-method .method { color: var(--accent); }
-
-.status {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 700;
-  padding: 2px var(--s-2);
-  border-radius: 6px;
-  border: 1px solid transparent;
-}
-.status--ok    { color: var(--success, #1FA855); background: var(--success-subtle, rgba(31,168,85,.12)); }
-.status--err   { color: #D14343; background: rgba(209,67,67,.12); }
-.status--other { color: var(--text-secondary); background: var(--surface-sunken); }
+.nav__item-method .method--get    { color: #1FA855; }
+.nav__item-method .method--post   { color: #4B87FF; }
+.nav__item-method .method--put    { color: #C0863B; }
+.nav__item-method .method--patch  { color: #A78BFA; }
+.nav__item-method .method--delete { color: #E05C5C; }
+.nav__item-method .method--head,
+.nav__item-method .method--options,
+.nav__item-method .method--trace  { color: var(--text-tertiary); }
 
 .status-row { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-4); }
-.status-tab {
-  font: inherit;
+
+/* The pill is the control. Previously a button wrapped a pill, which read as
+   a box inside a box. */
+.status {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: var(--s-1) var(--s-3);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-tertiary);
   cursor: pointer;
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-card);
-  border-radius: 8px;
-  padding: var(--s-1) var(--s-2);
+  transition: color var(--dur-fast, .14s) var(--ease-out), background var(--dur-fast, .14s) var(--ease-out);
 }
-.status-tab[aria-selected="true"] { border-color: var(--accent); box-shadow: var(--ring); }
+.status:hover { background: var(--surface-sunken); color: var(--text-secondary); }
+.status[aria-selected="true"] { color: var(--text-primary); background: var(--surface-sunken); }
+.status[aria-selected="true"].status--ok  { color: var(--success, #1FA855); background: var(--success-subtle, rgba(31,168,85,.12)); }
+.status[aria-selected="true"].status--err { color: #D14343; background: rgba(209,67,67,.12); }
+.status:focus-visible { outline: none; box-shadow: var(--ring); }
 
 /* --------------------------------------------------------------- states -- */
 
@@ -496,3 +527,68 @@ html, body {
    sits tight against it rather than fighting for the same space */
 .keel-cb__action--tight { margin-left: 0; }
 .keel-cb__action:focus-visible { outline: none; box-shadow: var(--ring); }
+
+/* ------------------------------------------------------- resource pages -- */
+
+/* the docs badge sits with the title, at text size rather than as a button */
+.doc-badge {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: var(--s-3);
+  opacity: .75;
+  transition: opacity var(--dur-fast, .14s) var(--ease-out);
+}
+.doc-badge:hover { opacity: 1; }
+.doc-badge svg { width: .62em; height: .62em; display: block; }
+
+/* one operation in a resource listing */
+.op-row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-3) var(--s-2);
+  margin: 0 calc(var(--s-2) * -1);
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-md, 10px);
+  cursor: pointer;
+}
+.op-row:hover { background: var(--surface-subtle); }
+.op-row__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.op-row__name { font-size: 14px; font-weight: 600; }
+.op-row__preview {
+  margin-left: var(--s-2);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--signal-text, var(--text-tertiary));
+}
+.op-row__path {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  overflow-wrap: anywhere;
+}
+
+/* nav group: a chevron that expands, and a label that opens the resource */
+.nav__group-row { display: flex; align-items: stretch; }
+.nav__group-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--s-1) 0 var(--s-4);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.nav__group-toggle:hover .nav__chev { color: var(--accent); }
+.nav__group-toggle[aria-expanded="true"] .nav__chev { transform: rotate(90deg); }
+.nav__group-btn {
+  flex: 1 1 auto;
+  padding-left: var(--s-1);
+}
+.nav__group-btn[aria-current="true"] { color: var(--accent); }

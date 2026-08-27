@@ -7,7 +7,7 @@
     <header class="shell__header">
         <div class="appbar">
             <button class="appbar__icon appbar__nav-toggle" @onclick="ToggleNav"
-                    aria-label="@(_navOpen ? "Close navigation" : "Open navigation")" aria-expanded="@_navOpen">
+                    aria-label="@(_navOpen ? "Close navigation" : "Open navigation")" aria-expanded="@(_navOpen ? "true" : "false")">
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
                     <path d="M3 5.5h14M3 10h14M3 14.5h14" />
                 </svg>
@@ -78,8 +78,11 @@
                         case RouteKind.Operation when FindOperation(_route.Id) is { } op:
                             <OperationView Spec="_spec" Operation="op" OnNavigate="NavigateAsync" />
                             break;
+                        case RouteKind.Resource when _route.Id is { } tag:
+                            <ResourcePage Spec="_spec" Name="@tag" OnNavigate="NavigateAsync" />
+                            break;
                         case RouteKind.Schema when _route.Id is { } id && _spec.Schemas.ContainsKey(id):
-                            <SchemaPage Spec="_spec" Name="id" OnNavigate="NavigateAsync" />
+                            <SchemaPage Spec="_spec" Name="@id" OnNavigate="NavigateAsync" />
                             break;
                         default:
                             <OverviewPage Spec="_spec" Entry="_current" OnNavigate="NavigateAsync" />

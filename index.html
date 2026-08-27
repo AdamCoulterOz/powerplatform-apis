@@ -111,6 +111,24 @@
       // close the drawer after picking something from the nav
       api.addEventListener('click', (e) => { if (e.target.closest('a')) closeNav(); });
       document.getElementById('app').appendChild(api);
+
+      // Elements renders our live-verified notes as a blockquote in the left
+      // description column; move it into the right column beneath the request/
+      // response examples. Elements re-renders on navigation, so re-run on change.
+      const relocateNotes = () => {
+        api.querySelectorAll('.HttpOperation__Description blockquote').forEach((bq) => {
+          if (bq.dataset.relocated || !/Verified against the live API/i.test(bq.textContent)) return;
+          const left = bq.closest('.sl-flex-1');
+          const twoCol = left && left.parentElement;
+          const right = twoCol && twoCol.querySelector(':scope > .sl-w-2\\/5');
+          if (right) { bq.dataset.relocated = '1'; right.appendChild(bq); }
+        });
+      };
+      let t = 0;
+      const schedule = () => { clearTimeout(t); t = setTimeout(relocateNotes, 120); };
+      new MutationObserver(schedule).observe(document.getElementById('app'), { childList: true, subtree: true });
+      // navigation re-renders the operation; retry a few times so the note lands
+      addEventListener('hashchange', () => [150, 450, 900].forEach((d) => setTimeout(relocateNotes, d)));
     })();
   </script>
 </body>

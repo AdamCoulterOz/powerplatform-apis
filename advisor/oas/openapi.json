@@ -1,1495 +1,1495 @@
 {
- "openapi": "3.0.3",
- "info": {
-  "title": "PowerApps Advisor API (Solution Checker)",
-  "version": "2.0",
-  "description": "The PowerApps Advisor API is the Solution Checker service: it publishes rule catalogues and runs static analysis over Power Platform solutions.\n\nAnalysis is a three-step flow \u2014 upload the solution to storage, submit an analysis request, then poll for status until the job reaches a terminal state. Results are returned as SARIF, or written into a Dataverse environment where the analysis was requested in that context.\n\nThe host is per environment: resolve it from the environment's `PowerAppsAdvisor` runtime endpoint.\n\nUnofficial and reverse-engineered \u2014 see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/advisor) for how it was derived and which parts are verified.",
-  "x-api-versions": [
-   "1.0",
-   "2.0"
-  ],
-  "x-evidence-sources": {
-   "live-probe": "Rule and ruleset reads, probed against a real tenant across 17 public-cloud geographies.",
-   "microsoft-docs": "https://learn.microsoft.com/power-platform/alm/checker-api/overview - the analysis job flow.",
-   "pac-cli": "Microsoft.PowerApps.Checker.Client, the first-party solution-checker SDK shipped inside pac CLI 2.11.2."
-  },
-  "x-dataverse-host-geography-map": {
-   "crm.dynamics.com": "unitedstates",
-   "crm2.dynamics.com": "southamerica",
-   "crm3.dynamics.com": "canada",
-   "crm4.dynamics.com": "europe",
-   "crm5.dynamics.com": "asia",
-   "crm6.dynamics.com": "australia",
-   "crm7.dynamics.com": "japan",
-   "crm8.dynamics.com": "india",
-   "crm9.dynamics.com": "USGovernment",
-   "crm11.dynamics.com": "unitedkingdom",
-   "crm12.dynamics.com": "france",
-   "crm14.dynamics.com": "southafrica",
-   "crm15.dynamics.com": "unitedarabemirates",
-   "crm16.dynamics.com": "germany",
-   "crm17.dynamics.com": "switzerland",
-   "crm19.dynamics.com": "norway",
-   "crm20.dynamics.com": "singapore",
-   "crm21.dynamics.com": "korea",
-   "crm22.dynamics.com": "sweden",
-   "crm.dynamics.cn": "China",
-   "crm.microsoftdynamics.us": "USGovernmentL4",
-   "crm.appsplatform.us": "USGovernmentL5DoD"
-  },
-  "x-dataverse-host-geography-map-note": "Source: pac-cli. Maps a Dataverse environment host to the advisor geography that serves it, which is the mapping the spec previously said was not derivable. It is a lookup, not a string transform, and it is incomplete on purpose: crm10.dynamics.com is the preprod ring, crm13 and crm18 are absent, and italy, poland and newzealand have advisor hosts with no Dataverse host mapped to them in this build. Anything unlisted falls back to unitedstates, which is wrong often enough that reading the environment's PowerAppsAdvisor runtime endpoint remains the correct approach; use this map only when you have no environment to ask.",
-  "x-retry-contract": "Transport behaviour, common to every operation, from the SDK's handler chain (x-source: pac-cli). A 429 carrying Retry-After is honoured literally and retried without limit, and the header is parsed as an integer number of seconds only - an HTTP-date Retry-After aborts the retry rather than being converted. Separately, 408, 429 and any 5xx other than 501 and 505 are treated as transient and retried up to three times with exponential backoff between 1 and 10 seconds. 4xx other than 408 and 429 are never retried."
- },
- "servers": [
-  {
-   "url": "https://{region}.api.advisor.powerapps.com",
-   "description": "Per-geography public-cloud host. Prefer taking it from the environment's PowerAppsAdvisor runtime endpoint; where that is unavailable, derive the geography from the Dataverse host with info.x-dataverse-host-geography-map.",
-   "variables": {
-    "region": {
-     "default": "unitedstates",
-     "enum": [
-      "asia",
-      "australia",
-      "canada",
-      "europe",
-      "france",
-      "germany",
-      "india",
-      "italy",
-      "japan",
-      "korea",
-      "newzealand",
-      "norway",
-      "poland",
-      "singapore",
-      "southafrica",
-      "southamerica",
-      "sweden",
-      "switzerland",
-      "unitedarabemirates",
-      "unitedkingdom",
-      "unitedstates",
-      "unitedstatesfirstrelease"
-     ],
-     "description": "The geography the advisor endpoint serves. unitedstatesfirstrelease is a first-release ring rather than a geography: it serves rule changes before the rest of unitedstates does, and is the host to diff against when a catalogue difference between regions needs explaining."
-    }
-   }
-  },
-  {
-   "url": "https://api.advisor.powerapps.com",
-   "description": "Unregioned host, and the OAuth resource identifier the WWW-Authenticate challenge names. Usable as a fallback when a geography cannot be resolved, but prefer a regional host: the rule catalogue differs between deployment rings and this host does not say which ring answered."
-  },
-  {
-   "url": "https://{ring}.api.advisor.powerapps.us",
-   "description": "US Government clouds.",
-   "x-source": "pac-cli",
-   "variables": {
-    "ring": {
-     "default": "gov",
-     "enum": [
-      "gov",
-      "high"
-     ],
-     "description": "gov is GCC (Dataverse crm9.dynamics.com); high is GCC High (crm.microsoftdynamics.us)."
-    }
-   }
-  },
-  {
-   "url": "https://mil.api.advisor.appsplatform.us",
-   "description": "US Department of Defense (Dataverse crm.appsplatform.us).",
-   "x-source": "pac-cli"
-  },
-  {
-   "url": "https://china.api.advisor.powerapps.cn",
-   "description": "Power Platform operated by 21Vianet in China (Dataverse crm.dynamics.cn).",
-   "x-source": "pac-cli"
-  }
- ],
- "security": [
-  {
-   "azure_auth": [
-    "https://advisor.powerapps.com/.default"
-   ]
-  }
- ],
- "tags": [
-  {
-   "name": "Rules",
-   "description": "The checker rule catalogue. A rule is one static-analysis check over a solution component - a plug-in registration, a canvas app formula, a JavaScript web resource, a desktop flow - carrying a severity, a category and a link to published guidance. The catalogue is read-only and published per geography; it is what the report's issue titles, severities and guidance links are resolved from."
-  },
-  {
-   "name": "Rulesets",
-   "description": "Named groupings of rules. A rule may belong to no ruleset, one, or several, and a ruleset id is what an analysis run is configured with - it is the unit of 'which standard is this solution checked against'. The public cloud publishes two: Solution Checker, the everyday set used by the maker portal and by Managed Environments enforcement, and AppSource Certification, the stricter set a solution must pass to be listed on AppSource."
-  },
-  {
-   "name": "Analysis",
-   "description": "The asynchronous static-analysis job. A run puts solution files in storage - by uploading them here or by supplying its own SAS URIs - submits a job naming those files and a ruleset, polls for completion, and downloads a SARIF v2 report per file.\n\nThere are two submissions: the ordinary one, which returns results to the caller and nowhere else, and the Dataverse-context one, which additionally writes the run into the target environment so it shows up in the Solution Health Hub app."
-  },
-  {
-   "name": "Enforcement Cache",
-   "description": "The tenant-wide store of past solution-checker results that Managed Environments solution checker enforcement consults when deciding whether to block an import. It exists so that a solution already checked is not re-checked on every import; the consequence is that a solution fixed after a failing result can keep being blocked by the stale verdict until the cache is purged. Purging is the whole of this resource's API - there is no read."
-  }
- ],
- "paths": {
-  "/api/rule": {
-   "get": {
-    "operationId": "rules_list",
-    "tags": [
-     "Rules"
+  "openapi": "3.0.3",
+  "info": {
+    "title": "PowerApps Advisor API (Solution Checker)",
+    "version": "2.0",
+    "description": "The PowerApps Advisor API is the Solution Checker service: it publishes rule catalogues and runs static analysis over Power Platform solutions.\n\nAnalysis is a three-step flow — upload the solution to storage, submit an analysis request, then poll for status until the job reaches a terminal state. Results are returned as SARIF, or written into a Dataverse environment where the analysis was requested in that context.\n\nThe host is per environment: resolve it from the environment's `PowerAppsAdvisor` runtime endpoint.\n\nUnofficial and reverse-engineered — see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/advisor) for how it was derived and which parts are verified.",
+    "x-api-versions": [
+      "1.0",
+      "2.0"
     ],
-    "summary": "List",
-    "x-probe-verified": true,
-    "description": "Reads the rule catalogue from one environment's advisor endpoint, optionally narrowed to one or more rulesets. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint; the catalogue is not tenant- or environment-specific beyond that, so any environment in a geography answers identically.\n\nThe response is a flat JSON array with no envelope, pagination or total count - the whole catalogue arrives in one body, around 100 rules and 40 KB, four times that with message formats.\n\nTwo behaviours matter before relying on this endpoint. First, the ruleset parameter fails open: an unrecognised id or name is not rejected, it yields the single rule that belongs to no ruleset (web-unsupported-syntax), so a typo silently produces a near-empty catalogue rather than an error. An empty, whitespace or bare-comma value behaves like omitting the parameter entirely and returns every rule. Several ruleset GUIDs joined by commas in the one parameter select the union of those rulesets.\n\nSecond, the catalogue is not identical across geographies. Rule changes reach deployment rings at different times, so the same ruleset can carry a different set of rules in one geography than in another. Anything that diffs, caches or pins this catalogue must key by region.\n\nRule text is localised by Accept-Language; code, guidanceUrl, severity and primaryCategory are invariant across languages.",
-    "x-notes": [
-     {
-      "note": "Microsoft documents a 204 for 'no results were found'. No input produced one: an unrecognised ruleset value answers 200 with a single rule instead.",
-      "source": "live"
-     },
-     {
-      "note": "The rule and ruleset reads both require a bearer token, despite Microsoft's documentation stating that they do not. The WWW-Authenticate challenge on the 401 names the resource to request one for, so an unauthenticated call is a legitimate way to discover the audience.",
-      "source": "live"
-     }
-    ],
-    "parameters": [
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": false,
-      "description": "Optional in practice - omitting it serves the same payload as 2.0.",
-      "schema": {
-       "type": "string",
-       "default": "2.0",
-       "enum": [
-        "1.0",
-        "2.0"
-       ]
-      }
-     },
-     {
-      "name": "ruleset",
-      "in": "query",
-      "required": false,
-      "description": "Ruleset id or display name, matched case-insensitively, or several separated by comma or semicolon - in which case the response is their union, not their concatenation (103 rules for both public rulesets, which overlap heavily, not 98 + 64). Omit to get every rule the geography publishes. Unrecognised values fail open rather than erroring; see the operation description. There is no service-side default: omitted means every rule, not Solution Checker.",
-      "schema": {
-       "type": "string",
-       "example": "0ad12346-e108-40b8-a956-9a8f95ea18c9"
-      },
-      "examples": {
-       "solutionCheckerById": {
-        "summary": "Solution Checker by id (what the Terraform provider sends)",
-        "value": "0ad12346-e108-40b8-a956-9a8f95ea18c9"
-       },
-       "byName": {
-        "summary": "By display name",
-        "value": "Solution Checker"
-       },
-       "both": {
-        "summary": "Union of both public rulesets",
-        "value": "0ad12346-e108-40b8-a956-9a8f95ea18c9,083a2ef5-7e0e-4754-9d88-9455142dc08b"
-       }
-      }
-     },
-     {
-      "name": "includeMessageFormats",
-      "in": "query",
-      "required": false,
-      "description": "Adds messageTemplates to every rule, which roughly quadruples the response size and its processing time - ask for it only when pre-translating report output. Parsed strictly as a boolean, unlike ruleset, so a junk value is rejected.",
-      "schema": {
-       "type": "boolean",
-       "default": false
-      }
-     },
-     {
-      "$ref": "#/components/parameters/TenantIdQuery"
-     },
-     {
-      "$ref": "#/components/parameters/AcceptLanguage"
-     },
-     {
-      "$ref": "#/components/parameters/CorrelationIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/ClientTenantIdHeader"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The matching rules, as a top-level array. Also the response to an unrecognised ruleset value, with one element.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "type": "array",
-         "items": {
-          "$ref": "#/components/schemas/Rule"
-         }
+    "x-evidence-sources": {
+      "live-probe": "Rule and ruleset reads, probed against a real tenant across 17 public-cloud geographies.",
+      "microsoft-docs": "https://learn.microsoft.com/power-platform/alm/checker-api/overview - the analysis job flow.",
+      "pac-cli": "Microsoft.PowerApps.Checker.Client, the first-party solution-checker SDK shipped inside pac CLI 2.11.2."
+    },
+    "x-dataverse-host-geography-map": {
+      "crm.dynamics.com": "unitedstates",
+      "crm2.dynamics.com": "southamerica",
+      "crm3.dynamics.com": "canada",
+      "crm4.dynamics.com": "europe",
+      "crm5.dynamics.com": "asia",
+      "crm6.dynamics.com": "australia",
+      "crm7.dynamics.com": "japan",
+      "crm8.dynamics.com": "india",
+      "crm9.dynamics.com": "USGovernment",
+      "crm11.dynamics.com": "unitedkingdom",
+      "crm12.dynamics.com": "france",
+      "crm14.dynamics.com": "southafrica",
+      "crm15.dynamics.com": "unitedarabemirates",
+      "crm16.dynamics.com": "germany",
+      "crm17.dynamics.com": "switzerland",
+      "crm19.dynamics.com": "norway",
+      "crm20.dynamics.com": "singapore",
+      "crm21.dynamics.com": "korea",
+      "crm22.dynamics.com": "sweden",
+      "crm.dynamics.cn": "China",
+      "crm.microsoftdynamics.us": "USGovernmentL4",
+      "crm.appsplatform.us": "USGovernmentL5DoD"
+    },
+    "x-dataverse-host-geography-map-note": "Source: pac-cli. Maps a Dataverse environment host to the advisor geography that serves it, which is the mapping the spec previously said was not derivable. It is a lookup, not a string transform, and it is incomplete on purpose: crm10.dynamics.com is the preprod ring, crm13 and crm18 are absent, and italy, poland and newzealand have advisor hosts with no Dataverse host mapped to them in this build. Anything unlisted falls back to unitedstates, which is wrong often enough that reading the environment's PowerAppsAdvisor runtime endpoint remains the correct approach; use this map only when you have no environment to ask.",
+    "x-retry-contract": "Transport behaviour, common to every operation, from the SDK's handler chain (x-source: pac-cli). A 429 carrying Retry-After is honoured literally and retried without limit, and the header is parsed as an integer number of seconds only - an HTTP-date Retry-After aborts the retry rather than being converted. Separately, 408, 429 and any 5xx other than 501 and 505 are treated as transient and retried up to three times with exponential backoff between 1 and 10 seconds. 4xx other than 408 and 429 are never retried."
+  },
+  "servers": [
+    {
+      "url": "https://{region}.api.advisor.powerapps.com",
+      "description": "Per-geography public-cloud host. Prefer taking it from the environment's PowerAppsAdvisor runtime endpoint; where that is unavailable, derive the geography from the Dataverse host with info.x-dataverse-host-geography-map.",
+      "variables": {
+        "region": {
+          "default": "unitedstates",
+          "enum": [
+            "asia",
+            "australia",
+            "canada",
+            "europe",
+            "france",
+            "germany",
+            "india",
+            "italy",
+            "japan",
+            "korea",
+            "newzealand",
+            "norway",
+            "poland",
+            "singapore",
+            "southafrica",
+            "southamerica",
+            "sweden",
+            "switzerland",
+            "unitedarabemirates",
+            "unitedkingdom",
+            "unitedstates",
+            "unitedstatesfirstrelease"
+          ],
+          "description": "The geography the advisor endpoint serves. unitedstatesfirstrelease is a first-release ring rather than a geography: it serves rule changes before the rest of unitedstates does, and is the host to diff against when a catalogue difference between regions needs explaining."
         }
-       }
       }
-     },
-     "400": {
-      "description": "Either an api-version other than 1.0 or 2.0, which returns ErrorResponse with code UnsupportedApiVersion, or a query parameter value that fails model binding - a non-boolean includeMessageFormats - which returns ValidationProblemDetails naming the offending parameter. The two bodies are structurally unrelated, so a client that parses errors must handle both.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "oneOf": [
+    },
+    {
+      "url": "https://api.advisor.powerapps.com",
+      "description": "Unregioned host, and the OAuth resource identifier the WWW-Authenticate challenge names. Usable as a fallback when a geography cannot be resolved, but prefer a regional host: the rule catalogue differs between deployment rings and this host does not say which ring answered."
+    },
+    {
+      "url": "https://{ring}.api.advisor.powerapps.us",
+      "description": "US Government clouds.",
+      "x-source": "pac-cli",
+      "variables": {
+        "ring": {
+          "default": "gov",
+          "enum": [
+            "gov",
+            "high"
+          ],
+          "description": "gov is GCC (Dataverse crm9.dynamics.com); high is GCC High (crm.microsoftdynamics.us)."
+        }
+      }
+    },
+    {
+      "url": "https://mil.api.advisor.appsplatform.us",
+      "description": "US Department of Defense (Dataverse crm.appsplatform.us).",
+      "x-source": "pac-cli"
+    },
+    {
+      "url": "https://china.api.advisor.powerapps.cn",
+      "description": "Power Platform operated by 21Vianet in China (Dataverse crm.dynamics.cn).",
+      "x-source": "pac-cli"
+    }
+  ],
+  "security": [
+    {
+      "azure_auth": [
+        "https://advisor.powerapps.com/.default"
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Rules",
+      "description": "The checker rule catalogue. A rule is one static-analysis check over a solution component - a plug-in registration, a canvas app formula, a JavaScript web resource, a desktop flow - carrying a severity, a category and a link to published guidance. The catalogue is read-only and published per geography; it is what the report's issue titles, severities and guidance links are resolved from."
+    },
+    {
+      "name": "Rulesets",
+      "description": "Named groupings of rules. A rule may belong to no ruleset, one, or several, and a ruleset id is what an analysis run is configured with - it is the unit of 'which standard is this solution checked against'. The public cloud publishes two: Solution Checker, the everyday set used by the maker portal and by Managed Environments enforcement, and AppSource Certification, the stricter set a solution must pass to be listed on AppSource."
+    },
+    {
+      "name": "Analysis",
+      "description": "The asynchronous static-analysis job. A run puts solution files in storage - by uploading them here or by supplying its own SAS URIs - submits a job naming those files and a ruleset, polls for completion, and downloads a SARIF v2 report per file.\n\nThere are two submissions: the ordinary one, which returns results to the caller and nowhere else, and the Dataverse-context one, which additionally writes the run into the target environment so it shows up in the Solution Health Hub app."
+    },
+    {
+      "name": "Enforcement Cache",
+      "description": "The tenant-wide store of past solution-checker results that Managed Environments solution checker enforcement consults when deciding whether to block an import. It exists so that a solution already checked is not re-checked on every import; the consequence is that a solution fixed after a failing result can keep being blocked by the stale verdict until the cache is purged. Purging is the whole of this resource's API - there is no read."
+    }
+  ],
+  "paths": {
+    "/api/rule": {
+      "get": {
+        "operationId": "rules_list",
+        "tags": [
+          "Rules"
+        ],
+        "summary": "List",
+        "x-probe-verified": true,
+        "description": "Reads the rule catalogue from one environment's advisor endpoint, optionally narrowed to one or more rulesets. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint; the catalogue is not tenant- or environment-specific beyond that, so any environment in a geography answers identically.\n\nThe response is a flat JSON array with no envelope, pagination or total count - the whole catalogue arrives in one body, around 100 rules and 40 KB, four times that with message formats.\n\nTwo behaviours matter before relying on this endpoint. First, the ruleset parameter fails open: an unrecognised id or name is not rejected, it yields the single rule that belongs to no ruleset (web-unsupported-syntax), so a typo silently produces a near-empty catalogue rather than an error. An empty, whitespace or bare-comma value behaves like omitting the parameter entirely and returns every rule. Several ruleset GUIDs joined by commas in the one parameter select the union of those rulesets.\n\nSecond, the catalogue is not identical across geographies. Rule changes reach deployment rings at different times, so the same ruleset can carry a different set of rules in one geography than in another. Anything that diffs, caches or pins this catalogue must key by region.\n\nRule text is localised by Accept-Language; code, guidanceUrl, severity and primaryCategory are invariant across languages.",
+        "x-notes": [
           {
-           "$ref": "#/components/schemas/ErrorResponse"
+            "note": "Microsoft documents a 204 for 'no results were found'. No input produced one: an unrecognised ruleset value answers 200 with a single rule instead.",
+            "source": "live"
           },
           {
-           "$ref": "#/components/schemas/ValidationProblemDetails"
+            "note": "The rule and ruleset reads both require a bearer token, despite Microsoft's documentation stating that they do not. The WWW-Authenticate challenge on the 401 names the resource to request one for, so an unauthenticated call is a legitimate way to discover the audience.",
+            "source": "live"
           }
-         ]
+        ],
+        "parameters": [
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "description": "Optional in practice - omitting it serves the same payload as 2.0.",
+            "schema": {
+              "type": "string",
+              "default": "2.0",
+              "enum": [
+                "1.0",
+                "2.0"
+              ]
+            }
+          },
+          {
+            "name": "ruleset",
+            "in": "query",
+            "required": false,
+            "description": "Ruleset id or display name, matched case-insensitively, or several separated by comma or semicolon - in which case the response is their union, not their concatenation (103 rules for both public rulesets, which overlap heavily, not 98 + 64). Omit to get every rule the geography publishes. Unrecognised values fail open rather than erroring; see the operation description. There is no service-side default: omitted means every rule, not Solution Checker.",
+            "schema": {
+              "type": "string",
+              "example": "0ad12346-e108-40b8-a956-9a8f95ea18c9"
+            },
+            "examples": {
+              "solutionCheckerById": {
+                "summary": "Solution Checker by id (what the Terraform provider sends)",
+                "value": "0ad12346-e108-40b8-a956-9a8f95ea18c9"
+              },
+              "byName": {
+                "summary": "By display name",
+                "value": "Solution Checker"
+              },
+              "both": {
+                "summary": "Union of both public rulesets",
+                "value": "0ad12346-e108-40b8-a956-9a8f95ea18c9,083a2ef5-7e0e-4754-9d88-9455142dc08b"
+              }
+            }
+          },
+          {
+            "name": "includeMessageFormats",
+            "in": "query",
+            "required": false,
+            "description": "Adds messageTemplates to every rule, which roughly quadruples the response size and its processing time - ask for it only when pre-translating report output. Parsed strictly as a boolean, unlike ruleset, so a junk value is rejected.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "$ref": "#/components/parameters/TenantIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/ClientTenantIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The matching rules, as a top-level array. Also the response to an unrecognised ruleset value, with one element.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Rule"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Either an api-version other than 1.0 or 2.0, which returns ErrorResponse with code UnsupportedApiVersion, or a query parameter value that fails model binding - a non-boolean includeMessageFormats - which returns ValidationProblemDetails naming the offending parameter. The two bodies are structurally unrelated, so a client that parses errors must handle both.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ValidationProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid bearer token. The WWW-Authenticate challenge names the resource to request a token for.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer authorization_uri=\"https://login.microsoftonline.com/common\",resource_id=\"https://api.advisor.powerapps.com/\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Any method other than GET. The Allow header names GET and the body is an ErrorResponse, confusingly also coded UnsupportedApiVersion.",
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "example": "GET"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait, as an integer.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "x-source": "pac-cli"
+          }
         }
-       }
       }
-     },
-     "401": {
-      "description": "No or invalid bearer token. The WWW-Authenticate challenge names the resource to request a token for.",
-      "headers": {
-       "WWW-Authenticate": {
-        "description": "Bearer authorization_uri=\"https://login.microsoftonline.com/common\",resource_id=\"https://api.advisor.powerapps.com/\"",
-        "schema": {
-         "type": "string"
-        }
-       }
-      }
-     },
-     "405": {
-      "description": "Any method other than GET. The Allow header names GET and the body is an ErrorResponse, confusingly also coded UnsupportedApiVersion.",
-      "headers": {
-       "Allow": {
-        "schema": {
-         "type": "string",
-         "example": "GET"
-        }
-       }
-      }
-     },
-     "429": {
-      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
-      "headers": {
-       "Retry-After": {
-        "description": "Seconds to wait, as an integer.",
-        "schema": {
-         "type": "integer"
-        }
-       }
-      },
-      "x-source": "pac-cli"
-     }
-    }
-   }
-  },
-  "/api/ruleset": {
-   "get": {
-    "operationId": "rulesets_list",
-    "tags": [
-     "Rulesets"
-    ],
-    "summary": "List",
-    "x-probe-verified": true,
-    "description": "Reads every ruleset the geography publishes, as a flat array of id and name with no envelope or pagination. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint.\n\nCall this to resolve a ruleset's display name into the id a rule listing or an analysis run needs, though in practice the two public ids are stable enough to hard-code.\n\nAll 17 public geographies publish the same two rulesets. They overlap rather than nest: AppSource Certification has five rules Solution Checker does not, and Solution Checker has 39 that AppSource Certification does not.\n\nNames are not localised - an Accept-Language of fr still returns English names, unlike rule text.",
-    "x-notes": [
-     {
-      "note": "Microsoft's own rule documentation labels 083a2ef5-7e0e-4754-9d88-9455142dc08b 'Solution Checker' in its examples; the service says that id is AppSource Certification. Trust the service.",
-      "source": "live"
-     },
-     {
-      "note": "The rule and ruleset reads both require a bearer token, despite Microsoft's documentation stating that they do not.",
-      "source": "live"
-     }
-    ],
-    "parameters": [
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": false,
-      "description": "Optional. 1.0 and 2.0 both serve the same payload.",
-      "schema": {
-       "type": "string",
-       "default": "2.0",
-       "enum": [
-        "1.0",
-        "2.0"
-       ]
-      }
-     },
-     {
-      "$ref": "#/components/parameters/TenantIdQuery"
-     },
-     {
-      "$ref": "#/components/parameters/AcceptLanguage"
-     },
-     {
-      "$ref": "#/components/parameters/CorrelationIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/ClientTenantIdHeader"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The rulesets, as a top-level array.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "type": "array",
-         "items": {
-          "$ref": "#/components/schemas/Ruleset"
-         }
-        }
-       }
-      }
-     },
-     "400": {
-      "description": "An api-version other than 1.0 or 2.0, as ErrorResponse with code UnsupportedApiVersion.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ErrorResponse"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "No or invalid bearer token, with the same WWW-Authenticate challenge the rule listing returns."
-     },
-     "405": {
-      "description": "Any method other than GET; the Allow header names GET.",
-      "headers": {
-       "Allow": {
-        "schema": {
-         "type": "string",
-         "example": "GET"
-        }
-       }
-      }
-     },
-     "429": {
-      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
-      "headers": {
-       "Retry-After": {
-        "description": "Seconds to wait, as an integer.",
-        "schema": {
-         "type": "integer"
-        }
-       }
-      },
-      "x-source": "pac-cli"
-     }
-    }
-   }
-  },
-  "/api/upload": {
-   "post": {
-    "operationId": "analysis_uploadFile",
-    "tags": [
-     "Analysis"
-    ],
-    "summary": "File Upload",
-    "x-probe-verified": false,
-    "description": "Uploads one solution file to service-managed storage in the geography and returns the URI the analysis submission will name it by. This step is optional: any storage URI the service can read works just as well, and must be used for files past the size limit. One call per file, so a run's files can be uploaded concurrently and their returned URIs collected into the submission's sasUriList.\n\nServed at api-version 1.0, and POST is the only method accepted.",
-    "x-notes": [
-     {
-      "note": "The call returns a body, contrary to Microsoft's documentation: a bare JSON array of storage URIs, one per uploaded file. The published reference implies an empty 200, and a client that believes it has nothing to put in the submission's sasUriList.",
-      "source": "pac-cli"
-     },
-     {
-      "note": "The size limit is unresolved. Microsoft documents 30 MB with a 413 above it; the first-party client's own guard refuses locally at 100 MB. Neither figure has been observed on the wire.",
-      "source": "pac-cli"
-     }
-    ],
-    "parameters": [
-     {
-      "$ref": "#/components/parameters/ApiVersion10"
-     },
-     {
-      "$ref": "#/components/parameters/TenantIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/CorrelationIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/ClientTenantIdHeader"
-     }
-    ],
-    "requestBody": {
-     "required": true,
-     "description": "multipart/form-data with exactly one part. The part's Content-Disposition carries both name and filename set to the same value, the bare file name - and that file name is what identifies the file in the report.\n\nThe part's own Content-Type is chosen from the extension: .zip gives application/x-zip-compressed, .cab gives application/octet-stream, .gz gives application/x-gzip, .z gives application/x-compress, and anything else falls back to application/octet-stream.",
-     "content": {
-      "multipart/form-data": {
-       "schema": {
-        "type": "object",
-        "description": "The solution zip, as a single form part.",
-        "properties": {
-         "file": {
-          "type": "string",
-          "format": "binary",
-          "description": "The solution file - a solution zip, or a cab or gzip archive. Above the size limit, upload to your own storage and pass a SAS URI to the submission instead."
-         }
-        }
-       }
-      }
-     }
     },
-    "responses": {
-     "200": {
-      "description": "Uploaded. The body is a bare JSON array of storage URIs, one element per uploaded file, so one element for a single-part request. Each element is what goes into the submission's sasUriList.",
-      "content": {
-       "application/json": {
+    "/api/ruleset": {
+      "get": {
+        "operationId": "rulesets_list",
+        "tags": [
+          "Rulesets"
+        ],
+        "summary": "List",
+        "x-probe-verified": true,
+        "description": "Reads every ruleset the geography publishes, as a flat array of id and name with no envelope or pagination. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint.\n\nCall this to resolve a ruleset's display name into the id a rule listing or an analysis run needs, though in practice the two public ids are stable enough to hard-code.\n\nAll 17 public geographies publish the same two rulesets. They overlap rather than nest: AppSource Certification has five rules Solution Checker does not, and Solution Checker has 39 that AppSource Certification does not.\n\nNames are not localised - an Accept-Language of fr still returns English names, unlike rule text.",
+        "x-notes": [
+          {
+            "note": "Microsoft's own rule documentation labels 083a2ef5-7e0e-4754-9d88-9455142dc08b 'Solution Checker' in its examples; the service says that id is AppSource Certification. Trust the service.",
+            "source": "live"
+          },
+          {
+            "note": "The rule and ruleset reads both require a bearer token, despite Microsoft's documentation stating that they do not.",
+            "source": "live"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "description": "Optional. 1.0 and 2.0 both serve the same payload.",
+            "schema": {
+              "type": "string",
+              "default": "2.0",
+              "enum": [
+                "1.0",
+                "2.0"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/TenantIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/ClientTenantIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The rulesets, as a top-level array.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Ruleset"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An api-version other than 1.0 or 2.0, as ErrorResponse with code UnsupportedApiVersion.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid bearer token, with the same WWW-Authenticate challenge the rule listing returns."
+          },
+          "405": {
+            "description": "Any method other than GET; the Allow header names GET.",
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "example": "GET"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait, as an integer.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "x-source": "pac-cli"
+          }
+        }
+      }
+    },
+    "/api/upload": {
+      "post": {
+        "operationId": "analysis_uploadFile",
+        "tags": [
+          "Analysis"
+        ],
+        "summary": "File Upload",
+        "x-probe-verified": false,
+        "description": "Uploads one solution file to service-managed storage in the geography and returns the URI the analysis submission will name it by. This step is optional: any storage URI the service can read works just as well, and must be used for files past the size limit. One call per file, so a run's files can be uploaded concurrently and their returned URIs collected into the submission's sasUriList.\n\nServed at api-version 1.0, and POST is the only method accepted.",
+        "x-notes": [
+          {
+            "note": "The call returns a body, contrary to Microsoft's documentation: a bare JSON array of storage URIs, one per uploaded file. The published reference implies an empty 200, and a client that believes it has nothing to put in the submission's sasUriList.",
+            "source": "pac-cli"
+          },
+          {
+            "note": "The size limit is unresolved. Microsoft documents 30 MB with a 413 above it; the first-party client's own guard refuses locally at 100 MB. Neither figure has been observed on the wire.",
+            "source": "pac-cli"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion10"
+          },
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/ClientTenantIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "multipart/form-data with exactly one part. The part's Content-Disposition carries both name and filename set to the same value, the bare file name - and that file name is what identifies the file in the report.\n\nThe part's own Content-Type is chosen from the extension: .zip gives application/x-zip-compressed, .cab gives application/octet-stream, .gz gives application/x-gzip, .z gives application/x-compress, and anything else falls back to application/octet-stream.",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "description": "The solution zip, as a single form part.",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The solution file - a solution zip, or a cab or gzip archive. Above the size limit, upload to your own storage and pass a SAS URI to the submission instead."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Uploaded. The body is a bare JSON array of storage URIs, one element per uploaded file, so one element for a single-part request. Each element is what goes into the submission's sasUriList.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "Storage URIs for the uploaded files, in the order the parts were sent.",
+                  "items": {
+                    "type": "string",
+                    "format": "uri",
+                    "example": "https://contoso.blob.core.windows.net/uploads/solution.zip?sv=...&sig=..."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The content was not a zip, the parameters were wrong, or the file failed the service's virus scan. No response body distinguishes the three."
+          },
+          "401": {
+            "description": "No or invalid bearer token."
+          },
+          "413": {
+            "description": "Too large. Upload to your own storage and pass a SAS URI to the submission instead."
+          },
+          "429": {
+            "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait, as an integer.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "x-source": "pac-cli"
+          }
+        },
+        "x-source": "pac-cli"
+      }
+    },
+    "/api/analyze": {
+      "post": {
+        "operationId": "analysis_create",
+        "tags": [
+          "Analysis"
+        ],
+        "summary": "Create",
+        "x-probe-verified": false,
+        "description": "Submits a static-analysis job over one or more solution files already in storage and returns immediately with the job's status URL in the Location header. The Location value is the whole contract: a 202 without one is a protocol error, and the URL it carries should be polled verbatim rather than reconstructed - it already carries its own api-version.\n\nConfigure the run with either ruleSets or ruleCodes, not both. ruleLevelOverrides is a third, independent list that re-levels named rules for this run only; it is how a team downgrades a rule it has accepted without removing the check.\n\nServed at api-version 1.0 only, and POST is the only method accepted.",
+        "x-notes": [
+          {
+            "note": "Property binding is case-insensitive: the camelCase body Microsoft documents and its PascalCase equivalent (SasUriList, RuleSets, RuleCodes, RuleLevelOverrides, FileExclusions) are both accepted. The first-party client sends PascalCase.",
+            "source": "pac-cli"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion10"
+          },
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "$ref": "#/components/parameters/ClientTenantIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The job was accepted and is running. No response body; the Location header is the only thing that matters.",
+            "headers": {
+              "Location": {
+                "description": "Status URL for this job, of the form https://{region}.api.advisor.powerapps.com/api/status/{analysisId}?api-version=1.0. Poll it as given - it is absolute and already versioned.",
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Non-zip content behind one of the SAS URIs, bad parameters, or a file that failed virus scanning. No response body."
+          },
+          "401": {
+            "description": "No or invalid bearer token."
+          },
+          "409": {
+            "description": "The x-ms-correlation-id has already been used for a job. Generate a fresh GUID per run rather than retrying with the same one."
+          },
+          "429": {
+            "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait, as an integer.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "x-source": "pac-cli"
+          }
+        },
+        "x-source": "pac-cli"
+      }
+    },
+    "/api/status/{analysisId}": {
+      "get": {
+        "operationId": "analysis_getStatus",
+        "tags": [
+          "Analysis"
+        ],
+        "summary": "Status Read",
+        "x-probe-verified": false,
+        "description": "Polls a submitted job, following the URL the submission put in its Location header, or - for a Dataverse-context submission, which returns no Location - built as /api/status/{runcorrelationid}?api-version=1.0 against the same host.\n\nBoth 200 and 202 carry the same body; read status rather than branching on the status code, because a finished job and a failed one look identical at the transport layer. The five states are Opened and InProgress, which mean keep polling, and Failed, Finished and FinishedWithErrors, which are terminal.\n\nThis route sends no Retry-After, so poll on a fixed interval; 30 seconds with a ceiling of an hour is a workable default. progress drives a progress bar and is not a scheduling or completion signal.\n\nOnce a job is terminal, resultFileUris names the reports. Download them promptly and do not assume they are Azure blob URIs; see the field's own description.\n\nServed at api-version 1.0 only. An unauthenticated call is refused with the same challenge as the catalogue reads. An unknown job id is reported as problem+json, a different error shape from the rest of this API, and the all-zeros GUID faults the service rather than returning not-found, so never use it as a placeholder.",
+        "parameters": [
+          {
+            "name": "analysisId",
+            "in": "path",
+            "required": true,
+            "description": "The job id, taken from the Location header of the submission rather than constructed. In practice the same GUID as the run's x-ms-correlation-id.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion10"
+          },
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/ClientTenantIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The job has finished - successfully or not, so read status rather than assuming success - and resultFileUris and issueSummary are populated. Stop polling.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisStatus"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Still running - status is Opened or InProgress. Same body shape as the 200, without the result fields. Wait and poll the same URL again. Treat 200 and 202 interchangeably and decide on status alone.",
+            "headers": {
+              "Location": {
+                "description": "The same status URL, repeated.",
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An api-version other than 1.0 - this route is not served at 2.0 - as ErrorResponse with code UnsupportedApiVersion.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid bearer token."
+          },
+          "403": {
+            "description": "The token belongs to a different client application than the one that submitted the job. Results are readable only by the submitter."
+          },
+          "404": {
+            "description": "No such analysis job - unknown id, or one that has aged out. Served as application/problem+json, not the ErrorResponse envelope the api-version errors use. An analysisId that is not a GUID at all gets a bare 404 with no body instead, from routing rather than from the operation.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Returned for the all-zeros GUID, which the service treats as an unset value rather than as an unknown id. Empty body, and unaffected by the request headers. Any other GUID returns a clean not-found, so do not use the zero GUID as a placeholder."
+          },
+          "429": {
+            "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait, as an integer.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "x-source": "pac-cli"
+          }
+        },
+        "x-source": "pac-cli"
+      }
+    },
+    "/api/cds/analysisrequest": {
+      "post": {
+        "operationId": "analysis_createDataverse",
+        "tags": [
+          "Analysis"
+        ],
+        "summary": "Create (Dataverse Context)",
+        "x-probe-verified": false,
+        "x-source": "pac-cli",
+        "description": "Submits an analysis run whose results are also written back into a Dataverse environment, where they appear in the Solution Health Hub app as msdyn_analysisjobs records. The environment is the destination for the results, not the subject of the analysis, and identifying it is entirely the job of the x-ms-orgurl, x-ms-organization-id, x-ms-requestorid and x-ms-tenant-id headers - the body says nothing about it.\n\nIt differs from the ordinary submission in three ways that matter. It answers 200, not 202. It returns a body rather than a Location header, so the caller composes the status URL itself as /api/status/{runcorrelationid}?api-version=1.0 against the same host. And its body adds Solutions, a list the caller populates itself - one entry per storage URI, each with a caller-chosen id and name - which is how the results get labelled per solution in the environment rather than by opaque file URI.",
+        "x-notes": [
+          {
+            "note": "Despite the cds in the route, this does not analyse a live Dataverse environment: the files still come from storage URIs exactly as with the ordinary submission.",
+            "source": "pac-cli"
+          },
+          {
+            "note": "Undocumented by Microsoft, and never invoked: the first-party client is the only evidence this route exists.",
+            "source": "pac-cli"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion10"
+          },
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/OrgUrlHeader"
+          },
+          {
+            "$ref": "#/components/parameters/OrganizationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/RequestorIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/ClientRequestorIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/ClientTenantIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataverseAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The job was accepted and is running - 200 here means accepted, not complete. runcorrelationid is the field that matters, and an all-zeros value is not a usable id. Build the status URL from it and poll.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataverseAnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Rejected. No error body shape is defined for this route; treat whatever the service sends as opaque text."
+          },
+          "401": {
+            "description": "No or invalid bearer token."
+          },
+          "429": {
+            "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait, as an integer.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "x-source": "pac-cli"
+          }
+        }
+      }
+    },
+    "/api/QueryValidationResults": {
+      "delete": {
+        "operationId": "enforcementCache_delete",
+        "tags": [
+          "Enforcement Cache"
+        ],
+        "summary": "Delete",
+        "x-probe-verified": false,
+        "x-source": "pac-cli",
+        "description": "Purges every cached solution-checker result for the caller's tenant, so that the next import re-runs the checks instead of reusing a stored verdict. The reason to reach for it is a solution that Managed Environments enforcement keeps blocking on a result you have already fixed.\n\nTenant-wide and not undoable: it discards the results for every solution in the tenant, not only the one you are trying to unblock, and the next import of each pays for a fresh analysis. There is no companion read, no way to purge a single solution, and no confirmation beyond the status code.\n\nThe tenant is taken from the token rather than from any parameter - the call has no path, query or body input at all.",
+        "x-notes": [
+          {
+            "note": "Undocumented by Microsoft, and never invoked: the first-party client is the only evidence this route exists. The route name is nothing like the api/cache one might guess at.",
+            "source": "pac-cli"
+          },
+          {
+            "note": "The route carries no api-version at all, unlike every other operation on this host.",
+            "source": "pac-cli"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CorrelationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/ClientTenantIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purged. The status code alone signals success; no response body is defined."
+          },
+          "401": {
+            "description": "No or invalid bearer token."
+          },
+          "429": {
+            "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait, as an integer.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "x-source": "pac-cli"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "azure_auth": {
+        "type": "oauth2",
+        "description": "Microsoft Entra ID OAuth2. The audience is the advisor service itself, not the PowerApps service - the challenge on an unauthenticated call names resource_id https://api.advisor.powerapps.com/. Both app ID URIs resolve: https://advisor.powerapps.com/.default and https://api.advisor.powerapps.com/.default.\n\nThe audience is per-cloud, and is selected from the Dataverse environment's host rather than from the advisor host being called: crm.dynamics.com and anything unrecognised map to https://api.advisor.powerapps.com/, crm9.dynamics.com to https://gov.api.advisor.powerapps.us/, crm.microsoftdynamics.us to https://high.api.advisor.powerapps.us/, crm.appsplatform.us to https://mil.api.advisor.appsplatform.us/, and crm.dynamics.cn to https://china.api.advisor.powerapps.cn/.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+            "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            "scopes": {
+              "https://advisor.powerapps.com/.default": "PowerApps Advisor (solution checker)",
+              "https://api.advisor.powerapps.com/.default": "PowerApps Advisor, named by the WWW-Authenticate challenge and requested by the first-party SDK"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "AcceptLanguage": {
+        "name": "Accept-Language",
+        "in": "header",
+        "required": false,
+        "description": "Language for the human-readable rule text, defaulting to en-US. It localises `summary`, `description` and `howToFix`; `code`, `guidanceUrl` and every other field stay in English, and ruleset names are not localised at all. Several languages may be listed, the first being primary.",
         "schema": {
-         "type": "array",
-         "description": "Storage URIs for the uploaded files, in the order the parts were sent.",
-         "items": {
+          "type": "string",
+          "default": "en-US",
+          "example": "fr"
+        }
+      },
+      "ApiVersion10": {
+        "name": "api-version",
+        "in": "query",
+        "required": true,
+        "description": "The analysis job routes are served at 1.0 only, unlike the catalogue reads which are 2.0. Sending 2.0 here is rejected as an unsupported version, which is how these routes were confirmed to exist without invoking them.",
+        "schema": {
+          "type": "string",
+          "default": "1.0",
+          "enum": [
+            "1.0"
+          ]
+        }
+      },
+      "TenantIdHeader": {
+        "name": "x-ms-tenant-id",
+        "in": "header",
+        "required": false,
+        "description": "Tenant the analysed solution belongs to. In practice it travels with the other Dataverse-context headers, when results are being written back to an environment.\n\nDistinct from x-ms-client-tenant-id, which identifies the tenant of the calling client rather than the owner of the solution.",
+        "schema": {
+          "type": "string",
+          "format": "uuid",
+          "x-notes": [
+            {
+              "note": "Microsoft documents this header as required on the analysis routes. It is optional in practice, and accepted without complaint on the routes it is not documented for.",
+              "source": "live"
+            }
+          ]
+        }
+      },
+      "CorrelationIdHeader": {
+        "name": "x-ms-correlation-id",
+        "in": "header",
+        "required": false,
+        "description": "The identity of one analysis run: send the same freshly generated GUID on every upload, the submission and every status poll of that run. Reusing a GUID on a later submission is refused as a duplicate. Microsoft documents the header as required; it is optional here because no call was ever observed to need it.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "ClientTenantIdHeader": {
+        "name": "x-ms-client-tenant-id",
+        "in": "header",
+        "required": false,
+        "description": "Tenant of the calling client, accepted on every request to this API including the catalogue reads. Not used for authorization: a random GUID is acceptable where the caller has no tenant context.\n\nDistinct from x-ms-tenant-id, which identifies the tenant that owns the solution under analysis.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "x-source": "pac-cli"
+      },
+      "TenantIdQuery": {
+        "name": "tenantId",
+        "in": "query",
+        "required": false,
+        "description": "Tenant to resolve the catalogue for. Optional - both catalogue reads answer without it - but it is what scopes the catalogue to a tenant, so a tenant-private or preview ruleset would surface only when it is sent. The all-zeros GUID counts as absent rather than as a value.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "x-source": "pac-cli"
+      },
+      "OrgUrlHeader": {
+        "name": "x-ms-orgurl",
+        "in": "header",
+        "required": false,
+        "description": "Absolute URL of the Dataverse environment the analysis results are to be written into, e.g. https://contoso.crm.dynamics.com/. Sent only with the Dataverse-context submission.",
+        "schema": {
           "type": "string",
           "format": "uri",
-          "example": "https://contoso.blob.core.windows.net/uploads/solution.zip?sv=...&sig=..."
-         }
-        }
-       }
-      }
-     },
-     "400": {
-      "description": "The content was not a zip, the parameters were wrong, or the file failed the service's virus scan. No response body distinguishes the three."
-     },
-     "401": {
-      "description": "No or invalid bearer token."
-     },
-     "413": {
-      "description": "Too large. Upload to your own storage and pass a SAS URI to the submission instead."
-     },
-     "429": {
-      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
-      "headers": {
-       "Retry-After": {
-        "description": "Seconds to wait, as an integer.",
-        "schema": {
-         "type": "integer"
-        }
-       }
+          "example": "https://contoso.crm.dynamics.com/"
+        },
+        "x-source": "pac-cli"
       },
-      "x-source": "pac-cli"
-     }
-    },
-    "x-source": "pac-cli"
-   }
-  },
-  "/api/analyze": {
-   "post": {
-    "operationId": "analysis_create",
-    "tags": [
-     "Analysis"
-    ],
-    "summary": "Create",
-    "x-probe-verified": false,
-    "description": "Submits a static-analysis job over one or more solution files already in storage and returns immediately with the job's status URL in the Location header. The Location value is the whole contract: a 202 without one is a protocol error, and the URL it carries should be polled verbatim rather than reconstructed - it already carries its own api-version.\n\nConfigure the run with either ruleSets or ruleCodes, not both. ruleLevelOverrides is a third, independent list that re-levels named rules for this run only; it is how a team downgrades a rule it has accepted without removing the check.\n\nServed at api-version 1.0 only, and POST is the only method accepted.",
-    "x-notes": [
-     {
-      "note": "Property binding is case-insensitive: the camelCase body Microsoft documents and its PascalCase equivalent (SasUriList, RuleSets, RuleCodes, RuleLevelOverrides, FileExclusions) are both accepted. The first-party client sends PascalCase.",
-      "source": "pac-cli"
-     }
-    ],
-    "parameters": [
-     {
-      "$ref": "#/components/parameters/ApiVersion10"
-     },
-     {
-      "$ref": "#/components/parameters/TenantIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/CorrelationIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/AcceptLanguage"
-     },
-     {
-      "$ref": "#/components/parameters/ClientTenantIdHeader"
-     }
-    ],
-    "requestBody": {
-     "required": true,
-     "content": {
-      "application/json": {
-       "schema": {
-        "$ref": "#/components/schemas/AnalysisRequest"
-       }
-      }
-     }
-    },
-    "responses": {
-     "202": {
-      "description": "The job was accepted and is running. No response body; the Location header is the only thing that matters.",
-      "headers": {
-       "Location": {
-        "description": "Status URL for this job, of the form https://{region}.api.advisor.powerapps.com/api/status/{analysisId}?api-version=1.0. Poll it as given - it is absolute and already versioned.",
+      "RequestorIdHeader": {
+        "name": "x-ms-requestorid",
+        "in": "header",
+        "required": false,
+        "description": "Entra object id of the user on whose behalf the run is submitted - the object id on the target environment's own system user record, not the subject of the bearer token. This is who the analysis job in the environment is attributed to.",
         "schema": {
-         "type": "string",
-         "format": "uri"
-        }
-       }
-      }
-     },
-     "400": {
-      "description": "Non-zip content behind one of the SAS URIs, bad parameters, or a file that failed virus scanning. No response body."
-     },
-     "401": {
-      "description": "No or invalid bearer token."
-     },
-     "409": {
-      "description": "The x-ms-correlation-id has already been used for a job. Generate a fresh GUID per run rather than retrying with the same one."
-     },
-     "429": {
-      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
-      "headers": {
-       "Retry-After": {
-        "description": "Seconds to wait, as an integer.",
-        "schema": {
-         "type": "integer"
-        }
-       }
+          "type": "string",
+          "format": "uuid"
+        },
+        "x-source": "pac-cli"
       },
-      "x-source": "pac-cli"
-     }
-    },
-    "x-source": "pac-cli"
-   }
-  },
-  "/api/status/{analysisId}": {
-   "get": {
-    "operationId": "analysis_getStatus",
-    "tags": [
-     "Analysis"
-    ],
-    "summary": "Status Read",
-    "x-probe-verified": false,
-    "description": "Polls a submitted job, following the URL the submission put in its Location header, or - for a Dataverse-context submission, which returns no Location - built as /api/status/{runcorrelationid}?api-version=1.0 against the same host.\n\nBoth 200 and 202 carry the same body; read status rather than branching on the status code, because a finished job and a failed one look identical at the transport layer. The five states are Opened and InProgress, which mean keep polling, and Failed, Finished and FinishedWithErrors, which are terminal.\n\nThis route sends no Retry-After, so poll on a fixed interval; 30 seconds with a ceiling of an hour is a workable default. progress drives a progress bar and is not a scheduling or completion signal.\n\nOnce a job is terminal, resultFileUris names the reports. Download them promptly and do not assume they are Azure blob URIs; see the field's own description.\n\nServed at api-version 1.0 only. An unauthenticated call is refused with the same challenge as the catalogue reads. An unknown job id is reported as problem+json, a different error shape from the rest of this API, and the all-zeros GUID faults the service rather than returning not-found, so never use it as a placeholder.",
-    "parameters": [
-     {
-      "name": "analysisId",
-      "in": "path",
-      "required": true,
-      "description": "The job id, taken from the Location header of the submission rather than constructed. In practice the same GUID as the run's x-ms-correlation-id.",
-      "schema": {
-       "type": "string",
-       "format": "uuid"
-      }
-     },
-     {
-      "$ref": "#/components/parameters/ApiVersion10"
-     },
-     {
-      "$ref": "#/components/parameters/TenantIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/CorrelationIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/ClientTenantIdHeader"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The job has finished - successfully or not, so read status rather than assuming success - and resultFileUris and issueSummary are populated. Stop polling.",
-      "content": {
-       "application/json": {
+      "OrganizationIdHeader": {
+        "name": "x-ms-organization-id",
+        "in": "header",
+        "required": false,
+        "description": "Dataverse organization id of the environment the results are written into. Distinct from the environment id.",
         "schema": {
-         "$ref": "#/components/schemas/AnalysisStatus"
-        }
-       }
-      }
-     },
-     "202": {
-      "description": "Still running - status is Opened or InProgress. Same body shape as the 200, without the result fields. Wait and poll the same URL again. Treat 200 and 202 interchangeably and decide on status alone.",
-      "headers": {
-       "Location": {
-        "description": "The same status URL, repeated.",
-        "schema": {
-         "type": "string",
-         "format": "uri"
-        }
-       }
+          "type": "string",
+          "format": "uuid"
+        },
+        "x-source": "pac-cli"
       },
-      "content": {
-       "application/json": {
+      "ClientRequestorIdHeader": {
+        "name": "x-ms-client-requestorid",
+        "in": "header",
+        "required": false,
+        "description": "Fresh GUID per submission, distinguishing this request from others by the same requestor. Not the run correlation id.",
         "schema": {
-         "$ref": "#/components/schemas/AnalysisStatus"
-        }
-       }
+          "type": "string",
+          "format": "uuid"
+        },
+        "x-source": "pac-cli"
       }
-     },
-     "400": {
-      "description": "An api-version other than 1.0 - this route is not served at 2.0 - as ErrorResponse with code UnsupportedApiVersion.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ErrorResponse"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "No or invalid bearer token."
-     },
-     "403": {
-      "description": "The token belongs to a different client application than the one that submitted the job. Results are readable only by the submitter."
-     },
-     "404": {
-      "description": "No such analysis job - unknown id, or one that has aged out. Served as application/problem+json, not the ErrorResponse envelope the api-version errors use. An analysisId that is not a GUID at all gets a bare 404 with no body instead, from routing rather than from the operation.",
-      "content": {
-       "application/problem+json": {
-        "schema": {
-         "$ref": "#/components/schemas/ProblemDetails"
-        }
-       }
-      }
-     },
-     "500": {
-      "description": "Returned for the all-zeros GUID, which the service treats as an unset value rather than as an unknown id. Empty body, and unaffected by the request headers. Any other GUID returns a clean not-found, so do not use the zero GUID as a placeholder."
-     },
-     "429": {
-      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
-      "headers": {
-       "Retry-After": {
-        "description": "Seconds to wait, as an integer.",
-        "schema": {
-         "type": "integer"
-        }
-       }
-      },
-      "x-source": "pac-cli"
-     }
     },
-    "x-source": "pac-cli"
-   }
-  },
-  "/api/cds/analysisrequest": {
-   "post": {
-    "operationId": "analysis_createDataverse",
-    "tags": [
-     "Analysis"
-    ],
-    "summary": "Create (Dataverse Context)",
-    "x-probe-verified": false,
-    "x-source": "pac-cli",
-    "description": "Submits an analysis run whose results are also written back into a Dataverse environment, where they appear in the Solution Health Hub app as msdyn_analysisjobs records. The environment is the destination for the results, not the subject of the analysis, and identifying it is entirely the job of the x-ms-orgurl, x-ms-organization-id, x-ms-requestorid and x-ms-tenant-id headers - the body says nothing about it.\n\nIt differs from the ordinary submission in three ways that matter. It answers 200, not 202. It returns a body rather than a Location header, so the caller composes the status URL itself as /api/status/{runcorrelationid}?api-version=1.0 against the same host. And its body adds Solutions, a list the caller populates itself - one entry per storage URI, each with a caller-chosen id and name - which is how the results get labelled per solution in the environment rather than by opaque file URI.",
-    "x-notes": [
-     {
-      "note": "Despite the cds in the route, this does not analyse a live Dataverse environment: the files still come from storage URIs exactly as with the ordinary submission.",
-      "source": "pac-cli"
-     },
-     {
-      "note": "Undocumented by Microsoft, and never invoked: the first-party client is the only evidence this route exists.",
-      "source": "pac-cli"
-     }
-    ],
-    "parameters": [
-     {
-      "$ref": "#/components/parameters/ApiVersion10"
-     },
-     {
-      "$ref": "#/components/parameters/TenantIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/OrgUrlHeader"
-     },
-     {
-      "$ref": "#/components/parameters/OrganizationIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/RequestorIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/ClientRequestorIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/CorrelationIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/ClientTenantIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/AcceptLanguage"
-     }
-    ],
-    "requestBody": {
-     "required": true,
-     "content": {
-      "application/json": {
-       "schema": {
-        "$ref": "#/components/schemas/DataverseAnalysisRequest"
-       }
-      }
-     }
-    },
-    "responses": {
-     "200": {
-      "description": "The job was accepted and is running - 200 here means accepted, not complete. runcorrelationid is the field that matters, and an all-zeros value is not a usable id. Build the status URL from it and poll.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/DataverseAnalysisResponse"
+    "schemas": {
+      "Rule": {
+        "type": "object",
+        "x-probe-verified": true,
+        "description": "One checker rule: what it looks for, how bad a violation is, and where the guidance for fixing it lives. A rule object carries exactly these nine fields - no envelope, no @odata metadata, no pagination.\n\nOnly code, guidanceUrl, include, componentType, primaryCategory and severity are present on every rule. description, summary and howToFix are absent entirely on a rule with no authored text - web-unsupported-syntax is one - and howToFix is an empty string on roughly half of the rest.\n\nNo property is ever explicitly null: absent means absent.",
+        "x-notes": [
+          {
+            "note": "Microsoft's documentation shows howToFix as an object with a summary property; at api-version 2.0 the service returns a plain string.",
+            "source": "live"
+          }
+        ],
+        "required": [
+          "code",
+          "guidanceUrl",
+          "include",
+          "componentType",
+          "primaryCategory",
+          "severity"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^(app|connector|desktopflow|flow|meta|web)-",
+            "description": "Stable rule identifier, and the rule id findings are reported under in the SARIF report. Prefixed by the component family it analyses: app- (canvas apps), connector- (custom connectors), desktopflow- (Power Automate desktop flows), flow- (cloud flows), meta- (plug-ins, workflow activities and solution metadata), web- (JavaScript web resources).",
+            "example": "meta-remove-dup-reg"
+          },
+          "summary": {
+            "type": "string",
+            "description": "One-line title of the rule, as shown in the solution checker report's Issue column. Localised by Accept-Language."
+          },
+          "description": {
+            "type": "string",
+            "description": "Longer statement of what the rule checks for. Localised by Accept-Language. Note this describes the check, not a particular finding - per-finding text comes from messageTemplates."
+          },
+          "guidanceUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Published guidance explaining the issue and the recommended fix - the report's Guidance link. Either a learn.microsoft.com article or a go.microsoft.com fwlink redirect carrying the rule code in its error query parameter. Always present, though a link may resolve to a general best-practices page rather than a dedicated article."
+          },
+          "howToFix": {
+            "type": "string",
+            "description": "Short remediation instruction shown alongside a finding. Authored for only about half the rules; an empty string where there is none."
+          },
+          "include": {
+            "type": "boolean",
+            "description": "Whether the rule participates in an analysis run. True on every rule this endpoint returns - the catalogue only lists included rules - so it is not usable as a filter. It carries meaning in a SARIF report, where an excluded rule can appear as false.",
+            "enum": [
+              true
+            ]
+          },
+          "componentType": {
+            "type": "integer",
+            "description": "The solution component type the rule targets.",
+            "x-notes": [
+              {
+                "note": "Undocumented by Microsoft, and 0 on every rule the catalogue returns, so it yields no usable mapping to solution component types: the enum records what the service returns, not the full domain. A rule's component family is readable from its code prefix instead.",
+                "source": "live"
+              }
+            ],
+            "enum": [
+              0
+            ]
+          },
+          "primaryCategory": {
+            "type": "integer",
+            "description": "What kind of problem the rule looks for: 1 Performance, 2 Upgrade Readiness (patterns that risk breaking on a platform version upgrade), 3 Usage (misuse of an API, pattern or configuration), 4 Security, 5 Design, 7 Maintainability, 8 Supportability (use of removed, unpublished or otherwise unsupported APIs), 9 Accessibility, 10 licensing entitlement (the meta-license-* rules; this category has no published name).",
+            "x-notes": [
+              {
+                "note": "The numbering is not the order of the category list Microsoft publishes under model-driven app best practices. It was derived by cross-referencing 38 rule codes against their documented category names, with no collisions. 6 was never returned by any geography and is presumed to be Online Migration, the one documented category with no live rule.",
+                "source": "live"
+              }
+            ],
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              7,
+              8,
+              9,
+              10
+            ]
+          },
+          "severity": {
+            "type": "integer",
+            "description": "Impact ranking, ascending: 1 Informational, 2 Low, 3 Medium, 4 High, 5 Critical. The names line up with the severities Microsoft Learn publishes per rule code.\n\nCritical is the level solution checker enforcement blocks a solution import on in Managed Environments, so it is the one with governance consequences rather than only advisory weight. The same five levels are the buckets in IssueSummary.",
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "messageTemplates": {
+            "type": "array",
+            "description": "The message variations this rule can emit, intended for pre-translating report output. Present and non-empty on every rule when the request asks for message formats, and absent entirely otherwise - so unlike howToFix, there is no rule without message text.",
+            "items": {
+              "$ref": "#/components/schemas/MessageTemplate"
+            }
+          }
         }
-       }
-      }
-     },
-     "400": {
-      "description": "Rejected. No error body shape is defined for this route; treat whatever the service sends as opaque text."
-     },
-     "401": {
-      "description": "No or invalid bearer token."
-     },
-     "429": {
-      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
-      "headers": {
-       "Retry-After": {
-        "description": "Seconds to wait, as an integer.",
-        "schema": {
-         "type": "integer"
-        }
-       }
       },
-      "x-source": "pac-cli"
-     }
+      "MessageTemplate": {
+        "type": "object",
+        "x-probe-verified": true,
+        "description": "One message variation a rule can emit - the per-finding wording that appears in a SARIF report, as opposed to the rule's own fixed summary. Returned only when the request asks for message formats.",
+        "required": [
+          "ruleId",
+          "messageTemplateId",
+          "messageTemplate"
+        ],
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "description": "The owning rule's code, repeated on every template."
+          },
+          "messageTemplateId": {
+            "type": "string",
+            "description": "Identifier a SARIF finding references to select this variation. Usually message1, message2 and so on, numbered per rule, but not guaranteed to follow that form - descriptive ids such as connectiontoconnectionreferencemode also occur.",
+            "example": "message1"
+          },
+          "messageTemplate": {
+            "type": "string",
+            "description": "Format string whose positional {0}, {1}, ... placeholders are filled from the arguments the SARIF finding carries. Translate the template, not the assembled message."
+          }
+        }
+      },
+      "Ruleset": {
+        "type": "object",
+        "x-probe-verified": true,
+        "description": "A named grouping of rules - the standard a solution is checked against. Both fields are always present.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Returned lowercase, and accepted case-insensitively wherever a ruleset is named. Stable across geographies: 0ad12346-e108-40b8-a956-9a8f95ea18c9 is Solution Checker and 083a2ef5-7e0e-4754-9d88-9455142dc08b is AppSource Certification.",
+            "enum": [
+              "0ad12346-e108-40b8-a956-9a8f95ea18c9",
+              "083a2ef5-7e0e-4754-9d88-9455142dc08b"
+            ],
+            "example": "0ad12346-e108-40b8-a956-9a8f95ea18c9"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, also accepted in place of the id when naming a ruleset. Not localised.",
+            "enum": [
+              "Solution Checker",
+              "AppSource Certification"
+            ],
+            "example": "Solution Checker"
+          }
+        }
+      },
+      "AnalysisRequest": {
+        "type": "object",
+        "x-probe-verified": false,
+        "description": "Configuration for one analysis run: what to analyse, against which rules, and what to skip. Supply exactly one of ruleSets or ruleCodes.",
+        "x-notes": [
+          {
+            "note": "ruleLevelOverrides is accepted even though Microsoft's documentation of this body omits it.",
+            "source": "pac-cli"
+          },
+          {
+            "note": "Property names bind case-insensitively: the camelCase spelling documented here and its PascalCase equivalent (SasUriList, FileExclusions, RuleSets, RuleCodes, RuleLevelOverrides) are both accepted, and a null member may be omitted entirely instead of being sent.",
+            "source": "pac-cli"
+          }
+        ],
+        "required": [
+          "sasUriList"
+        ],
+        "properties": {
+          "sasUriList": {
+            "type": "array",
+            "description": "Storage URIs the service can download without further credentials - those returned by the upload step, or your own SAS URIs. Each may be a single solution, a zip of several, or a package, and each produces one entry in resultFileUris. Required, and must not be empty.",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "ruleSets": {
+            "type": "array",
+            "description": "Rulesets to check against, normally exactly one. The usual choice over naming individual rules.",
+            "items": {
+              "$ref": "#/components/schemas/RulesetReference"
+            }
+          },
+          "ruleCodes": {
+            "type": "array",
+            "description": "Individual rules to check, as an alternative to whole rulesets when you want a narrower run.",
+            "items": {
+              "$ref": "#/components/schemas/RuleReference"
+            }
+          },
+          "fileExclusions": {
+            "type": "array",
+            "description": "File names or patterns to skip, typically third-party libraries you did not write and cannot fix. A * wildcard is supported at either end, e.g. *jquery* or *jquery.dll. Omit the member entirely when empty rather than sending an empty array.",
+            "items": {
+              "type": "string",
+              "example": "*jquery*"
+            }
+          },
+          "ruleLevelOverrides": {
+            "type": "array",
+            "description": "Rules to re-level for this run only, leaving the catalogue untouched - the mechanism a team uses to accept a finding without disabling the check that produces it. Each entry names a rule code and the level to report it at instead.\n\nDistinct from ruleCodes, which selects which rules run at all: an override does not add a rule to a run that the chosen ruleset does not already include.",
+            "items": {
+              "$ref": "#/components/schemas/RuleLevelOverride"
+            },
+            "x-source": "pac-cli"
+          }
+        },
+        "x-source": "pac-cli"
+      },
+      "RulesetReference": {
+        "type": "object",
+        "x-probe-verified": false,
+        "description": "Names one ruleset for an analysis run to check against. Only id is meaningful to the service; name may travel alongside it, so the object returned by the ruleset listing can be passed back wholesale, and a reference built from a bare GUID with no name at all is equally valid.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "A ruleset id from the ruleset listing.",
+            "example": "0ad12346-e108-40b8-a956-9a8f95ea18c9"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, as returned by the ruleset listing. Not required, and not how the service identifies a ruleset here.",
+            "example": "Solution Checker"
+          }
+        },
+        "x-source": "pac-cli"
+      },
+      "RuleReference": {
+        "type": "object",
+        "x-probe-verified": false,
+        "description": "Names one individual rule for an analysis run to check. Only code is meaningful on a submission; the catalogue's descriptive text may travel with it, and is omitted when null.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "A rule code from the rule catalogue.",
+            "example": "meta-remove-dup-reg"
+          }
+        },
+        "x-source": "pac-cli"
+      },
+      "AnalysisStatus": {
+        "type": "object",
+        "x-probe-verified": false,
+        "description": "The state of one analysis job, and once it has completed, where to fetch its report and how many findings it produced. Returned identically under 200 and 202.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "The job's state, and the only thing worth branching on - both a finished job and a failed one arrive as HTTP 200.\n\nOpened means accepted but not yet started and InProgress means running; both mean keep polling. The other three are terminal. Finished is clean completion. FinishedWithErrors means a report exists but one or more rules failed to run, so it may be incomplete - a service-side fault rather than a finding about the solution, and a reason not to gate a release on the counts. Failed means the job itself broke and there is no report.",
+            "enum": [
+              "Opened",
+              "InProgress",
+              "Failed",
+              "Finished",
+              "FinishedWithErrors"
+            ]
+          },
+          "progress": {
+            "type": "integer",
+            "description": "Percentage complete, for a progress bar. Not a scheduling signal and not a completion signal - poll on a fixed interval, and read status rather than treating 100 as done.",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "runCorrelationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The run's id, for matching a response to a run when several are in flight. Equal to the x-ms-correlation-id of an ordinary submission, and to the runcorrelationid returned by a Dataverse-context submission. Note the casing differs between the two routes: runCorrelationId here, runcorrelationid in the Dataverse-context response."
+          },
+          "resultFileUris": {
+            "type": "array",
+            "description": "Where the reports are, one entry per submitted file, present only once the job is terminal. Each normally resolves to a zip containing a SARIF v2 JSON report.\n\nDo not assume a single URI form. Three forms are downloadable: an Azure blob SAS URI (*.blob.core.windows.net or *.file.core.windows.net, with a sig query parameter, plus the sovereign equivalents on core.usgovcloudapi.net and core.chinacloudapi.cn), a Power Platform blob-proxy URI (*.powerplatformusercontent.com/.us/.cn, with an esig query parameter), and a Dataverse file-download URI (a Dataverse host with an /api/filedownload path).\n\nTwo further forms are pointers for a human rather than files, and there is nothing to fetch from them: a Dataverse record URI containing msdyn_analysisjobs(...), and a maker-portal deep link of the form make.powerapps.com/environments/{id}/solutions/{id}/overview/checkerResults. Expect these from a Dataverse-context run, whose results live in the environment.\n\nWhatever the form, download promptly: the signed URIs expire. Only the blob and localhost forms carry a usable file name, so do not rely on the URI to name the report.",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "issueSummary": {
+            "$ref": "#/components/schemas/IssueSummary"
+          },
+          "privacyPolicy": {
+            "type": "string",
+            "format": "uri",
+            "description": "Link to the privacy policy covering the analysed content. Not always present."
+          },
+          "additionalMessage": {
+            "type": "string",
+            "description": "Free-text service commentary about the run, typically present when status is FinishedWithErrors and explaining which rules could not be evaluated. Untrusted text: strip control characters and sanitise it before display or logging.",
+            "x-source": "pac-cli"
+          }
+        },
+        "x-source": "pac-cli"
+      },
+      "IssueSummary": {
+        "type": "object",
+        "x-probe-verified": false,
+        "description": "Finding counts bucketed by severity, present only once processing has completed. The five buckets are the names behind Rule.severity's numeric values, so criticalIssueCount counts findings from rules with severity 5. Critical is the bucket Managed Environments solution checker enforcement blocks on.",
+        "properties": {
+          "criticalIssueCount": {
+            "type": "integer"
+          },
+          "highIssueCount": {
+            "type": "integer"
+          },
+          "mediumIssueCount": {
+            "type": "integer"
+          },
+          "lowIssueCount": {
+            "type": "integer"
+          },
+          "informationalIssueCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "x-probe-verified": true,
+        "description": "The envelope used for api-version and HTTP-method negotiation failures - the outermost routing layer, before any operation runs. Distinct from the problem-details shapes the operations themselves return.",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        }
+      },
+      "ErrorDetail": {
+        "type": "object",
+        "x-probe-verified": true,
+        "description": "The code and message pair inside an ErrorResponse.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "UnsupportedApiVersion is the only value this envelope carries, and it covers both an unsupported api-version and an unsupported method on a supported one - so the code alone does not tell you which.",
+            "enum": [
+              "UnsupportedApiVersion"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable explanation. It embeds the internal service-fabric node address and partition path of the instance that handled the request, so log it but do not surface it to end users."
+          }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "x-probe-verified": true,
+        "description": "RFC 9110 problem details, served as application/problem+json. Used by the analysis status route; the catalogue reads use ErrorResponse instead.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri",
+            "description": "Link to the RFC section for the status code, not a service-specific error taxonomy - it carries no diagnostic information."
+          },
+          "title": {
+            "type": "string",
+            "example": "Not Found"
+          },
+          "status": {
+            "type": "integer",
+            "description": "Repeats the HTTP status code."
+          },
+          "traceId": {
+            "type": "string",
+            "description": "Kestrel connection and request id, of the form {connectionId}:{requestNumber}. The value to quote when asking support to look up a request.",
+            "example": "0HMPABCDEFGHI:00000001"
+          }
+        }
+      },
+      "ValidationProblemDetails": {
+        "type": "object",
+        "x-probe-verified": true,
+        "description": "Model-binding failure on a query parameter - a value the service could not parse into the expected type.",
+        "x-notes": [
+          {
+            "note": "Served as application/json rather than application/problem+json, unlike ProblemDetails on the same surface, so content-type alone will not tell a client which error shape it is holding.",
+            "source": "live"
+          }
+        ],
+        "properties": {
+          "errors": {
+            "type": "object",
+            "description": "Parameter name to the list of messages about it, so the caller can point at the offending input.",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "includeMessageFormats": [
+                "The value 'maybe' is not valid."
+              ]
+            }
+          },
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string",
+            "example": "One or more validation errors occurred."
+          },
+          "status": {
+            "type": "integer",
+            "description": "Repeats the HTTP status code."
+          },
+          "traceId": {
+            "type": "string",
+            "description": "Kestrel connection and request id, as in ProblemDetails."
+          }
+        }
+      },
+      "RuleLevelOverride": {
+        "type": "object",
+        "x-probe-verified": false,
+        "x-source": "pac-cli",
+        "description": "Re-levels one rule for the duration of a single analysis run.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The rule code to re-level, from the rule catalogue.",
+            "example": "meta-remove-dup-reg"
+          },
+          "overrideLevel": {
+            "type": "string",
+            "description": "Severity to report findings from this rule at instead of the catalogue's. These five names are the labels behind Rule.severity's integers - Critical is 5 down to Informational is 1 - so an override is really a severity substitution.\n\nDowngrading a rule below Critical is what takes it out of the way of Managed Environments enforcement without silencing it. The service's handling of an unrecognised level is undefined.",
+            "enum": [
+              "Critical",
+              "High",
+              "Medium",
+              "Low",
+              "Informational"
+            ],
+            "example": "Medium"
+          }
+        }
+      },
+      "DataverseAnalysisRequest": {
+        "type": "object",
+        "x-probe-verified": false,
+        "x-source": "pac-cli",
+        "description": "An analysis submission that also writes its results into a Dataverse environment. Structurally the ordinary AnalysisRequest plus Solutions.\n\nThe property names here are PascalCase. The camelCase spelling the ordinary submission accepts is likely to work too, but only the PascalCase form is established for this route, so prefer the names shown.",
+        "properties": {
+          "SasUriList": {
+            "type": "array",
+            "description": "As AnalysisRequest.sasUriList. Every entry must also appear in Solutions.",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "Solutions": {
+            "type": "array",
+            "description": "One entry per storage URI, naming the solution each file holds so the results can be labelled in the environment rather than by opaque URI.\n\nThe caller builds this list itself - the service does not derive it from SasUriList - so the id and the name are the caller's to choose, and neither is required to be the solution's real Dataverse identity.",
+            "items": {
+              "$ref": "#/components/schemas/AnalysisSolution"
+            }
+          },
+          "RuleSets": {
+            "type": "array",
+            "description": "As AnalysisRequest.ruleSets.",
+            "items": {
+              "$ref": "#/components/schemas/RulesetReference"
+            }
+          },
+          "RuleCodes": {
+            "type": "array",
+            "description": "As AnalysisRequest.ruleCodes.",
+            "items": {
+              "$ref": "#/components/schemas/RuleReference"
+            }
+          },
+          "RuleLevelOverrides": {
+            "type": "array",
+            "description": "As AnalysisRequest.ruleLevelOverrides.",
+            "items": {
+              "$ref": "#/components/schemas/RuleLevelOverride"
+            }
+          },
+          "FileExclusions": {
+            "type": "array",
+            "description": "As AnalysisRequest.fileExclusions. Omitted entirely when empty.",
+            "items": {
+              "type": "string",
+              "example": "*jquery*"
+            }
+          }
+        }
+      },
+      "AnalysisSolution": {
+        "type": "object",
+        "x-probe-verified": false,
+        "x-source": "pac-cli",
+        "description": "One solution in a Dataverse-context run - the pairing of a storage URI with a name the environment can show. The same object comes back on the response, where the service may have filled in status.",
+        "properties": {
+          "ID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier for this solution within the run. Caller-generated and not the solution's Dataverse id - a fresh GUID per entry per run is the usual choice. It correlates a request entry with its response entry and nothing more."
+          },
+          "Name": {
+            "type": "string",
+            "description": "Label for the solution in the results. The caller chooses it; taking it from the storage URI's last path segment with the extension removed gives the file's name rather than the solution's unique name.",
+            "example": "ContosoCore"
+          },
+          "SasUri": {
+            "type": "string",
+            "format": "uri",
+            "description": "The storage URI this entry describes. Must be one of the entries in SasUriList."
+          },
+          "Status": {
+            "type": "string",
+            "description": "Per-solution outcome, filled in by the service on the response and never set on a request. Its value set is undefined, and it is not the job-level status the polling route returns."
+          }
+        }
+      },
+      "DataverseAnalysisResponse": {
+        "type": "object",
+        "x-probe-verified": false,
+        "x-source": "pac-cli",
+        "description": "Acknowledgement of a Dataverse-context submission. It stands in for the Location header the ordinary submission returns: runcorrelationid is what the caller builds the status URL from.",
+        "properties": {
+          "runcorrelationid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The run's id, and the {analysisId} of the status URL the caller must compose. Spelled entirely in lower case here, unlike the status route's runCorrelationId - the inconsistency is the service's.\n\nAn all-zeros value is not a usable id, which lines up with the status route faulting on that GUID rather than reporting not-found."
+          },
+          "solutions": {
+            "type": "array",
+            "description": "The submitted solutions echoed back, possibly with status filled in.",
+            "items": {
+              "$ref": "#/components/schemas/AnalysisSolution"
+            }
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Tenant the run is attributed to. Nullable."
+          }
+        }
+      }
     }
-   }
-  },
-  "/api/QueryValidationResults": {
-   "delete": {
-    "operationId": "enforcementCache_delete",
-    "tags": [
-     "Enforcement Cache"
-    ],
-    "summary": "Delete",
-    "x-probe-verified": false,
-    "x-source": "pac-cli",
-    "description": "Purges every cached solution-checker result for the caller's tenant, so that the next import re-runs the checks instead of reusing a stored verdict. The reason to reach for it is a solution that Managed Environments enforcement keeps blocking on a result you have already fixed.\n\nTenant-wide and not undoable: it discards the results for every solution in the tenant, not only the one you are trying to unblock, and the next import of each pays for a fresh analysis. There is no companion read, no way to purge a single solution, and no confirmation beyond the status code.\n\nThe tenant is taken from the token rather than from any parameter - the call has no path, query or body input at all.",
-    "x-notes": [
-     {
-      "note": "Undocumented by Microsoft, and never invoked: the first-party client is the only evidence this route exists. The route name is nothing like the api/cache one might guess at.",
-      "source": "pac-cli"
-     },
-     {
-      "note": "The route carries no api-version at all, unlike every other operation on this host.",
-      "source": "pac-cli"
-     }
-    ],
-    "parameters": [
-     {
-      "$ref": "#/components/parameters/CorrelationIdHeader"
-     },
-     {
-      "$ref": "#/components/parameters/ClientTenantIdHeader"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Purged. The status code alone signals success; no response body is defined."
-     },
-     "401": {
-      "description": "No or invalid bearer token."
-     },
-     "429": {
-      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
-      "headers": {
-       "Retry-After": {
-        "description": "Seconds to wait, as an integer.",
-        "schema": {
-         "type": "integer"
-        }
-       }
-      },
-      "x-source": "pac-cli"
-     }
-    }
-   }
   }
- },
- "components": {
-  "securitySchemes": {
-   "azure_auth": {
-    "type": "oauth2",
-    "description": "Microsoft Entra ID OAuth2. The audience is the advisor service itself, not the PowerApps service - the challenge on an unauthenticated call names resource_id https://api.advisor.powerapps.com/. Both app ID URIs resolve: https://advisor.powerapps.com/.default and https://api.advisor.powerapps.com/.default.\n\nThe audience is per-cloud, and is selected from the Dataverse environment's host rather than from the advisor host being called: crm.dynamics.com and anything unrecognised map to https://api.advisor.powerapps.com/, crm9.dynamics.com to https://gov.api.advisor.powerapps.us/, crm.microsoftdynamics.us to https://high.api.advisor.powerapps.us/, crm.appsplatform.us to https://mil.api.advisor.appsplatform.us/, and crm.dynamics.cn to https://china.api.advisor.powerapps.cn/.",
-    "flows": {
-     "authorizationCode": {
-      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-      "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-      "scopes": {
-       "https://advisor.powerapps.com/.default": "PowerApps Advisor (solution checker)",
-       "https://api.advisor.powerapps.com/.default": "PowerApps Advisor, named by the WWW-Authenticate challenge and requested by the first-party SDK"
-      }
-     }
-    }
-   }
-  },
-  "parameters": {
-   "AcceptLanguage": {
-    "name": "Accept-Language",
-    "in": "header",
-    "required": false,
-    "description": "Language for the human-readable rule text, defaulting to en-US. Verified live: fr localises summary, description and howToFix while code, guidanceUrl, severity and primaryCategory stay invariant. Ruleset names are not localised at all. Multiple languages may be listed, the first being primary.",
-    "schema": {
-     "type": "string",
-     "default": "en-US",
-     "example": "fr"
-    }
-   },
-   "ApiVersion10": {
-    "name": "api-version",
-    "in": "query",
-    "required": true,
-    "description": "The analysis job routes are served at 1.0 only, unlike the catalogue reads which are 2.0. Sending 2.0 here is rejected as an unsupported version, which is how these routes were confirmed to exist without invoking them.",
-    "schema": {
-     "type": "string",
-     "default": "1.0",
-     "enum": [
-      "1.0"
-     ]
-    }
-   },
-   "TenantIdHeader": {
-    "name": "x-ms-tenant-id",
-    "in": "header",
-    "required": false,
-    "description": "Tenant the analysed solution belongs to. In practice it travels with the other Dataverse-context headers, when results are being written back to an environment.\n\nDistinct from x-ms-client-tenant-id, which identifies the tenant of the calling client rather than the owner of the solution.",
-    "schema": {
-     "type": "string",
-     "format": "uuid",
-     "x-notes": [
-      {
-       "note": "Microsoft documents this header as required on the analysis routes. It is optional in practice, and accepted without complaint on the routes it is not documented for.",
-       "source": "live"
-      }
-     ]
-    }
-   },
-   "CorrelationIdHeader": {
-    "name": "x-ms-correlation-id",
-    "in": "header",
-    "required": false,
-    "description": "The identity of one analysis run: send the same freshly generated GUID on every upload, the submission and every status poll of that run. Microsoft documents it as required, and says reusing one on a later submission is refused as a duplicate.",
-    "schema": {
-     "type": "string",
-     "format": "uuid"
-    }
-   },
-   "ClientTenantIdHeader": {
-    "name": "x-ms-client-tenant-id",
-    "in": "header",
-    "required": false,
-    "description": "Tenant of the calling client, accepted on every request to this API including the catalogue reads. Not used for authorization: a random GUID is acceptable where the caller has no tenant context.\n\nDistinct from x-ms-tenant-id, which identifies the tenant that owns the solution under analysis.",
-    "schema": {
-     "type": "string",
-     "format": "uuid"
-    },
-    "x-source": "pac-cli"
-   },
-   "TenantIdQuery": {
-    "name": "tenantId",
-    "in": "query",
-    "required": false,
-    "description": "Tenant to resolve the catalogue for. Optional - both catalogue reads answer without it - but it is what scopes the catalogue to a tenant, so a tenant-private or preview ruleset would surface only when it is sent. The all-zeros GUID counts as absent rather than as a value.",
-    "schema": {
-     "type": "string",
-     "format": "uuid"
-    },
-    "x-source": "pac-cli"
-   },
-   "OrgUrlHeader": {
-    "name": "x-ms-orgurl",
-    "in": "header",
-    "required": false,
-    "description": "Absolute URL of the Dataverse environment the analysis results are to be written into, e.g. https://contoso.crm.dynamics.com/. Sent only with the Dataverse-context submission.",
-    "schema": {
-     "type": "string",
-     "format": "uri",
-     "example": "https://contoso.crm.dynamics.com/"
-    },
-    "x-source": "pac-cli"
-   },
-   "RequestorIdHeader": {
-    "name": "x-ms-requestorid",
-    "in": "header",
-    "required": false,
-    "description": "Entra object id of the user on whose behalf the run is submitted - the object id on the target environment's own system user record, not the subject of the bearer token. This is who the analysis job in the environment is attributed to.",
-    "schema": {
-     "type": "string",
-     "format": "uuid"
-    },
-    "x-source": "pac-cli"
-   },
-   "OrganizationIdHeader": {
-    "name": "x-ms-organization-id",
-    "in": "header",
-    "required": false,
-    "description": "Dataverse organization id of the environment the results are written into. Distinct from the environment id.",
-    "schema": {
-     "type": "string",
-     "format": "uuid"
-    },
-    "x-source": "pac-cli"
-   },
-   "ClientRequestorIdHeader": {
-    "name": "x-ms-client-requestorid",
-    "in": "header",
-    "required": false,
-    "description": "Fresh GUID per submission, distinguishing this request from others by the same requestor. Not the run correlation id.",
-    "schema": {
-     "type": "string",
-     "format": "uuid"
-    },
-    "x-source": "pac-cli"
-   }
-  },
-  "schemas": {
-   "Rule": {
-    "type": "object",
-    "x-probe-verified": true,
-    "description": "One checker rule: what it looks for, how bad a violation is, and where the guidance for fixing it lives. A rule object carries exactly these nine fields - no envelope, no @odata metadata, no pagination.\n\nOnly code, guidanceUrl, include, componentType, primaryCategory and severity are present on every rule. description, summary and howToFix are absent entirely on a rule with no authored text - web-unsupported-syntax is one - and howToFix is an empty string on roughly half of the rest.\n\nNo property is ever explicitly null: absent means absent.",
-    "x-notes": [
-     {
-      "note": "Microsoft's documentation shows howToFix as an object with a summary property; at api-version 2.0 the service returns a plain string.",
-      "source": "live"
-     }
-    ],
-    "required": [
-     "code",
-     "guidanceUrl",
-     "include",
-     "componentType",
-     "primaryCategory",
-     "severity"
-    ],
-    "properties": {
-     "code": {
-      "type": "string",
-      "pattern": "^(app|connector|desktopflow|flow|meta|web)-",
-      "description": "Stable rule identifier, and the rule id findings are reported under in the SARIF report. Prefixed by the component family it analyses: app- (canvas apps), connector- (custom connectors), desktopflow- (Power Automate desktop flows), flow- (cloud flows), meta- (plug-ins, workflow activities and solution metadata), web- (JavaScript web resources).",
-      "example": "meta-remove-dup-reg"
-     },
-     "summary": {
-      "type": "string",
-      "description": "One-line title of the rule, as shown in the solution checker report's Issue column. Localised by Accept-Language."
-     },
-     "description": {
-      "type": "string",
-      "description": "Longer statement of what the rule checks for. Localised by Accept-Language. Note this describes the check, not a particular finding - per-finding text comes from messageTemplates."
-     },
-     "guidanceUrl": {
-      "type": "string",
-      "format": "uri",
-      "description": "Published guidance explaining the issue and the recommended fix - the report's Guidance link. Either a learn.microsoft.com article or a go.microsoft.com fwlink redirect carrying the rule code in its error query parameter. Always present, though a link may resolve to a general best-practices page rather than a dedicated article."
-     },
-     "howToFix": {
-      "type": "string",
-      "description": "Short remediation instruction shown alongside a finding. Authored for only about half the rules; an empty string where there is none."
-     },
-     "include": {
-      "type": "boolean",
-      "description": "Whether the rule participates in an analysis run. True on every rule this endpoint returns - the catalogue only lists included rules - so it is not usable as a filter. It carries meaning in a SARIF report, where an excluded rule can appear as false.",
-      "enum": [
-       true
-      ]
-     },
-     "componentType": {
-      "type": "integer",
-      "description": "The solution component type the rule targets.",
-      "x-notes": [
-       {
-        "note": "Undocumented by Microsoft, and 0 on every rule the catalogue returns, so it yields no usable mapping to solution component types: the enum records what the service returns, not the full domain. A rule's component family is readable from its code prefix instead.",
-        "source": "live"
-       }
-      ],
-      "enum": [
-       0
-      ]
-     },
-     "primaryCategory": {
-      "type": "integer",
-      "description": "What kind of problem the rule looks for: 1 Performance, 2 Upgrade Readiness (patterns that risk breaking on a platform version upgrade), 3 Usage (misuse of an API, pattern or configuration), 4 Security, 5 Design, 7 Maintainability, 8 Supportability (use of removed, unpublished or otherwise unsupported APIs), 9 Accessibility, 10 licensing entitlement (the meta-license-* rules; this category has no published name).",
-      "x-notes": [
-       {
-        "note": "The numbering is not the order of the category list Microsoft publishes under model-driven app best practices. It was derived by cross-referencing 38 rule codes against their documented category names, with no collisions. 6 was never returned by any geography and is presumed to be Online Migration, the one documented category with no live rule.",
-        "source": "live"
-       }
-      ],
-      "enum": [
-       1,
-       2,
-       3,
-       4,
-       5,
-       7,
-       8,
-       9,
-       10
-      ]
-     },
-     "severity": {
-      "type": "integer",
-      "description": "Impact ranking, ascending: 1 Informational, 2 Low, 3 Medium, 4 High, 5 Critical. The names line up with the severities Microsoft Learn publishes per rule code.\n\nCritical is the level solution checker enforcement blocks a solution import on in Managed Environments, so it is the one with governance consequences rather than only advisory weight. The same five levels are the buckets in IssueSummary.",
-      "enum": [
-       1,
-       2,
-       3,
-       4,
-       5
-      ]
-     },
-     "messageTemplates": {
-      "type": "array",
-      "description": "The message variations this rule can emit, intended for pre-translating report output. Present and non-empty on every rule when the request asks for message formats, and absent entirely otherwise - so unlike howToFix, there is no rule without message text.",
-      "items": {
-       "$ref": "#/components/schemas/MessageTemplate"
-      }
-     }
-    }
-   },
-   "MessageTemplate": {
-    "type": "object",
-    "x-probe-verified": true,
-    "description": "One message variation a rule can emit - the per-finding wording that appears in a SARIF report, as opposed to the rule's own fixed summary. Returned only when the request asks for message formats.",
-    "required": [
-     "ruleId",
-     "messageTemplateId",
-     "messageTemplate"
-    ],
-    "properties": {
-     "ruleId": {
-      "type": "string",
-      "description": "The owning rule's code, repeated on every template."
-     },
-     "messageTemplateId": {
-      "type": "string",
-      "description": "Identifier a SARIF finding references to select this variation. Usually message1, message2 and so on, numbered per rule, but not guaranteed to follow that form - descriptive ids such as connectiontoconnectionreferencemode also occur.",
-      "example": "message1"
-     },
-     "messageTemplate": {
-      "type": "string",
-      "description": "Format string whose positional {0}, {1}, ... placeholders are filled from the arguments the SARIF finding carries. Translate the template, not the assembled message."
-     }
-    }
-   },
-   "Ruleset": {
-    "type": "object",
-    "x-probe-verified": true,
-    "description": "A named grouping of rules - the standard a solution is checked against. Both fields are always present.",
-    "required": [
-     "id",
-     "name"
-    ],
-    "properties": {
-     "id": {
-      "type": "string",
-      "format": "uuid",
-      "description": "Returned lowercase, and accepted case-insensitively wherever a ruleset is named. Stable across geographies: 0ad12346-e108-40b8-a956-9a8f95ea18c9 is Solution Checker and 083a2ef5-7e0e-4754-9d88-9455142dc08b is AppSource Certification.",
-      "enum": [
-       "0ad12346-e108-40b8-a956-9a8f95ea18c9",
-       "083a2ef5-7e0e-4754-9d88-9455142dc08b"
-      ],
-      "example": "0ad12346-e108-40b8-a956-9a8f95ea18c9"
-     },
-     "name": {
-      "type": "string",
-      "description": "Display name, also accepted in place of the id when naming a ruleset. Not localised.",
-      "enum": [
-       "Solution Checker",
-       "AppSource Certification"
-      ],
-      "example": "Solution Checker"
-     }
-    }
-   },
-   "AnalysisRequest": {
-    "type": "object",
-    "x-probe-verified": false,
-    "description": "Configuration for one analysis run: what to analyse, against which rules, and what to skip. Supply exactly one of ruleSets or ruleCodes.",
-    "x-notes": [
-     {
-      "note": "ruleLevelOverrides is accepted even though Microsoft's documentation of this body omits it.",
-      "source": "pac-cli"
-     },
-     {
-      "note": "Property names bind case-insensitively: the camelCase spelling documented here and its PascalCase equivalent (SasUriList, FileExclusions, RuleSets, RuleCodes, RuleLevelOverrides) are both accepted, and a null member may be omitted entirely instead of being sent.",
-      "source": "pac-cli"
-     }
-    ],
-    "required": [
-     "sasUriList"
-    ],
-    "properties": {
-     "sasUriList": {
-      "type": "array",
-      "description": "Storage URIs the service can download without further credentials - those returned by the upload step, or your own SAS URIs. Each may be a single solution, a zip of several, or a package, and each produces one entry in resultFileUris. Required, and must not be empty.",
-      "items": {
-       "type": "string",
-       "format": "uri"
-      }
-     },
-     "ruleSets": {
-      "type": "array",
-      "description": "Rulesets to check against, normally exactly one. The usual choice over naming individual rules.",
-      "items": {
-       "$ref": "#/components/schemas/RulesetReference"
-      }
-     },
-     "ruleCodes": {
-      "type": "array",
-      "description": "Individual rules to check, as an alternative to whole rulesets when you want a narrower run.",
-      "items": {
-       "$ref": "#/components/schemas/RuleReference"
-      }
-     },
-     "fileExclusions": {
-      "type": "array",
-      "description": "File names or patterns to skip, typically third-party libraries you did not write and cannot fix. A * wildcard is supported at either end, e.g. *jquery* or *jquery.dll. Omit the member entirely when empty rather than sending an empty array.",
-      "items": {
-       "type": "string",
-       "example": "*jquery*"
-      }
-     },
-     "ruleLevelOverrides": {
-      "type": "array",
-      "description": "Rules to re-level for this run only, leaving the catalogue untouched - the mechanism a team uses to accept a finding without disabling the check that produces it. Each entry names a rule code and the level to report it at instead.\n\nDistinct from ruleCodes, which selects which rules run at all: an override does not add a rule to a run that the chosen ruleset does not already include.",
-      "items": {
-       "$ref": "#/components/schemas/RuleLevelOverride"
-      },
-      "x-source": "pac-cli"
-     }
-    },
-    "x-source": "pac-cli"
-   },
-   "RulesetReference": {
-    "type": "object",
-    "x-probe-verified": false,
-    "description": "Names one ruleset for an analysis run to check against. Only id is meaningful to the service; name may travel alongside it, so the object returned by the ruleset listing can be passed back wholesale, and a reference built from a bare GUID with no name at all is equally valid.",
-    "properties": {
-     "id": {
-      "type": "string",
-      "format": "uuid",
-      "description": "A ruleset id from the ruleset listing.",
-      "example": "0ad12346-e108-40b8-a956-9a8f95ea18c9"
-     },
-     "name": {
-      "type": "string",
-      "description": "Display name, as returned by the ruleset listing. Not required, and not how the service identifies a ruleset here.",
-      "example": "Solution Checker"
-     }
-    },
-    "x-source": "pac-cli"
-   },
-   "RuleReference": {
-    "type": "object",
-    "x-probe-verified": false,
-    "description": "Names one individual rule for an analysis run to check. Only code is meaningful on a submission; the catalogue's descriptive text may travel with it, and is omitted when null.",
-    "properties": {
-     "code": {
-      "type": "string",
-      "description": "A rule code from the rule catalogue.",
-      "example": "meta-remove-dup-reg"
-     }
-    },
-    "x-source": "pac-cli"
-   },
-   "AnalysisStatus": {
-    "type": "object",
-    "x-probe-verified": false,
-    "description": "The state of one analysis job, and once it has completed, where to fetch its report and how many findings it produced. Returned identically under 200 and 202.",
-    "properties": {
-     "status": {
-      "type": "string",
-      "description": "The job's state, and the only thing worth branching on - both a finished job and a failed one arrive as HTTP 200.\n\nOpened means accepted but not yet started and InProgress means running; both mean keep polling. The other three are terminal. Finished is clean completion. FinishedWithErrors means a report exists but one or more rules failed to run, so it may be incomplete - a service-side fault rather than a finding about the solution, and a reason not to gate a release on the counts. Failed means the job itself broke and there is no report.",
-      "enum": [
-       "Opened",
-       "InProgress",
-       "Failed",
-       "Finished",
-       "FinishedWithErrors"
-      ]
-     },
-     "progress": {
-      "type": "integer",
-      "description": "Percentage complete, for a progress bar. Not a scheduling signal and not a completion signal - poll on a fixed interval, and read status rather than treating 100 as done.",
-      "minimum": 0,
-      "maximum": 100
-     },
-     "runCorrelationId": {
-      "type": "string",
-      "format": "uuid",
-      "description": "The run's id, for matching a response to a run when several are in flight. Equal to the x-ms-correlation-id of an ordinary submission, and to the runcorrelationid returned by a Dataverse-context submission. Note the casing differs between the two routes: runCorrelationId here, runcorrelationid in the Dataverse-context response."
-     },
-     "resultFileUris": {
-      "type": "array",
-      "description": "Where the reports are, one entry per submitted file, present only once the job is terminal. Each normally resolves to a zip containing a SARIF v2 JSON report.\n\nDo not assume a single URI form. Three forms are downloadable: an Azure blob SAS URI (*.blob.core.windows.net or *.file.core.windows.net, with a sig query parameter, plus the sovereign equivalents on core.usgovcloudapi.net and core.chinacloudapi.cn), a Power Platform blob-proxy URI (*.powerplatformusercontent.com/.us/.cn, with an esig query parameter), and a Dataverse file-download URI (a Dataverse host with an /api/filedownload path).\n\nTwo further forms are pointers for a human rather than files, and there is nothing to fetch from them: a Dataverse record URI containing msdyn_analysisjobs(...), and a maker-portal deep link of the form make.powerapps.com/environments/{id}/solutions/{id}/overview/checkerResults. Expect these from a Dataverse-context run, whose results live in the environment.\n\nWhatever the form, download promptly: the signed URIs expire. Only the blob and localhost forms carry a usable file name, so do not rely on the URI to name the report.",
-      "items": {
-       "type": "string",
-       "format": "uri"
-      }
-     },
-     "issueSummary": {
-      "$ref": "#/components/schemas/IssueSummary"
-     },
-     "privacyPolicy": {
-      "type": "string",
-      "format": "uri",
-      "description": "Link to the privacy policy covering the analysed content. Not always present."
-     },
-     "additionalMessage": {
-      "type": "string",
-      "description": "Free-text service commentary about the run, typically present when status is FinishedWithErrors and explaining which rules could not be evaluated. Untrusted text: strip control characters and sanitise it before display or logging.",
-      "x-source": "pac-cli"
-     }
-    },
-    "x-source": "pac-cli"
-   },
-   "IssueSummary": {
-    "type": "object",
-    "x-probe-verified": false,
-    "description": "Finding counts bucketed by severity, present only once processing has completed. The five buckets are the names behind Rule.severity's numeric values, so criticalIssueCount counts findings from rules with severity 5. Critical is the bucket Managed Environments solution checker enforcement blocks on.",
-    "properties": {
-     "criticalIssueCount": {
-      "type": "integer"
-     },
-     "highIssueCount": {
-      "type": "integer"
-     },
-     "mediumIssueCount": {
-      "type": "integer"
-     },
-     "lowIssueCount": {
-      "type": "integer"
-     },
-     "informationalIssueCount": {
-      "type": "integer"
-     }
-    }
-   },
-   "ErrorResponse": {
-    "type": "object",
-    "x-probe-verified": true,
-    "description": "The envelope used for api-version and HTTP-method negotiation failures - the outermost routing layer, before any operation runs. Distinct from the problem-details shapes the operations themselves return.",
-    "properties": {
-     "error": {
-      "$ref": "#/components/schemas/ErrorDetail"
-     }
-    }
-   },
-   "ErrorDetail": {
-    "type": "object",
-    "x-probe-verified": true,
-    "description": "The code and message pair inside an ErrorResponse.",
-    "properties": {
-     "code": {
-      "type": "string",
-      "description": "UnsupportedApiVersion is the only value this envelope carries, and it covers both an unsupported api-version and an unsupported method on a supported one - so the code alone does not tell you which.",
-      "enum": [
-       "UnsupportedApiVersion"
-      ]
-     },
-     "message": {
-      "type": "string",
-      "description": "Human-readable explanation. It embeds the internal service-fabric node address and partition path of the instance that handled the request, so log it but do not surface it to end users."
-     }
-    }
-   },
-   "ProblemDetails": {
-    "type": "object",
-    "x-probe-verified": true,
-    "description": "RFC 9110 problem details, served as application/problem+json. Used by the analysis status route; the catalogue reads use ErrorResponse instead.",
-    "properties": {
-     "type": {
-      "type": "string",
-      "format": "uri",
-      "description": "Link to the RFC section for the status code, not a service-specific error taxonomy - it carries no diagnostic information."
-     },
-     "title": {
-      "type": "string",
-      "example": "Not Found"
-     },
-     "status": {
-      "type": "integer",
-      "description": "Repeats the HTTP status code."
-     },
-     "traceId": {
-      "type": "string",
-      "description": "Kestrel connection and request id, of the form {connectionId}:{requestNumber}. The value to quote when asking support to look up a request.",
-      "example": "0HMPABCDEFGHI:00000001"
-     }
-    }
-   },
-   "ValidationProblemDetails": {
-    "type": "object",
-    "x-probe-verified": true,
-    "description": "Model-binding failure on a query parameter - a value the service could not parse into the expected type.",
-    "x-notes": [
-     {
-      "note": "Served as application/json rather than application/problem+json, unlike ProblemDetails on the same surface, so content-type alone will not tell a client which error shape it is holding.",
-      "source": "live"
-     }
-    ],
-    "properties": {
-     "errors": {
-      "type": "object",
-      "description": "Parameter name to the list of messages about it, so the caller can point at the offending input.",
-      "additionalProperties": {
-       "type": "array",
-       "items": {
-        "type": "string"
-       }
-      },
-      "example": {
-       "includeMessageFormats": [
-        "The value 'maybe' is not valid."
-       ]
-      }
-     },
-     "type": {
-      "type": "string",
-      "format": "uri"
-     },
-     "title": {
-      "type": "string",
-      "example": "One or more validation errors occurred."
-     },
-     "status": {
-      "type": "integer",
-      "description": "Repeats the HTTP status code."
-     },
-     "traceId": {
-      "type": "string",
-      "description": "Kestrel connection and request id, as in ProblemDetails."
-     }
-    }
-   },
-   "RuleLevelOverride": {
-    "type": "object",
-    "x-probe-verified": false,
-    "x-source": "pac-cli",
-    "description": "Re-levels one rule for the duration of a single analysis run.",
-    "properties": {
-     "code": {
-      "type": "string",
-      "description": "The rule code to re-level, from the rule catalogue.",
-      "example": "meta-remove-dup-reg"
-     },
-     "overrideLevel": {
-      "type": "string",
-      "description": "Severity to report findings from this rule at instead of the catalogue's. These five names are the labels behind Rule.severity's integers - Critical is 5 down to Informational is 1 - so an override is really a severity substitution.\n\nDowngrading a rule below Critical is what takes it out of the way of Managed Environments enforcement without silencing it. The service's handling of an unrecognised level is undefined.",
-      "enum": [
-       "Critical",
-       "High",
-       "Medium",
-       "Low",
-       "Informational"
-      ],
-      "example": "Medium"
-     }
-    }
-   },
-   "DataverseAnalysisRequest": {
-    "type": "object",
-    "x-probe-verified": false,
-    "x-source": "pac-cli",
-    "description": "An analysis submission that also writes its results into a Dataverse environment. Structurally the ordinary AnalysisRequest plus Solutions.\n\nThe property names here are PascalCase. The camelCase spelling the ordinary submission accepts is likely to work too, but only the PascalCase form is established for this route, so prefer the names shown.",
-    "properties": {
-     "SasUriList": {
-      "type": "array",
-      "description": "As AnalysisRequest.sasUriList. Every entry must also appear in Solutions.",
-      "items": {
-       "type": "string",
-       "format": "uri"
-      }
-     },
-     "Solutions": {
-      "type": "array",
-      "description": "One entry per storage URI, naming the solution each file holds so the results can be labelled in the environment rather than by opaque URI.\n\nThe caller builds this list itself - the service does not derive it from SasUriList - so the id and the name are the caller's to choose, and neither is required to be the solution's real Dataverse identity.",
-      "items": {
-       "$ref": "#/components/schemas/AnalysisSolution"
-      }
-     },
-     "RuleSets": {
-      "type": "array",
-      "description": "As AnalysisRequest.ruleSets.",
-      "items": {
-       "$ref": "#/components/schemas/RulesetReference"
-      }
-     },
-     "RuleCodes": {
-      "type": "array",
-      "description": "As AnalysisRequest.ruleCodes.",
-      "items": {
-       "$ref": "#/components/schemas/RuleReference"
-      }
-     },
-     "RuleLevelOverrides": {
-      "type": "array",
-      "description": "As AnalysisRequest.ruleLevelOverrides.",
-      "items": {
-       "$ref": "#/components/schemas/RuleLevelOverride"
-      }
-     },
-     "FileExclusions": {
-      "type": "array",
-      "description": "As AnalysisRequest.fileExclusions. Omitted entirely when empty.",
-      "items": {
-       "type": "string",
-       "example": "*jquery*"
-      }
-     }
-    }
-   },
-   "AnalysisSolution": {
-    "type": "object",
-    "x-probe-verified": false,
-    "x-source": "pac-cli",
-    "description": "One solution in a Dataverse-context run - the pairing of a storage URI with a name the environment can show. The same object comes back on the response, where the service may have filled in status.",
-    "properties": {
-     "ID": {
-      "type": "string",
-      "format": "uuid",
-      "description": "Identifier for this solution within the run. Caller-generated and not the solution's Dataverse id - a fresh GUID per entry per run is the usual choice. It correlates a request entry with its response entry and nothing more."
-     },
-     "Name": {
-      "type": "string",
-      "description": "Label for the solution in the results. The caller chooses it; taking it from the storage URI's last path segment with the extension removed gives the file's name rather than the solution's unique name.",
-      "example": "ContosoCore"
-     },
-     "SasUri": {
-      "type": "string",
-      "format": "uri",
-      "description": "The storage URI this entry describes. Must be one of the entries in SasUriList."
-     },
-     "Status": {
-      "type": "string",
-      "description": "Per-solution outcome, filled in by the service on the response and never set on a request. Its value set is undefined, and it is not the job-level status the polling route returns."
-     }
-    }
-   },
-   "DataverseAnalysisResponse": {
-    "type": "object",
-    "x-probe-verified": false,
-    "x-source": "pac-cli",
-    "description": "Acknowledgement of a Dataverse-context submission. It stands in for the Location header the ordinary submission returns: runcorrelationid is what the caller builds the status URL from.",
-    "properties": {
-     "runcorrelationid": {
-      "type": "string",
-      "format": "uuid",
-      "description": "The run's id, and the {analysisId} of the status URL the caller must compose. Spelled entirely in lower case here, unlike the status route's runCorrelationId - the inconsistency is the service's.\n\nAn all-zeros value is not a usable id, which lines up with the status route faulting on that GUID rather than reporting not-found."
-     },
-     "solutions": {
-      "type": "array",
-      "description": "The submitted solutions echoed back, possibly with status filled in.",
-      "items": {
-       "$ref": "#/components/schemas/AnalysisSolution"
-      }
-     },
-     "tenantId": {
-      "type": "string",
-      "format": "uuid",
-      "nullable": true,
-      "description": "Tenant the run is attributed to. Nullable."
-     }
-    }
-   }
-  }
- }
 }

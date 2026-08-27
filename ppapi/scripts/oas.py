@@ -583,9 +583,11 @@ def main():
             all_paths.setdefault(path, {}).update(ops)
 
     for name in sorted(all_seen):
-        global_schemas.setdefault(name, {
-            "type": "object", "x-stub": True,
-            "description": "Referenced by the docs but not defined on any page."})
+        # No description: a description says what a model is, and for a stub we
+        # do not know. The browser renders x-stub with its own sentence, so a
+        # generated one here would only duplicate it. enrichment.addSchemas can
+        # supply a real description where the model's purpose is known.
+        global_schemas.setdefault(name, {"type": "object", "x-stub": True})
 
     # curated schema renames: the docs auto-name some models generically (the
     # OData envelope item type becomes "Value"); rename them meaningfully here.

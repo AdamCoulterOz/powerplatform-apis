@@ -8,12 +8,15 @@ namespace PowerPlatformApis.Browser.Rendering;
 /// else. Every site that shows a verb reads it from this one method, so the
 /// sidebar, the resource listing and the request line cannot drift apart.
 ///
-/// The verbs are a closed set with conventional colours people already read,
-/// and the four that have an obvious semantic home take it: a GET is safe, a
-/// POST is the informational primary act, a PUT replaces and a DELETE removes.
-/// PATCH has no such home. It takes New because the app needs five verbs to be
-/// tellable apart at a glance and New is the remaining distinct step on the
-/// scale, not because a PATCH is new. Everything else is unremarkable and grey.
+/// A GET is safe, a POST is the informational primary act, a DELETE removes.
+/// PUT and PATCH deliberately share Warning: both mutate a resource that
+/// already exists, so they are one class of act, and the label says which of
+/// the two a reader is looking at. A verb set of six or more mapped onto six
+/// tones has to collide somewhere, and this is the cheapest place for it, so
+/// the collision is a choice and not a leftover. The tone PATCH gives up is
+/// New, which keel keeps for pops, a live dot or a New badge; a routine verb is
+/// not a pop, whatever New happens to look like. Everything else is
+/// unremarkable and grey.
 /// </summary>
 public static class MethodTone
 {
@@ -23,7 +26,7 @@ public static class MethodTone
         "POST" => Tone.Info,
         "PUT" => Tone.Warning,
         "DELETE" => Tone.Bad,
-        "PATCH" => Tone.New,
+        "PATCH" => Tone.Warning,
         _ => Tone.Neutral,
     };
 }

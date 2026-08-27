@@ -1255,7 +1255,7 @@
     "x-ms-namespace": "authorization/role-based-access-control",
     "x-notes": [
      {
-      "note": "Verified live (2026-08-27): returns 200 OK, not the documented 201, and a single assignment object {roleAssignmentId, scope, principalType, principalObjectId, roleDefinitionId, createdByPrincipalType, createdByPrincipalObjectId, createdOn, expiresOn}, not the documented RoleAssignmentResponse {value:[...]} envelope.",
+      "note": "Returns 200 OK, not the documented 201, and a single assignment object {roleAssignmentId, scope, principalType, principalObjectId, roleDefinitionId, createdByPrincipalType, createdByPrincipalObjectId, createdOn, expiresOn}, not the documented RoleAssignmentResponse {value:[...]} envelope.",
       "source": "live"
      },
      {
@@ -1349,7 +1349,7 @@
     "x-ms-namespace": "authorization/role-based-access-control",
     "x-notes": [
      {
-      "note": "Verified live (2026-08-27): items carry the full assignment shape (roleAssignmentId, scope, principalType, principalObjectId, roleDefinitionId, createdBy fields, createdOn, expiresOn), not the documented role-definition-shaped item.",
+      "note": "Items carry the full assignment shape (roleAssignmentId, scope, principalType, principalObjectId, roleDefinitionId, createdBy fields, createdOn, expiresOn), not the documented role-definition-shaped item.",
       "source": "live"
      }
     ],
@@ -1415,7 +1415,7 @@
     "x-ms-namespace": "authorization/role-based-access-control",
     "x-notes": [
      {
-      "note": "Verified live (2026-08-27): returns 200 with the deleted assignment in the body. Deletes are path-scoped, so an environment-scoped assignment cannot be deleted through the tenant path (that returns 404 RoleAssignmentNotFound).",
+      "note": "Returns 200 with the deleted assignment in the body. Deletes are path-scoped, so an environment-scoped assignment cannot be deleted through the tenant path (that returns 404 RoleAssignmentNotFound).",
       "source": "live"
      }
     ],
@@ -1470,7 +1470,7 @@
     "x-ms-namespace": "authorization/role-based-access-control",
     "x-notes": [
      {
-      "note": "Verified live (2026-08-27): the URL path fixes the allowed scope. Posting a body scope of /tenants/{tid}/environments/{id} to this tenant endpoint returns 400 WrongResourceTypeForUrlContext. Tenant, environment, and environment-group scoped assignments are separate endpoints, not one endpoint switched by the body scope.",
+      "note": "The URL path fixes the allowed scope. Posting a body scope of /tenants/{tid}/environments/{id} to this tenant endpoint returns 400 WrongResourceTypeForUrlContext. Tenant, environment, and environment-group scoped assignments are separate endpoints, not one endpoint switched by the body scope.",
       "source": "live"
      }
     ],
@@ -1551,7 +1551,7 @@
     "x-ms-namespace": "authorization/role-based-access-control",
     "x-notes": [
      {
-      "note": "Verified live (2026-08-27): assignment items are {roleAssignmentId, scope, principalType, principalObjectId, roleDefinitionId, createdByPrincipalType, createdByPrincipalObjectId, createdOn, expiresOn}, not the documented role-definition-shaped item. The tenant list returns only tenant-scoped assignments; environment-scoped ones appear only under /authorization/environments/{id}/roleAssignments.",
+      "note": "Assignment items are {roleAssignmentId, scope, principalType, principalObjectId, roleDefinitionId, createdByPrincipalType, createdByPrincipalObjectId, createdOn, expiresOn}, not the documented role-definition-shaped item. The tenant list returns only tenant-scoped assignments; environment-scoped ones appear only under /authorization/environments/{id}/roleAssignments.",
       "source": "live"
      }
     ],
@@ -1657,7 +1657,7 @@
     "x-ms-namespace": "authorization/role-based-access-control",
     "x-notes": [
      {
-      "note": "Verified live (2026-08-27): role definitions also carry description, roleType, assignableScopes[], restrictedScopes[], and permissionsExceptions[] beyond the documented permissions, roleDefinitionId, and roleDefinitionName.",
+      "note": "Role definitions also carry description, roleType, assignableScopes[], restrictedScopes[], and permissionsExceptions[] beyond the documented permissions, roleDefinitionId, and roleDefinitionName.",
       "source": "live"
      }
     ],
@@ -3732,7 +3732,7 @@
     "x-ms-namespace": "environmentmanagement/environment-groups",
     "x-notes": [
      {
-      "note": "Verified live (2026-08-27): the returned operation is a BAP lifecycle operation (status in state.id, transitioning NotStarted to Succeeded; stages Validate, Prepare, Run, Finalize), not an environment-group-specific type. An unknown or absent operation id returns 204 No Content.",
+      "note": "The returned operation is a BAP lifecycle operation (status in state.id, transitioning NotStarted to Succeeded; stages Validate, Prepare, Run, Finalize), not an environment-group-specific type. An unknown or absent operation id returns 204 No Content.",
       "source": "live"
      }
     ],
@@ -24093,7 +24093,7 @@
    "Geo": {
     "type": "object",
     "x-stub": true,
-    "description": "Referenced by the docs but not defined on any page."
+    "description": "A geography an ISV contract covers. The contract request carries a list of them."
    },
    "GetConnectorByIdResponse": {
     "properties": {

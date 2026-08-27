@@ -1,62 +1,66 @@
-[
-  {
-    "id": "ppapi",
-    "title": "Power Platform API (PPAPI)",
-    "url": "ppapi/oas/openapi.json",
-    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/ppapi"
-  },
-  {
-    "id": "bapi",
-    "title": "Business Application Platform API (BAPI)",
-    "url": "bapi/oas/openapi.json",
-    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/bapi"
-  },
-  {
-    "id": "analytics",
-    "title": "Power Platform Admin Analytics API (CS Analytics)",
-    "url": "analytics/oas/openapi.json",
-    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/analytics"
-  },
-  {
-    "id": "admin",
-    "title": "Power Platform Admin Centre API",
-    "url": "admin/oas/openapi.json",
-    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/admin"
-  },
-  {
-    "id": "copilot",
-    "title": "Copilot Studio Bot Management API",
-    "url": "copilot/oas/openapi.json",
-    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/copilot"
-  },
-  {
-    "id": "advisor",
-    "title": "PowerApps Advisor API (Solution Checker)",
-    "url": "advisor/oas/openapi.json",
-    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/advisor"
-  },
-  {
-    "id": "powerapps",
-    "title": "PowerApps API",
-    "url": "powerapps/oas/openapi.json",
-    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/powerapps"
-  },
-  {
-    "id": "dataverse",
-    "title": "Dataverse Web API (admin subset)",
-    "url": "dataverse/oas/openapi.json",
-    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/dataverse"
-  },
-  {
-    "id": "athena",
-    "title": "Dataverse Synapse Link Orchestration API (athena)",
-    "url": "athena/oas/openapi.json",
-    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/athena"
-  },
-  {
-    "id": "licensing",
-    "title": "Power Platform Licensing API",
-    "url": "licensing/oas/openapi.json",
-    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/licensing"
-  }
-]
+{
+  "default": "ppapi",
+  "index": "index.json",
+  "specs": [
+    {
+      "id": "ppapi",
+      "title": "Power Platform API (PPAPI)",
+      "url": "ppapi/oas/openapi.json",
+      "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/ppapi"
+    },
+    {
+      "id": "bapi",
+      "title": "Business Application Platform API (BAPI)",
+      "url": "bapi/oas/openapi.json",
+      "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/bapi"
+    },
+    {
+      "id": "analytics",
+      "title": "Power Platform Admin Analytics API (CS Analytics)",
+      "url": "analytics/oas/openapi.json",
+      "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/analytics"
+    },
+    {
+      "id": "admin",
+      "title": "Power Platform Admin Centre API",
+      "url": "admin/oas/openapi.json",
+      "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/admin"
+    },
+    {
+      "id": "copilot",
+      "title": "Copilot Studio Bot Management API",
+      "url": "copilot/oas/openapi.json",
+      "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/copilot"
+    },
+    {
+      "id": "advisor",
+      "title": "PowerApps Advisor API (Solution Checker)",
+      "url": "advisor/oas/openapi.json",
+      "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/advisor"
+    },
+    {
+      "id": "powerapps",
+      "title": "PowerApps API",
+      "url": "powerapps/oas/openapi.json",
+      "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/powerapps"
+    },
+    {
+      "id": "dataverse",
+      "title": "Dataverse Web API (admin subset)",
+      "url": "dataverse/oas/openapi.json",
+      "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/dataverse"
+    },
+    {
+      "id": "athena",
+      "title": "Dataverse Synapse Link Orchestration API (athena)",
+      "url": "athena/oas/openapi.json",
+      "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/athena"
+    },
+    {
+      "id": "licensing",
+      "title": "Power Platform Licensing API",
+      "url": "licensing/oas/openapi.json",
+      "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/licensing"
+    }
+  ]
+}

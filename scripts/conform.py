@@ -200,8 +200,40 @@ def check_links(spec: str, doc: dict, corpus: dict) -> None:
     walk_strings(doc)
 
 
+def catalogue() -> tuple[list, dict]:
+    """The catalogue, in either shape. A bare array is the legacy form."""
+    raw = json.loads((ROOT / "specs.json").read_text())
+    return (raw["specs"], raw) if isinstance(raw, dict) else (raw, {})
+
+
+def check_catalogue(entries: list, cat: dict) -> None:
+    ids = [e["id"] for e in entries]
+    if len(ids) != len(set(ids)):
+        fail("specs.json", "specs", "duplicate spec ids")
+
+    # A spec id that collides with a fragment kind makes #/<a>/<b>/<c> ambiguous:
+    # the first segment is a spec id unless it is a kind. The reserved set is the
+    # kinds this checker already validates fragments against, so adding a kind
+    # updates the validator and this rule in one edit.
+    reserved = set(targets({}).keys())
+    for bad in sorted(set(ids) & reserved):
+        fail("specs.json", f"specs/{bad}",
+             f"spec id {bad!r} is also a fragment kind, which makes a qualified "
+             f"deep link ambiguous")
+
+    default = cat.get("default")
+    if cat and default is None:
+        fail("specs.json", "default",
+             "no declared default; a bare deep link would resolve against whichever "
+             "spec happens to be first, making catalogue order load-bearing")
+    elif default is not None and default not in ids:
+        fail("specs.json", "default", f"default {default!r} names no spec in the catalogue")
+
+
 def main() -> int:
-    specs = sys.argv[1:] or [s["id"] for s in json.loads((ROOT / "specs.json").read_text())]
+    entries, cat = catalogue()
+    check_catalogue(entries, cat)
+    specs = sys.argv[1:] or [e["id"] for e in entries]
     corpus = {}
     for spec in specs:
         f = ROOT / spec / "oas" / "openapi.json"

@@ -143,7 +143,9 @@ def check(spec_id: str) -> int:
 
 
 def main() -> int:
-    specs = sys.argv[1:] or [s["id"] for s in json.loads((ROOT / "specs.json").read_text())]
+    raw = json.loads((ROOT / "specs.json").read_text())
+    entries = raw["specs"] if isinstance(raw, dict) else raw
+    specs = sys.argv[1:] or [e["id"] for e in entries]
     checked = sum(check(s) for s in specs)
     covered = [s for s in specs if (ROOT / s / "evidence" / "manifest.json").exists()]
     if failures:

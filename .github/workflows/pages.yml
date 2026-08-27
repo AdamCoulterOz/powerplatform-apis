@@ -63,9 +63,12 @@ jobs:
           mkdir -p _site
           cp -R app/dist/wwwroot/. _site/
           cp specs.json _site/
+          [ -f index.json ] && cp index.json _site/
           for api in $(python3 -c "
           import json
-          print(' '.join(e['url'].split('/')[0] for e in json.load(open('specs.json'))))"); do
+          raw = json.load(open('specs.json'))
+          entries = raw['specs'] if isinstance(raw, dict) else raw
+          print(' '.join(e['url'].split('/')[0] for e in entries))"); do
             [ -d "$api" ] || { echo "specs.json names $api, which is not in the repository"; exit 1; }
             mkdir -p "_site/$api"
             for part in oas docs catalogue README.md; do
@@ -90,8 +93,12 @@ jobs:
             || { echo 'Keel assembly missing'; exit 1; }
           python3 - <<'PY'
           import json, pathlib, sys
-          missing = [e['url'] for e in json.load(open('specs.json'))
+          raw = json.load(open('specs.json'))
+          entries = raw['specs'] if isinstance(raw, dict) else raw
+          missing = [e['url'] for e in entries
                      if not pathlib.Path('_site', e['url']).is_file()]
+          if isinstance(raw, dict) and raw.get('index') and not pathlib.Path('_site', raw['index']).is_file():
+              missing.append(raw['index'])
           if missing:
               sys.exit('specs listed but not deployed: ' + ', '.join(missing))
           print('all specs present')

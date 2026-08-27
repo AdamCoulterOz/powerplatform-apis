@@ -1,0 +1,3815 @@
+{
+ "operations": {
+  "adminApplications_get": [
+   "bapi"
+  ],
+  "adminApplications_list": [
+   "bapi"
+  ],
+  "adminApplications_register": [
+   "bapi"
+  ],
+  "adminApplications_unregister": [
+   "bapi"
+  ],
+  "analysis_create": [
+   "advisor"
+  ],
+  "analysis_createDataverse": [
+   "advisor"
+  ],
+  "analysis_getStatus": [
+   "advisor"
+  ],
+  "analysis_uploadFile": [
+   "advisor"
+  ],
+  "analytics_askAdvisor": [
+   "ppapi"
+  ],
+  "analytics_executeRecommendationAction": [
+   "ppapi"
+  ],
+  "analytics_getActionSchema": [
+   "ppapi"
+  ],
+  "analytics_getRecommendationResources": [
+   "ppapi"
+  ],
+  "analytics_getRecommendationScenarios": [
+   "ppapi"
+  ],
+  "analytics_getRecommendations": [
+   "ppapi"
+  ],
+  "analytics_getScenarioActions": [
+   "ppapi"
+  ],
+  "analytics_listAdvisorConversations": [
+   "ppapi"
+  ],
+  "appInsightsConfiguration_read": [
+   "copilot"
+  ],
+  "appInsightsConfiguration_update": [
+   "copilot"
+  ],
+  "appmanagement_getApplicationPackageInstallStatus": [
+   "ppapi"
+  ],
+  "appmanagement_getEnvironmentApplicationPackage": [
+   "ppapi"
+  ],
+  "appmanagement_getTenantApplicationPackage": [
+   "ppapi"
+  ],
+  "appmanagement_installApplicationPackage": [
+   "ppapi"
+  ],
+  "apps_list": [
+   "powerapps"
+  ],
+  "apps_listByEnvironment": [
+   "powerapps"
+  ],
+  "authorization_createEnvironmentGroupRoleAssignment": [
+   "ppapi"
+  ],
+  "authorization_createEnvironmentRoleAssignment": [
+   "ppapi"
+  ],
+  "authorization_createRoleAssignment": [
+   "ppapi"
+  ],
+  "authorization_deleteEnvironmentGroupRoleAssignment": [
+   "ppapi"
+  ],
+  "authorization_deleteEnvironmentRoleAssignment": [
+   "ppapi"
+  ],
+  "authorization_deleteRoleAssignment": [
+   "ppapi"
+  ],
+  "authorization_listEnvironmentGroupRoleAssignments": [
+   "ppapi"
+  ],
+  "authorization_listEnvironmentRoleAssignments": [
+   "ppapi"
+  ],
+  "authorization_listRoleAssignments": [
+   "ppapi"
+  ],
+  "authorization_listRoleDefinitions": [
+   "ppapi"
+  ],
+  "batch_execute": [
+   "dataverse"
+  ],
+  "billingPolicies_list": [
+   "licensing"
+  ],
+  "billingPolicies_listProductView": [
+   "licensing"
+  ],
+  "billingPolicies_read": [
+   "licensing"
+  ],
+  "billingPolicies_readProductView": [
+   "licensing"
+  ],
+  "billingPolicies_refreshProvisioningStatus": [
+   "licensing"
+  ],
+  "billingPolicyEnvironments_list": [
+   "licensing"
+  ],
+  "billingPolicyEnvironments_read": [
+   "licensing"
+  ],
+  "billingPolicyEnvironments_readPolicyForEnvironment": [
+   "licensing"
+  ],
+  "connections_list": [
+   "analytics",
+   "powerapps"
+  ],
+  "connections_listByEnvironment": [
+   "powerapps"
+  ],
+  "connections_list_v1": [
+   "analytics"
+  ],
+  "connectivity_getConnectorById": [
+   "ppapi"
+  ],
+  "connectivity_getConnectorOnEnvironmentHost": [
+   "ppapi"
+  ],
+  "connectivity_listConnections": [
+   "ppapi"
+  ],
+  "connectivity_listConnectionsOnEnvironmentHost": [
+   "ppapi"
+  ],
+  "connectivity_listConnectors": [
+   "ppapi"
+  ],
+  "connectivity_listConnectorsOnEnvironmentHost": [
+   "ppapi"
+  ],
+  "connectorMetadata_listUnblockable": [
+   "bapi"
+  ],
+  "connectorMetadata_listVirtual": [
+   "bapi"
+  ],
+  "connectors_get": [
+   "powerapps"
+  ],
+  "connectors_list": [
+   "powerapps"
+  ],
+  "connectors_listConnections": [
+   "powerapps"
+  ],
+  "copilotgovernance_getSetting": [
+   "ppapi"
+  ],
+  "copilotstudio_deleteCopilotAgent": [
+   "ppapi"
+  ],
+  "copilotstudio_downloadAgentChannelManifest": [
+   "ppapi"
+  ],
+  "copilotstudio_downloadMakerEvaluationSnapshot": [
+   "ppapi"
+  ],
+  "copilotstudio_getBotQuarantineStatus": [
+   "ppapi"
+  ],
+  "copilotstudio_getConnectorConsentBypass": [
+   "ppapi"
+  ],
+  "copilotstudio_getMakerEvaluationTestRun": [
+   "ppapi"
+  ],
+  "copilotstudio_getMakerEvaluationTestSet": [
+   "ppapi"
+  ],
+  "copilotstudio_listMakerEvaluationTestRuns": [
+   "ppapi"
+  ],
+  "copilotstudio_listMakerEvaluationTestSets": [
+   "ppapi"
+  ],
+  "copilotstudio_reassignCopilotAgent": [
+   "ppapi"
+  ],
+  "copilotstudio_runMakerEvaluationTestSet": [
+   "ppapi"
+  ],
+  "copilotstudio_setBotAsQuarantined": [
+   "ppapi"
+  ],
+  "copilotstudio_setBotAsUnquarantined": [
+   "ppapi"
+  ],
+  "copilotstudio_setConnectorConsentBypass": [
+   "ppapi"
+  ],
+  "countryDefaultOptIn_list": [
+   "bapi"
+  ],
+  "currencyAllocations_list": [
+   "licensing"
+  ],
+  "currencyAllocations_read": [
+   "licensing"
+  ],
+  "currencyReports_list": [
+   "licensing"
+  ],
+  "data_lakes_list": [
+   "athena"
+  ],
+  "datalakeFolders_list": [
+   "dataverse"
+  ],
+  "discovery_listInstances": [
+   "dataverse"
+  ],
+  "discovery_readAuthChallenge": [
+   "dataverse"
+  ],
+  "discovery_readInstance": [
+   "dataverse"
+  ],
+  "dlpPolicies_create": [
+   "bapi"
+  ],
+  "dlpPolicies_delete": [
+   "bapi"
+  ],
+  "dlpPolicies_get": [
+   "bapi"
+  ],
+  "dlpPolicies_list": [
+   "bapi"
+  ],
+  "dlpPolicies_update": [
+   "bapi"
+  ],
+  "dynamics_applyFinOpsVersion": [
+   "ppapi"
+  ],
+  "dynamics_getFinOpsMaintenanceSettings": [
+   "ppapi"
+  ],
+  "dynamics_getFinOpsOperationErrors": [
+   "ppapi"
+  ],
+  "dynamics_getFinOpsProperties": [
+   "ppapi"
+  ],
+  "dynamics_getFinOpsVersions": [
+   "ppapi"
+  ],
+  "dynamics_updateFinOpsMaintenanceSettings": [
+   "ppapi"
+  ],
+  "enforcementCache_delete": [
+   "advisor"
+  ],
+  "enterprisePolicies_linkUnlink": [
+   "bapi"
+  ],
+  "entitlements_list": [
+   "licensing"
+  ],
+  "entitlements_read": [
+   "licensing"
+  ],
+  "entitlements_readProductView": [
+   "licensing"
+  ],
+  "entityAnalyticsConfigs_list": [
+   "dataverse"
+  ],
+  "entityDefinitions_get": [
+   "dataverse"
+  ],
+  "entityDefinitions_list": [
+   "dataverse"
+  ],
+  "entityDefinitions_listAttributes": [
+   "dataverse"
+  ],
+  "entityDefinitions_readAttribute": [
+   "dataverse"
+  ],
+  "environmentGroups_create": [
+   "bapi"
+  ],
+  "environmentGroups_delete": [
+   "bapi"
+  ],
+  "environmentGroups_get": [
+   "bapi"
+  ],
+  "environmentGroups_list": [
+   "bapi"
+  ],
+  "environmentGroups_update": [
+   "bapi"
+  ],
+  "environmentRoleAssignments_addApplicationUser": [
+   "bapi"
+  ],
+  "environmentRoleAssignments_addUser": [
+   "bapi"
+  ],
+  "environmentRoleAssignments_list": [
+   "bapi"
+  ],
+  "environmentRoleAssignments_modify": [
+   "bapi"
+  ],
+  "environmentVariables_createValue": [
+   "dataverse"
+  ],
+  "environmentVariables_deleteValue": [
+   "dataverse"
+  ],
+  "environmentVariables_listDefinitions": [
+   "dataverse"
+  ],
+  "environmentVariables_listValues": [
+   "dataverse"
+  ],
+  "environmentVariables_readValue": [
+   "dataverse"
+  ],
+  "environmentVariables_updateValue": [
+   "dataverse"
+  ],
+  "environmentmanagement_addEnvironmentToGroup": [
+   "ppapi"
+  ],
+  "environmentmanagement_copyEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_createEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_createEnvironmentBackup": [
+   "ppapi"
+  ],
+  "environmentmanagement_createEnvironmentGroup": [
+   "ppapi"
+  ],
+  "environmentmanagement_createEnvironmentManagementSettings": [
+   "ppapi"
+  ],
+  "environmentmanagement_deleteEnvironmentBackup": [
+   "ppapi"
+  ],
+  "environmentmanagement_deleteEnvironmentById": [
+   "ppapi"
+  ],
+  "environmentmanagement_deleteEnvironmentGroup": [
+   "ppapi"
+  ],
+  "environmentmanagement_disableDisasterRecovery": [
+   "ppapi"
+  ],
+  "environmentmanagement_disableEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_disableManagedEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_enableDisasterRecovery": [
+   "ppapi"
+  ],
+  "environmentmanagement_enableEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_enableManagedEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_getBusinessContinuityStateFullSnapshot": [
+   "ppapi"
+  ],
+  "environmentmanagement_getEnvironmentBackups": [
+   "ppapi"
+  ],
+  "environmentmanagement_getEnvironmentByIdForUser": [
+   "ppapi"
+  ],
+  "environmentmanagement_getEnvironmentCopyCandidates": [
+   "ppapi"
+  ],
+  "environmentmanagement_getEnvironmentGroup": [
+   "ppapi"
+  ],
+  "environmentmanagement_getEnvironmentGroupOperation": [
+   "ppapi"
+  ],
+  "environmentmanagement_getEnvironmentOperationById": [
+   "ppapi"
+  ],
+  "environmentmanagement_getOperationById": [
+   "ppapi"
+  ],
+  "environmentmanagement_getOperationsForEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_getProvisioningCurrencies": [
+   "ppapi"
+  ],
+  "environmentmanagement_getProvisioningLanguages": [
+   "ppapi"
+  ],
+  "environmentmanagement_getProvisioningTemplates": [
+   "ppapi"
+  ],
+  "environmentmanagement_getRestoreCandidates": [
+   "ppapi"
+  ],
+  "environmentmanagement_getSupportedLocations": [
+   "ppapi"
+  ],
+  "environmentmanagement_linkDataverse": [
+   "ppapi"
+  ],
+  "environmentmanagement_listEnvironmentGroups": [
+   "ppapi"
+  ],
+  "environmentmanagement_listEnvironmentManagementSettings": [
+   "ppapi"
+  ],
+  "environmentmanagement_listEnvironmentsForUser": [
+   "ppapi"
+  ],
+  "environmentmanagement_modifyEnvironmentSku": [
+   "ppapi"
+  ],
+  "environmentmanagement_performDrDrill": [
+   "ppapi"
+  ],
+  "environmentmanagement_performFailback": [
+   "ppapi"
+  ],
+  "environmentmanagement_performForceFailover": [
+   "ppapi"
+  ],
+  "environmentmanagement_provisionNewEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_recoverEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_removeEnvironmentFromGroup": [
+   "ppapi"
+  ],
+  "environmentmanagement_resetEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_restoreEnvironment": [
+   "ppapi"
+  ],
+  "environmentmanagement_updateEnvironmentGroup": [
+   "ppapi"
+  ],
+  "environmentmanagement_updateEnvironmentManagementSettings": [
+   "ppapi"
+  ],
+  "environments_create": [
+   "bapi"
+  ],
+  "environments_delete": [
+   "bapi"
+  ],
+  "environments_get": [
+   "bapi",
+   "powerapps"
+  ],
+  "environments_getLastActivity": [
+   "bapi"
+  ],
+  "environments_getMakerScope": [
+   "bapi"
+  ],
+  "environments_list": [
+   "bapi",
+   "powerapps"
+  ],
+  "environments_listMakerScope": [
+   "bapi"
+  ],
+  "environments_modifySku": [
+   "bapi"
+  ],
+  "environments_provisionDataverse": [
+   "bapi"
+  ],
+  "environments_update": [
+   "bapi"
+  ],
+  "environments_validateDetails": [
+   "bapi"
+  ],
+  "fabric_workspaces_list": [
+   "athena"
+  ],
+  "featureControl_readEnabledState": [
+   "dataverse"
+  ],
+  "featureControl_readSetting": [
+   "dataverse"
+  ],
+  "features_enable": [
+   "admin"
+  ],
+  "features_list": [
+   "admin",
+   "bapi"
+  ],
+  "gatewayCluster_read": [
+   "analytics"
+  ],
+  "gateway_getCluster": [
+   "ppapi"
+  ],
+  "gateways_list": [
+   "powerapps"
+  ],
+  "governance_createCrossTenantConnectionReport": [
+   "ppapi"
+  ],
+  "governance_createEnviornmentGroupRuleBasedAssignment": [
+   "ppapi"
+  ],
+  "governance_createEnvironmentRuleBasedAssignment": [
+   "ppapi"
+  ],
+  "governance_createRuleBasedPolicy": [
+   "ppapi"
+  ],
+  "governance_createRuleSet": [
+   "ppapi"
+  ],
+  "governance_deleteRuleSet": [
+   "ppapi"
+  ],
+  "governance_getConfiguration": [
+   "ppapi"
+  ],
+  "governance_getCrossTenantConnectionReport": [
+   "ppapi"
+  ],
+  "governance_getRuleBasedPolicyById": [
+   "ppapi"
+  ],
+  "governance_getRuleSet": [
+   "ppapi"
+  ],
+  "governance_getRuleSetListForTenant": [
+   "ppapi"
+  ],
+  "governance_listCrossTenantConnectionReports": [
+   "ppapi"
+  ],
+  "governance_listEffectiveRuleBasedPoliciesByEnvironment": [
+   "ppapi"
+  ],
+  "governance_listRuleAssignments": [
+   "ppapi"
+  ],
+  "governance_listRuleAssignmentsByEnvironmentGroupId": [
+   "ppapi"
+  ],
+  "governance_listRuleAssignmentsByEnvironmentId": [
+   "ppapi"
+  ],
+  "governance_listRuleAssignmentsByPolicyId": [
+   "ppapi"
+  ],
+  "governance_listRuleBasedPolicies": [
+   "ppapi"
+  ],
+  "governance_listRuleBasedPoliciesByEnvironmentGroup": [
+   "ppapi"
+  ],
+  "governance_listRuleSetUiConfigurations": [
+   "ppapi"
+  ],
+  "governance_listTenantRuleBasedPolicies": [
+   "ppapi"
+  ],
+  "governance_patchRuleBasedPolicy": [
+   "ppapi"
+  ],
+  "governance_removeRuleFromRuleBasedPolicy": [
+   "ppapi"
+  ],
+  "governance_updateRuleBasedPolicyById": [
+   "ppapi"
+  ],
+  "governance_updateRuleSet": [
+   "ppapi"
+  ],
+  "identity_whoAmI": [
+   "dataverse"
+  ],
+  "lake_profile_activate": [
+   "athena"
+  ],
+  "lake_profile_read": [
+   "athena"
+  ],
+  "lake_profile_update": [
+   "athena"
+  ],
+  "lakehouse_artifacts_create": [
+   "athena"
+  ],
+  "lakehouse_artifacts_delete": [
+   "athena"
+  ],
+  "lakehouse_artifacts_premium_licence_read": [
+   "athena"
+  ],
+  "licensing_addBillingPolicyEnvironment": [
+   "ppapi"
+  ],
+  "licensing_createBillingPolicy": [
+   "ppapi"
+  ],
+  "licensing_createIsvContract": [
+   "ppapi"
+  ],
+  "licensing_deleteBillingPolicy": [
+   "ppapi"
+  ],
+  "licensing_deleteIsvContract": [
+   "ppapi"
+  ],
+  "licensing_getAllResourceThresholds": [
+   "ppapi"
+  ],
+  "licensing_getAllocationsAvailabilityV2": [
+   "ppapi"
+  ],
+  "licensing_getAllocationsByEnvironment": [
+   "ppapi"
+  ],
+  "licensing_getBillingPolicy": [
+   "ppapi"
+  ],
+  "licensing_getBillingPolicyEnvironment": [
+   "ppapi"
+  ],
+  "licensing_getCurrencyAllocationByEnvironment": [
+   "ppapi"
+  ],
+  "licensing_getEntitlement": [
+   "ppapi"
+  ],
+  "licensing_getEnvironmentBillingPolicy": [
+   "ppapi"
+  ],
+  "licensing_getEnvironmentResources": [
+   "ppapi"
+  ],
+  "licensing_getFinOpsLicenseSummaryV2": [
+   "ppapi"
+  ],
+  "licensing_getIsvContract": [
+   "ppapi"
+  ],
+  "licensing_getManyEntitlementsReservedV2": [
+   "ppapi"
+  ],
+  "licensing_getManyEnvironmentEntitlements": [
+   "ppapi"
+  ],
+  "licensing_getStorageWarningByCategory": [
+   "ppapi"
+  ],
+  "licensing_getStorageWarningByCategoryAndEntity": [
+   "ppapi"
+  ],
+  "licensing_getTenantCapacityDetails": [
+   "ppapi"
+  ],
+  "licensing_getTenantLicenseTrends": [
+   "ppapi"
+  ],
+  "licensing_getTenantResourceConsumptionByUser": [
+   "ppapi"
+  ],
+  "licensing_getTenantResourcesAcrossEnvironments": [
+   "ppapi"
+  ],
+  "licensing_getTenantUserConsumptionByResource": [
+   "ppapi"
+  ],
+  "licensing_getTenantUsers": [
+   "ppapi"
+  ],
+  "licensing_getUserPerFlowCapacitySource": [
+   "ppapi"
+  ],
+  "licensing_getUserPerFlowCapacitySourceFlowContextSummary": [
+   "ppapi"
+  ],
+  "licensing_getUserPerFlowCapacitySourceFlowContextSummaryForUserId": [
+   "ppapi"
+  ],
+  "licensing_getUserPerFlowCapacitySourceTenantContextSummary": [
+   "ppapi"
+  ],
+  "licensing_getUserPerFlowCapacitySourceUserContextSummary": [
+   "ppapi"
+  ],
+  "licensing_getUserPerFlowCapacitySourceUserContextSummaryForUserId": [
+   "ppapi"
+  ],
+  "licensing_listAllocationsByEnvironment": [
+   "ppapi"
+  ],
+  "licensing_listBillingPolicies": [
+   "ppapi"
+  ],
+  "licensing_listBillingPolicyEnvironments": [
+   "ppapi"
+  ],
+  "licensing_listCurrencyReports": [
+   "ppapi"
+  ],
+  "licensing_listIsvContracts": [
+   "ppapi"
+  ],
+  "licensing_listStorageWarnings": [
+   "ppapi"
+  ],
+  "licensing_patchCurrencyAllocationByEnvironment": [
+   "ppapi"
+  ],
+  "licensing_putAllocationsV2": [
+   "ppapi"
+  ],
+  "licensing_refreshProvisioningStatus": [
+   "ppapi"
+  ],
+  "licensing_removeBillingPolicyEnvironment": [
+   "ppapi"
+  ],
+  "licensing_retrieveTemporaryCurrencyEntitlementCount": [
+   "ppapi"
+  ],
+  "licensing_updateAllocationsByEnvironment": [
+   "ppapi"
+  ],
+  "licensing_updateBillingPolicy": [
+   "ppapi"
+  ],
+  "licensing_updateIsvContract": [
+   "ppapi"
+  ],
+  "licensing_upsertResourceThreshold": [
+   "ppapi"
+  ],
+  "lifecycleOperations_get": [
+   "bapi"
+  ],
+  "lifecycleOperations_list": [
+   "bapi"
+  ],
+  "linkable_tables_fno_list": [
+   "athena"
+  ],
+  "linkable_tables_list": [
+   "athena"
+  ],
+  "linkable_tables_relationships_list": [
+   "athena"
+  ],
+  "locations_list": [
+   "bapi"
+  ],
+  "locations_listCurrencies": [
+   "bapi"
+  ],
+  "locations_listLanguages": [
+   "bapi"
+  ],
+  "locations_listTemplates": [
+   "bapi"
+  ],
+  "managedEnvironments_setGovernanceConfiguration": [
+   "bapi"
+  ],
+  "organizationSettings_list": [
+   "dataverse"
+  ],
+  "organizationSettings_listBackendSettings": [
+   "dataverse"
+  ],
+  "organizationSettings_listSettingDefinitions": [
+   "dataverse"
+  ],
+  "organizationSettings_readAuditReadAccess": [
+   "dataverse"
+  ],
+  "organizationSettings_readBackendSetting": [
+   "dataverse"
+  ],
+  "organizationSettings_readCurrentOrganization": [
+   "dataverse"
+  ],
+  "organizationSettings_readOrganizationInfo": [
+   "dataverse"
+  ],
+  "organizationSettings_readSetting": [
+   "dataverse"
+  ],
+  "organizationSettings_readVersion": [
+   "dataverse"
+  ],
+  "organizationSettings_saveBackendSetting": [
+   "dataverse"
+  ],
+  "organizationSettings_update": [
+   "dataverse"
+  ],
+  "organization_como_enabled_read": [
+   "athena"
+  ],
+  "organization_enterprise_policy_credentials_read": [
+   "athena"
+  ],
+  "organization_island_enabled_read": [
+   "athena"
+  ],
+  "organization_registration_update": [
+   "athena"
+  ],
+  "organizations_list": [
+   "admin"
+  ],
+  "powerapps_enroll": [
+   "ppapi"
+  ],
+  "powerapps_evaluateDlpPoliciesForApp": [
+   "ppapi"
+  ],
+  "powerapps_getAdminApp": [
+   "ppapi"
+  ],
+  "powerapps_getAdminApps": [
+   "ppapi"
+  ],
+  "powerapps_getAppOnEnvironmentHost": [
+   "ppapi"
+  ],
+  "powerapps_getEnvironment": [
+   "ppapi"
+  ],
+  "powerapps_getUserSetting": [
+   "ppapi"
+  ],
+  "powerapps_listAppsOnEnvironmentHost": [
+   "ppapi"
+  ],
+  "powerapps_listEnvironments": [
+   "ppapi"
+  ],
+  "powerapps_listFeatures": [
+   "ppapi"
+  ],
+  "powerapps_listGlobalApps": [
+   "ppapi"
+  ],
+  "powerapps_listNotifications": [
+   "ppapi"
+  ],
+  "powerapps_listPlans": [
+   "ppapi"
+  ],
+  "powerapps_locateApp": [
+   "ppapi"
+  ],
+  "powerapps_startAppSession": [
+   "ppapi"
+  ],
+  "powerapps_subscribeToNotificationChannel": [
+   "ppapi"
+  ],
+  "powerautomate_listCloudFlows": [
+   "ppapi"
+  ],
+  "powerautomate_listFlowActions": [
+   "ppapi"
+  ],
+  "powerautomate_listFlowRuns": [
+   "ppapi"
+  ],
+  "powerpages_addAllowedIpAddresses": [
+   "ppapi"
+  ],
+  "powerpages_addSslBindingByPortal": [
+   "ppapi"
+  ],
+  "powerpages_convertTrialToProduction": [
+   "ppapi"
+  ],
+  "powerpages_createCustomDomain": [
+   "ppapi"
+  ],
+  "powerpages_createWafRules": [
+   "ppapi"
+  ],
+  "powerpages_createWebsite": [
+   "ppapi"
+  ],
+  "powerpages_deleteCertificateByPortal": [
+   "ppapi"
+  ],
+  "powerpages_deleteHostNameForPortal": [
+   "ppapi"
+  ],
+  "powerpages_deleteSslBindingByThumbprint": [
+   "ppapi"
+  ],
+  "powerpages_deleteWafCustomRules": [
+   "ppapi"
+  ],
+  "powerpages_deleteWebsite": [
+   "ppapi"
+  ],
+  "powerpages_disableWaf": [
+   "ppapi"
+  ],
+  "powerpages_enableWaf": [
+   "ppapi"
+  ],
+  "powerpages_getAllowedIpAddresses": [
+   "ppapi"
+  ],
+  "powerpages_getCertificatesByPortal": [
+   "ppapi"
+  ],
+  "powerpages_getSecurityScanReport": [
+   "ppapi"
+  ],
+  "powerpages_getSecurityScanScore": [
+   "ppapi"
+  ],
+  "powerpages_getWafRules": [
+   "ppapi"
+  ],
+  "powerpages_getWafStatus": [
+   "ppapi"
+  ],
+  "powerpages_getWebsiteById": [
+   "ppapi"
+  ],
+  "powerpages_getWebsites": [
+   "ppapi"
+  ],
+  "powerpages_listHostNamesForPortal": [
+   "ppapi"
+  ],
+  "powerpages_listSslBindingsByThumbprints": [
+   "ppapi"
+  ],
+  "powerpages_removeAllowedIpAddresses": [
+   "ppapi"
+  ],
+  "powerpages_restartWebsite": [
+   "ppapi"
+  ],
+  "powerpages_setPortalBootstrapV5Enabled": [
+   "ppapi"
+  ],
+  "powerpages_setPortalDataModelVersion": [
+   "ppapi"
+  ],
+  "powerpages_startDeepScan": [
+   "ppapi"
+  ],
+  "powerpages_startQuickScan": [
+   "ppapi"
+  ],
+  "powerpages_startWebsite": [
+   "ppapi"
+  ],
+  "powerpages_stopWebsite": [
+   "ppapi"
+  ],
+  "powerpages_toggleAfdTrafficRouting": [
+   "ppapi"
+  ],
+  "powerpages_updatePortalSecurityGroup": [
+   "ppapi"
+  ],
+  "powerpages_updateSiteVisibility": [
+   "ppapi"
+  ],
+  "powerpages_updateWafPolicySettings": [
+   "ppapi"
+  ],
+  "powerpages_uploadCertificate": [
+   "ppapi"
+  ],
+  "publishers_create": [
+   "dataverse"
+  ],
+  "publishers_delete": [
+   "dataverse"
+  ],
+  "publishers_get": [
+   "dataverse"
+  ],
+  "publishers_list": [
+   "dataverse"
+  ],
+  "publishers_update": [
+   "dataverse"
+  ],
+  "records_create": [
+   "dataverse"
+  ],
+  "records_delete": [
+   "dataverse"
+  ],
+  "records_get": [
+   "dataverse"
+  ],
+  "records_query": [
+   "dataverse"
+  ],
+  "records_update": [
+   "dataverse"
+  ],
+  "relationships_add": [
+   "dataverse"
+  ],
+  "relationships_listReferences": [
+   "dataverse"
+  ],
+  "relationships_listRelated": [
+   "dataverse"
+  ],
+  "relationships_remove": [
+   "dataverse"
+  ],
+  "relationships_removeByKey": [
+   "dataverse"
+  ],
+  "resourcequery_queryResources": [
+   "ppapi"
+  ],
+  "rules_list": [
+   "advisor"
+  ],
+  "rulesets_list": [
+   "advisor"
+  ],
+  "search_readStatus": [
+   "dataverse"
+  ],
+  "serviceRoot_read": [
+   "licensing"
+  ],
+  "solutionImport_publishAllCustomizations": [
+   "dataverse"
+  ],
+  "solutionImport_readAsyncOperation": [
+   "dataverse"
+  ],
+  "solutionImport_readResult": [
+   "dataverse"
+  ],
+  "solutionImport_stage": [
+   "dataverse"
+  ],
+  "solutionImport_start": [
+   "dataverse"
+  ],
+  "solutionImport_startUpgrade": [
+   "dataverse"
+  ],
+  "solutions_delete": [
+   "dataverse"
+  ],
+  "solutions_export": [
+   "dataverse"
+  ],
+  "solutions_get": [
+   "dataverse"
+  ],
+  "solutions_list": [
+   "dataverse"
+  ],
+  "solutions_readPreferred": [
+   "dataverse"
+  ],
+  "synapseDatabases_list": [
+   "dataverse"
+  ],
+  "synapseLinkExternalTableStates_list": [
+   "dataverse"
+  ],
+  "tenantCapacity_read": [
+   "licensing"
+  ],
+  "tenantIsolation_createOrUpdate": [
+   "bapi"
+  ],
+  "tenantIsolation_get": [
+   "bapi"
+  ],
+  "tenantSettings_list": [
+   "bapi"
+  ],
+  "tenantSettings_update": [
+   "bapi"
+  ],
+  "tenantToTenantMigrations_get": [
+   "bapi"
+  ],
+  "tenant_get": [
+   "bapi"
+  ],
+  "trials_list": [
+   "licensing"
+  ],
+  "trials_listDatesOnly": [
+   "licensing"
+  ],
+  "trials_read": [
+   "licensing"
+  ],
+  "trials_readDatesOnly": [
+   "licensing"
+  ],
+  "usermanagement_applyAdminRole": [
+   "ppapi"
+  ],
+  "usermanagement_listEnvironmentPlugins": [
+   "ppapi"
+  ],
+  "users_addRole": [
+   "dataverse"
+  ],
+  "users_createApplicationUser": [
+   "dataverse"
+  ],
+  "users_delete": [
+   "dataverse"
+  ],
+  "users_list": [
+   "dataverse"
+  ],
+  "users_listBusinessUnits": [
+   "dataverse"
+  ],
+  "users_listRoleAssignments": [
+   "dataverse"
+  ],
+  "users_listRoleReferences": [
+   "dataverse"
+  ],
+  "users_listSecurityRoles": [
+   "dataverse"
+  ],
+  "users_listTeamMemberships": [
+   "dataverse"
+  ],
+  "users_listTeams": [
+   "dataverse"
+  ],
+  "users_read": [
+   "dataverse"
+  ],
+  "users_readBusinessUnit": [
+   "dataverse"
+  ],
+  "users_readByEntraObjectId": [
+   "dataverse"
+  ],
+  "users_readPrivileges": [
+   "dataverse"
+  ],
+  "users_readPrivilegesThroughTeams": [
+   "dataverse"
+  ],
+  "users_removeRole": [
+   "dataverse"
+  ],
+  "users_update": [
+   "dataverse"
+  ],
+  "workflowsagent_deleteApproval": [
+   "ppapi"
+  ],
+  "workflowsagent_deleteConnection": [
+   "ppapi"
+  ],
+  "workflowsagent_deleteFlow": [
+   "ppapi"
+  ],
+  "workflowsagent_deletePrompt": [
+   "ppapi"
+  ],
+  "workflowsagent_getApprovals": [
+   "ppapi"
+  ],
+  "workflowsagent_getConnections": [
+   "ppapi"
+  ],
+  "workflowsagent_getConversationTranscriptsForDsr": [
+   "ppapi"
+  ],
+  "workflowsagent_getConversationTranscriptsWithEnvironment": [
+   "ppapi"
+  ],
+  "workflowsagent_getFlowRunActionsForDsr": [
+   "ppapi"
+  ],
+  "workflowsagent_getFlowRunActionsWithEnvironment": [
+   "ppapi"
+  ],
+  "workflowsagent_getFlowRunsNonSingleton": [
+   "ppapi"
+  ],
+  "workflowsagent_getFlowRunsSingleton": [
+   "ppapi"
+  ],
+  "workflowsagent_getFlows": [
+   "ppapi"
+  ],
+  "workflowsagent_getPrompts": [
+   "ppapi"
+  ],
+  "workflowsagent_getRunHistoryData": [
+   "ppapi"
+  ],
+  "workflowsagent_getRunHistoryDataNonSingleton": [
+   "ppapi"
+  ]
+ },
+ "resources": {
+  "Admin Applications": [
+   "bapi"
+  ],
+  "Advisor Chat": [
+   "ppapi"
+  ],
+  "Advisor Recommendation": [
+   "ppapi"
+  ],
+  "Analysis": [
+   "advisor"
+  ],
+  "Application Insights Configuration": [
+   "copilot"
+  ],
+  "Application Package": [
+   "ppapi"
+  ],
+  "Async Operation": [
+   "ppapi"
+  ],
+  "Batch": [
+   "dataverse"
+  ],
+  "Billing Policy": [
+   "licensing",
+   "ppapi"
+  ],
+  "Billing Policy to Environment link": [
+   "licensing",
+   "ppapi"
+  ],
+  "Canvas App": [
+   "powerapps",
+   "ppapi"
+  ],
+  "Capacity Allocation": [
+   "ppapi"
+  ],
+  "Cloud Flow": [
+   "ppapi"
+  ],
+  "Cluster": [
+   "ppapi"
+  ],
+  "Connection": [
+   "powerapps",
+   "ppapi"
+  ],
+  "Connector": [
+   "powerapps",
+   "ppapi"
+  ],
+  "Connector Metadata": [
+   "bapi"
+  ],
+  "Copilot Agent": [
+   "ppapi"
+  ],
+  "Copilot Governance Setting": [
+   "ppapi"
+  ],
+  "Country Opt-In Defaults": [
+   "bapi"
+  ],
+  "Cross-Tenant Connection Report": [
+   "ppapi"
+  ],
+  "Currency Allocation": [
+   "licensing",
+   "ppapi"
+  ],
+  "DLP Policies": [
+   "bapi"
+  ],
+  "DSR Compliance Request": [
+   "ppapi"
+  ],
+  "Data Export Connections": [
+   "analytics"
+  ],
+  "Data Lakes": [
+   "athena"
+  ],
+  "Dataverse Search": [
+   "dataverse"
+  ],
+  "Discovery": [
+   "dataverse"
+  ],
+  "Enforcement Cache": [
+   "advisor"
+  ],
+  "Enterprise Policies": [
+   "bapi"
+  ],
+  "Entitlement": [
+   "licensing",
+   "ppapi"
+  ],
+  "Environment": [
+   "powerapps",
+   "ppapi"
+  ],
+  "Environment Group": [
+   "ppapi"
+  ],
+  "Environment Groups": [
+   "bapi"
+  ],
+  "Environment Operations": [
+   "ppapi"
+  ],
+  "Environment Role Assignments": [
+   "bapi"
+  ],
+  "Environment Variables": [
+   "dataverse"
+  ],
+  "Environments": [
+   "bapi"
+  ],
+  "F&O Environment": [
+   "ppapi"
+  ],
+  "Fabric Workspaces": [
+   "athena"
+  ],
+  "Fabric and Synapse Link": [
+   "dataverse"
+  ],
+  "Feature Control": [
+   "dataverse"
+  ],
+  "Feature Gate": [
+   "ppapi"
+  ],
+  "Feature Gates": [
+   "bapi"
+  ],
+  "FinOps Licensing": [
+   "ppapi"
+  ],
+  "Gateway": [
+   "powerapps"
+  ],
+  "Governance Configuration": [
+   "ppapi"
+  ],
+  "ISV Contract": [
+   "ppapi"
+  ],
+  "Identity": [
+   "dataverse"
+  ],
+  "Lake Profiles": [
+   "athena"
+  ],
+  "Lakehouse Artifacts": [
+   "athena"
+  ],
+  "Lifecycle Operations": [
+   "bapi"
+  ],
+  "Linkable Tables": [
+   "athena"
+  ],
+  "Locations": [
+   "bapi"
+  ],
+  "Managed Environments": [
+   "bapi"
+  ],
+  "Notification": [
+   "ppapi"
+  ],
+  "Organization": [
+   "admin"
+  ],
+  "Organization Registration": [
+   "athena"
+  ],
+  "Organization Settings": [
+   "dataverse"
+  ],
+  "Per-Flow Capacity": [
+   "ppapi"
+  ],
+  "Power Pages Website": [
+   "ppapi"
+  ],
+  "Publishers": [
+   "dataverse"
+  ],
+  "Records": [
+   "dataverse"
+  ],
+  "Region Discovery": [
+   "analytics"
+  ],
+  "Relationships": [
+   "dataverse"
+  ],
+  "Release Wave Feature": [
+   "admin"
+  ],
+  "Resource Query": [
+   "ppapi"
+  ],
+  "Role Based Access Control": [
+   "ppapi"
+  ],
+  "Rule Set": [
+   "ppapi"
+  ],
+  "Rule-Based Policy": [
+   "ppapi"
+  ],
+  "Rules": [
+   "advisor"
+  ],
+  "Rulesets": [
+   "advisor"
+  ],
+  "Service Plan": [
+   "ppapi"
+  ],
+  "Service Root": [
+   "licensing"
+  ],
+  "Solution Import": [
+   "dataverse"
+  ],
+  "Solutions": [
+   "dataverse"
+  ],
+  "Table Definitions": [
+   "dataverse"
+  ],
+  "Tenant": [
+   "bapi"
+  ],
+  "Tenant Capacity": [
+   "licensing",
+   "ppapi"
+  ],
+  "Tenant Isolation": [
+   "bapi"
+  ],
+  "Tenant-to-Tenant Migrations": [
+   "bapi"
+  ],
+  "User": [
+   "ppapi"
+  ],
+  "User Setting": [
+   "ppapi"
+  ],
+  "User Trial": [
+   "licensing"
+  ],
+  "Users and Roles": [
+   "dataverse"
+  ]
+ },
+ "schemas": {
+  "ActionEvent": [
+   "ppapi"
+  ],
+  "ActionEventBase": [
+   "ppapi"
+  ],
+  "ActionEventType": [
+   "ppapi"
+  ],
+  "ActionOutputProperties": [
+   "ppapi"
+  ],
+  "ActionProperties": [
+   "ppapi"
+  ],
+  "ActionResponse": [
+   "ppapi"
+  ],
+  "ActionStatus": [
+   "ppapi"
+  ],
+  "ActionSuggestionRequestEvent": [
+   "ppapi"
+  ],
+  "ActionSuggestionRequestProperties": [
+   "ppapi"
+  ],
+  "ActionValidationResponseEvent": [
+   "ppapi"
+  ],
+  "ActionValidationResponseProperties": [
+   "ppapi"
+  ],
+  "AddItemRequest": [
+   "bapi"
+  ],
+  "AdminManagementApplication": [
+   "bapi"
+  ],
+  "AdminManagementApplicationList": [
+   "bapi"
+  ],
+  "AdvisorAction": [
+   "ppapi"
+  ],
+  "AdvisorActionRequest": [
+   "ppapi"
+  ],
+  "AdvisorActionResponse": [
+   "ppapi"
+  ],
+  "AdvisorActionResult": [
+   "ppapi"
+  ],
+  "AdvisorChatConversation": [
+   "ppapi"
+  ],
+  "AdvisorChatConversationCollection": [
+   "ppapi"
+  ],
+  "AdvisorChatMessage": [
+   "ppapi"
+  ],
+  "AdvisorChatRequest": [
+   "ppapi"
+  ],
+  "AdvisorRecommendation": [
+   "ppapi"
+  ],
+  "AdvisorRecommendationDetails": [
+   "ppapi"
+  ],
+  "AdvisorRecommendationIEnumerableResponseWithContinuation": [
+   "ppapi"
+  ],
+  "AdvisorRecommendationResource": [
+   "ppapi"
+  ],
+  "AdvisorRecommendationResourceIEnumerableResponseWithContinuation": [
+   "ppapi"
+  ],
+  "AdvisorScenario": [
+   "ppapi"
+  ],
+  "Alert": [
+   "ppapi"
+  ],
+  "AllocatedQuantity": [
+   "licensing"
+  ],
+  "AllocationAvailabilityResponseModel": [
+   "ppapi"
+  ],
+  "AllocationByEnvironmentModel": [
+   "ppapi"
+  ],
+  "AllocationEnforcementRule": [
+   "ppapi"
+  ],
+  "AllocationEnforcementRuleTypes": [
+   "ppapi"
+  ],
+  "AllocationModel": [
+   "ppapi"
+  ],
+  "AllocationPutRequestModel": [
+   "ppapi"
+  ],
+  "AllocationsByEnvironmentPatchRequestModelV1": [
+   "ppapi"
+  ],
+  "AllocationsByEnvironmentResponseModelV1": [
+   "ppapi"
+  ],
+  "AllowedOperation": [
+   "bapi"
+  ],
+  "AllowedTenant": [
+   "bapi"
+  ],
+  "AnalysisRequest": [
+   "advisor"
+  ],
+  "AnalysisSolution": [
+   "advisor"
+  ],
+  "AnalysisStatus": [
+   "advisor"
+  ],
+  "ApiProperties": [
+   "ppapi"
+  ],
+  "App": [
+   "powerapps"
+  ],
+  "AppDlpEvaluationRequest": [
+   "ppapi"
+  ],
+  "AppDlpEvaluationResponse": [
+   "ppapi"
+  ],
+  "AppDlpEvaluationResult": [
+   "ppapi"
+  ],
+  "AppEnvironmentRef": [
+   "powerapps"
+  ],
+  "AppInsightsConfiguration": [
+   "copilot"
+  ],
+  "AppList": [
+   "powerapps"
+  ],
+  "AppLocation": [
+   "ppapi"
+  ],
+  "AppProperties": [
+   "powerapps"
+  ],
+  "AppSession": [
+   "ppapi"
+  ],
+  "AppSessionRequest": [
+   "ppapi"
+  ],
+  "AppSessionResponse": [
+   "ppapi"
+  ],
+  "AppSessionUser": [
+   "ppapi"
+  ],
+  "AppUris": [
+   "ppapi"
+  ],
+  "ApplicationPackage": [
+   "ppapi"
+  ],
+  "ApplicationPackageContinuationResponse": [
+   "ppapi"
+  ],
+  "ApplicationVisibility": [
+   "ppapi"
+  ],
+  "ApplyFinOpsVersionAcceptedResponse": [
+   "ppapi"
+  ],
+  "AsyncOperation": [
+   "dataverse"
+  ],
+  "AttributeMetadata": [
+   "dataverse"
+  ],
+  "AttributeMetadataCollection": [
+   "dataverse"
+  ],
+  "AuditInfo": [
+   "ppapi"
+  ],
+  "BapLifecycleOperation": [
+   "ppapi"
+  ],
+  "Base64ThoughtImage": [
+   "ppapi"
+  ],
+  "Base64ThoughtImage_format": [
+   "ppapi"
+  ],
+  "BillingInstrument": [
+   "bapi",
+   "licensing"
+  ],
+  "BillingInstrumentModel": [
+   "ppapi"
+  ],
+  "BillingPolicy": [
+   "bapi",
+   "licensing"
+  ],
+  "BillingPolicyConditionsApiFilterModel": [
+   "ppapi"
+  ],
+  "BillingPolicyConditionsApiModel": [
+   "ppapi"
+  ],
+  "BillingPolicyConditionsModel": [
+   "ppapi"
+  ],
+  "BillingPolicyEnvironment": [
+   "licensing"
+  ],
+  "BillingPolicyEnvironmentAddRequestModel": [
+   "ppapi"
+  ],
+  "BillingPolicyEnvironmentRemoveRequestModel": [
+   "ppapi"
+  ],
+  "BillingPolicyEnvironmentResponseModelV1": [
+   "ppapi"
+  ],
+  "BillingPolicyEnvironmentResponseModelV1ResponseWithOdataContinuation": [
+   "ppapi"
+  ],
+  "BillingPolicyList": [
+   "licensing"
+  ],
+  "BillingPolicyPostRequestModel": [
+   "ppapi"
+  ],
+  "BillingPolicyProductView": [
+   "licensing"
+  ],
+  "BillingPolicyProductViewList": [
+   "licensing"
+  ],
+  "BillingPolicyPutRequestModel": [
+   "ppapi"
+  ],
+  "BillingPolicyResponseModel": [
+   "ppapi"
+  ],
+  "BillingPolicyResponseModelResponseWithOdataContinuation": [
+   "ppapi"
+  ],
+  "BillingPolicyStatus": [
+   "ppapi"
+  ],
+  "BodyProperties": [
+   "ppapi"
+  ],
+  "BotQuarantineStatus": [
+   "ppapi"
+  ],
+  "BusinessContinuityStateFullSnapshot": [
+   "ppapi"
+  ],
+  "BusinessUnit": [
+   "dataverse"
+  ],
+  "BusinessUnitCollection": [
+   "dataverse"
+  ],
+  "CapacityAvailabilityStatus": [
+   "ppapi"
+  ],
+  "CapacityConsumption": [
+   "licensing"
+  ],
+  "CapacityEntitlement": [
+   "licensing"
+  ],
+  "CapacityEntitlementModel": [
+   "ppapi"
+  ],
+  "CapacityEntitlementType": [
+   "ppapi"
+  ],
+  "CapacityLicense": [
+   "licensing"
+  ],
+  "CapacityLicenseModel": [
+   "ppapi"
+  ],
+  "CapacityStatusMessageCode": [
+   "ppapi"
+  ],
+  "CapacitySummary": [
+   "licensing",
+   "ppapi"
+  ],
+  "CapacityType": [
+   "ppapi"
+  ],
+  "CapacityUnits": [
+   "ppapi"
+  ],
+  "CascadeConfiguration": [
+   "dataverse"
+  ],
+  "CatalogPayGoEntitlementModel": [
+   "ppapi"
+  ],
+  "CatalogSettings": [
+   "bapi"
+  ],
+  "CatalogVisibility": [
+   "ppapi"
+  ],
+  "CertificateDTO": [
+   "ppapi"
+  ],
+  "ChampionSettings": [
+   "bapi"
+  ],
+  "Clause": [
+   "ppapi"
+  ],
+  "ClauseBaseClass": [
+   "ppapi"
+  ],
+  "ClauseBaseClass_Type": [
+   "ppapi"
+  ],
+  "ClientUris": [
+   "bapi"
+  ],
+  "Cluster": [
+   "bapi"
+  ],
+  "ComponentParameter": [
+   "dataverse"
+  ],
+  "Connection": [
+   "analytics",
+   "powerapps",
+   "ppapi"
+  ],
+  "ConnectionEnvironment": [
+   "analytics"
+  ],
+  "ConnectionList": [
+   "powerapps"
+  ],
+  "ConnectionListResponse": [
+   "analytics"
+  ],
+  "ConnectionParameter": [
+   "powerapps"
+  ],
+  "ConnectionParameterSets": [
+   "powerapps"
+  ],
+  "ConnectionProperties": [
+   "powerapps",
+   "ppapi"
+  ],
+  "ConnectionReference": [
+   "ppapi"
+  ],
+  "ConnectionReferenceParameter": [
+   "dataverse"
+  ],
+  "ConnectionStatus": [
+   "analytics",
+   "powerapps"
+  ],
+  "Connector": [
+   "powerapps"
+  ],
+  "ConnectorActionEndEvent": [
+   "ppapi"
+  ],
+  "ConnectorActionEndProperties": [
+   "ppapi"
+  ],
+  "ConnectorActionStartEvent": [
+   "ppapi"
+  ],
+  "ConnectorActionStartProperties": [
+   "ppapi"
+  ],
+  "ConnectorConsentBypassResponse": [
+   "ppapi"
+  ],
+  "ConnectorInterface": [
+   "powerapps"
+  ],
+  "ConnectorList": [
+   "powerapps"
+  ],
+  "ConnectorMetadata": [
+   "powerapps"
+  ],
+  "ConnectorProperties": [
+   "powerapps"
+  ],
+  "ConnectorScopes": [
+   "powerapps"
+  ],
+  "ConnectorVersion": [
+   "powerapps"
+  ],
+  "ConsumedQuantity": [
+   "licensing"
+  ],
+  "ConsumerIdentityModel": [
+   "ppapi"
+  ],
+  "ConsumptionModel": [
+   "ppapi"
+  ],
+  "ContentTypeCategory": [
+   "ppapi"
+  ],
+  "ConversationTranscript": [
+   "ppapi"
+  ],
+  "ConversationTranscriptCompletion": [
+   "ppapi"
+  ],
+  "ConversationTranscriptFunction": [
+   "ppapi"
+  ],
+  "ConversationTranscriptMessage": [
+   "ppapi"
+  ],
+  "ConversationTranscriptRequest": [
+   "ppapi"
+  ],
+  "ConversationTranscriptResponse": [
+   "ppapi"
+  ],
+  "ConversationTranscriptScenario": [
+   "ppapi"
+  ],
+  "ConversationTranscriptSystemMetadata": [
+   "ppapi"
+  ],
+  "ConversationTranscriptTool": [
+   "ppapi"
+  ],
+  "ConversationTranscriptToolCall": [
+   "ppapi"
+  ],
+  "ConversationTranscriptToolFunction": [
+   "ppapi"
+  ],
+  "ConvertTrialToProductionRequest": [
+   "ppapi"
+  ],
+  "CopilotGovernanceRuleInput": [
+   "ppapi"
+  ],
+  "CopilotGovernanceSetting": [
+   "ppapi"
+  ],
+  "CopilotGovernanceSettingRule": [
+   "ppapi"
+  ],
+  "CopilotGovernanceStatusMessage": [
+   "ppapi"
+  ],
+  "CopilotPolicies": [
+   "bapi"
+  ],
+  "CopyRequest": [
+   "ppapi"
+  ],
+  "CopyRequestOptions": [
+   "ppapi"
+  ],
+  "CopyType": [
+   "ppapi"
+  ],
+  "CountClause": [
+   "ppapi"
+  ],
+  "CountryDefaultOptIn": [
+   "bapi"
+  ],
+  "CountryDefaultOptInList": [
+   "bapi"
+  ],
+  "CreateApplicationUser": [
+   "dataverse"
+  ],
+  "CreateBackupRequest": [
+   "ppapi"
+  ],
+  "CreateCurrency": [
+   "bapi"
+  ],
+  "CreateEnvironmentManagementSettingResponse": [
+   "ppapi"
+  ],
+  "CreateEnvironmentRequest": [
+   "ppapi"
+  ],
+  "CreateEnvironmentRequestBillingPolicy": [
+   "ppapi"
+  ],
+  "CreateEnvironmentRequestCluster": [
+   "ppapi"
+  ],
+  "CreateEnvironmentRequestFinOpsMetadata": [
+   "ppapi"
+  ],
+  "CreateEnvironmentRequestGovernance": [
+   "ppapi"
+  ],
+  "CreateEnvironmentRequestLinkedMetadata": [
+   "ppapi"
+  ],
+  "CreateEnvironmentRequestParentGroup": [
+   "ppapi"
+  ],
+  "CreateEnvironmentVariableValue": [
+   "dataverse"
+  ],
+  "CreateLinkEnvironmentMetadata": [
+   "bapi"
+  ],
+  "CreatePostProvisioningPackages": [
+   "bapi"
+  ],
+  "CreateTemplateMetadata": [
+   "bapi"
+  ],
+  "CreatedBy": [
+   "ppapi"
+  ],
+  "CreatedByClientVersion": [
+   "ppapi"
+  ],
+  "CrossTenantConnection": [
+   "ppapi"
+  ],
+  "CrossTenantConnectionReport": [
+   "ppapi"
+  ],
+  "CrossTenantConnectionReportsResponseWithOdataContinuation": [
+   "ppapi"
+  ],
+  "CurrenciesList": [
+   "bapi"
+  ],
+  "Currency": [
+   "bapi"
+  ],
+  "CurrencyAllocationModel": [
+   "ppapi"
+  ],
+  "CurrencyAllocationRequestModelV1": [
+   "ppapi"
+  ],
+  "CurrencyAllocationResponseModelV1": [
+   "ppapi"
+  ],
+  "CurrencyConsumption": [
+   "ppapi"
+  ],
+  "CurrencyProperties": [
+   "bapi"
+  ],
+  "CurrencyReport": [
+   "licensing"
+  ],
+  "CurrencyReportV2": [
+   "ppapi"
+  ],
+  "CurrencyType": [
+   "ppapi"
+  ],
+  "CustomRule": [
+   "ppapi"
+  ],
+  "DatalakeFolder": [
+   "dataverse"
+  ],
+  "DatalakeFolderCollection": [
+   "dataverse"
+  ],
+  "DataverseAnalysisRequest": [
+   "advisor"
+  ],
+  "DataverseAnalysisResponse": [
+   "advisor"
+  ],
+  "DataverseTable": [
+   "athena"
+  ],
+  "Details": [
+   "ppapi"
+  ],
+  "Direction": [
+   "bapi"
+  ],
+  "DisabledReason": [
+   "ppapi"
+  ],
+  "DisallowedOperation": [
+   "bapi"
+  ],
+  "DisallowedOperationReason": [
+   "bapi"
+  ],
+  "DisasterRecoveryPatch": [
+   "bapi"
+  ],
+  "DisasterRecoveryPatchProperties": [
+   "bapi"
+  ],
+  "DisasterRecoveryPatchStates": [
+   "bapi"
+  ],
+  "DisasterRecoveryState": [
+   "bapi"
+  ],
+  "DiscoveryInstance": [
+   "dataverse"
+  ],
+  "DiscoveryInstanceCollection": [
+   "dataverse"
+  ],
+  "DistinctClause": [
+   "ppapi"
+  ],
+  "DlpActionRule": [
+   "bapi"
+  ],
+  "DlpConnector": [
+   "bapi"
+  ],
+  "DlpConnectorActionConfigurations": [
+   "bapi"
+  ],
+  "DlpConnectorConfigurationsDefinition": [
+   "bapi"
+  ],
+  "DlpConnectorGroups": [
+   "bapi"
+  ],
+  "DlpConnectorUrlPatternsDefinition": [
+   "bapi"
+  ],
+  "DlpConnectorUrlPatternsRule": [
+   "bapi"
+  ],
+  "DlpEndpointConfigurations": [
+   "bapi"
+  ],
+  "DlpEndpointRule": [
+   "bapi"
+  ],
+  "DlpEnvironment": [
+   "bapi"
+  ],
+  "DlpPolicy": [
+   "bapi"
+  ],
+  "DlpPolicyDefinition": [
+   "bapi"
+  ],
+  "DlpPolicyDefinitionList": [
+   "bapi"
+  ],
+  "DlpPolicyLastAction": [
+   "bapi"
+  ],
+  "DocumentUri": [
+   "ppapi"
+  ],
+  "DsrConversationTranscriptsResponse": [
+   "ppapi"
+  ],
+  "DsrFlowRunData": [
+   "ppapi"
+  ],
+  "DsrFlowRunsResponse": [
+   "ppapi"
+  ],
+  "DsrPagedResponse": [
+   "ppapi"
+  ],
+  "EnforcementRule": [
+   "ppapi"
+  ],
+  "EnforcementRuleTypes": [
+   "ppapi"
+  ],
+  "EnterprisePolicies": [
+   "ppapi"
+  ],
+  "EnterprisePolicy": [
+   "bapi"
+  ],
+  "EnterprisePolicyClientCredentials": [
+   "athena"
+  ],
+  "EnterprisePolicyLink": [
+   "ppapi"
+  ],
+  "EnterprisePolicyLinkStatus": [
+   "ppapi"
+  ],
+  "Entitlement": [
+   "licensing"
+  ],
+  "EntitlementAllocationAvailabilityModel": [
+   "ppapi"
+  ],
+  "EntitlementAllocationModel": [
+   "ppapi"
+  ],
+  "EntitlementAllocationModelV2": [
+   "ppapi"
+  ],
+  "EntitlementCapacity": [
+   "licensing"
+  ],
+  "EntitlementConsumedModel": [
+   "ppapi"
+  ],
+  "EntitlementConsumptionType": [
+   "ppapi"
+  ],
+  "EntitlementEntitledModel": [
+   "ppapi"
+  ],
+  "EntitlementFlatCapacity": [
+   "licensing"
+  ],
+  "EntitlementLicense": [
+   "licensing"
+  ],
+  "EntitlementPayGo": [
+   "licensing"
+  ],
+  "EntitlementProductView": [
+   "licensing"
+  ],
+  "EntitlementReservedResponseModel": [
+   "ppapi"
+  ],
+  "EntitlementUnit": [
+   "ppapi"
+  ],
+  "EntityAnalyticsConfig": [
+   "dataverse"
+  ],
+  "EntityAnalyticsConfigCollection": [
+   "dataverse"
+  ],
+  "EntityDefinition": [
+   "dataverse"
+  ],
+  "EntityDefinitionCollection": [
+   "dataverse"
+  ],
+  "EntityDescription": [
+   "athena"
+  ],
+  "EntityRelationship": [
+   "athena"
+  ],
+  "Environment": [
+   "bapi",
+   "powerapps",
+   "ppapi"
+  ],
+  "EnvironmentAddonResponseModel": [
+   "ppapi"
+  ],
+  "EnvironmentBackup": [
+   "ppapi"
+  ],
+  "EnvironmentBackupPagedCollection": [
+   "ppapi"
+  ],
+  "EnvironmentCapacity": [
+   "bapi"
+  ],
+  "EnvironmentCapacityEntitlementModel": [
+   "ppapi"
+  ],
+  "EnvironmentCluster": [
+   "powerapps"
+  ],
+  "EnvironmentCreate": [
+   "bapi"
+  ],
+  "EnvironmentCreateProperties": [
+   "bapi"
+  ],
+  "EnvironmentCurrency": [
+   "ppapi"
+  ],
+  "EnvironmentCurrencyResourceCollection": [
+   "ppapi"
+  ],
+  "EnvironmentDelete": [
+   "bapi"
+  ],
+  "EnvironmentDisasterRecoveryLocation": [
+   "ppapi"
+  ],
+  "EnvironmentDisasterRecoveryState": [
+   "ppapi"
+  ],
+  "EnvironmentEnterprisePolicies": [
+   "bapi"
+  ],
+  "EnvironmentEntitlementDetailServiceModel": [
+   "ppapi"
+  ],
+  "EnvironmentEntitlementResponseModel": [
+   "ppapi"
+  ],
+  "EnvironmentEntitlementSnapshotResponseModel": [
+   "ppapi"
+  ],
+  "EnvironmentEntitlementSnapshotResponseModelPagedResponse": [
+   "ppapi"
+  ],
+  "EnvironmentGroup": [
+   "bapi",
+   "ppapi"
+  ],
+  "EnvironmentGroupList": [
+   "bapi"
+  ],
+  "EnvironmentGroupPrincipal": [
+   "bapi"
+  ],
+  "EnvironmentGroupResponseWithOdataContinuation": [
+   "ppapi"
+  ],
+  "EnvironmentLanguage": [
+   "ppapi"
+  ],
+  "EnvironmentLanguageResourceCollection": [
+   "ppapi"
+  ],
+  "EnvironmentLastActivity": [
+   "bapi"
+  ],
+  "EnvironmentList": [
+   "bapi",
+   "powerapps",
+   "ppapi"
+  ],
+  "EnvironmentManagementSetting": [
+   "ppapi"
+  ],
+  "EnvironmentPagedCollection": [
+   "ppapi"
+  ],
+  "EnvironmentPartnerLastActivity": [
+   "bapi"
+  ],
+  "EnvironmentPermission": [
+   "bapi"
+  ],
+  "EnvironmentPermissionResponseModel": [
+   "ppapi"
+  ],
+  "EnvironmentPrincipal": [
+   "ppapi"
+  ],
+  "EnvironmentProperties": [
+   "bapi",
+   "powerapps"
+  ],
+  "EnvironmentRef": [
+   "powerapps"
+  ],
+  "EnvironmentRequestCurrency": [
+   "ppapi"
+  ],
+  "EnvironmentResourceEntitlementSnapshotResponseModel": [
+   "ppapi"
+  ],
+  "EnvironmentResponse": [
+   "ppapi"
+  ],
+  "EnvironmentScenario": [
+   "ppapi"
+  ],
+  "EnvironmentServiceErrorResponse": [
+   "ppapi"
+  ],
+  "EnvironmentSettings": [
+   "bapi"
+  ],
+  "EnvironmentSku": [
+   "ppapi"
+  ],
+  "EnvironmentStates": [
+   "powerapps"
+  ],
+  "EnvironmentTemplate": [
+   "bapi",
+   "ppapi"
+  ],
+  "EnvironmentTemplateList": [
+   "bapi"
+  ],
+  "EnvironmentTemplateResourceCollection": [
+   "ppapi"
+  ],
+  "EnvironmentType": [
+   "ppapi"
+  ],
+  "EnvironmentUserGetResponse": [
+   "bapi"
+  ],
+  "EnvironmentUserRequest": [
+   "bapi"
+  ],
+  "EnvironmentUserResponse": [
+   "bapi"
+  ],
+  "EnvironmentVariableDefinition": [
+   "dataverse"
+  ],
+  "EnvironmentVariableDefinitionCollection": [
+   "dataverse"
+  ],
+  "EnvironmentVariableParameter": [
+   "dataverse"
+  ],
+  "EnvironmentVariableValue": [
+   "dataverse"
+  ],
+  "EnvironmentVariableValueCollection": [
+   "dataverse"
+  ],
+  "Environment_powerapps": [
+   "ppapi"
+  ],
+  "Error": [
+   "bapi",
+   "powerapps",
+   "ppapi"
+  ],
+  "ErrorDetail": [
+   "advisor",
+   "bapi",
+   "copilot",
+   "licensing",
+   "ppapi"
+  ],
+  "ErrorDetails": [
+   "athena",
+   "ppapi"
+  ],
+  "ErrorMessage": [
+   "ppapi"
+  ],
+  "ErrorResponse": [
+   "advisor",
+   "copilot",
+   "powerapps",
+   "ppapi"
+  ],
+  "Error_powerautomate": [
+   "ppapi"
+  ],
+  "Error_powerpages": [
+   "ppapi"
+  ],
+  "EvaluationRunState": [
+   "ppapi"
+  ],
+  "ExecutionState": [
+   "ppapi"
+  ],
+  "ExportComponentDetail": [
+   "dataverse"
+  ],
+  "ExportComponentsParams": [
+   "dataverse"
+  ],
+  "ExportSolutionRequest": [
+   "dataverse"
+  ],
+  "ExportSolutionResponse": [
+   "dataverse"
+  ],
+  "ExtendClause": [
+   "ppapi"
+  ],
+  "ExtendedGovernanceSettings": [
+   "powerapps"
+  ],
+  "ExtendedSettings": [
+   "bapi"
+  ],
+  "ExternalCurrencyType": [
+   "ppapi"
+  ],
+  "FabricWorkspace": [
+   "athena"
+  ],
+  "Feature": [
+   "admin",
+   "bapi"
+  ],
+  "FeatureCollection": [
+   "admin"
+  ],
+  "FeatureList": [
+   "bapi"
+  ],
+  "FeatureProperties": [
+   "bapi"
+  ],
+  "FieldError": [
+   "ppapi"
+  ],
+  "FinOpsAdminSettingsResponse": [
+   "ppapi"
+  ],
+  "FinOpsAppVersion": [
+   "ppapi"
+  ],
+  "FinOpsAttachLicenseConsumption": [
+   "ppapi"
+  ],
+  "FinOpsBaseLicenseConsumption": [
+   "ppapi"
+  ],
+  "FinOpsDayOfWeek": [
+   "ppapi"
+  ],
+  "FinOpsDeploymentCategory": [
+   "ppapi"
+  ],
+  "FinOpsErrorResponse": [
+   "ppapi"
+  ],
+  "FinOpsLicenseRequirements": [
+   "ppapi"
+  ],
+  "FinOpsLicenseSummaryV2Response": [
+   "ppapi"
+  ],
+  "FinOpsLicensesConsumption": [
+   "ppapi"
+  ],
+  "FinOpsMetadata": [
+   "ppapi"
+  ],
+  "FinOpsOperationsLicenseConsumption": [
+   "ppapi"
+  ],
+  "FinOpsProductLicenseConsumption": [
+   "ppapi"
+  ],
+  "FinOpsProjectOperationsOrHumanResourcesLicenseConsumption": [
+   "ppapi"
+  ],
+  "FinOpsPropertiesResponse": [
+   "ppapi"
+  ],
+  "FinOpsSimpleLicenseConsumption": [
+   "ppapi"
+  ],
+  "FinOpsSupplyChainManagementOrFinanceOrCommerceLicenseConsumption": [
+   "ppapi"
+  ],
+  "FinOpsUpdateCadence": [
+   "ppapi"
+  ],
+  "FinOpsVersionsResponse": [
+   "ppapi"
+  ],
+  "FinanceAndOperationsTable": [
+   "athena"
+  ],
+  "FlowOutputEvent": [
+   "ppapi"
+  ],
+  "FlowOutputProperties": [
+   "ppapi"
+  ],
+  "ForceFailoverRequest": [
+   "ppapi"
+  ],
+  "GatewayCluster": [
+   "analytics",
+   "ppapi"
+  ],
+  "GatewayError": [
+   "ppapi"
+  ],
+  "GatewayInnerError": [
+   "ppapi"
+  ],
+  "GatewayList": [
+   "powerapps"
+  ],
+  "GenerativeAiFeatures": [
+   "bapi"
+  ],
+  "GenerativeAiFeaturesProperties": [
+   "bapi"
+  ],
+  "Geo": [
+   "ppapi"
+  ],
+  "GetConnectorByIdResponse": [
+   "ppapi"
+  ],
+  "GetEnvironmentManagementSettingResponse": [
+   "ppapi"
+  ],
+  "GetFeatureEnabledStateRequest": [
+   "dataverse"
+  ],
+  "GetFeatureEnabledStateResponse": [
+   "dataverse"
+  ],
+  "GetOrgDbOrgSettingRequest": [
+   "dataverse"
+  ],
+  "GetOrgDbOrgSettingResponse": [
+   "dataverse"
+  ],
+  "GetTemporaryCurrencyEntitlementCountResponseModel": [
+   "ppapi"
+  ],
+  "GovernanceConfiguration": [
+   "bapi",
+   "powerapps"
+  ],
+  "GovernanceSettings": [
+   "bapi"
+  ],
+  "HelpSupportSettings": [
+   "bapi"
+  ],
+  "IErrorDetail": [
+   "ppapi"
+  ],
+  "ImportSolutionParameters": [
+   "dataverse"
+  ],
+  "ImportSolutionRequest": [
+   "dataverse"
+  ],
+  "ImportSolutionResponse": [
+   "dataverse"
+  ],
+  "InstancePackage": [
+   "ppapi"
+  ],
+  "InstancePackageOperation": [
+   "ppapi"
+  ],
+  "InstancePackageOperationPollingResponse": [
+   "ppapi"
+  ],
+  "InstancePackageOperationStatus": [
+   "ppapi"
+  ],
+  "InstancePackageState": [
+   "ppapi"
+  ],
+  "IntelligenceSettings": [
+   "bapi"
+  ],
+  "Interfaces": [
+   "ppapi"
+  ],
+  "IpAddressConfiguration": [
+   "ppapi"
+  ],
+  "IpAddressEntity": [
+   "ppapi"
+  ],
+  "IpAddressType": [
+   "ppapi"
+  ],
+  "IssueSummary": [
+   "advisor"
+  ],
+  "IsvContractPostRequestModel": [
+   "ppapi"
+  ],
+  "IsvContractPutRequestModel": [
+   "ppapi"
+  ],
+  "IsvContractResponseModel": [
+   "ppapi"
+  ],
+  "IsvContractResponseModelResponseWithOdataContinuation": [
+   "ppapi"
+  ],
+  "Item": [
+   "bapi"
+  ],
+  "ItemDisabledReason": [
+   "bapi"
+  ],
+  "ItemResponse": [
+   "bapi"
+  ],
+  "JoinClause": [
+   "ppapi"
+  ],
+  "KeyMessageError": [
+   "licensing"
+  ],
+  "Label": [
+   "dataverse"
+  ],
+  "LakeDetail": [
+   "athena"
+  ],
+  "LakeProfile": [
+   "athena"
+  ],
+  "LakeProfileEntity": [
+   "athena"
+  ],
+  "LakeProfileEntityStatus": [
+   "athena"
+  ],
+  "LakeProfileEntityUpdate": [
+   "athena"
+  ],
+  "LakeProfileState": [
+   "athena"
+  ],
+  "LakeProfileStatus": [
+   "athena"
+  ],
+  "LakeProfileUpdate": [
+   "athena"
+  ],
+  "LakehouseArtifacts": [
+   "athena"
+  ],
+  "LakehouseArtifactsCreateRequest": [
+   "athena"
+  ],
+  "LakehouseArtifactsResyncRequest": [
+   "athena"
+  ],
+  "Language": [
+   "bapi"
+  ],
+  "LanguageProperties": [
+   "bapi"
+  ],
+  "LanguagesList": [
+   "bapi"
+  ],
+  "LastActivityRecord": [
+   "bapi"
+  ],
+  "LastModifiedBy": [
+   "ppapi"
+  ],
+  "LegacyCapacityModel": [
+   "ppapi"
+  ],
+  "LicenseDetailsModel": [
+   "ppapi"
+  ],
+  "LicenseModel": [
+   "ppapi"
+  ],
+  "LicenseModelType": [
+   "ppapi"
+  ],
+  "LicenseQuantity": [
+   "ppapi"
+  ],
+  "LicenseQuantityBreakdown": [
+   "licensing"
+  ],
+  "LicenseSettings": [
+   "bapi"
+  ],
+  "LicenseSource": [
+   "ppapi"
+  ],
+  "LicenseTier": [
+   "ppapi"
+  ],
+  "LicensedPolicyModel": [
+   "ppapi"
+  ],
+  "LicensingPrincipal": [
+   "licensing",
+   "ppapi"
+  ],
+  "LicensingProblemDetails": [
+   "ppapi"
+  ],
+  "LifecycleLink": [
+   "bapi"
+  ],
+  "LifecycleLinks": [
+   "bapi"
+  ],
+  "LifecycleOperation": [
+   "bapi"
+  ],
+  "LifecycleOperationList": [
+   "bapi"
+  ],
+  "LifecycleOperationType": [
+   "bapi"
+  ],
+  "LifecycleOperationsEnforcement": [
+   "bapi"
+  ],
+  "LifecycleStage": [
+   "bapi"
+  ],
+  "LifecycleState": [
+   "bapi"
+  ],
+  "LinkEnterprisePolicy": [
+   "bapi"
+  ],
+  "LinkProperties": [
+   "ppapi"
+  ],
+  "LinkedAppMetadata": [
+   "bapi"
+  ],
+  "LinkedEnvironmentMetadata": [
+   "bapi",
+   "powerapps"
+  ],
+  "ListConnectionsResponse": [
+   "ppapi"
+  ],
+  "ListConnectorsResponse": [
+   "ppapi"
+  ],
+  "ListPolicyResponse": [
+   "ppapi"
+  ],
+  "LocalizedLabel": [
+   "dataverse"
+  ],
+  "Location": [
+   "bapi",
+   "ppapi"
+  ],
+  "LocationList": [
+   "bapi"
+  ],
+  "LocationProperties": [
+   "bapi"
+  ],
+  "LocationSelectionMode": [
+   "ppapi"
+  ],
+  "MacroRegion": [
+   "ppapi"
+  ],
+  "MakerEnrollment": [
+   "ppapi"
+  ],
+  "MakerEvaluationConnection": [
+   "ppapi"
+  ],
+  "ManagedProperty": [
+   "dataverse"
+  ],
+  "ManagedRules": [
+   "ppapi"
+  ],
+  "ManyToManyRelationshipMetadata": [
+   "dataverse"
+  ],
+  "MatchConditions": [
+   "ppapi"
+  ],
+  "MessageTemplate": [
+   "advisor"
+  ],
+  "Metadata": [
+   "ppapi"
+  ],
+  "Metric": [
+   "ppapi"
+  ],
+  "MetricErrorReason": [
+   "ppapi"
+  ],
+  "MetricResult": [
+   "ppapi"
+  ],
+  "MetricStatus": [
+   "ppapi"
+  ],
+  "MetricType": [
+   "ppapi"
+  ],
+  "MgGovEnvironmentValues": [
+   "ppapi"
+  ],
+  "MgGovErrorResponse": [
+   "ppapi"
+  ],
+  "MgGovFilterType": [
+   "ppapi"
+  ],
+  "MgGovODataResponse": [
+   "ppapi"
+  ],
+  "MgGovPolicyEnvironmentFilter": [
+   "ppapi"
+  ],
+  "MgGovResourceType": [
+   "ppapi"
+  ],
+  "MgGovRule": [
+   "ppapi"
+  ],
+  "MgGovRuleSetType": [
+   "ppapi"
+  ],
+  "MinClientVersion": [
+   "ppapi"
+  ],
+  "MissingDependency": [
+   "dataverse"
+  ],
+  "ModelExperimentationSettings": [
+   "bapi"
+  ],
+  "ModifyEnvironmentSkuRequest": [
+   "ppapi"
+  ],
+  "ModifySku": [
+   "bapi"
+  ],
+  "NeptuneOperationResult": [
+   "ppapi"
+  ],
+  "NeptuneValidationError": [
+   "ppapi"
+  ],
+  "NeptuneValidationErrorMessage": [
+   "ppapi"
+  ],
+  "NewWebsiteRequest": [
+   "ppapi"
+  ],
+  "NonODataError": [
+   "dataverse"
+  ],
+  "NotificationChannelSubscription": [
+   "ppapi"
+  ],
+  "NotificationList": [
+   "ppapi"
+  ],
+  "NotificationMetadata": [
+   "bapi"
+  ],
+  "ODataContext": [
+   "dataverse"
+  ],
+  "ODataError": [
+   "dataverse"
+  ],
+  "ODataErrorBody": [
+   "dataverse"
+  ],
+  "ODataListWebsitesDto": [
+   "ppapi"
+  ],
+  "ODataServiceDocument": [
+   "licensing"
+  ],
+  "OneToManyRelationshipMetadata": [
+   "dataverse"
+  ],
+  "OngoingOperation": [
+   "bapi"
+  ],
+  "OperationErrorDetail": [
+   "ppapi"
+  ],
+  "OperationErrorItem": [
+   "ppapi"
+  ],
+  "OperationErrorsResponse": [
+   "ppapi"
+  ],
+  "OperationExecutionResult": [
+   "ppapi"
+  ],
+  "OperationExecutionResultPagedCollection": [
+   "ppapi"
+  ],
+  "OperationProperties": [
+   "ppapi"
+  ],
+  "OperationResponse": [
+   "ppapi"
+  ],
+  "OperationStatus": [
+   "ppapi"
+  ],
+  "OptionMetadata": [
+   "dataverse"
+  ],
+  "OptionSetMetadata": [
+   "dataverse"
+  ],
+  "OrderByClause": [
+   "ppapi"
+  ],
+  "Organization": [
+   "admin",
+   "dataverse"
+  ],
+  "OrganizationCollection": [
+   "dataverse"
+  ],
+  "OrganizationDetail": [
+   "dataverse"
+  ],
+  "OrganizationEndpointCollection": [
+   "dataverse"
+  ],
+  "OrganizationInfo": [
+   "dataverse"
+  ],
+  "OrganizationInstalledSolution": [
+   "dataverse"
+  ],
+  "OverageStatus": [
+   "ppapi"
+  ],
+  "OverflowCapacityModel": [
+   "ppapi"
+  ],
+  "Owner": [
+   "ppapi"
+  ],
+  "ParentEnvironmentGroup": [
+   "bapi"
+  ],
+  "PayAsYouGoPolicy": [
+   "bapi"
+  ],
+  "PayAsYouGoState": [
+   "ppapi"
+  ],
+  "PayGoEntitlement": [
+   "licensing"
+  ],
+  "Policy": [
+   "ppapi"
+  ],
+  "PolicyAssignmentOverride": [
+   "ppapi"
+  ],
+  "PolicyAssignmentRequest": [
+   "ppapi"
+  ],
+  "PolicyRequest": [
+   "ppapi"
+  ],
+  "PolicySettings": [
+   "bapi"
+  ],
+  "PortalDataModelDto": [
+   "ppapi"
+  ],
+  "PortalScanIssues": [
+   "ppapi"
+  ],
+  "PowerApp": [
+   "ppapi"
+  ],
+  "PowerAppsEnvironmentList": [
+   "ppapi"
+  ],
+  "PowerAppsEnvironmentPermission": [
+   "ppapi"
+  ],
+  "PowerAppsEnvironmentProperties": [
+   "ppapi"
+  ],
+  "PowerAppsEnvironmentResource": [
+   "ppapi"
+  ],
+  "PowerAppsFeature": [
+   "ppapi"
+  ],
+  "PowerAppsFeatureList": [
+   "ppapi"
+  ],
+  "PowerAppsSettings": [
+   "bapi"
+  ],
+  "PowerAppsUserSetting": [
+   "ppapi"
+  ],
+  "PowerAutomatePayAsYouGoPolicy": [
+   "bapi",
+   "licensing"
+  ],
+  "PowerAutomatePolicyModel": [
+   "ppapi"
+  ],
+  "PowerAutomateSettings": [
+   "bapi"
+  ],
+  "PowerPagesSettings": [
+   "bapi"
+  ],
+  "PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceFlowContextRecord": [
+   "ppapi"
+  ],
+  "PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceRecord": [
+   "ppapi"
+  ],
+  "PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceUserContextRecord": [
+   "ppapi"
+  ],
+  "PowerPlatformSettings": [
+   "bapi"
+  ],
+  "Principal": [
+   "bapi",
+   "powerapps",
+   "ppapi"
+  ],
+  "PrincipalType": [
+   "ppapi"
+  ],
+  "ProblemDetails": [
+   "advisor",
+   "licensing",
+   "ppapi"
+  ],
+  "ProductCategory": [
+   "ppapi"
+  ],
+  "ProductPayAsYouGoPolicy": [
+   "licensing"
+  ],
+  "ProjectClause": [
+   "ppapi"
+  ],
+  "Properties": [
+   "bapi",
+   "ppapi"
+  ],
+  "PropertiesItem": [
+   "bapi"
+  ],
+  "Properties_connectivity": [
+   "ppapi"
+  ],
+  "ProtectionLevel": [
+   "ppapi"
+  ],
+  "ProtectionStatus": [
+   "bapi"
+  ],
+  "ProvisioningLocations": [
+   "ppapi"
+  ],
+  "Publisher": [
+   "dataverse"
+  ],
+  "PublisherCollection": [
+   "dataverse"
+  ],
+  "Quantity": [
+   "licensing"
+  ],
+  "RbacRoleAssignment": [
+   "ppapi"
+  ],
+  "RbacRoleAssignmentList": [
+   "ppapi"
+  ],
+  "ReassignBotRequestBody": [
+   "ppapi"
+  ],
+  "Record": [
+   "dataverse"
+  ],
+  "RecordCollection": [
+   "dataverse"
+  ],
+  "Reference": [
+   "dataverse"
+  ],
+  "ReferenceCollection": [
+   "dataverse"
+  ],
+  "ReservedModel": [
+   "ppapi"
+  ],
+  "ResetRequest": [
+   "ppapi"
+  ],
+  "ResourceArrayPowerApp": [
+   "ppapi"
+  ],
+  "ResourceItem": [
+   "ppapi"
+  ],
+  "ResourceQueryRequest": [
+   "ppapi"
+  ],
+  "ResourceQueryRequestOptions": [
+   "ppapi"
+  ],
+  "ResourceQueryResponse": [
+   "ppapi"
+  ],
+  "ResourceThresholdModel": [
+   "ppapi"
+  ],
+  "ResourceThresholdRequestModel": [
+   "ppapi"
+  ],
+  "ResponseMetadataProperties": [
+   "ppapi"
+  ],
+  "RestoreRequest": [
+   "ppapi"
+  ],
+  "RestoreRequestOptions": [
+   "ppapi"
+  ],
+  "RetentionDetails": [
+   "bapi",
+   "ppapi"
+  ],
+  "RetrieveCurrentOrganizationResponse": [
+   "dataverse"
+  ],
+  "RetrieveFeatureControlSettingRequest": [
+   "dataverse"
+  ],
+  "RetrieveFeatureControlSettingResponse": [
+   "dataverse"
+  ],
+  "RetrieveOrganizationInfoResponse": [
+   "dataverse"
+  ],
+  "RetrieveSettingListResponse": [
+   "dataverse"
+  ],
+  "RetrieveSettingResponse": [
+   "dataverse"
+  ],
+  "RetrieveSolutionImportResultResponse": [
+   "dataverse"
+  ],
+  "RetrieveUserPrivilegesResponse": [
+   "dataverse"
+  ],
+  "RetrieveVersionResponse": [
+   "dataverse"
+  ],
+  "RetryPolicy": [
+   "athena"
+  ],
+  "RoleAssignment": [
+   "bapi"
+  ],
+  "RoleAssignmentRequest": [
+   "ppapi"
+  ],
+  "RoleAssignmentResponse": [
+   "ppapi"
+  ],
+  "RoleDefinition": [
+   "bapi",
+   "ppapi"
+  ],
+  "RoleDefinitionResponse": [
+   "ppapi"
+  ],
+  "RolePrivilege": [
+   "dataverse"
+  ],
+  "RoleReference": [
+   "dataverse"
+  ],
+  "Rule": [
+   "advisor",
+   "ppapi"
+  ],
+  "RuleAssignment": [
+   "ppapi"
+  ],
+  "RuleAssignmentsResponse": [
+   "ppapi"
+  ],
+  "RuleGroupOverrides": [
+   "ppapi"
+  ],
+  "RuleLevelOverride": [
+   "advisor"
+  ],
+  "RuleReference": [
+   "advisor"
+  ],
+  "RuleSet": [
+   "ppapi"
+  ],
+  "RuleSetDto": [
+   "ppapi"
+  ],
+  "RuleSetParameters": [
+   "ppapi"
+  ],
+  "RuleSetUiComponent": [
+   "ppapi"
+  ],
+  "RuleSetUiConfiguration": [
+   "ppapi"
+  ],
+  "RuleSetUiConfigurationList": [
+   "ppapi"
+  ],
+  "RuleSetUiProperty": [
+   "ppapi"
+  ],
+  "Rules": [
+   "ppapi"
+  ],
+  "Ruleset": [
+   "advisor"
+  ],
+  "RulesetReference": [
+   "advisor"
+  ],
+  "RunStatus": [
+   "ppapi"
+  ],
+  "RunStatusResponse": [
+   "ppapi"
+  ],
+  "RunTestSetRequestBody": [
+   "ppapi"
+  ],
+  "RunningActionType": [
+   "ppapi"
+  ],
+  "RuntimeEndpoints": [
+   "bapi",
+   "powerapps"
+  ],
+  "RuntimeEnvironment": [
+   "bapi"
+  ],
+  "SaveSettingValueRequest": [
+   "dataverse"
+  ],
+  "ScheduledLifecycleOperation": [
+   "bapi"
+  ],
+  "ScopeModel": [
+   "ppapi"
+  ],
+  "SearchSettings": [
+   "bapi"
+  ],
+  "SearchStatusResponse": [
+   "dataverse"
+  ],
+  "SecurityRole": [
+   "dataverse"
+  ],
+  "SecurityRoleCollection": [
+   "dataverse"
+  ],
+  "SensitivityLabelProperties": [
+   "ppapi"
+  ],
+  "ServiceError": [
+   "admin"
+  ],
+  "ServiceFabricError": [
+   "licensing"
+  ],
+  "ServicePlan": [
+   "ppapi"
+  ],
+  "ServicePlanList": [
+   "ppapi"
+  ],
+  "ServicePlanPolicies": [
+   "ppapi"
+  ],
+  "SetAdminConsentBypassRequest": [
+   "ppapi"
+  ],
+  "SettingDefinition": [
+   "dataverse"
+  ],
+  "SettingDefinitionCollection": [
+   "dataverse"
+  ],
+  "SettingDetail": [
+   "dataverse"
+  ],
+  "Settings": [
+   "bapi"
+  ],
+  "Sink": [
+   "analytics"
+  ],
+  "SiteSecurityResult": [
+   "ppapi"
+  ],
+  "SiteSecurityScore": [
+   "ppapi"
+  ],
+  "Solution": [
+   "dataverse"
+  ],
+  "SolutionCollection": [
+   "dataverse"
+  ],
+  "SolutionOperationResult": [
+   "dataverse"
+  ],
+  "SolutionValidationResult": [
+   "dataverse"
+  ],
+  "SslBindingThumbprintDTO": [
+   "ppapi"
+  ],
+  "StageSolutionRequest": [
+   "dataverse"
+  ],
+  "StageSolutionResponse": [
+   "dataverse"
+  ],
+  "StageSolutionResults": [
+   "dataverse"
+  ],
+  "StageSolutionSolutionDetails": [
+   "dataverse"
+  ],
+  "StageStatus": [
+   "ppapi"
+  ],
+  "StateChangeRequest": [
+   "ppapi"
+  ],
+  "StateCode": [
+   "ppapi"
+  ],
+  "StatesEnvironment": [
+   "bapi"
+  ],
+  "StatesManagementEnvironment": [
+   "bapi"
+  ],
+  "StepExecutionStatus": [
+   "ppapi"
+  ],
+  "StorageWarningThresholds": [
+   "ppapi"
+  ],
+  "StorageWarningThresholdsDocument": [
+   "ppapi"
+  ],
+  "SubQuery": [
+   "ppapi"
+  ],
+  "SummarizeClause": [
+   "ppapi"
+  ],
+  "SummarizeClause_SummarizeClauseExpression": [
+   "ppapi"
+  ],
+  "SummarizeClause_SummarizeClauseExpression_OperatorName": [
+   "ppapi"
+  ],
+  "SynapseDatabase": [
+   "dataverse"
+  ],
+  "SynapseDatabaseCollection": [
+   "dataverse"
+  ],
+  "SynapseLinkExternalTableState": [
+   "dataverse"
+  ],
+  "SynapseLinkExternalTableStateCollection": [
+   "dataverse"
+  ],
+  "SystemUser": [
+   "dataverse"
+  ],
+  "SystemUserCollection": [
+   "dataverse"
+  ],
+  "SystemUserRole": [
+   "dataverse"
+  ],
+  "SystemUserRoleCollection": [
+   "dataverse"
+  ],
+  "Tags": [
+   "ppapi"
+  ],
+  "TakeClause": [
+   "ppapi"
+  ],
+  "Team": [
+   "dataverse"
+  ],
+  "TeamCollection": [
+   "dataverse"
+  ],
+  "TeamMembership": [
+   "dataverse"
+  ],
+  "TeamMembershipCollection": [
+   "dataverse"
+  ],
+  "TeamsIntegrationSettings": [
+   "bapi"
+  ],
+  "TemplateAvailability": [
+   "ppapi"
+  ],
+  "TemporaryLicenseInfo": [
+   "ppapi"
+  ],
+  "Tenant": [
+   "bapi"
+  ],
+  "TenantApplicationPackage": [
+   "ppapi"
+  ],
+  "TenantApplicationPackageContinuationResponse": [
+   "ppapi"
+  ],
+  "TenantCapacity": [
+   "licensing"
+  ],
+  "TenantCapacityAndConsumptionModel": [
+   "ppapi"
+  ],
+  "TenantCapacityConsumptionSnapshotResponseModel": [
+   "ppapi"
+  ],
+  "TenantCapacityConsumptionUserSnapshotResponseModel": [
+   "ppapi"
+  ],
+  "TenantCapacityDetailsModel": [
+   "ppapi"
+  ],
+  "TenantCapacityEntitlementModel": [
+   "ppapi"
+  ],
+  "TenantCapacityMeter": [
+   "licensing"
+  ],
+  "TenantEntitlementDetailServiceModel": [
+   "ppapi"
+  ],
+  "TenantEntitlementLicenseModel": [
+   "ppapi"
+  ],
+  "TenantEntitlementLicenseTrendResponseModel": [
+   "ppapi"
+  ],
+  "TenantEntitlementLicenseTrendResponseModelPagedResponse": [
+   "ppapi"
+  ],
+  "TenantEntitlementResponseModel": [
+   "ppapi"
+  ],
+  "TenantEnvironmentResourceSnapshotResponseModel": [
+   "ppapi"
+  ],
+  "TenantEnvironmentResourceSnapshotResponseModelPagedResponse": [
+   "ppapi"
+  ],
+  "TenantIsolationPolicy": [
+   "bapi"
+  ],
+  "TenantIsolationPolicyProperties": [
+   "bapi"
+  ],
+  "TenantResourceResponseModel": [
+   "ppapi"
+  ],
+  "TenantResourceResponseModelPagedResponse": [
+   "ppapi"
+  ],
+  "TenantSettings": [
+   "bapi"
+  ],
+  "TenantUserResponseModel": [
+   "ppapi"
+  ],
+  "TenantUserResponseModelPagedResponse": [
+   "ppapi"
+  ],
+  "TestCaseResult": [
+   "ppapi"
+  ],
+  "TestCaseState": [
+   "ppapi"
+  ],
+  "TestLink": [
+   "powerapps"
+  ],
+  "TestRun": [
+   "ppapi"
+  ],
+  "TestRunCollection": [
+   "ppapi"
+  ],
+  "TestSet": [
+   "ppapi"
+  ],
+  "TestSetCollection": [
+   "ppapi"
+  ],
+  "ThoughtEvent": [
+   "ppapi"
+  ],
+  "ThoughtProperties": [
+   "ppapi"
+  ],
+  "ToggleAFDTrafficRoutingResponse": [
+   "ppapi"
+  ],
+  "ToolsConnections": [
+   "ppapi"
+  ],
+  "TpsInstallRequestPayload": [
+   "ppapi"
+  ],
+  "Trial": [
+   "licensing"
+  ],
+  "TrialCurrencyUnit": [
+   "licensing"
+  ],
+  "TrialDatesOnly": [
+   "licensing"
+  ],
+  "TriggerEvent": [
+   "ppapi"
+  ],
+  "TriggerProperties": [
+   "ppapi"
+  ],
+  "UnblockableConnector": [
+   "bapi"
+  ],
+  "UnblockableConnectorMetadata": [
+   "bapi"
+  ],
+  "UpdateCadence": [
+   "bapi"
+  ],
+  "UpdateEnvironmentVariableValue": [
+   "dataverse"
+  ],
+  "UpdateFinOpsAdminSettingsRequestBody": [
+   "ppapi"
+  ],
+  "UsedBy": [
+   "bapi"
+  ],
+  "UserAppMetadata": [
+   "ppapi"
+  ],
+  "UserIdentity": [
+   "ppapi"
+  ],
+  "UserManagementSettings": [
+   "bapi"
+  ],
+  "UserPerFlowCapacitySourceFlowContextRecord": [
+   "ppapi"
+  ],
+  "UserPerFlowCapacitySourceRecord": [
+   "ppapi"
+  ],
+  "UserPerFlowCapacitySourceTenantContextSummaryRecord": [
+   "ppapi"
+  ],
+  "UserPerFlowCapacitySourceUserContextRecord": [
+   "ppapi"
+  ],
+  "ValidateCreateEnvironmentDetails": [
+   "bapi"
+  ],
+  "ValidateUpdateEnvironmentDetails": [
+   "bapi"
+  ],
+  "ValidationError": [
+   "licensing"
+  ],
+  "ValidationMessages": [
+   "admin"
+  ],
+  "ValidationProblemDetails": [
+   "advisor"
+  ],
+  "ValidationProperties": [
+   "ppapi"
+  ],
+  "ValidationResponse": [
+   "ppapi"
+  ],
+  "Version": [
+   "ppapi"
+  ],
+  "VirtualConnector": [
+   "bapi"
+  ],
+  "VirtualConnectorMetadata": [
+   "bapi"
+  ],
+  "WafRuleAction": [
+   "ppapi"
+  ],
+  "WafRuleType": [
+   "ppapi"
+  ],
+  "WebApplicationFirewallConfiguration": [
+   "ppapi"
+  ],
+  "WebApplicationFirewallPolicySettings": [
+   "ppapi"
+  ],
+  "WebApplicationFirewallRules": [
+   "ppapi"
+  ],
+  "WebApplicationFirewallStatus": [
+   "ppapi"
+  ],
+  "WebsiteDto": [
+   "ppapi"
+  ],
+  "WhereClause": [
+   "ppapi"
+  ],
+  "WhoAmIResponse": [
+   "dataverse"
+  ]
+ }
+}

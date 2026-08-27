@@ -711,7 +711,13 @@
      "Environments"
     ],
     "summary": "Create",
-    "description": "Provisions an environment. `properties.displayName` and `properties.environmentSku` are mandatory; everything else is optional, and the service validates them in that order.\n\nDataverse is opt-in through `properties.databaseType`. Setting it to `CommonDataService` provisions an organization from `properties.linkedEnvironmentMetadata`; **omitting it silently discards that whole block** and returns a successful, Dataverse-less environment with no error and no warning.\n\nAn environment without Dataverse is created synchronously in seconds; one with Dataverse is asynchronous. Either way the environment is readable before its `linkedEnvironmentMetadata` is, so clients that need the organization URL must keep re-reading after the operation succeeds.\n\nA typical create body carries `location`, `displayName`, `environmentSku`, `databaseType`, `linkedEnvironmentMetadata` (`baseLanguage`, `currency.code`, an empty `templates`), `billingPolicy` and `cluster.category`. An explicit `null` is accepted wherever the member is optional, which is how `usedBy`, `parentEnvironmentGroup` and `governanceConfiguration` are normally sent.",
+    "description": "Provisions an environment. `properties.displayName` and `properties.environmentSku` are mandatory; everything else is optional, and the service validates them in that order.\n\nDataverse is opt-in through `properties.databaseType`: setting it to `CommonDataService` provisions an organization from `properties.linkedEnvironmentMetadata`.\n\nAn environment without Dataverse is created synchronously in seconds; one with Dataverse is asynchronous. Either way the environment is readable before its `linkedEnvironmentMetadata` is, so clients that need the organization URL must keep re-reading after the operation succeeds.\n\nA typical create body carries `location`, `displayName`, `environmentSku`, `databaseType`, `linkedEnvironmentMetadata` (`baseLanguage`, `currency.code`, an empty `templates`), `billingPolicy` and `cluster.category`. An explicit `null` is accepted wherever the member is optional, which is how `usedBy`, `parentEnvironmentGroup` and `governanceConfiguration` are normally sent.",
+    "x-notes": [
+     {
+      "note": "Sending `linkedEnvironmentMetadata` without `properties.databaseType` does not create a Dataverse organization and does not fail. The whole block is discarded and the call returns a successful, Dataverse-less environment with no error and no warning.",
+      "source": "live"
+     }
+    ],
     "parameters": [
      {
       "name": "api-version",
@@ -1356,7 +1362,13 @@
      "Tenant"
     ],
     "summary": "Settings Read",
-    "description": "Returns the tenant-wide settings tree. A POST despite being a read, because the admin center calls it that way; the request body is ignored and may be omitted entirely.\n\nThe response is the complete tree, so a client managing a subset must filter it before diffing.",
+    "description": "Returns the tenant-wide settings tree.\n\nThe response is the complete tree, so a client managing a subset must filter it before diffing.",
+    "x-notes": [
+     {
+      "note": "A POST that only reads, because the admin center calls it that way. The request body is ignored and may be omitted entirely.",
+      "source": "live"
+     }
+    ],
     "parameters": [
      {
       "name": "api-version",
@@ -3381,7 +3393,13 @@
       }
      }
     },
-    "description": "Replaces the policy. Despite the PATCH verb the body is the whole policy, with the same `policyDefinition` envelope and non-empty URL-pattern rules that create requires; a partial body is rejected. Read the policy, change it, send it back.",
+    "description": "Replaces the policy. Read the policy, change it, send it back.",
+    "x-notes": [
+     {
+      "note": "PATCH here is a whole-document replace, not a merge. The body must be the complete policy, with the same `policyDefinition` envelope and non-empty URL-pattern rules that create requires; a partial body is rejected.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true
    },
    "delete": {
@@ -3618,9 +3636,15 @@
       "required": true,
       "schema": {
        "type": "string",
-       "default": "2021-04-01"
+       "default": "2021-04-01",
+       "x-notes": [
+        {
+         "note": "`2020-10-01-alpha` is accepted on this route despite not appearing in the service's own list of versions.",
+         "source": "live"
+        }
+       ]
       },
-      "description": "2020-08-01, 2020-10-01-alpha and 2021-04-01 each answer this route with a different property set, so pin one. `2020-10-01-alpha` is accepted despite not appearing in the service's own list of versions."
+      "description": "2020-08-01, 2020-10-01-alpha and 2021-04-01 each answer this route with a different property set, so pin one."
      },
      {
       "name": "$expand",
@@ -3884,7 +3908,13 @@
      "Feature Gates"
     ],
     "summary": "List",
-    "description": "Lists the Power Platform feature gates currently enabled for a directory principal. Only enabled flags are returned, so membership in the list is the value \u2014 there is no flag to read false.\n\nThis is Microsoft's own rollout machinery, exposed rather than published: the flag names and descriptions are internal, change without notice, and are not a contract. It is useful for explaining why a tenant sees behaviour another tenant does not, and for nothing else.\n\nThe response is large, on the order of a thousand entries, and the resource ids come back under the `Microsoft.PowerApps` provider even though the request goes to a `Microsoft.BusinessAppPlatform` path.",
+    "description": "Lists the Power Platform feature gates currently enabled for a directory principal. Only enabled flags are returned, so membership in the list is the value \u2014 there is no flag to read false.\n\nThis is Microsoft's own rollout machinery, exposed rather than published: the flag names and descriptions are internal, change without notice, and are not a contract. It is useful for explaining why a tenant sees behaviour another tenant does not, and for nothing else.\n\nThe response is large, on the order of a thousand entries.",
+    "x-notes": [
+     {
+      "note": "The resource ids come back under the `Microsoft.PowerApps` provider even though the request goes to a `Microsoft.BusinessAppPlatform` path.",
+      "source": "live"
+     }
+    ],
     "x-provider-unsourced": true,
     "parameters": [
      {
@@ -4709,7 +4739,13 @@
        "Microsoft.BusinessAppPlatform/environments"
       ],
       "example": "Microsoft.BusinessAppPlatform/scopes/environments",
-      "description": "`Microsoft.BusinessAppPlatform/scopes/environments` when read through the admin scope, `Microsoft.BusinessAppPlatform/environments` when read through the maker scope. `id` follows the same split \u2014 the two scopes return the same environment under two resource ids."
+      "description": "`Microsoft.BusinessAppPlatform/scopes/environments` when read through the admin scope, `Microsoft.BusinessAppPlatform/environments` when read through the maker scope.",
+      "x-notes": [
+       {
+        "note": "`id` follows the same split as `type`: the two scopes return the same environment under two different resource ids.",
+        "source": "live"
+       }
+      ]
      },
      "location": {
       "type": "string",
@@ -4925,7 +4961,7 @@
      },
      "databaseType": {
       "type": "string",
-      "description": "`CommonDataService` when a Dataverse organization is linked, `None` when not. **On create this field is the switch that turns Dataverse on**: omit it and `linkedEnvironmentMetadata` is silently discarded, and the environment provisions without Dataverse and without an error.",
+      "description": "`CommonDataService` when a Dataverse organization is linked, `None` when not. On create this field is the switch that turns Dataverse on.",
       "enum": [
        "CommonDataService",
        "None"

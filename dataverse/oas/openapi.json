@@ -136,7 +136,13 @@
      "Table Definitions"
     ],
     "summary": "List",
-    "description": "Lists the tables of this environment's model. Filtering on `LogicalCollectionName` is how a caller inverts a plural collection name back to a table's singular logical name.\n\nMetadata endpoints are not ordinary entity sets: `$top`, `$count` and `$orderby` are accepted and then silently ignored, only `$select` and `$filter` have effect, and there is no paging \u2014 the whole collection arrives in one response.\n\n`$filter` and `$expand` do work here despite `$top` being ignored, and filtering on metadata properties rather than data is what makes the endpoint useful: `$filter=SyncToExternalSearchIndex eq true and ChangeTrackingEnabled eq true` narrows to the tables eligible for search or for a data-lake link without pulling the whole model. `$expand=Attributes($select=...)` inlines columns in the same call.\n\nThe `@Microsoft.Dynamics.CRM.totalrecordcount` annotation behaves differently from the one on entity sets: it carries a **real count** here rather than `-1`, and it counts the filtered result. It is still capped, so treat a value of 5000 as a floor.\n\n`RetrieveAllSettings=True` is a metadata-only query option, PascalCase and not an OData one; it returns each definition's full property set at a large cost in response size.",
+    "description": "Lists the tables of this environment's model. Filtering on `LogicalCollectionName` is how a caller inverts a plural collection name back to a table's singular logical name.\n\nMetadata endpoints are not ordinary entity sets: `$top`, `$count` and `$orderby` are accepted and then silently ignored, only `$select` and `$filter` have effect, and there is no paging \u2014 the whole collection arrives in one response.\n\n`$filter` and `$expand` do work here despite `$top` being ignored, and filtering on metadata properties rather than data is what makes the endpoint useful: `$filter=SyncToExternalSearchIndex eq true and ChangeTrackingEnabled eq true` narrows to the tables eligible for search or for a data-lake link without pulling the whole model. `$expand=Attributes($select=...)` inlines columns in the same call.\n\n`RetrieveAllSettings=True` is a metadata-only query option, PascalCase and not an OData one; it returns each definition's full property set at a large cost in response size.",
+    "x-notes": [
+     {
+      "note": "`@Microsoft.Dynamics.CRM.totalrecordcount` means the opposite of what it means on an entity set: here it carries a real count rather than `-1`, and it counts the filtered result. It is still capped, so treat 5000 as a floor.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "parameters": [
      {
@@ -313,7 +319,13 @@
      "Table Definitions"
     ],
     "summary": "Attribute Read",
-    "description": "Reads one column's metadata by logical name.\n\nBoth keys are string arguments and both are quoted, unlike the guid keys used elsewhere. The cheapest way to answer \"does this column exist here\" without pulling the table's whole attribute list \u2014 select `LogicalName` alone and read the status code.\n\nThe response is **cast to the column's concrete metadata type**: the context path carries the cast (`.../Attributes/Microsoft.Dynamics.CRM.BooleanAttributeMetadata(...)`) and the body carries a matching `@odata.type`. A caller cannot know which subtype it will get before asking, so read `@odata.type` rather than assuming.\n\nAn `api-version` **query** parameter is accepted alongside the path's version segment and may disagree with it \u2014 `v9.0` in the path with `api-version=9.1` in the query still succeeds. The route ignores the query parameter, so do not rely on it to select a version.",
+    "description": "Reads one column's metadata by logical name.\n\nBoth keys are string arguments and both are quoted, unlike the guid keys used elsewhere. The cheapest way to answer \"does this column exist here\" without pulling the table's whole attribute list \u2014 select `LogicalName` alone and read the status code.\n\nThe response is **cast to the column's concrete metadata type**: the context path carries the cast (`.../Attributes/Microsoft.Dynamics.CRM.BooleanAttributeMetadata(...)`) and the body carries a matching `@odata.type`. A caller cannot know which subtype it will get before asking, so read `@odata.type` rather than assuming.",
+    "x-notes": [
+     {
+      "note": "An `api-version` query parameter is accepted alongside the path's own version segment and may disagree with it: `v9.0` in the path with `api-version=9.1` in the query still succeeds. The route ignores the query parameter, so it cannot be used to select a version.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.0"
@@ -659,7 +671,13 @@
      "Records"
     ],
     "summary": "Update",
-    "description": "Updates the named columns and leaves the rest alone.\n\nPATCH against a key that does not exist is an **upsert**: the service creates the record with that id. `If-Match: *` forbids the create, making the request update-only; `If-None-Match: *` forbids the update, making it create-only. A caller that means \"update\" and sends neither will silently materialise a record when the id is wrong.\n\nAn etag in `If-Match` instead of `*` makes the write conditional on the row not having changed since it was read.",
+    "description": "Updates the named columns and leaves the rest alone.\n\n`If-Match: *` makes the request update-only; `If-None-Match: *` makes it create-only. An etag in `If-Match` instead of `*` makes the write conditional on the row not having changed since it was read.",
+    "x-notes": [
+     {
+      "note": "PATCH against a key that does not exist is an upsert: the service creates the record with that id. A caller that means \"update\" and sends neither `If-Match` nor `If-None-Match` silently materialises a record whenever the id is wrong.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "parameters": [
      {
@@ -1103,7 +1121,17 @@
      "Batch"
     ],
     "summary": "Execute",
-    "description": "Sends several Web API requests in one round trip.\n\nThe body is a `multipart/mixed` document, **not JSON**: each part carries `Content-Type: application/http` and `Content-Transfer-Encoding: binary`, then a complete request line, its own headers, a blank line and its body. The boundary is chosen by the caller and named in the request's own `Content-Type`. Requests inside may use absolute URLs on this host.\n\nThe response is `multipart/mixed` too, with a **service-chosen boundary** that has no relation to the request's \u2014 parse it out of the response `Content-Type` rather than assuming symmetry. Each part holds a full HTTP response, status line and headers included, so a part can fail while the batch returns 200.\n\nReads may be sent loose in the document as shown here. Writes that must succeed or fail together go inside a change set, which is a nested multipart part of its own; only change sets are transactional, a batch of loose requests is not.",
+    "description": "Sends several Web API requests in one round trip.\n\nThe body is a `multipart/mixed` document, **not JSON**: each part carries `Content-Type: application/http` and `Content-Transfer-Encoding: binary`, then a complete request line, its own headers, a blank line and its body. The boundary is chosen by the caller and named in the request's own `Content-Type`. Requests inside may use absolute URLs on this host. The response is `multipart/mixed` too.\n\nReads may be sent loose in the document as shown here. Writes that must succeed or fail together go inside a change set, which is a nested multipart part of its own; only change sets are transactional, a batch of loose requests is not.",
+    "x-notes": [
+     {
+      "note": "The response boundary is chosen by the service and has no relation to the request's. Parse it out of the response `Content-Type` rather than assuming symmetry.",
+      "source": "live"
+     },
+     {
+      "note": "A 200 on the batch says nothing about the requests inside it. Each part holds a full HTTP response, status line and headers included, so a part can fail while the batch succeeds.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.0"
@@ -1345,7 +1373,13 @@
      "Solution Import"
     ],
     "summary": "Stage",
-    "description": "Uploads a base64-encoded solution `.zip` and validates it **without importing anything**.\n\nThe outcome is not in the status code \u2014 a package that cannot be imported still returns a success status, and the verdict lives in `StageSolutionResults.StageSolutionStatus`. Only `Passed` means importable; `MissingDependencies` and `SolutionValidationResults` say why it is not.\n\nOn success `StageSolutionUploadId` is the handle passed to the import or upgrade call, and `SolutionDetails` reports the unique name, friendly name, version and managed flag read out of the package \u2014 the only way to learn what a package contains before committing to importing it.\n\nStaging is idempotent and safe to repeat, each time yielding a fresh upload id. Uploads expire, so stage and import within the same run.",
+    "description": "Uploads a base64-encoded solution `.zip` and validates it **without importing anything**.\n\nOn success `StageSolutionUploadId` is the handle passed to the import or upgrade call, and `SolutionDetails` reports the unique name, friendly name, version and managed flag read out of the package \u2014 the only way to learn what a package contains before committing to importing it.\n\nStaging is idempotent and safe to repeat, each time yielding a fresh upload id. Uploads expire, so stage and import within the same run.",
+    "x-notes": [
+     {
+      "note": "A package that cannot be imported still returns a success status: the verdict is in `StageSolutionResults.StageSolutionStatus`, not in the status code. Only `Passed` means importable; `MissingDependencies` and `SolutionValidationResults` say why it is not.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "requestBody": {
      "required": true,
@@ -2565,7 +2599,13 @@
      "Users and Roles"
     ],
     "summary": "User Update",
-    "description": "Updates a user.\n\n`isdisabled` toggles access, and on an application user the patch must carry `applicationid` alongside it. Moving a user between business units through `businessunitid@odata.bind` silently drops every security role scoped to the old unit, because roles are per business unit \u2014 re-assign afterwards.",
+    "description": "Updates a user.\n\n`isdisabled` toggles access, and on an application user the patch must carry `applicationid` alongside it.",
+    "x-notes": [
+     {
+      "note": "Moving a user between business units through `businessunitid@odata.bind` silently drops every security role scoped to the old unit, because roles are per business unit. Re-assign afterwards.",
+      "source": "provider"
+     }
+    ],
     "x-probe-verified": false,
     "parameters": [
      {
@@ -3370,7 +3410,17 @@
      "Organization Settings"
     ],
     "summary": "Update",
-    "description": "Changes environment settings, one column at a time.\n\nThe row must be addressed by key; PATCH against the `organizations` collection is not allowed.\n\nSend only the columns being changed. **Read-only columns are accepted and silently discarded** rather than refused \u2014 patching `name` returns success and changes nothing \u2014 so a caller that round-trips the whole 500-column row gets a misleading success. Verify by reading back.\n\nSeveral settings interact: the audit sub-switches do nothing while the master switch is off, and the IP firewall's enforcing mode will lock out every caller including this one if the allowed range is wrong, so validate a range in audit mode first. Some columns are also one-way \u2014 `auditretentionperiodv2` cannot be set back to null once it holds a value; use `-1` (retain forever) instead.",
+    "description": "Changes environment settings, one column at a time.\n\nThe row must be addressed by key; PATCH against the `organizations` collection is not allowed.\n\nSend only the columns being changed.\n\nSeveral settings interact: the audit sub-switches do nothing while the master switch is off, and the IP firewall's enforcing mode will lock out every caller including this one if the allowed range is wrong, so validate a range in audit mode first. Some columns are also one-way \u2014 `auditretentionperiodv2` cannot be set back to null once it holds a value; use `-1` (retain forever) instead.",
+    "x-notes": [
+     {
+      "note": "Read-only columns are accepted and silently discarded rather than refused. Patching `name` returns success and changes nothing, so a caller that round-trips the whole 500-column row gets a misleading success. Verify by reading back.",
+      "source": "live"
+     },
+     {
+      "note": "The 204 carries `Content-Type: text/html` despite the empty body, alongside a `Location` header naming the row.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "parameters": [
      {
@@ -3392,7 +3442,7 @@
     },
     "responses": {
      "204": {
-      "description": "Applied \u2014 but only for the columns that are writable. Read-only columns in the payload were discarded without comment, so success here does not prove the value changed. The response carries a `Location` header naming the row, and `Content-Type: text/html` despite the empty body.",
+      "description": "Applied \u2014 but only for the columns that are writable. Read-only columns in the payload were discarded without comment, so success here does not prove the value changed.",
       "headers": {
        "Location": {
         "description": "Absolute URL of the row that was patched, returned on a successful update as well as on a create. Redundant here \u2014 the caller already had the id.",
@@ -3753,7 +3803,13 @@
      "Organization Settings"
     ],
     "summary": "Audit Read Access Read",
-    "description": "Reports whether read auditing is active for this environment.\n\n**Not an OData endpoint.** It sits beside the Web API on the same host and the same token, under `/api/nosql/` rather than `/api/data/{version}/`; there is no version segment, no envelope, and the body is the bare JSON literal `true` or `false` with `Content-Type: application/json; charset=utf-8`. `OData-Version` is absent from the response.\n\nIt is the effective answer, not the stored one: the `organization` row's `isreadauditenabled` says what was configured, while this reports whether the audit store is actually serving reads \u2014 which is also false while the master audit switch is off.",
+    "description": "Reports whether read auditing is active for this environment.\n\nIt sits beside the Web API on the same host and the same token, under `/api/nosql/` rather than `/api/data/{version}/`; there is no version segment, no envelope, and the body is the bare JSON literal `true` or `false` with `Content-Type: application/json; charset=utf-8`.\n\nIt is the effective answer, not the stored one: the `organization` row's `isreadauditenabled` says what was configured, while this reports whether the audit store is actually serving reads \u2014 which is also false while the master audit switch is off.",
+    "x-notes": [
+     {
+      "note": "Not an OData endpoint, despite sharing the Web API's host and token. There is no version segment, no envelope, and `OData-Version` is absent from the response, so an OData client library cannot be pointed at it.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "responses": {
      "200": {
@@ -3786,7 +3842,13 @@
      "Feature Control"
     ],
     "summary": "Enabled State Read",
-    "description": "Evaluates one feature control bit for this environment.\n\nIt is an unbound **action**, not a function, so it is a POST with a JSON body even though it only reads \u2014 and it takes exactly one bit per call. There is no list form and no bulk form, which is why the admin centre's environment-settings page issues it dozens of times in a row to paint a single screen.\n\nThe answer is a bare boolean with no error path. An unknown feature name, a feature that does not apply here, and a feature that is switched off all answer `false` alike, so a caller cannot validate a name against this operation.\n\nThe bits are read-only from here. What flips one is a Microsoft release, an admin-centre toggle, or a setting on another surface; nothing in this spec writes them.",
+    "description": "Evaluates one feature control bit for this environment.\n\nIt is an unbound **action**, not a function, so it is a POST with a JSON body even though it only reads \u2014 and it takes exactly one bit per call. There is no list form and no bulk form, which is why the admin centre's environment-settings page issues it dozens of times in a row to paint a single screen.\n\nThe bits are read-only from here. What flips one is a Microsoft release, an admin-centre toggle, or a setting on another surface; nothing in this spec writes them.",
+    "x-notes": [
+     {
+      "note": "The answer is a bare boolean with no error path. An unknown feature name, a feature that does not apply to this environment, and a feature that is switched off all answer `false` alike, so a name cannot be validated against this operation.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.0"
@@ -3914,7 +3976,17 @@
      "Fabric and Synapse Link"
     ],
     "summary": "List",
-    "description": "Lists the environment's data-lake folders.\n\n**Read this before picking one.** An organization carries a dozen or so rows, of which at most one belongs to the Link to Fabric. The others \u2014 `cds_workspace`, `cds2_workspace`, `msdyn_analytics`, `msdyn_processadvisor`, `msdyn_skillmining_workspace`, `msdyn_iap_federated`, `msdyn_nl2sq`, `pai_capi_batch_datalake`, `smartdataimport_workspace` and a per-installation `cds_<guid>` \u2014 are provisioned by the platform and by first-party components, all `statecode` 0, and indistinguishable from a link's folder by state alone.\n\n`cds_workspace`, `cds2_workspace` and `cds3_workspace` are created together at organization provisioning, so **a never-linked organization already carries these rows** \u2014 including the one a later link will use. Rows are also not returned in creation order, so nothing about the ordering carries meaning.\n\nSo **there is no \"the\" folder, and `value[0]` is never the right answer.** A client that falls back to the first row picks whichever platform folder the service happened to return first, which is routinely not the linked one. [athena](../athena)'s unlink takes a `datalakefolderid` in its path, and handing it the wrong one deletes an unrelated system folder.\n\nSelect by `datalakefolder_uniquename` instead \u2014 `cds3_workspace` for a current Link to Fabric, `cds2_workspace` for the older Synapse-era one \u2014 and corroborate with a signal that the folder is actually in use: `extendedproperties` parsing to `{\"IsActiveFabricProfile\":true}`, or a non-empty `synapsedatabases` under `$expand`. Both are set on the linked folder and on no other.\n\nThe portal filters on the unique name and expands both children in one call. `$expand=synapselinkexternaltablestates,synapsedatabases` is supported and is the cheapest way to get the folder and its state together.",
+    "description": "Lists the environment's data-lake folders.\n\n**Read this before picking one.** An organization carries a dozen or so rows, of which at most one belongs to the Link to Fabric. The others \u2014 `cds_workspace`, `cds2_workspace`, `msdyn_analytics`, `msdyn_processadvisor`, `msdyn_skillmining_workspace`, `msdyn_iap_federated`, `msdyn_nl2sq`, `pai_capi_batch_datalake`, `smartdataimport_workspace` and a per-installation `cds_<guid>` \u2014 are provisioned by the platform and by first-party components, all `statecode` 0, and indistinguishable from a link's folder by state alone.\n\nSelect by `datalakefolder_uniquename` \u2014 `cds3_workspace` for a current Link to Fabric, `cds2_workspace` for the older Synapse-era one \u2014 and corroborate with a signal that the folder is actually in use: `extendedproperties` parsing to `{\"IsActiveFabricProfile\":true}`, or a non-empty `synapsedatabases` under `$expand`. Both are set on the linked folder and on no other.\n\nThe portal filters on the unique name and expands both children in one call. `$expand=synapselinkexternaltablestates,synapsedatabases` is supported and is the cheapest way to get the folder and its state together.",
+    "x-notes": [
+     {
+      "note": "`cds_workspace`, `cds2_workspace` and `cds3_workspace` are created together at organization provisioning, so a never-linked organization already carries these rows, including the one a later link will use. Their presence is not evidence of a link. Rows are also not returned in creation order, so the ordering carries no meaning.",
+      "source": "live"
+     },
+     {
+      "note": "There is no \"the\" folder, and `value[0]` is never the right answer. A client that falls back to the first row picks whichever platform folder the service happened to return first, which is routinely not the linked one, and [athena](../athena)'s unlink takes a `datalakefolderid` in its path: handing it the wrong one deletes an unrelated system folder.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.1",

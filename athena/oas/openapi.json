@@ -259,6 +259,12 @@
     "summary": "Enterprise Policy Credentials Read",
     "operationId": "organization_enterprise_policy_credentials_read",
     "description": "The client credential the environment's encryption enterprise policy exposes to the sync engine, for a customer-managed-key environment. \"ep\" in the path is the enterprise policy. The portals call it immediately before writing the organization registration, so that a CMK environment's link is configured with the right identity to reach the customer's key.\n\nAn environment with no enterprise policy gets nulls rather than an error.",
+    "x-notes": [
+     {
+      "note": "The body is JSON and is served as text/plain, so a client that dispatches on Content-Type will not parse it.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "parameters": [
      {
@@ -276,7 +282,7 @@
     ],
     "responses": {
      "200": {
-      "description": "The credential, or a pair of nulls when no enterprise policy applies. Served as text/plain despite the body being JSON -- a client that dispatches on Content-Type will not parse it.",
+      "description": "The credential, or a pair of nulls when no enterprise policy applies.",
       "content": {
        "text/plain": {
         "schema": {
@@ -295,7 +301,17 @@
     ],
     "summary": "Update",
     "operationId": "organization_registration_update",
-    "description": "Register the Dataverse organization with the athena island serving its environment, or refresh the registration if it is already there.\n\n**The organization details are query parameters, not a body.** Send no body: the request carries Content-Length: 0, and anything sent as a body is ignored.\n\nIdempotent and cheap. The portals call it on almost every visit to the link management page rather than tracking whether it has been done, and again immediately before creating or resynchronising lakehouse artifacts.\n\nIts role in the wizard's error handling is the part worth copying: an unregistered organization does not fail at link creation, it fails earlier and more obscurely, on the premium-licence check. See that operation's 403 for the sequence.",
+    "description": "Register the Dataverse organization with the athena island serving its environment, or refresh the registration if it is already there.\n\nIdempotent and cheap. The portals call it on almost every visit to the link management page rather than tracking whether it has been done, and again immediately before creating or resynchronising lakehouse artifacts.",
+    "x-notes": [
+     {
+      "note": "The organization details go in the query string, not in a body. The request carries Content-Length: 0, and anything sent as a body is ignored.",
+      "source": "live"
+     },
+     {
+      "note": "Skipping the registration does not fail where it was skipped. An unregistered organization fails later and more obscurely, on link creation's premium-licence check; see that operation's 403 for the sequence. Registering first is what the portals do, and it is the cheaper diagnosis.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "parameters": [
      {
@@ -328,7 +344,13 @@
     ],
     "summary": "List",
     "operationId": "fabric_workspaces_list",
-    "description": "The Fabric workspaces the calling user can target, proxied from Fabric by athena so that the caller needs only an athena token. Unpaged, and returned in no documented order.\n\nThe list reflects the *user's* Fabric access, not the environment's: the same user gets the same list from environments on different islands, and a workspace created in Fabric shows up on the next call. Filter to workspaces with a capacityId before offering them, since a workspace with no Fabric capacity cannot host a mirror lakehouse.",
+    "description": "The Fabric workspaces the calling user can target, proxied from Fabric by athena so that the caller needs only an athena token. Unpaged, and returned in no documented order.\n\nFilter to workspaces with a capacityId before offering them, since a workspace with no Fabric capacity cannot host a mirror lakehouse.",
+    "x-notes": [
+     {
+      "note": "The environment id in the path does not scope the answer. The list is the calling user's Fabric access: the same user gets the same list from environments on different islands, and a workspace created in Fabric shows up on the next call.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "parameters": [
      {
@@ -773,9 +795,15 @@
     "schema": {
      "type": "string",
      "format": "uuid",
-     "example": "00000000-0000-0000-0000-000000000000"
+     "example": "00000000-0000-0000-0000-000000000000",
+     "x-notes": [
+      {
+       "note": "This is the datalakefolder id, not the lake profile's own id, despite the path segment being named lakeprofile. The profile's Id, returned in the response body, is a different GUID and is not accepted here.",
+       "source": "live"
+      }
+     ]
     },
-    "description": "The **datalakefolder id**, despite the path segment being named lakeprofile. It is the Id field of the Data Lakes list, and it is the same value the delete operation takes as datalakeFolderId. The profile's own Id, returned in the response body, is a different GUID and is not accepted here."
+    "description": "The datalakefolder id. It is the Id field of the Data Lakes list, and the same value the delete operation takes as datalakeFolderId."
    },
    "organizationUrlQuery": {
     "name": "organizationUrl",
@@ -953,7 +981,13 @@
    },
    "FabricWorkspace": {
     "type": "object",
-    "description": "A Microsoft Fabric workspace the caller may create a mirror lakehouse in. Note the camelCase field names: this is the only payload on the surface that is not PascalCase, because athena passes Fabric's own representation through.",
+    "description": "A Microsoft Fabric workspace the caller may create a mirror lakehouse in.",
+    "x-notes": [
+     {
+      "note": "Field names are camelCase, the only payload on this surface that is not PascalCase, because athena passes Fabric's own representation straight through.",
+      "source": "live"
+     }
+    ],
     "x-probe-verified": true,
     "required": [
      "id",

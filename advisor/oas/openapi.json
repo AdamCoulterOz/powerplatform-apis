@@ -850,10 +850,16 @@
     "name": "x-ms-tenant-id",
     "in": "header",
     "required": false,
-    "description": "Tenant the analysed solution belongs to. Microsoft documents it as required on the analysis routes, and it is harmless elsewhere. In practice it travels with the other Dataverse-context headers, when results are being written back to an environment.\n\nDistinct from x-ms-client-tenant-id, which identifies the tenant of the calling client rather than the owner of the solution.",
+    "description": "Tenant the analysed solution belongs to. In practice it travels with the other Dataverse-context headers, when results are being written back to an environment.\n\nDistinct from x-ms-client-tenant-id, which identifies the tenant of the calling client rather than the owner of the solution.",
     "schema": {
      "type": "string",
-     "format": "uuid"
+     "format": "uuid",
+     "x-notes": [
+      {
+       "note": "Microsoft documents this header as required on the analysis routes. It is optional in practice, and accepted without complaint on the routes it is not documented for.",
+       "source": "live"
+      }
+     ]
     }
    },
    "CorrelationIdHeader": {
@@ -986,7 +992,13 @@
      },
      "componentType": {
       "type": "integer",
-      "description": "Undocumented, and 0 on every rule the catalogue returns, so it yields no usable mapping to solution component types - the enum below records what the service returns, not the full domain. The component family a rule targets is instead readable from its code prefix.",
+      "description": "The solution component type the rule targets.",
+      "x-notes": [
+       {
+        "note": "Undocumented by Microsoft, and 0 on every rule the catalogue returns, so it yields no usable mapping to solution component types: the enum records what the service returns, not the full domain. A rule's component family is readable from its code prefix instead.",
+        "source": "live"
+       }
+      ],
       "enum": [
        0
       ]
@@ -1307,7 +1319,13 @@
    "ValidationProblemDetails": {
     "type": "object",
     "x-probe-verified": true,
-    "description": "Model-binding failure on a query parameter - a value the service could not parse into the expected type. Returned as application/json despite being a problem-details document, unlike ProblemDetails.",
+    "description": "Model-binding failure on a query parameter - a value the service could not parse into the expected type.",
+    "x-notes": [
+     {
+      "note": "Served as application/json rather than application/problem+json, unlike ProblemDetails on the same surface, so content-type alone will not tell a client which error shape it is holding.",
+      "source": "live"
+     }
+    ],
     "properties": {
      "errors": {
       "type": "object",

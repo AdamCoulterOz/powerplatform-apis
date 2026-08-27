@@ -256,7 +256,13 @@
      "Service Root"
     ],
     "summary": "Read",
-    "description": "Returns an empty OData service document. Nothing under it works: `GET /$metadata` answers an EDMX with an empty entity container, and no OData entity set is exposed.\n\nIt is documented because it is a trap. Route discovery on this host relies on a 404 to mean 'no such route', and the root is the one path that answers 200 without being part of the API. Its `@odata.context` names an internal cluster address on a private IP; do not follow it.",
+    "description": "Returns an empty OData service document. Nothing under it works: `GET /$metadata` answers an EDMX with an empty entity container, and no OData entity set is exposed.",
+    "x-notes": [
+     {
+      "note": "This is the one path on the host that answers 200 without being part of the API, and it is a trap for route discovery, which relies on a 404 meaning 'no such route'. Its `@odata.context` names an internal cluster address on a private IP; do not follow it.",
+      "source": "live"
+     }
+    ],
     "x-version-segments": [
      "(none -- mounted at the host root, outside the versioned route space)"
     ],
@@ -366,7 +372,13 @@
      "Billing Policy to Environment link"
     ],
     "summary": "List",
-    "description": "Lists the environments linked to one billing policy, as a bare JSON array with no envelope and no paging -- note the sibling billing-policy listings wrap their results in `{value: [...]}` and this one does not.\n\nEach row carries only the two ids. To learn anything about an environment, take `environmentId` to BAPI or the Power Platform API.",
+    "description": "Lists the environments linked to one billing policy, as a bare JSON array with no envelope and no paging.\n\nEach row carries only the two ids. To learn anything about an environment, take `environmentId` to BAPI or the Power Platform API.",
+    "x-notes": [
+     {
+      "note": "This listing returns a bare array while the sibling billing-policy listings wrap theirs in `{value: [...]}`. One host, two collection shapes.",
+      "source": "live"
+     }
+    ],
     "x-version-segments": [
      "v0.1-alpha"
     ],
@@ -662,7 +674,13 @@
      "Tenant Capacity"
     ],
     "summary": "Read",
-    "description": "Returns the tenant's whole capacity position in one document: a summary verdict plus one entry per metered resource, each with its entitlement broken into base, incremental and add-on layers and its consumption snapshot.\n\nEvery meter the service models is returned whether or not the tenant is entitled to it, so the response is a fixed-size document and an absent meter means a service change, not a tenant difference. Consumption figures are scheduled snapshots sharing a single timestamp across all meters; read `consumption.rated`, not `consumption.actual`, when comparing against entitlement.",
+    "description": "Returns the tenant's whole capacity position in one document: a summary verdict plus one entry per metered resource, each with its entitlement broken into base, incremental and add-on layers and its consumption snapshot.\n\nEvery meter the service models is returned whether or not the tenant is entitled to it, so the response is a fixed-size document and an absent meter means a service change, not a tenant difference.",
+    "x-notes": [
+     {
+      "note": "`consumption.actual` is not the figure to compare against entitlement; `consumption.rated` is. Both are scheduled snapshots sharing one timestamp across every meter, so neither is a live count.",
+      "source": "live"
+     }
+    ],
     "x-version-segments": [
      "v0.1-alpha"
     ],
@@ -905,7 +923,13 @@
      "User Trial"
     ],
     "summary": "List",
-    "description": "Lists every product trial the named user has taken, with its currency allowances and how much of each has been spent.\n\nExpired trials are returned rather than filtered out, so a caller must compare `expiryDate` against the current time itself; and a trial can be exhausted before it expires, when `trialConsumedUnits` reaches `trialUnits`. The maker portal calls this to decide whether to offer trial-backed features to the signed-in user.\n\nThe path also accepts `POST` (`Allow: GET, POST`), which is presumably how a trial is started. It was not invoked and its body is not documented.",
+    "description": "Lists every product trial the named user has taken, with its currency allowances and how much of each has been spent. The maker portal calls this to decide whether to offer trial-backed features to the signed-in user.\n\nThe path also accepts `POST` (`Allow: GET, POST`), which is presumably how a trial is started. It was not invoked and its body is not documented.",
+    "x-notes": [
+     {
+      "note": "The list is not filtered to usable trials. Expired ones are returned alongside live ones, so a caller compares `expiryDate` against the current time itself; and a trial can be spent before it expires, when `trialConsumedUnits` reaches `trialUnits`.",
+      "source": "live"
+     }
+    ],
     "x-version-segments": [
      "v0.1-alpha",
      "v1.0"
@@ -1027,7 +1051,13 @@
      "Billing Policy"
     ],
     "summary": "List",
-    "description": "Lists every pay-as-you-go billing policy in the tenant, richest representation first.\n\nUnpaged and unfiltered: there is no `nextLink` and no continuation token, and `$top` -- along with any other query parameter -- is accepted and ignored. The one query parameter that is *not* ignored is `api-version`: `1.0` is accepted, anything else is rejected.\n\nThis path also accepts `POST` (`Allow: GET, POST`), and the item path `PUT` and `DELETE`, so policies can be created and changed here -- but no request body was ever observed and none is documented. Prefer the [Power Platform API](../../ppapi) for writes, and for reads too unless you specifically need `type`, `payGoEntitlements` or `billingInstrument.provisioningStatus`, none of which it returns.",
+    "description": "Lists every pay-as-you-go billing policy in the tenant, richest representation first.\n\nUnpaged and unfiltered: there is no `nextLink` and no continuation token, and `$top` -- along with any other query parameter -- is accepted and ignored.\n\nThis path also accepts `POST` (`Allow: GET, POST`), and the item path `PUT` and `DELETE`, so policies can be created and changed here -- but no request body was ever observed and none is documented. Prefer the [Power Platform API](../../ppapi) for writes, and for reads too unless you specifically need `type`, `payGoEntitlements` or `billingInstrument.provisioningStatus`, none of which it returns.",
+    "x-notes": [
+     {
+      "note": "`api-version` is the one query parameter this route does not ignore, on a host that otherwise versions by path segment: `1.0` is accepted and anything else is rejected.",
+      "source": "live"
+     }
+    ],
     "x-version-segments": [
      "v0.1-alpha",
      "v2.0"
@@ -1532,7 +1562,13 @@
     }
    },
    "CapacityConsumption": {
-    "description": "What has actually been used against a meter. Both figures are periodically refreshed snapshots, not live counters -- the timestamps say how stale they are, and they were identical across every meter in one response, so the whole rollup is computed in a single scheduled pass.",
+    "description": "What has actually been used against a meter.",
+    "x-notes": [
+     {
+      "note": "Neither figure is a live counter. Both are periodically refreshed snapshots, and their timestamps were identical across every meter in one response, so the whole rollup is computed in a single scheduled pass.",
+      "source": "live"
+     }
+    ],
     "type": "object",
     "properties": {
      "actual": {
@@ -1646,7 +1682,13 @@
      },
      "displayName": {
       "type": "string",
-      "description": "Friendly SKU name. Returned as an empty string for every licence observed, so do not rely on it for display."
+      "description": "Friendly SKU name.",
+      "x-notes": [
+       {
+        "note": "Empty for every licence observed, despite the name. `EntitlementLicense.productName` is the field that actually carries a friendly name.",
+        "source": "live"
+       }
+      ]
      },
      "servicePlanId": {
       "type": "string",

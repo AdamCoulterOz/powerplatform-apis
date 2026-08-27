@@ -349,7 +349,17 @@
     ],
     "x-probe-verified": true,
     "x-source-api": "ppapi",
-    "description": "Returns the Power Platform cluster serving the caller, whose `geoName` selects the analytics host through `info.x-region-hosts`. This is a PPAPI operation: it lives on the tenant-scoped `api.powerplatform.com` host and takes the Power Platform API scope, not the analytics one \u2014 note the per-operation `servers` and `security` overrides.\n\nTwo things about it are surprising. The tenant GUID in the host is **decorative**: a bogus tenant label, and even the bare `api.powerplatform.com` host with no tenant label at all, return the caller's own cluster, because the answer is derived from the bearer token. And `api-version` is optional and ignored \u2014 omitting it, or passing `2`, returns the same body as `api-version=1`.",
+    "description": "Returns the Power Platform cluster serving the caller, whose `geoName` selects the analytics host through `info.x-region-hosts`. This is a PPAPI operation: it lives on the tenant-scoped `api.powerplatform.com` host and takes the Power Platform API scope, not the analytics one \u2014 note the per-operation `servers` and `security` overrides.",
+    "x-notes": [
+     {
+      "note": "The tenant GUID in the host is decorative. A bogus tenant label, and the bare `api.powerplatform.com` host carrying no tenant label at all, both return the caller's own cluster: the answer comes from the bearer token, not from the host.",
+      "source": "live"
+     },
+     {
+      "note": "`api-version` is optional and ignored. Omitting it, or passing `2`, returns the same body as `api-version=1`.",
+      "source": "live"
+     }
+    ],
     "security": [
      {
       "ppapi_auth": [

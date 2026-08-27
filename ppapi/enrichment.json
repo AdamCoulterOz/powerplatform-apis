@@ -3257,7 +3257,8 @@
   "ErrorResponse": {
    "notes": [
     "Two shapes are in circulation for this type: the envelope `{error: {code, message}}` that the published reference describes, and a flat `{code, message, details}` with `details` an array of `{code, message, target, value}`. The envelope is the one modelled here; on the Power Automate operations that return it, be ready for either."
-   ]
+   ],
+   "x-source": "pac-cli"
   },
   "IpAddressEntity": {
    "description": "One entry in a Power Pages website's IP allow list, with the audit fields the service maintains for it.",

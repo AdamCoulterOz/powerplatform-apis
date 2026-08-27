@@ -69,7 +69,7 @@
       const holder = document.createElement('script');
       holder.id = 'api-reference';
       holder.dataset.url = current.url;
-      holder.dataset.configuration = JSON.stringify({ hideDownloadButton: false });
+      holder.dataset.configuration = JSON.stringify({ hideTestRequestButton: true, hideClientButton: true });
       document.getElementById('app').appendChild(holder);
       const lib = document.createElement('script');
       lib.src = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.66.1/dist/browser/standalone.min.js';

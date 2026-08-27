@@ -52,6 +52,12 @@ jobs:
       - name: Publish
         run: dotnet publish app/Browser -c Release -o app/dist --no-restore
 
+      - name: Report the payload
+        # What a browser actually downloads is the brotli total, not the folder.
+        run: |
+          echo "brotli   $(find app/dist/wwwroot -name '*.br' -exec cat {} + | wc -c | awk '{printf "%.1f MB", $1/1048576}')"
+          echo "raw wasm $(find app/dist/wwwroot/_framework -name '*.wasm' -exec cat {} + | wc -c | awk '{printf "%.1f MB", $1/1048576}')"
+
       - name: Check the published output
         # A Blazor publish can succeed while producing a site that cannot boot,
         # so assert the pieces the app actually needs at runtime.
@@ -70,3 +76,40 @@ jobs:
           name: api-browser
           path: app/dist/wwwroot
           retention-days: 7
+
+  # AOT trades download size for execution speed, and for a documentation
+  # browser those pull in opposite directions: the payload is what a reader
+  # waits for, while the CPU work (parsing a spec once, rendering a schema
+  # tree) is already fast. So it is measured on demand rather than assumed,
+  # and left off the default build, which also keeps that build quick.
+  aot:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '11.0.x'
+          dotnet-quality: preview
+
+      - name: Install the wasm-tools workload
+        run: dotnet workload install wasm-tools
+
+      - name: Authenticate the keel feed
+        run: >
+          dotnet nuget update source keel
+          --username AdamCoulterOz
+          --password "${{ secrets.GITHUB_TOKEN }}"
+          --store-password-in-clear-text
+
+      - name: Publish with AOT
+        run: >
+          dotnet publish app/Browser -c Release -o app/aot
+          -p:RunAOTCompilation=true
+
+      - name: Report the payload
+        run: |
+          echo "AOT brotli   $(find app/aot/wwwroot -name '*.br' -exec cat {} + | wc -c | awk '{printf "%.1f MB", $1/1048576}')"
+          echo "AOT raw wasm $(find app/aot/wwwroot/_framework -name '*.wasm' -exec cat {} + | wc -c | awk '{printf "%.1f MB", $1/1048576}')"
+          echo "compare against the build job, which is the same app without AOT"

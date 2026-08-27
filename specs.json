@@ -34,5 +34,11 @@
     "title": "PowerApps Advisor API (Solution Checker)",
     "url": "advisor/oas/openapi.json",
     "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/advisor"
+  },
+  {
+    "id": "powerapps",
+    "title": "PowerApps API",
+    "url": "powerapps/oas/openapi.json",
+    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/powerapps"
   }
 ]

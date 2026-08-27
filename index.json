@@ -139,10 +139,19 @@
   "connections_list_v1": [
    "analytics"
   ],
+  "connectivity_deleteConnection": [
+   "ppapi"
+  ],
+  "connectivity_getConnection": [
+   "ppapi"
+  ],
   "connectivity_getConnectorById": [
    "ppapi"
   ],
   "connectivity_getConnectorOnEnvironmentHost": [
+   "ppapi"
+  ],
+  "connectivity_listConnectionPermissions": [
    "ppapi"
   ],
   "connectivity_listConnections": [
@@ -155,6 +164,12 @@
    "ppapi"
   ],
   "connectivity_listConnectorsOnEnvironmentHost": [
+   "ppapi"
+  ],
+  "connectivity_modifyConnectionPermissions": [
+   "ppapi"
+  ],
+  "connectivity_putConnection": [
    "ppapi"
   ],
   "connectorMetadata_listUnblockable": [
@@ -557,6 +572,12 @@
    "ppapi"
   ],
   "governance_createRuleSet": [
+   "ppapi"
+  ],
+  "governance_deleteRuleBasedPolicy": [
+   "ppapi"
+  ],
+  "governance_deleteRuleBasedPolicyGroupAssignment": [
    "ppapi"
   ],
   "governance_deleteRuleSet": [

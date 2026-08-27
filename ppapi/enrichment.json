@@ -287,7 +287,11 @@
   "connectivity/connections/list-connections": {
    "summary": "List",
    "notes": [
-    "The environment-scoped host serves the same list at `/connectivity/connections` with no `/environments/{environmentId}` segment; that is the form the maker portal uses. Undocumented `$filter` (`environment eq '<environmentId>'`) and `$expand=api` (inline the connector definition on each connection) were both accepted there."
+    "The environment-scoped host serves the same list at `/connectivity/connections` with no `/environments/{environmentId}` segment; that is the form the maker portal uses. Undocumented `$filter` (`environment eq '<environmentId>'`) and `$expand=api` (inline the connector definition on each connection) were both accepted there.",
+    {
+     "note": "The provider reaches this route on the **environment-scoped host**, not the global one, with `api-version=1`. A probe of `api.powerplatform.com/connectivity/connections` answers `RouteNotFound`, and so does `/connectivity/connectors`, so the global spelling the published reference gives appears not to exist. Two of the nine unreachable routes in this spec are these, and the call graph of a working client says where they actually live.",
+     "source": "live"
+    }
    ]
   },
   "connectivity/connectors/get-connector-by-id": {
@@ -3211,6 +3215,496 @@
    "notes": [
     "`violations` and `violationsByPolicy` are empty whenever the verdict is `Compliant`."
    ]
+  },
+  "PUT /connectivity/connectors/{connectorName}/connections/{connectionId}": {
+   "operationId": "connectivity_putConnection",
+   "tags": [
+    "Connection"
+   ],
+   "summary": "Create or Replace",
+   "description": "Creates a connection, or replaces one that exists. **The caller chooses the id**: there is no POST-to-collection form, so a client generates a GUID, strips the dashes and PUTs to that address. A create answers `201` and a replace answers `200`, which is the only thing distinguishing them.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "connectorName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "example": "shared_sql"
+     },
+     "description": "The connector's name, such as `shared_sql`. Not a GUID."
+    },
+    {
+     "name": "connectionId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+     },
+     "description": "The connection's id: a GUID **with the dashes removed**."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. This route takes the ordinal `1`."
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+     },
+     "description": "`environment eq '{environmentId}'`. Sent on every call even though the host already identifies the environment."
+    }
+   ],
+   "requestBody": {
+    "required": true,
+    "content": {
+     "application/json": {
+      "schema": {
+       "$ref": "Connection"
+      }
+     }
+    }
+   },
+   "responses": {
+    "200": {
+     "description": "The connection was replaced.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "Connection"
+       }
+      }
+     }
+    },
+    "201": {
+     "description": "The connection was created.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "Connection"
+       }
+      }
+     }
+    }
+   },
+   "x-source": "provider"
+  },
+  "GET /connectivity/connectors/{connectorName}/connections/{connectionId}": {
+   "operationId": "connectivity_getConnection",
+   "tags": [
+    "Connection"
+   ],
+   "summary": "Read",
+   "description": "Reads one connection on the environment the host names.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "connectorName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "example": "shared_sql"
+     },
+     "description": "The connector's name, such as `shared_sql`. Not a GUID."
+    },
+    {
+     "name": "connectionId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+     },
+     "description": "The connection's id: a GUID **with the dashes removed**."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. This route takes the ordinal `1`."
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+     },
+     "description": "`environment eq '{environmentId}'`. Sent on every call even though the host already identifies the environment."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The connection.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "Connection"
+       }
+      }
+     }
+    }
+   },
+   "x-source": "provider"
+  },
+  "DELETE /connectivity/connectors/{connectorName}/connections/{connectionId}": {
+   "operationId": "connectivity_deleteConnection",
+   "tags": [
+    "Connection"
+   ],
+   "summary": "Delete",
+   "description": "Deletes a connection. Answers `200` rather than the `204` a delete usually returns.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "connectorName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "example": "shared_sql"
+     },
+     "description": "The connector's name, such as `shared_sql`. Not a GUID."
+    },
+    {
+     "name": "connectionId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+     },
+     "description": "The connection's id: a GUID **with the dashes removed**."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. This route takes the ordinal `1`."
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+     },
+     "description": "`environment eq '{environmentId}'`. Sent on every call even though the host already identifies the environment."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The connection was deleted."
+    }
+   },
+   "x-source": "provider"
+  },
+  "POST /connectivity/connectors/{connectorName}/connections/{connectionId}/modifyPermissions": {
+   "operationId": "connectivity_modifyConnectionPermissions",
+   "tags": [
+    "Connection"
+   ],
+   "summary": "Permissions Modify",
+   "description": "Grants, changes or revokes a principal's access to a connection. Both sharing and unsharing go through this one route: the body carries the additions and the deletions together.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "connectorName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "example": "shared_sql"
+     },
+     "description": "The connector's name, such as `shared_sql`. Not a GUID."
+    },
+    {
+     "name": "connectionId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+     },
+     "description": "The connection's id: a GUID **with the dashes removed**."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. This route takes the ordinal `1`."
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+     },
+     "description": "`environment eq '{environmentId}'`. Sent on every call even though the host already identifies the environment."
+    }
+   ],
+   "requestBody": {
+    "required": true,
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object"
+      }
+     }
+    }
+   },
+   "responses": {
+    "200": {
+     "description": "The permissions were modified."
+    }
+   },
+   "x-source": "provider"
+  },
+  "GET /connectivity/connectors/{connectorName}/connections/{connectionId}/permissions": {
+   "operationId": "connectivity_listConnectionPermissions",
+   "tags": [
+    "Connection"
+   ],
+   "summary": "Permissions List",
+   "description": "Lists who can use a connection and in what role.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "connectorName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "example": "shared_sql"
+     },
+     "description": "The connector's name, such as `shared_sql`. Not a GUID."
+    },
+    {
+     "name": "connectionId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+     },
+     "description": "The connection's id: a GUID **with the dashes removed**."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. This route takes the ordinal `1`."
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+     },
+     "description": "`environment eq '{environmentId}'`. Sent on every call even though the host already identifies the environment."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The connection's permissions.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    }
+   },
+   "x-source": "provider"
+  },
+  "DELETE /governance/ruleBasedPolicies/{policyId}": {
+   "operationId": "governance_deleteRuleBasedPolicy",
+   "tags": [
+    "Rule-Based Policy"
+   ],
+   "summary": "Delete",
+   "description": "Deletes a rule-based policy.",
+   "parameters": [
+    {
+     "name": "policyId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "description": "The policy's id."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2024-10-01"
+     },
+     "description": "The API version."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The policy was deleted."
+    },
+    "204": {
+     "description": "The policy was deleted."
+    },
+    "404": {
+     "description": "No such policy. Treated as success by an idempotent caller."
+    }
+   },
+   "x-source": "provider"
+  },
+  "DELETE /governance/ruleBasedPolicies/{policyId}/environmentGroups/{environmentGroupId}/assignments": {
+   "operationId": "governance_deleteRuleBasedPolicyGroupAssignment",
+   "tags": [
+    "Rule-Based Policy"
+   ],
+   "summary": "Environment Group Assignment Delete",
+   "description": "Unassigns a rule-based policy from an environment group. The POST that creates the assignment is documented; this delete is not.",
+   "parameters": [
+    {
+     "name": "policyId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "description": "The policy's id."
+    },
+    {
+     "name": "environmentGroupId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "description": "The environment group's id."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2024-10-01"
+     },
+     "description": "The API version."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The assignment was removed."
+    },
+    "204": {
+     "description": "The assignment was removed."
+    },
+    "404": {
+     "description": "No such assignment. Treated as success by an idempotent caller."
+    }
+   },
+   "x-source": "provider"
   }
  },
  "schemas": {

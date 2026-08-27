@@ -24965,11 +24965,17 @@
       "type": "string"
      },
      "macroRegionId": {
-      "description": "The macro region identifier.",
-      "type": "string"
+      "type": "string",
+      "description": "Identifies the macro region. Its accepted values are chosen by the service and are not published: a client is expected to render whatever the response returns, using `displayName` and `dataResidencyNote`, rather than to know the set in advance."
      }
     },
-    "type": "object"
+    "type": "object",
+    "x-notes": [
+     {
+      "note": "The value set is deliberately open. Microsoft's own SDK (`Microsoft.PowerPlatform.Management` 2.0.3503.299) types `MacroRegionId` as a bare string, while twelve lines away in the same generated file it emits `LocationSelectionMode` as a real enum with `Region` and `MacroRegion`. So this is a generator that does produce enums for closed sets and did not produce one here. Read with the shape of the object -- it carries its own `displayName` and `dataResidencyNote` -- the intent is that a client renders a picker without knowing any identifier. Choosing a macro region by a hardcoded id is working against the design.",
+      "source": "pac-cli"
+     }
+    ]
    },
    "MakerEnrollment": {
     "type": "object",

@@ -3347,6 +3347,20 @@
    "notes": [
     "The docs define one Value model reused for both the role-definition list and the role-assignment list. Verified live, role-assignment items are different and richer (roleAssignmentId, scope, principal fields, createdBy fields, createdOn, expiresOn); this shape reflects the role-definition list, not assignments."
    ]
+  },
+  "MacroRegion": {
+   "properties": {
+    "macroRegionId": {
+     "type": "string",
+     "description": "Identifies the macro region. Its accepted values are chosen by the service and are not published: a client is expected to render whatever the response returns, using `displayName` and `dataResidencyNote`, rather than to know the set in advance."
+    }
+   },
+   "notes": [
+    {
+     "note": "The value set is deliberately open. Microsoft's own SDK (`Microsoft.PowerPlatform.Management` 2.0.3503.299) types `MacroRegionId` as a bare string, while twelve lines away in the same generated file it emits `LocationSelectionMode` as a real enum with `Region` and `MacroRegion`. So this is a generator that does produce enums for closed sets and did not produce one here. Read with the shape of the object -- it carries its own `displayName` and `dataResidencyNote` -- the intent is that a client renders a picker without knowing any identifier. Choosing a macro region by a hardcoded id is working against the design.",
+     "source": "pac-cli"
+    }
+   ]
   }
  },
  "addSchemas": {

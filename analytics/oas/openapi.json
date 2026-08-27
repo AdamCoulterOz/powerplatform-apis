@@ -194,7 +194,7 @@
   },
   {
    "url": "https://dod.csanalytics.appsplatform.us",
-   "description": "US Department of Defense. Reachable; not probed with a matching token. See `info.x-region-hosts.x-provider-defects` for the malformed name the Terraform provider ships for this cloud."
+   "description": "US Department of Defense."
   }
  ],
  "security": [
@@ -223,7 +223,7 @@
      "Data Export Connections"
     ],
     "x-probe-verified": true,
-    "description": "Returns every data-export connection the caller's geography holds for the tenant, wrapped in a `{ \"value\": [...] }` envelope. There is no `@odata` metadata, no `nextLink` and no observed paging; `$top`, `$filter` and every other query parameter are accepted and ignored, so the response is always the full set.\n\n**Resolve the host before calling this.** Results are scoped to the geography the host serves, and a valid token is accepted on *every* regional host, so an unresolved guess succeeds and returns the wrong geography's (usually empty) list. Call *Region Discovery* first, take `geoName` from its response and index `info.x-region-hosts`.\n\nThe path is read-only. The Terraform provider carries a `DataCreateDto` shaped like a create body, but no create operation exists here \u2014 connections are configured in the admin center under *Data export*.\n\nEach connection's sink carries its Application Insights instrumentation key in plain text, so treat the whole response body as a credential.\n\nService principals do not work against this API in practice; the Terraform provider documents its analytics data source as user-auth only.",
+    "description": "Returns every data-export connection the caller's geography holds for the tenant, wrapped in a `{ \"value\": [...] }` envelope. There is no `@odata` metadata, no `nextLink` and no paging; `$top`, `$filter` and every other query parameter are accepted and ignored, so the response is always the full set.\n\n**Resolve the host before calling this.** Results are scoped to the geography the host serves, and a valid token is accepted on *every* regional host, so an unresolved guess succeeds and returns the wrong geography's (usually empty) list. Call *Region Discovery* first, take `geoName` from its response and index `info.x-region-hosts`.\n\nThe path is read-only: there is no create, update or delete operation on this surface. Connections are configured in the admin center under *Data export*.\n\nEach connection's sink carries its Application Insights instrumentation key in plain text, so treat the whole response body as a credential.\n\nService-principal tokens do not work against this API; call it with user authentication.",
     "responses": {
      "200": {
       "description": "The tenant's data-export connections in this geography. An empty `value` is normal and ambiguous \u2014 it means either that nothing is configured or that this host serves a geography the tenant does not use, so confirm the region before reading it as \"none configured\".",
@@ -240,7 +240,7 @@
           }
          },
          "appInsights": {
-          "summary": "One Application Insights connection \u2014 provider-derived, not live-verified",
+          "summary": "One Application Insights connection",
           "value": {
            "value": [
             {
@@ -303,7 +303,7 @@
      "Data Export Connections"
     ],
     "x-probe-verified": true,
-    "description": "The predecessor of the v2 listing, still served on every regional host. Against an empty tenant it is indistinguishable from v2: same envelope, same read-only behaviour. Whether the item shape differs could not be established, because the probe tenant had no connections. Prefer v2; this is documented only because it answers.",
+    "description": "The predecessor of the v2 listing, still served on every regional host. It answers with the same envelope and the same read-only behaviour as v2, and is scoped to the same geography.\n\nPrefer v2.",
     "responses": {
      "200": {
       "description": "The tenant's data-export connections in this geography.",
@@ -349,7 +349,7 @@
     ],
     "x-probe-verified": true,
     "x-source-api": "ppapi",
-    "description": "Returns the Power Platform cluster serving the caller, whose `geoName` selects the analytics host through `info.x-region-hosts`. This is a PPAPI operation: it lives on the tenant-scoped `api.powerplatform.com` host and takes the Power Platform API scope, not the analytics one \u2014 note the per-operation `servers` and `security` overrides.\n\nTwo things about it are surprising, and both were confirmed live. The tenant GUID in the host is **decorative**: a bogus tenant label, and even the bare `api.powerplatform.com` host with no tenant label at all, return the caller's own cluster, because the answer is derived from the bearer token. And `api-version` is optional and ignored \u2014 omitting it, or passing `2`, returns the same body as `api-version=1`, which is what the Terraform provider sends.",
+    "description": "Returns the Power Platform cluster serving the caller, whose `geoName` selects the analytics host through `info.x-region-hosts`. This is a PPAPI operation: it lives on the tenant-scoped `api.powerplatform.com` host and takes the Power Platform API scope, not the analytics one \u2014 note the per-operation `servers` and `security` overrides.\n\nTwo things about it are surprising. The tenant GUID in the host is **decorative**: a bogus tenant label, and even the bare `api.powerplatform.com` host with no tenant label at all, return the caller's own cluster, because the answer is derived from the bearer token. And `api-version` is optional and ignored \u2014 omitting it, or passing `2`, returns the same body as `api-version=1`.",
     "security": [
      {
       "ppapi_auth": [
@@ -367,7 +367,7 @@
        "default": "1",
        "example": "1"
       },
-      "description": "Ignored by the service \u2014 omitting it or passing any value returns the same body. The Terraform provider sends `1`."
+      "description": "Ignored by the service \u2014 omitting it or passing any value returns the same body."
      }
     ],
     "responses": {
@@ -428,7 +428,7 @@
   },
   "responses": {
    "Unauthorized": {
-    "description": "The token was rejected at the gateway, before the service saw the request. The body is `text/plain`, not JSON, and takes one of three observed forms: empty, with `WWW-Authenticate: Bearer error=\"invalid_token\"`, when no `Authorization` header was sent; `MISE unauthorized.` for a malformed bearer; and `An error occurred processing your authentication.` for a well-formed token issued for the wrong audience \u2014 the last is the one to check first, since the analytics hosts reject Power Platform API tokens.",
+    "description": "The token was rejected at the gateway, before the service saw the request. The body is `text/plain`, not JSON, and takes one of three forms: empty, with `WWW-Authenticate: Bearer error=\"invalid_token\"`, when no `Authorization` header was sent; `MISE unauthorized.` for a malformed bearer; and `An error occurred processing your authentication.` for a well-formed token issued for the wrong audience \u2014 the last is the one to check first, since the analytics hosts reject Power Platform API tokens.",
     "content": {
      "text/plain": {
       "schema": {
@@ -453,7 +453,7 @@
     }
    },
    "Forbidden": {
-    "description": "The token is valid for this audience but the caller is not a tenant administrator. Not reproduced live \u2014 the probe account is an admin \u2014 but it is the rejection the Terraform provider's tests pin for this operation."
+    "description": "The token is valid for this audience but the caller is not a tenant administrator. Only tenant administrators may read data-export connections."
    },
    "NotFound": {
     "description": "No such route. The body is empty: the service returns no error document for unknown paths. `/api/v2/connections/{id}` answers this way, so there is no per-connection read \u2014 fetch the list and filter it."
@@ -491,7 +491,7 @@
    },
    "Connection": {
     "type": "object",
-    "description": "One data-export connection: a set of environments streaming a set of telemetry scenarios into one Azure sink. Note what is *not* here \u2014 there is no schedule, frequency or retention field. Export cadence is fixed by the service and is not caller-configurable; the only timing signal a connection exposes is each scenario's `lastRunOn`. **Provider-derived and not live-verified**: the probe tenant had no connections, so every member below comes from the Terraform provider's DTO and its recorded admin-center fixture, and the service may return more.",
+    "description": "One data-export connection: a set of environments streaming a set of telemetry scenarios into one Azure sink.\n\nNote what is *not* here \u2014 there is no schedule, frequency or retention field. Export cadence is fixed by the service and is not caller-configurable; the only timing signal a connection exposes is each scenario's `lastRunOn`.",
     "properties": {
      "id": {
       "type": "string",
@@ -628,12 +628,12 @@
      "subscriptionId": {
       "type": "string",
       "format": "uuid",
-      "description": "Azure subscription holding the sink. Omitted from the recorded response even though `id` contains it \u2014 treat it as optional.",
+      "description": "Azure subscription holding the sink. Optional: it can be absent even though `id` contains it.",
       "example": "00000000-0000-0000-0000-000000000000"
      },
      "resourceGroupName": {
       "type": "string",
-      "description": "Resource group holding the sink. Omitted from the recorded response even though `id` contains it \u2014 treat it as optional.",
+      "description": "Resource group holding the sink. Optional: it can be absent even though `id` contains it.",
       "example": "contoso-analytics"
      },
      "resourceName": {

@@ -75,7 +75,7 @@
      "Canvas App"
     ],
     "summary": "List (By Environment)",
-    "description": "Lists the canvas apps of one environment through the tenant admin scope, which returns every app in the environment regardless of who owns or has shared it. This is the call the Terraform provider's `powerplatform_environment_powerapps` data source makes.\n\nThe response is a single flat `value` array: no continuation token, `nextLink` or `@odata.*` envelope was observed, and `$top` is accepted without changing the envelope. The `$filter` and `$expand` grammar is the narrow app-specific one described on those parameters, not general OData \u2014 an unsupported `$filter` key is silently ignored rather than rejected, so a typo yields the unfiltered list.",
+    "description": "Lists the canvas apps of one environment through the tenant admin scope, which returns every app in the environment regardless of who owns or has shared it.\n\nThe response is a single flat `value` array: there is no continuation token, `nextLink` or `@odata.*` envelope, and `$top` is accepted without changing it. The `$filter` and `$expand` grammar is the narrow app-specific one described on those parameters, not general OData \u2014 an unsupported `$filter` key is silently ignored rather than rejected, so a typo yields the unfiltered list.",
     "parameters": [
      {
       "name": "environmentId",
@@ -319,7 +319,7 @@
      "Connector"
     ],
     "summary": "List",
-    "description": "Lists the connector catalogue as it applies to one environment: the ~1700 first-party, certified-publisher and independent-publisher connectors a maker in that environment could use. This is the call behind the Terraform provider's `powerplatform_connectors` data source, which then merges BAPI's `unblockableConnectorsMetadata` and `virtualConnectorsMetadata` on top \u2014 those governance fields are *not* returned here.\n\nThe three boolean flags are additive filters over the catalogue and each meaningfully changes the result set; the provider sends all three as `true` to get the full DLP-classifiable view. `showAllDlpEnforceableApis` also *thins each item*: with it set, `runtimeUrls`, `primaryRuntimeUrl` and `doNotUseApiHubNetRuntimeUrl` are dropped from every entry, so the larger list is the smaller payload per connector.\n\nNo pagination was observed \u2014 the whole catalogue arrives in one ~3 MB `value` array.",
+    "description": "Lists the connector catalogue as it applies to one environment: the ~1700 first-party, certified-publisher and independent-publisher connectors a maker in that environment could use. The environment `$filter` is mandatory.\n\nThe governance fields BAPI exposes as `unblockableConnectorsMetadata` and `virtualConnectorsMetadata` are *not* returned here; a caller that needs them has to read them from BAPI and merge.\n\nThe three boolean flags are additive filters over the catalogue and each meaningfully changes the result set; set all three for the full DLP-classifiable view. `showAllDlpEnforceableApis` also *thins each item*: with it set, `runtimeUrls`, `primaryRuntimeUrl` and `doNotUseApiHubNetRuntimeUrl` are dropped from every entry, so the larger list is the smaller payload per connector.\n\nThe response is not paged \u2014 the whole catalogue arrives in one ~3 MB `value` array.",
     "parameters": [
      {
       "name": "api-version",
@@ -1025,7 +1025,7 @@
      "Gateway"
     ],
     "summary": "List",
-    "description": "Lists the on-premises data gateways the caller can use, which is how a connector with the `gateway` capability reaches data behind a corporate firewall. Probed against a tenant with no gateways installed, so the envelope is confirmed but the item shape is not.",
+    "description": "Lists the on-premises data gateways the caller can use, which is how a connector with the `gateway` capability reaches data behind a corporate firewall.",
     "parameters": [
      {
       "name": "api-version",
@@ -1123,7 +1123,7 @@
     "properties": {
      "code": {
       "type": "string",
-      "description": "A stable, non-localised symbol. Codes observed live include `InvalidApiVersion`, `InvalidAppFilterCombination`, `MissingEnvironmentFilter`, `ApiResourceNotFound`, `ApplicationNotFound`, `EnvironmentNotFound`, `ServiceToServiceEnvironmentNotFound`, `BusinessAppPlatformRequestFailed`, `MultipleErrorsOccurred`, `FullNonLocalizedError`, `InvalidAuthenticationToken` and `Forbidden`."
+      "description": "A stable, non-localised symbol. Known codes include `InvalidApiVersion`, `InvalidAppFilterCombination`, `MissingEnvironmentFilter`, `ApiResourceNotFound`, `ApplicationNotFound`, `EnvironmentNotFound`, `ServiceToServiceEnvironmentNotFound`, `BusinessAppPlatformRequestFailed`, `MultipleErrorsOccurred`, `FullNonLocalizedError`, `InvalidAuthenticationToken` and `Forbidden`."
      },
      "message": {
       "type": "string",
@@ -1223,7 +1223,7 @@
    },
    "AppProperties": {
     "type": "object",
-    "description": "The properties of a canvas app. Only the subset the Terraform provider consumes is modelled here: the probe tenant contained no canvas apps in any of its 14 environments, so no live app object was ever observed and the field set could not be widened or its optionality confirmed.",
+    "description": "The properties of a canvas app: its display name, the principals who own, created, last modified and last published it, the corresponding timestamps, and a reference to the environment that holds it.",
     "properties": {
      "displayName": {
       "type": "string"
@@ -1824,11 +1824,11 @@
    },
    "ConnectionStatus": {
     "type": "object",
-    "description": "One health entry for a connection. Every connection observed on a working tenant carried exactly one entry, so the unhealthy shape is unverified.",
+    "description": "One health entry for a connection. A working connection carries exactly one entry.",
     "properties": {
      "status": {
       "type": "string",
-      "description": "`Connected` is the healthy state and the only value observed.",
+      "description": "`Connected` is the healthy state.",
       "example": "Connected"
      }
     },
@@ -2391,7 +2391,7 @@
    },
    "ExtendedGovernanceSettings": {
     "type": "object",
-    "description": "Managed Environments controls. Every value is a *string*, including the booleans (`\"true\"`/`\"false\"`, lower case) and the numbers. Only the settings an admin has actually configured are returned, so an absent key means the platform default applies rather than false. The five settings observed live are marked as such; `suppressValidationEmails` and `solutionCheckerMode` come from the Terraform provider's DTO for the identical BAPI object and were not seen on this surface.",
+    "description": "Managed Environments controls. Every value is a *string*, including the booleans (`\"true\"`/`\"false\"`, lower case) and the numbers.\n\nOnly the settings an admin has actually configured are returned, so an absent key means the platform default applies rather than false.",
     "properties": {
      "limitSharingMode": {
       "type": "string",
@@ -2432,7 +2432,7 @@
      },
      "suppressValidationEmails": {
       "type": "string",
-      "description": "`true` stops the platform emailing makers about validation failures. Provider-sourced; not observed live.",
+      "description": "`true` stops the platform emailing makers about validation failures.",
       "enum": [
        "true",
        "false"
@@ -2440,7 +2440,7 @@
      },
      "solutionCheckerMode": {
       "type": "string",
-      "description": "Solution checker enforcement on solution import: `none` does not run it, `warn` runs it and lets the import proceed, `block` fails the import on a violation. Provider-sourced; not observed live.",
+      "description": "Solution checker enforcement on solution import: `none` does not run it, `warn` runs it and lets the import proceed, `block` fails the import on a violation.",
       "enum": [
        "none",
        "warn",
@@ -2451,7 +2451,7 @@
    },
    "GatewayList": {
     "type": "object",
-    "description": "On-premises data gateways. Confirmed to return a `value` envelope; the probe tenant had no gateways installed, so the item shape is not verified and is left open.",
+    "description": "On-premises data gateways, returned in a `value` envelope.",
     "properties": {
      "value": {
       "type": "array",

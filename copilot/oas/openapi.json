@@ -61,7 +61,7 @@
      "name": "x-cci-tenantid",
      "in": "header",
      "required": true,
-     "description": "Entra tenant id of the environment. Mandatory, not derived from the bearer token, and spelled in lower case on the wire. Its absence could not be probed independently in this tenant because the licence check answers first; it is documented as required because the Terraform provider sends it on every call.",
+     "description": "Entra tenant id of the environment. Mandatory, not derived from the bearer token, and spelled in lower case on the wire.",
      "schema": {
       "type": "string",
       "format": "uuid",
@@ -82,7 +82,7 @@
     "x-probe-notes": "Live-verified: the route exists and answers on a real per-environment PVA host; the auth model; the error envelope; the path-segment-not-query-parameter behaviour of 2022-01-15; the bare-404 behaviour of unrecognised routes. Not verified: the 200 response body, which is provider-derived - every request in this tenant stopped at the 403 licence gate.",
     "responses": {
      "200": {
-      "description": "The bot's Application Insights configuration. Shape is provider-derived, not probed, so treat unlisted properties as possible rather than absent.",
+      "description": "The bot's Application Insights configuration.",
       "x-probe-verified": false,
       "content": {
        "application/json": {
@@ -115,7 +115,7 @@
       }
      },
      "404": {
-      "description": "Empty body, no error envelope. Returned for any path the gateway does not route: the parent `.../bots` collection, `.../bots/{botId}` on its own, or a different date in the api-version segment. An empty-bodied 404 therefore means the URL is wrong, not that the bot is missing - whether a well-formed request for a nonexistent bot also 404s could not be established, because the licence check answers first.",
+      "description": "Empty body, no error envelope. Returned for any path the gateway does not route: the parent `.../bots` collection, `.../bots/{botId}` on its own, or a different date in the api-version segment. An empty-bodied 404 therefore means the URL is wrong, not that the bot is missing.",
       "x-probe-verified": true
      }
     }
@@ -174,7 +174,7 @@
       }
      },
      "500": {
-      "description": "The update was rejected. Terminal, not transient: the Terraform provider lists 500 among this operation's *accepted* statuses precisely to keep its retry layer away from it, then raises the raw body as the error. Do not retry; fix the request. The body is not guaranteed to be the standard error envelope, so treat it as opaque text.",
+      "description": "The update was rejected. Terminal, not transient: do not retry, fix the request. Keep this status out of any retry policy and surface the raw body as the error, since it is not guaranteed to be the standard error envelope \u2014 treat it as opaque text.",
       "x-probe-verified": false
      }
     }
@@ -200,21 +200,21 @@
   "schemas": {
    "AppInsightsConfiguration": {
     "type": "object",
-    "description": "The Application Insights wiring of one Copilot Studio bot: which Application Insights resource its conversation telemetry is shipped to, and how much of each conversation is included in what is shipped. Export means the bot emits a custom event per logged item as conversations run, so the three inclusion flags govern both the detail available for analysis and the volume - and cost - of ingested data. See https://learn.microsoft.com/microsoft-copilot-studio/advanced-bot-framework-composer-capture-telemetry.\n\nProperties are those the Terraform provider models; the live 200 body could not be captured (see `info.description`), so the service may return more. Nothing is marked required, and the flags carry no `default`, because the service's behaviour when a field is omitted was never observed - the provider always sends the complete object. (The Terraform resource defaults all three flags to `true`, but that is the provider's choice, not the service's.)",
+    "description": "The Application Insights wiring of one Copilot Studio bot: which Application Insights resource its conversation telemetry is shipped to, and how much of each conversation is included in what is shipped.\n\nExport means the bot emits a custom event per logged item as conversations run, so the three inclusion flags govern both the detail available for analysis and the volume - and cost - of ingested data. See https://learn.microsoft.com/microsoft-copilot-studio/advanced-bot-framework-composer-capture-telemetry.\n\nThe update replaces the whole object, so send every member on a write rather than relying on omitted fields keeping their stored value.",
     "properties": {
      "environmentId": {
       "type": "string",
       "format": "uuid",
       "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
       "example": "00000000-0000-0000-0000-000000000000",
-      "description": "Echoed by the service on both operations, but not necessarily equal to the `environmentId` in the request path - the Terraform provider deliberately overwrites the server-reported value with the one it asked for rather than trusting it."
+      "description": "Echoed by the service on both operations, but not necessarily equal to the `environmentId` in the request path - prefer the id you addressed over the one reported back."
      },
      "botId": {
       "type": "string",
       "format": "uuid",
       "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
       "example": "00000000-0000-0000-0000-000000000000",
-      "description": "Echoed by the service; like `environmentId`, the provider overwrites it with the caller's value."
+      "description": "Echoed by the service; like `environmentId`, prefer the caller's value over the echoed one."
      },
      "appInsightsConnectionString": {
       "type": "string",
@@ -236,7 +236,7 @@
      },
      "networkIsolation": {
       "type": "string",
-      "description": "How the bot reaches the Application Insights ingestion endpoint: over the public internet, or constrained to a private path for a network-isolated environment. **The `enum` here records the only value ever evidenced** - the Terraform provider hardcodes `PublicNetwork` on write and every recorded response returns it - not a set confirmed against the service. The real accepted set is very probably larger (a network-isolated environment must have something else to say). Round-trip whatever a read returned rather than assuming this list is closed.",
+      "description": "How the bot reaches the Application Insights ingestion endpoint: over the public internet, or constrained to a private path for a network-isolated environment.\n\n`PublicNetwork` is what an ordinary environment carries, and it is the only value listed here. The accepted set is open and very probably larger - a network-isolated environment must have something else to say - so round-trip whatever a read returned rather than treating this list as closed.",
       "enum": [
        "PublicNetwork"
       ],

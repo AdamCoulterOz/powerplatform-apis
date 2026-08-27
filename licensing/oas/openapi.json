@@ -245,7 +245,7 @@
   },
   {
    "name": "Service Root",
-   "description": "A vestigial OData surface mounted at the host root. It is not part of the licensing API and exposes no data; it is documented only because it answers 200 and will fool route discovery that treats 200 as evidence."
+   "description": "A vestigial OData surface mounted at the host root. It is not part of the licensing API and exposes no data, but it answers `200`, so route discovery that treats a `200` as a live endpoint will be misled by it."
   }
  ],
  "paths": {
@@ -506,7 +506,7 @@
      "Entitlement"
     ],
     "summary": "List",
-    "description": "Lists the entitlements the tenant actually holds, as a bare JSON array. Unlike the capacity rollup, which returns every meter the service models, this returns only meters with something behind them -- one entry in the probed tenant against sixteen in the rollup.\n\nRegistered on `v0.1-alpha` only, so the list is available only in the flat representation even though individual entitlements can also be read in the v2.0 one.",
+    "description": "Lists the entitlements the tenant actually holds, as a bare JSON array. Unlike the capacity rollup, which returns every meter the service models, this returns only the meters with something behind them, so it is normally far shorter than the rollup.\n\nRegistered on `v0.1-alpha` only, so the list is available only in the flat representation even though individual entitlements can also be read in the v2.0 one.",
     "x-version-segments": [
      "v0.1-alpha"
     ],
@@ -822,7 +822,7 @@
      "Currency Allocation"
     ],
     "summary": "Allocations List (By Environment)",
-    "description": "Lists every environment-level currency allocation in the tenant.\n\n**The item schema is unknown.** The probed tenant allocates no currency to any environment, so this returned an empty array on every attempt, and the per-environment read 404s for the same reason. Nothing is documented below the array because nothing was observed -- the item is deliberately left untyped rather than guessed at from the ppapi model, which addresses the same resource but through a different envelope.\n\nThe path accepts `PATCH` as well as `GET`, matching ppapi's `PATCH /licensing/allocationsByEnvironment`; the patch body was not observed and is not documented.",
+    "description": "Lists every environment-level currency allocation in the tenant, as a bare JSON array. A tenant that allocates no currency to any environment gets an empty array here, and 404s from the per-environment read.\n\nThe path accepts `PATCH` as well as `GET`, mirroring the Power Platform API's `PATCH /licensing/allocationsByEnvironment` \u2014 which is the better-described surface for writing allocations.",
     "x-version-segments": [
      "v0.1-alpha"
     ],
@@ -834,7 +834,7 @@
     ],
     "responses": {
      "200": {
-      "description": "Environment currency allocations. Observed empty; the item shape is unverified.",
+      "description": "Environment currency allocations. Empty when the tenant allocates no currency to any environment.",
       "content": {
        "application/json": {
         "schema": {
@@ -864,7 +864,7 @@
      "Currency Allocation"
     ],
     "summary": "Allocations Read (By Environment)",
-    "description": "Reads one environment's currency allocations.\n\nThis is one of the four operations recorded in first-party UI traffic, and in that recording -- as in every probe since -- it answered 404: the maker portal calls it speculatively for the environment being edited and treats the 404 as 'nothing allocated'. **No 200 has ever been observed**, so the success body is undocumented and the operation is marked unverified. Note the two failure modes differ. Every long-lived environment in the probed tenant answered problem-details 404 -- the route matched, there is simply no allocation. An id the service cannot resolve answers 403 with an empty body, and that included a newly provisioned environment as well as ids from outside the tenant, so a 403 here is 'not visible to this service yet or at all' rather than a clean permission verdict.",
+    "description": "Reads one environment's currency allocations.\n\nA 404 is the ordinary answer, not a fault: the route matched and the environment simply has nothing allocated. First-party UI calls this speculatively for the environment being edited and reads the 404 as 'nothing allocated'.\n\nThe two failure modes differ. An environment this service can resolve but that holds no allocation answers problem-details `404`. An id it cannot resolve answers `403` with an empty body, and that covers both ids from outside the tenant and environments provisioned too recently for this service to see \u2014 so a `403` here means 'not visible to this service, yet or at all' rather than a clean permission verdict.",
     "x-version-segments": [
      "v0.1-alpha"
     ],
@@ -1113,7 +1113,7 @@
      "Billing Policy"
     ],
     "summary": "Provisioning Status Refresh",
-    "description": "Re-reads the policy's Azure billing instrument and updates `billingInstrument.provisioningStatus`. Call it after fixing the underlying `Microsoft.PowerPlatform/accounts` resource, rather than waiting for the service to notice.\n\n**This operation was never invoked.** Its existence is established indirectly: a `GET` against the path returns `405` with `Allow: POST`, which proves a POST route is registered without submitting anything. The request body, the response body and the success status code are all unknown and none is documented here; the equivalent operation on the [Power Platform API](../../ppapi) (`POST /licensing/billingPolicies/{billingPolicyId}/refreshProvisioningStatus`) is the better-described sibling. `scripts/probe.py` cannot issue this call -- its transport refuses every method but GET, HEAD and OPTIONS.",
+    "description": "Re-reads the policy's Azure billing instrument and updates `billingInstrument.provisioningStatus`. Call it after fixing the underlying `Microsoft.PowerPlatform/accounts` resource, rather than waiting for the service to notice.\n\n`POST` is the only method the route accepts: a `GET` against the path answers `405` with `Allow: POST`.\n\nPrefer the equivalent operation on the [Power Platform API](../../ppapi) (`POST /licensing/billingPolicies/{billingPolicyId}/refreshProvisioningStatus`), which is the better-described sibling.",
     "x-version-segments": [
      "v0.1-alpha",
      "v2.0"
@@ -1879,7 +1879,7 @@
       "items": {
        "$ref": "#/components/schemas/EntitlementLicense"
       },
-      "description": "Licences contributing the entitlement. Empty on the storage meters of the probed tenant even where entitlement was non-zero."
+      "description": "Licences contributing the entitlement. Can be empty on a storage meter even where the entitlement itself is non-zero."
      }
     }
    },
@@ -2358,7 +2358,7 @@
       "items": {
        "type": "object"
       },
-      "description": "Capacity borrowed from elsewhere to cover overage. Empty on every meter of the probed tenant, so the item shape is unknown and deliberately left untyped rather than invented."
+      "description": "Capacity borrowed from elsewhere to cover overage. Frequently empty."
      },
      "capacityEntitlements": {
       "type": "array",

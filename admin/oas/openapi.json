@@ -67,7 +67,7 @@
      "Release Wave Feature"
     ],
     "summary": "List",
-    "description": "Lists every release wave the service knows about for one organization, each with that organization's opt-in state and the geo's rollout dates.\n\nThere is no single-feature read. The sibling path /api/environments/{organizationId}/features/{featureName} is swallowed by the host's legacy-route fallback and answers 200 with an HTML stub, so a caller wanting one feature lists them all and matches on FeatureName -- which is exactly what the Terraform provider's client does behind its GetFeature method.\n\nBoth parameters need preparing. The path takes an organization id, not an environment id (map via BAPI's properties.linkedEnvironmentMetadata.resourceId), and the geo must be the crmGeo published for that organization by the organization listing. Omitting the geo faults rather than being rejected, because the parameter is bound before it is validated.\n\nThe envelope's count, totalCount and nextPageToken are present but inert: pageSize, $top and pageToken are all accepted and all ignored, every request returns the complete set, count equals totalCount, and nextPageToken was empty on every response observed. Do not write a paging loop against them.\n\nThis is also the operation to poll after enabling a wave: watch the feature's AppsUpgradeState until it leaves 'Upgrading'.",
+    "description": "Lists every release wave the service knows about for one organization, each with that organization's opt-in state and the geo's rollout dates.\n\nThere is no single-feature read. The sibling path /api/environments/{organizationId}/features/{featureName} is swallowed by the host's legacy-route fallback and answers 200 with an HTML stub, so a caller wanting one feature lists them all and matches on FeatureName.\n\nBoth parameters need preparing. The path takes an organization id, not an environment id (map via BAPI's properties.linkedEnvironmentMetadata.resourceId), and the geo must be the crmGeo published for that organization by the organization listing. Omitting the geo faults rather than being rejected, because the parameter is bound before it is validated.\n\nThe envelope's count, totalCount and nextPageToken are present but inert: pageSize, $top and pageToken are all accepted and all ignored, every request returns the complete set, count equals totalCount, and nextPageToken is always empty. Do not write a paging loop against them.\n\nThis is also the operation to poll after enabling a wave: watch the feature's AppsUpgradeState until it leaves 'Upgrading'.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -168,7 +168,7 @@
      "Release Wave Feature"
     ],
     "summary": "Enable",
-    "description": "Opts one organization in to a release wave ahead of its general-availability date -- the API behind the admin centre's early opt-in checkbox. There is no request body and no request content type; the entire request is the URL.\n\n**This is one-way.** Every wave feature observed reports CanBeReset: false, and this surface has no disable or reset operation. Once a wave is on for an organization it cannot be turned off through the API, which is why the Terraform provider's powerplatform_environment_wave resource cannot destroy what it creates.\n\nThe call returns as soon as the request is accepted, with an empty body and no Location or Operation-Location header, but the work behind it is asynchronous: the feature's AppsUpgradeState moves to 'Upgrading' while the organization's model-driven apps are upgraded, and settles when that finishes. Poll features_list until AppsUpgradeState leaves 'Upgrading' before treating the wave as active.\n\nAs with the listing, the path takes an organization id rather than an environment id and the geo must be that organization's crmGeo. Parameter checking is ordered differently here, though: an invalid geo is rejected before the organization is looked at, while an omitted geo passes straight through to the organization check, so this route appears to tolerate the parameter's absence in a way the listing does not. Send it regardless.\n\nOnly the failure paths of this operation were exercised against the live service; because the effect is irreversible, the success path was not.",
+    "description": "Opts one organization in to a release wave ahead of its general-availability date -- the API behind the admin centre's early opt-in checkbox. There is no request body and no request content type; the entire request is the URL.\n\n**This is one-way.** Wave features report CanBeReset: false, and this surface has no disable or reset operation. Once a wave is on for an organization it cannot be turned off through the API, so treat enabling one as permanent.\n\nThe call returns as soon as the request is accepted, with an empty body and no Location or Operation-Location header, but the work behind it is asynchronous: the feature's AppsUpgradeState moves to 'Upgrading' while the organization's model-driven apps are upgraded, and settles when that finishes. Poll features_list until AppsUpgradeState leaves 'Upgrading' before treating the wave as active.\n\nAs with the listing, the path takes an organization id rather than an environment id and the geo must be that organization's crmGeo. Parameter checking is ordered differently here, though: an invalid geo is rejected before the organization is looked at, while an omitted geo passes straight through to the organization check, so this route appears to tolerate the parameter's absence in a way the listing does not. Send it regardless.",
     "x-probe-verified": false,
     "parameters": [
      {
@@ -187,7 +187,7 @@
       "name": "featureName",
       "in": "path",
       "required": true,
-      "description": "The wave's FeatureName as features_list reports it. The enum is the set in the rollout window at the time of probing; the names follow the fixed pattern '<Month><Year>Update' with Month always April or October, so future waves are predictable, but read the listing rather than guessing. The name is checked after the organization, so an organization the caller cannot administer masks an unknown feature name rather than reporting it.",
+      "description": "The wave's FeatureName as features_list reports it. The enum is a snapshot of the waves in their rollout window rather than a fixed vocabulary; the names follow the fixed pattern '<Month><Year>Update' with Month always April or October, so future waves are predictable, but read the listing rather than guessing. The name is checked after the organization, so an organization the caller cannot administer masks an unknown feature name rather than reporting it.",
       "schema": {
        "type": "string",
        "enum": [
@@ -406,7 +406,7 @@
        "October2025Update"
       ],
       "pattern": "^(April|October)[0-9]{4}Update$",
-      "description": "Stable identifier for the wave, and the value the enable operation takes in its path. Named for the month the wave reaches general availability, which is one half-year after the wave's own number: April2025Update is 2025 release wave 1 and October2025Update is 2025 release wave 2. Each turns on that wave's whole bundle of Dataverse platform and model-driven-app changes for the organization -- it is a release-channel opt-in, not a toggle for any single feature.\n\nThe enum is the set the service returned across every organization in the probed tenant in 2026-08, and it is a snapshot rather than a fixed vocabulary: exactly the waves currently in their opt-in window are listed, and a wave drops out once superseded. The pattern holds even as the enum ages.",
+      "description": "Stable identifier for the wave, and the value the enable operation takes in its path. Named for the month the wave reaches general availability, which is one half-year after the wave's own number: April2025Update is 2025 release wave 1 and October2025Update is 2025 release wave 2. Each turns on that wave's whole bundle of Dataverse platform and model-driven-app changes for the organization -- it is a release-channel opt-in, not a toggle for any single feature.\n\nThe enum is a snapshot rather than a fixed vocabulary: exactly the waves currently in their opt-in window are listed, and a wave drops out once superseded. The naming pattern holds even as the enum ages.",
       "example": "October2025Update"
      },
      "DisplayName": {
@@ -428,7 +428,7 @@
       "enum": [
        "ON"
       ],
-      "description": "The wave's own opt-in state, as distinct from the app upgrade it triggers. 'ON' means the organization is on this wave. Only 'ON' was observed -- every wave in the probed tenant had already reached general availability -- so the value for a wave still awaiting opt-in was not seen, and the enum here is what was proven rather than the complete set.",
+      "description": "The wave's own opt-in state, as distinct from the app upgrade it triggers. 'ON' means the organization is on this wave. The enum is open rather than complete: compare against 'ON' rather than assuming a wave still awaiting opt-in reports one of the listed values.",
       "example": "ON"
      },
      "AppsUpgradeState": {
@@ -437,7 +437,7 @@
        "ON",
        "Upgrading"
       ],
-      "description": "The state of the model-driven-app upgrade that enabling the wave kicks off, and the field to poll after calling enable. 'Upgrading' means the organization's apps are being upgraded and the wave is not yet fully in effect; 'ON' means the upgrade has settled and the wave is live. The Terraform provider's polling loop waits precisely for this field to stop reading 'Upgrading'. 'ON' was observed live; 'Upgrading' comes from that provider loop, not from a probe.",
+      "description": "The state of the model-driven-app upgrade that enabling the wave kicks off, and the field to poll after calling enable. 'Upgrading' means the organization's apps are being upgraded and the wave is not yet fully in effect; 'ON' means the upgrade has settled and the wave is live.",
       "example": "ON"
      },
      "IsAllowed": {

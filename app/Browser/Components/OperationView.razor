@@ -20,7 +20,7 @@
         <div class="cluster cluster--titled">
             @if (Operation.IsPreview)
             {
-                <KeelBadge Tone="BadgeTone.Signal" Dot="true">Preview</KeelBadge>
+                <KeelBadge Tone="Tone.New" Dot="true">Preview</KeelBadge>
             }
             @if (Operation.DocsUrl is { } docs)
             {
@@ -75,9 +75,20 @@
                 {
                     <section class="section">
                         <h2 class="section__title">Responses</h2>
-                        <KeelSegmented TValue="string" class="cluster--titled" Size="Size.Sm"
-                                       Options="ResponseOptions" Value="@SelectedResponse?.Code"
-                                       ValueChanged="@(code => _selected = code)" />
+                        @* Status codes are states, not modes, so they are a row
+                           of selectable chips rather than a segmented control:
+                           each one carries its own tone and announces its own
+                           pressed state. *@
+                        <div class="cluster cluster--titled">
+                            @foreach (var r in Operation.Responses)
+                            {
+                                @* Not named "code": @code is a Razor directive. *@
+                                var status = r.Code;
+                                <KeelTag Mono="true" Tone="@ToneFor(r)"
+                                         Selected="@(status == SelectedResponse?.Code)"
+                                         SelectedChanged="@(_ => _selected = status)">@status</KeelTag>
+                            }
+                        </div>
 
                         @if (SelectedResponse is { } resp)
                         {
@@ -152,15 +163,11 @@
 
     protected override void OnParametersSet() => _selected = null;
 
-    // The tone is on every option rather than only the selected one, so the
-    // whole set reads as successes and failures before anything is picked.
-    private IReadOnlyList<KeelSegmented<string>.Option> ResponseOptions =>
-        Operation.Responses
-            .Select(r => new KeelSegmented<string>.Option(r.Code, r.Code, Tone: ToneFor(r)))
-            .ToList();
-
-    private static BadgeTone ToneFor(Response r) =>
-        r.IsSuccess ? BadgeTone.Success : r.IsError ? BadgeTone.Danger : BadgeTone.Neutral;
+    // keel supplies the shape, this supplies the meaning: every chip is toned
+    // whether or not it is the selected one, so the set reads as successes and
+    // failures before anyone picks from it.
+    private static Tone ToneFor(Response r) =>
+        r.IsSuccess ? Tone.Good : r.IsError ? Tone.Bad : Tone.Neutral;
 
     // Request and response as HTTP files: the request line, the headers, then a
     // body rendered for its own content type. That is the shape the API speaks,

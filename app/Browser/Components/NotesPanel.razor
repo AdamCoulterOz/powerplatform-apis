@@ -11,7 +11,7 @@
     <div class="notes @(Compact ? "notes--compact" : "section")">
         @foreach (var g in Groups)
         {
-            <KeelCallout Tone="@Tone(g)" Title="@g.Title">
+            <KeelCallout Tone="@ToneFor(g)" Title="@g.Title">
                 @if (g.Caveat is { } caveat)
                 {
                     <p class="notes__caveat">@caveat</p>
@@ -35,5 +35,7 @@
 
     private IReadOnlyList<NoteGroup> Groups => SpecNote.Group(Notes);
 
-    private static CalloutTone Tone(NoteGroup g) => g.IsObserved ? CalloutTone.Info : CalloutTone.Warning;
+    // Named ToneFor rather than Tone: keel's tone vocabulary is now a type
+    // called Tone, and a method of the same name would shadow it.
+    private static Tone ToneFor(NoteGroup g) => g.IsObserved ? Tone.Info : Tone.Warning;
 }

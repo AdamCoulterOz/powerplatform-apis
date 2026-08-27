@@ -28,5 +28,11 @@
     "title": "Copilot Studio Bot Management API",
     "url": "copilot/oas/openapi.json",
     "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/copilot"
+  },
+  {
+    "id": "advisor",
+    "title": "PowerApps Advisor API (Solution Checker)",
+    "url": "advisor/oas/openapi.json",
+    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/advisor"
   }
 ]

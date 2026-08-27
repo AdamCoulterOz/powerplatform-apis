@@ -4,23 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Power Platform APIs</title>
-  <meta name="description" content="Browsable OpenAPI specs for the Power Platform admin APIs, reverse-engineered from the public Microsoft Learn reference.">
+  <meta name="description" content="Browsable OpenAPI reference for the Power Platform admin APIs, reverse-engineered from the public Microsoft Learn documentation.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stoplight/elements@9.0.24/styles.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@stoplight/elements@9.0.24/web-components.min.js"></script>
   <style>
-    :root { color-scheme: light dark; }
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    html, body { margin: 0; height: 100%; }
+    body { display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     header {
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-      padding: 10px 16px; border-bottom: 1px solid rgba(128,128,128,.35);
-      background: light-dark(#f6f6f7, #1a1a1f);
+      padding: 9px 16px; border-bottom: 1px solid #e2e2e4; background: #f6f6f7; flex: 0 0 auto;
     }
     header h1 { font-size: 15px; margin: 0; font-weight: 600; }
-    header select {
-      font-size: 14px; padding: 4px 8px; border-radius: 6px;
-      border: 1px solid rgba(128,128,128,.5); background: inherit; color: inherit;
-    }
+    header select { font-size: 14px; padding: 4px 8px; border-radius: 6px; border: 1px solid #c4c4c8; background: #fff; }
     header .links { margin-left: auto; font-size: 13px; display: flex; gap: 14px; }
-    header a { color: light-dark(#0057b8, #6cb2ff); text-decoration: none; }
+    header a { color: #0057b8; text-decoration: none; }
     header a:hover { text-decoration: underline; }
+    #app { flex: 1 1 auto; min-height: 0; }
+    elements-api { display: block; height: 100%; }
     #note { padding: 24px; font-size: 14px; }
   </style>
 </head>
@@ -58,7 +58,8 @@
       }
       picker.addEventListener('change', () => {
         try { localStorage.setItem('spec', picker.value); } catch (e) {}
-        location.search = '?spec=' + encodeURIComponent(picker.value);
+        // reset the in-spec hash route when switching APIs
+        location.href = location.pathname + '?spec=' + encodeURIComponent(picker.value);
       });
 
       document.getElementById('spec-link').href = current.url;
@@ -66,21 +67,12 @@
       document.title = current.title;
       note.remove();
 
-      const holder = document.createElement('script');
-      holder.id = 'api-reference';
-      holder.dataset.url = current.url;
-      holder.dataset.configuration = JSON.stringify({ hideTestRequestButton: true, hideClientButton: true });
-      document.getElementById('app').appendChild(holder);
-      const lib = document.createElement('script');
-      lib.src = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.66.1/dist/browser/standalone.min.js';
-      lib.onerror = () => {
-        const d = document.createElement('div');
-        d.id = 'note';
-        d.innerHTML = 'The spec renderer failed to load from the CDN. The raw spec is at <a href="' +
-          current.url + '">' + current.url + '</a>.';
-        document.body.appendChild(d);
-      };
-      document.body.appendChild(lib);
+      const api = document.createElement('elements-api');
+      api.setAttribute('apiDescriptionUrl', current.url);
+      api.setAttribute('router', 'hash');
+      api.setAttribute('layout', 'sidebar');
+      api.setAttribute('hideTryIt', 'true');
+      document.getElementById('app').appendChild(api);
     })();
   </script>
 </body>

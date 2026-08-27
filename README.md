@@ -29,6 +29,7 @@ The site loads each spec from its folder over the same origin (no external fetch
 | [advisor](advisor) | PowerApps Advisor (solution checker) | `{region}.api.advisor.powerapps.com` | Terraform provider client, extended by live probing |
 | [copilot](copilot) | Copilot Studio | per-environment PVA gateway, e.g. `powervamg.eu-il107.gateway.prod.island.powerapps.com` | Terraform provider client (responses licence-gated, unverified) |
 | [athena](athena) | Synapse Link / Link to Fabric orchestration | `athenawebservice.e{clusterSuffix}.powerapps.com`, e.g. `athenawebservice.eau-il301.gateway.prod.island.powerapps.com` | Terraform provider `feature/fabric-link-ropc` branch |
+| [licensing](licensing) | Power Platform Licensing | `licensing.powerplatform.microsoft.com` | Recorded UI traffic + live probing |
 
 Note that `admin` and `athena` are entirely different services: `admin` is the
 Power Platform admin centre API, `athena` is the Synapse Link / Link to Fabric

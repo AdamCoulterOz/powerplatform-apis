@@ -45,17 +45,14 @@
             <div>
                 @if (Operation.Notes.Count > 0)
                 {
-                    <div class="keel-callout keel-callout--info section">
-                        <div class="keel-callout__title">Verified against the live API</div>
-                        <div class="keel-callout__body">
-                            <ul style="margin:var(--s-2) 0 0;padding-left:1.15em">
-                                @foreach (var note in Operation.Notes)
-                                {
-                                    <li style="margin:var(--s-2) 0">@((MarkupString)Markdown.ToHtml(note))</li>
-                                }
-                            </ul>
-                        </div>
-                    </div>
+                    <KeelCallout Tone="CalloutTone.Info" Title="Verified against the live API" class="section">
+                        <ul style="margin:var(--s-2) 0 0;padding-left:1.15em">
+                            @foreach (var note in Operation.Notes)
+                            {
+                                <li style="margin:var(--s-2) 0">@((MarkupString)Markdown.ToHtml(note))</li>
+                            }
+                        </ul>
+                    </KeelCallout>
                 }
 
                 @if (Operation.Parameters.Count > 0 || Operation.RequestBody is not null)
@@ -140,7 +137,7 @@
             </div>
 
             <aside class="op-split__aside">
-                <CodeBlock Tabs="SampleTabs" ShowLanguage="true" />
+                <KeelCodeBlock Tabs="SampleTabs" ShowLanguage="true" />
             </aside>
         </div>
     </div>
@@ -175,11 +172,11 @@
     private static string StatusClass(Response r) =>
         r.IsSuccess ? "status--ok" : r.IsError ? "status--err" : "status--other";
 
-    private IReadOnlyList<CodeBlock.Tab> SampleTabs
+    private IReadOnlyList<KeelCodeBlock.Tab> SampleTabs
     {
         get
         {
-            var tabs = new List<CodeBlock.Tab>
+            var tabs = new List<KeelCodeBlock.Tab>
             {
                 new("Request", SampleBuilder.Curl(Operation, Server), CodeLanguage.Bash)
             };
@@ -187,7 +184,7 @@
             var resp = SelectedResponse;
             if (resp?.Schema is { } schema)
             {
-                tabs.Add(new CodeBlock.Tab($"Response {resp.Code}", SampleBuilder.Json(schema), CodeLanguage.Json));
+                tabs.Add(new KeelCodeBlock.Tab($"Response {resp.Code}", SampleBuilder.Json(schema), CodeLanguage.Json));
             }
             return tabs;
         }

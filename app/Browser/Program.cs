@@ -1,3 +1,4 @@
+using Keel;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using PowerPlatformApis.Browser;
@@ -11,5 +12,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<SpecStore>();
 builder.Services.AddScoped<HashRouter>();
+builder.Services.AddKeel();
 
 await builder.Build().RunAsync();

@@ -11,17 +11,14 @@
 
     @if (Schema?.Notes is { Count: > 0 } notes)
     {
-        <div class="keel-callout keel-callout--info section">
-            <div class="keel-callout__title">Verified against the live API</div>
-            <div class="keel-callout__body">
-                <ul style="margin:var(--s-2) 0 0;padding-left:1.15em">
-                    @foreach (var n in notes)
-                    {
-                        <li style="margin:var(--s-2) 0">@((MarkupString)Markdown.ToHtml(n))</li>
-                    }
-                </ul>
-            </div>
-        </div>
+        <KeelCallout Tone="CalloutTone.Info" Title="Verified against the live API" class="section">
+            <ul style="margin:var(--s-2) 0 0;padding-left:1.15em">
+                @foreach (var n in notes)
+                {
+                    <li style="margin:var(--s-2) 0">@((MarkupString)Markdown.ToHtml(n))</li>
+                }
+            </ul>
+        </KeelCallout>
     }
 
     <div class="op-body">
@@ -51,7 +48,7 @@
             </div>
 
             <aside class="op-split__aside">
-                <CodeBlock Chrome="CodeChrome.Editor" Title="Example" Code="@SampleBuilder.Json(Schema)"
+                <KeelCodeBlock Chrome="CodeChrome.Editor" Title="Example" Code="@SampleBuilder.Json(Schema)"
                            Language="CodeLanguage.Json" ShowLanguage="true" />
             </aside>
         </div>

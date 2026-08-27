@@ -530,16 +530,23 @@ html, body {
 
 /* ------------------------------------------------------- resource pages -- */
 
-/* the docs badge sits with the title, at text size rather than as a button */
-.doc-badge {
-  display: inline-flex;
-  vertical-align: middle;
-  margin-left: var(--s-3);
-  opacity: .75;
-  transition: opacity var(--dur-fast, .14s) var(--ease-out);
+/* badges under the endpoint: preview state, and the link out to Learn. The
+   Microsoft mark alone says nothing, so it is labelled. */
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-5);
 }
-.doc-badge:hover { opacity: 1; }
-.doc-badge svg { width: .62em; height: .62em; display: block; }
+.badge--learn {
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--dur-fast, .14s) var(--ease-out), background var(--dur-fast, .14s) var(--ease-out);
+}
+.badge--learn:hover { color: var(--text-primary); background: var(--surface-subtle); }
+.badge__ms { width: 12px; height: 12px; flex: none; display: block; }
 
 /* one operation in a resource listing */
 .op-row {

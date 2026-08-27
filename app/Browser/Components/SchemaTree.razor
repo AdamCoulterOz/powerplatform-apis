@@ -25,7 +25,7 @@ else
     {
         @foreach (var p in target.Properties)
         {
-            <PropertyRow Property="p" Depth="0" Seen="@Seen(node)" OnNavigate="OnNavigate" />
+            <PropertyRow Property="p" Seen="@Seen(node)" OnNavigate="OnNavigate" />
         }
     }
     else if (target.Items is { } item)

@@ -3,21 +3,7 @@
    it is not, independently of the window size or whether the nav is open. *@
 
 <div class="page">
-    <h1 class="page__title">
-        @Operation.Summary
-        @if (Operation.DocsUrl is { } docs)
-        {
-            <a class="doc-badge" href="@docs" target="_blank" rel="noopener"
-               aria-label="Microsoft Learn documentation" title="Microsoft Learn documentation">
-                <svg viewBox="0 0 23 23" aria-hidden="true">
-                    <rect x="1" y="1" width="10" height="10" fill="#F25022" />
-                    <rect x="12" y="1" width="10" height="10" fill="#7FBA00" />
-                    <rect x="1" y="12" width="10" height="10" fill="#00A4EF" />
-                    <rect x="12" y="12" width="10" height="10" fill="#FFB900" />
-                </svg>
-            </a>
-        }
-    </h1>
+    <h1 class="page__title">@Operation.Summary</h1>
 
     @if (Operation.Prose is { } prose)
     {
@@ -29,10 +15,28 @@
         <span class="endpoint__path"><span class="endpoint__host">@Server</span>@Operation.Path</span>
     </div>
 
-    @if (Operation.IsPreview)
+    @if (Operation.IsPreview || Operation.DocsUrl is not null)
     {
-        <div class="keel-badge keel-badge--signal" style="margin-bottom:var(--s-4)">
-            <span class="keel-badge__dot"></span> Preview
+        <div class="badge-row">
+            @if (Operation.IsPreview)
+            {
+                <span class="keel-badge keel-badge--signal">
+                    <span class="keel-badge__dot"></span> Preview
+                </span>
+            }
+            @if (Operation.DocsUrl is { } docs)
+            {
+                <a class="keel-badge badge--learn" href="@docs" target="_blank" rel="noopener"
+                   title="Read this operation on Microsoft Learn">
+                    <svg class="badge__ms" viewBox="0 0 23 23" aria-hidden="true">
+                        <rect x="1" y="1" width="10" height="10" fill="#F25022" />
+                        <rect x="12" y="1" width="10" height="10" fill="#7FBA00" />
+                        <rect x="1" y="12" width="10" height="10" fill="#00A4EF" />
+                        <rect x="12" y="12" width="10" height="10" fill="#FFB900" />
+                    </svg>
+                    Learn
+                </a>
+            }
         </div>
     }
 

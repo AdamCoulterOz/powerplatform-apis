@@ -25,7 +25,10 @@
     "note": "Ten environment mutation operations return an undocumented **409** carrying `ValidationResponse` -- `provisioning/environments` and, on an environment, `enableDisasterRecovery`, `failback`, `forceFailover`, `governanceSetting/enableManaged`, `governanceSetting/disableManaged`, `modifySku`, `recover`, `reset` and `restore`. Microsoft's own client handles that status on all ten; the published reference documents it on none. A conflicting concurrent operation is the expected cause, so a client that treats 409 as an unexpected failure will mishandle the ordinary case.",
     "source": "pac-cli"
    }
-  ]
+  ],
+  "x-source-builds": {
+   "pac-cli": "Microsoft.PowerPlatform.Management 2.0.3503.299 (nuget.org), decompiled with Kiota abstractions 1.22.1 as reference. Earlier pac-cli claims in this spec were taken from 2.0.3399.248, the build bundled in pac CLI 2.11.2, which is two releases older and predates macro regions entirely -- a negative from that build is blindness, not evidence. Re-checked against 2.0.3503.299: 210 operations over 175 paths, 469 models, nothing in the SDK that this spec lacks."
+  }
  },
  "servers": [
   {

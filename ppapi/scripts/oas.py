@@ -707,6 +707,12 @@ def main():
             # than what the docs list, and the two do not agree.
             "x-api-versions": ENRICH.get("info", {}).get("x-api-versions", versions),
             **({"x-notes": ENRICH["info"]["notes"]} if ENRICH.get("info", {}).get("notes") else {}),
+            # Pass through every x- extension enrichment puts on info, rather than
+            # naming the ones we know: an allow-list here drops a new extension
+            # silently, which it did -- x-source-builds was written, generated away,
+            # and reported as recorded.
+            **{k: v for k, v in ENRICH.get("info", {}).items() if k.startswith("x-")
+               and k != "x-api-versions"},
         },
         "servers": ENRICH.get("servers", DEFAULT_SERVERS),
         "security": [{"azure_auth": ["https://api.powerplatform.com/.default"]}],

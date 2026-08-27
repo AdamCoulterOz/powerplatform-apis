@@ -1,13 +1,40 @@
 # powerplatform-apis
 
-A browsable reference for the Power Platform admin APIs, published at [adamcoulteroz.github.io/powerplatform-apis](https://adamcoulteroz.github.io/powerplatform-apis/).
+Browsable, machine-readable references for the family of APIs behind Microsoft Power Platform, each reverse-engineered from the best available source and kept current. Published at [adamcoulteroz.github.io/powerplatform-apis](https://adamcoulteroz.github.io/powerplatform-apis/).
 
-The site renders OpenAPI specs that are reverse-engineered daily from the public Microsoft Learn documentation by the `pp-{ApiName}` mirror repos. It always shows the latest committed spec, with operations grouped by logical resource rather than by Microsoft's transport namespaces.
+## Layout
 
-Current APIs:
+One folder per API. Each folder is self-contained: its own extraction scripts, its source material where relevant, and a generated `oas/openapi.json` in the same shape, so the browser at the repo root can render any of them.
 
-- **PPAPI** (api.powerplatform.com) from [pp-PPAPI](https://github.com/AdamCoulterOz/pp-PPAPI)
+```
+powerplatform-apis/
+  index.html, specs.json   the spec browser (Stoplight Elements); reads each spec from its folder
+  ppapi/                   Power Platform API — reverse-engineered from Microsoft Learn's OpenAPI-generated docs
+  bapi/                    Business Application Platform API — reverse-engineered from the Terraform provider's code
+  .github/workflows/       per-API refresh jobs (e.g. ppapi-mirror runs daily)
+```
 
-To add another API, add an entry to `specs.json` with an `id`, a `title`, the raw URL of its OpenAPI file, and its mirror repo. The dropdown picks it up automatically.
+The site loads each spec from its folder over the same origin (no external fetch), so a spec change is live as soon as Pages redeploys. To surface a new API in the browser, add an entry to `specs.json` pointing at its `oas/openapi.json`.
 
-The specs are unofficial reconstructions and are not verified against the service. Treat them as a map, not a contract.
+## APIs
+
+| Folder | API | Host | Source of the spec |
+|---|---|---|---|
+| [ppapi](ppapi) | Power Platform API | `api.powerplatform.com` | Microsoft Learn (OpenAPI-generated docs) |
+| [bapi](bapi) | Business Application Platform API | `api.bap.microsoft.com` | Terraform provider source (scaffold) |
+
+Not yet built, but part of the intended set (host patterns for reference):
+
+| API | Host |
+|---|---|
+| dataverse | `{org}.crm*.dynamics.com` |
+| powerapps | `api.powerapps.com` |
+| admin | `api.admin.powerplatform.microsoft.com` |
+| analytics | `{geo}.csanalytics.powerplatform.microsoft.com` |
+| advisor | `{region}.api.advisor.powerapps.com` |
+| copilot | per-environment PVA gateway, e.g. `powervamg.eu-il107.gateway.prod.island.powerapps.com` |
+| athena | `athenawebservice.e{clusterSuffix}.powerapps.com` (Fabric link) |
+
+## Nature of these specs
+
+Every spec here is an unofficial reconstruction, not verified end to end against the live service. Treat them as maps, not contracts. Each folder's README records where its spec comes from and how faithful it is.

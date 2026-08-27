@@ -2,7 +2,7 @@
   {
     "id": "ppapi",
     "title": "Power Platform API (PPAPI)",
-    "url": "https://raw.githubusercontent.com/AdamCoulterOz/pp-PPAPI/main/oas/ppapi.json",
-    "repo": "https://github.com/AdamCoulterOz/pp-PPAPI"
+    "url": "ppapi/oas/openapi.json",
+    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/ppapi"
   }
 ]

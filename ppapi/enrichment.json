@@ -1,0 +1,941 @@
+{
+ "operations": {
+  "analytics/recommendations/execute-recommendation-action": {
+   "summary": "Recommendation Action Execute"
+  },
+  "analytics/recommendations/get-action-schema": {
+   "summary": "Action Schema Read"
+  },
+  "analytics/recommendations/get-recommendation-resources": {
+   "summary": "Recommendation Resources Read"
+  },
+  "analytics/recommendations/get-recommendation-scenarios": {
+   "summary": "Recommendation Scenarios Read"
+  },
+  "analytics/recommendations/get-recommendations": {
+   "summary": "Recommendations Read"
+  },
+  "analytics/recommendations/get-scenario-actions": {
+   "summary": "Scenario Actions Read"
+  },
+  "appmanagement/applications/get-application-package-install-status": {
+   "summary": "Install Status Read"
+  },
+  "appmanagement/applications/get-environment-application-package": {
+   "summary": "Environment Read"
+  },
+  "appmanagement/applications/get-tenant-application-package": {
+   "summary": "Tenant Read"
+  },
+  "appmanagement/applications/install-application-package": {
+   "summary": "Install"
+  },
+  "authorization/role-based-access-control/create-environment-group-role-assignment": {
+   "summary": "Assignment Create (Environment Group)"
+  },
+  "authorization/role-based-access-control/create-environment-role-assignment": {
+   "summary": "Assignment Create (Environment)",
+   "notes": [
+    "Verified live (2026-08-27): returns 200 OK, not the documented 201, and a single assignment object {roleAssignmentId, scope, principalType, principalObjectId, roleDefinitionId, createdByPrincipalType, createdByPrincipalObjectId, createdOn, expiresOn}, not the documented RoleAssignmentResponse {value:[...]} envelope.",
+    "The body scope must match this path (/tenants/{tid}/environments/{id}) or the call returns 400 WrongResourceTypeForUrlContext."
+   ],
+   "responses": {
+    "200": {
+     "schema": {
+      "$ref": "RbacRoleAssignment"
+     },
+     "description": "The created role assignment. Verified live; the documentation shows 201 with a different envelope."
+    }
+   }
+  },
+  "authorization/role-based-access-control/create-role-assignment": {
+   "summary": "Assignment Create (Tenant)",
+   "notes": [
+    "Verified live (2026-08-27): the URL path fixes the allowed scope. Posting a body scope of /tenants/{tid}/environments/{id} to this tenant endpoint returns 400 WrongResourceTypeForUrlContext. Tenant, environment, and environment-group scoped assignments are separate endpoints, not one endpoint switched by the body scope."
+   ]
+  },
+  "authorization/role-based-access-control/delete-environment-group-role-assignment": {
+   "summary": "Assignment Delete (Environment Group)"
+  },
+  "authorization/role-based-access-control/delete-environment-role-assignment": {
+   "summary": "Assignment Delete (Environment)",
+   "notes": [
+    "Verified live (2026-08-27): returns 200 with the deleted assignment in the body. Deletes are path-scoped, so an environment-scoped assignment cannot be deleted through the tenant path (that returns 404 RoleAssignmentNotFound)."
+   ]
+  },
+  "authorization/role-based-access-control/delete-role-assignment": {
+   "summary": "Assignment Delete (Tenant)"
+  },
+  "authorization/role-based-access-control/list-environment-group-role-assignments": {
+   "summary": "Assignments List (Environment Group)"
+  },
+  "authorization/role-based-access-control/list-environment-role-assignments": {
+   "summary": "Assignments List (Environment)",
+   "notes": [
+    "Verified live (2026-08-27): items carry the full assignment shape (roleAssignmentId, scope, principalType, principalObjectId, roleDefinitionId, createdBy fields, createdOn, expiresOn), not the documented role-definition-shaped item."
+   ],
+   "responses": {
+    "200": {
+     "schema": {
+      "$ref": "RbacRoleAssignmentList"
+     },
+     "description": "Role assignments at environment scope. Verified against the live API."
+    }
+   }
+  },
+  "authorization/role-based-access-control/list-role-assignments": {
+   "summary": "Assignments List (Tenant)",
+   "notes": [
+    "Verified live (2026-08-27): assignment items are {roleAssignmentId, scope, principalType, principalObjectId, roleDefinitionId, createdByPrincipalType, createdByPrincipalObjectId, createdOn, expiresOn}, not the documented role-definition-shaped item. The tenant list returns only tenant-scoped assignments; environment-scoped ones appear only under /authorization/environments/{id}/roleAssignments."
+   ],
+   "responses": {
+    "200": {
+     "schema": {
+      "$ref": "RbacRoleAssignmentList"
+     },
+     "description": "Tenant-scoped role assignments. Verified against the live API."
+    }
+   }
+  },
+  "authorization/role-based-access-control/list-role-definitions": {
+   "summary": "Role Definitions List",
+   "notes": [
+    "Verified live (2026-08-27): role definitions also carry description, roleType, assignableScopes[], restrictedScopes[], and permissionsExceptions[] beyond the documented permissions, roleDefinitionId, and roleDefinitionName."
+   ]
+  },
+  "connectivity/connections/list-connections": {
+   "summary": "List"
+  },
+  "connectivity/connectors/get-connector-by-id": {
+   "summary": "Read"
+  },
+  "connectivity/connectors/list-connectors": {
+   "summary": "List"
+  },
+  "copilotstudio/agent-channels/download-agent-channel-manifest": {
+   "summary": "Agent Channel Manifest Download"
+  },
+  "copilotstudio/bots/delete-copilot-agent": {
+   "summary": "Delete"
+  },
+  "copilotstudio/bots/download-maker-evaluation-snapshot": {
+   "summary": "Maker Evaluation Snapshot Download"
+  },
+  "copilotstudio/bots/get-bot-quarantine-status": {
+   "summary": "Bot Quarantine Status Read"
+  },
+  "copilotstudio/bots/get-connector-consent-bypass": {
+   "summary": "Connector Consent Bypass Read"
+  },
+  "copilotstudio/bots/get-maker-evaluation-test-run": {
+   "summary": "Maker Evaluation Test Run Read"
+  },
+  "copilotstudio/bots/get-maker-evaluation-test-set": {
+   "summary": "Maker Evaluation Test Set Read"
+  },
+  "copilotstudio/bots/list-maker-evaluation-test-runs": {
+   "summary": "Maker Evaluation Test Runs List"
+  },
+  "copilotstudio/bots/list-maker-evaluation-test-sets": {
+   "summary": "Maker Evaluation Test Sets List"
+  },
+  "copilotstudio/bots/reassign-copilot-agent": {
+   "summary": "Reassign"
+  },
+  "copilotstudio/bots/run-maker-evaluation-test-set": {
+   "summary": "Run Maker Evaluation Test Set"
+  },
+  "copilotstudio/bots/set-bot-as-quarantined": {
+   "summary": "Set Bot As Quarantined"
+  },
+  "copilotstudio/bots/set-bot-as-unquarantined": {
+   "summary": "Set Bot As Unquarantined"
+  },
+  "copilotstudio/bots/set-connector-consent-bypass": {
+   "summary": "Connector Consent Bypass Set"
+  },
+  "dynamics/finance-and-operations-maintenance-settings/get-fin-ops-maintenance-settings": {
+   "summary": "Fin Ops Maintenance Settings Read"
+  },
+  "dynamics/finance-and-operations-maintenance-settings/update-fin-ops-maintenance-settings": {
+   "summary": "Fin Ops Maintenance Settings Update"
+  },
+  "dynamics/finance-and-operations-operation-errors/get-fin-ops-operation-errors": {
+   "summary": "Fin Ops Operation Errors Read"
+  },
+  "dynamics/finance-and-operations-properties/get-fin-ops-properties": {
+   "summary": "Fin Ops Properties Read"
+  },
+  "dynamics/finance-and-operations-versions/apply-fin-ops-version": {
+   "summary": "Fin Ops Version Apply"
+  },
+  "dynamics/finance-and-operations-versions/get-fin-ops-versions": {
+   "summary": "Fin Ops Versions Read"
+  },
+  "environmentmanagement/environment-backup/create-environment-backup": {
+   "summary": "Backup Create"
+  },
+  "environmentmanagement/environment-backup/delete-environment-backup": {
+   "summary": "Backup Delete"
+  },
+  "environmentmanagement/environment-backup/get-environment-backups": {
+   "summary": "Backups List"
+  },
+  "environmentmanagement/environment-copy/copy-environment": {
+   "summary": "Copy"
+  },
+  "environmentmanagement/environment-copy/get-environment-copy-candidates": {
+   "summary": "Copy Candidates List"
+  },
+  "environmentmanagement/environment-delete/delete-environment-by-id": {
+   "summary": "Delete"
+  },
+  "environmentmanagement/environment-groups/add-environment-to-group": {
+   "summary": "Environment Add",
+   "notes": [
+    "Adds a single environment (the path environmentId) to the group; there is no whole-list replace. The environment must already be a Managed Environment. The REST endpoint does not auto-upgrade it (the admin center does), and an unmanaged environment returns 400 InputValidationError.",
+    "The success response is 202 Accepted with an undocumented Location header (shown below) pointing at the group operation to poll; see [Read Operation](#/operations/environmentmanagement_getEnvironmentGroupOperation). No Operation-Location or azure-asyncoperation header is sent.",
+    "Membership is recorded on the environment record (its environmentGroupId), not as a members collection on the group. The 400 body is {error:{code:InputValidationError}}, not the documented ProblemDetails. Both api-version 1 and 2024-10-01 are accepted."
+   ],
+   "responses": {
+    "202": {
+     "headers": {
+      "Location": {
+       "description": "URL of the environment-group lifecycle operation to poll, of the form /environmentmanagement/environmentGroupOperations/{operationId}?api-version=1. Undocumented; verified against the live API.",
+       "schema": {
+        "type": "string",
+        "format": "uri"
+       }
+      }
+     }
+    }
+   }
+  },
+  "environmentmanagement/environment-groups/create-environment-group": {
+   "summary": "Create"
+  },
+  "environmentmanagement/environment-groups/delete-environment-group": {
+   "summary": "Delete"
+  },
+  "environmentmanagement/environment-groups/get-environment-group": {
+   "summary": "Read"
+  },
+  "environmentmanagement/environment-groups/get-environment-group-operation": {
+   "summary": "Operation Read",
+   "notes": [
+    "Verified live (2026-08-27): the returned operation is a BAP lifecycle operation (status in state.id, transitioning NotStarted to Succeeded; stages Validate, Prepare, Run, Finalize), not an environment-group-specific type. An unknown or absent operation id returns 204 No Content."
+   ],
+   "responses": {
+    "200": {
+     "schema": {
+      "$ref": "BapLifecycleOperation"
+     },
+     "description": "The lifecycle operation. Verified against the live API."
+    },
+    "204": {
+     "description": "No Content. Returned for an unknown or absent operation id (verified against the live API)."
+    }
+   }
+  },
+  "environmentmanagement/environment-groups/list-environment-groups": {
+   "summary": "List"
+  },
+  "environmentmanagement/environment-groups/remove-environment-from-group": {
+   "summary": "Environment Remove",
+   "notes": [
+    "Removes a single environment (the path environmentId) from the group; there is no whole-list replace.",
+    "Same 202 plus Location async transport as add; poll the returned Location header, see [Read Operation](#/operations/environmentmanagement_getEnvironmentGroupOperation).",
+    "Membership is validated synchronously, so removing an environment that is not currently a member returns 400 InputValidationError. A remove issued before an async add has settled will fail this way."
+   ],
+   "responses": {
+    "202": {
+     "headers": {
+      "Location": {
+       "description": "URL of the environment-group lifecycle operation to poll, of the form /environmentmanagement/environmentGroupOperations/{operationId}?api-version=1. Undocumented; verified against the live API.",
+       "schema": {
+        "type": "string",
+        "format": "uri"
+       }
+      }
+     }
+    }
+   }
+  },
+  "environmentmanagement/environment-groups/update-environment-group": {
+   "summary": "Update"
+  },
+  "environmentmanagement/environment-managed-governance/disable-managed-environment": {
+   "summary": "Managed Environment Disable"
+  },
+  "environmentmanagement/environment-managed-governance/enable-managed-environment": {
+   "summary": "Managed Environment Enable"
+  },
+  "environmentmanagement/environment-management-settings/create-environment-management-settings": {
+   "summary": "Management Settings Create"
+  },
+  "environmentmanagement/environment-management-settings/list-environment-management-settings": {
+   "summary": "Management Settings List"
+  },
+  "environmentmanagement/environment-management-settings/update-environment-management-settings": {
+   "summary": "Management Settings Update"
+  },
+  "environmentmanagement/environment-provisioning/get-provisioning-currencies": {
+   "summary": "Currencies List"
+  },
+  "environmentmanagement/environment-provisioning/get-provisioning-languages": {
+   "summary": "Languages List"
+  },
+  "environmentmanagement/environment-provisioning/get-provisioning-templates": {
+   "summary": "Templates List"
+  },
+  "environmentmanagement/environment-provisioning/get-supported-locations": {
+   "summary": "Locations List"
+  },
+  "environmentmanagement/environment-provisioning/link-dataverse": {
+   "summary": "Dataverse Link"
+  },
+  "environmentmanagement/environment-provisioning/provision-new-environment": {
+   "summary": "Create"
+  },
+  "environmentmanagement/environment-recover/recover-environment": {
+   "summary": "Recover"
+  },
+  "environmentmanagement/environment-reset/reset-environment": {
+   "summary": "Reset"
+  },
+  "environmentmanagement/environment-restore/get-restore-candidates": {
+   "summary": "Restore Candidates List"
+  },
+  "environmentmanagement/environment-restore/restore-environment": {
+   "summary": "Restore"
+  },
+  "environmentmanagement/environments/get-environment-by-id-for-user": {
+   "summary": "Read"
+  },
+  "environmentmanagement/environments/list-environments-for-user": {
+   "summary": "List"
+  },
+  "environmentmanagement/failover/disable-disaster-recovery": {
+   "summary": "Disaster Recovery Disable"
+  },
+  "environmentmanagement/failover/enable-disaster-recovery": {
+   "summary": "Disaster Recovery Enable"
+  },
+  "environmentmanagement/failover/get-business-continuity-state-full-snapshot": {
+   "summary": "Business Continuity State Read"
+  },
+  "environmentmanagement/failover/perform-dr-drill": {
+   "summary": "Perform DR Drill"
+  },
+  "environmentmanagement/failover/perform-failback": {
+   "summary": "Failback"
+  },
+  "environmentmanagement/failover/perform-force-failover": {
+   "summary": "Force Failover"
+  },
+  "environmentmanagement/operation/get-environment-operation-by-id": {
+   "summary": "Read (For Environment)"
+  },
+  "environmentmanagement/operation/get-operation-by-id": {
+   "summary": "Read"
+  },
+  "environmentmanagement/operation/get-operations-for-environment": {
+   "summary": "List (For Environment)"
+  },
+  "governance/cross-tenant-connection-reports/create-cross-tenant-connection-report": {
+   "summary": "Cross Tenant Connection Report Create"
+  },
+  "governance/cross-tenant-connection-reports/get-cross-tenant-connection-report": {
+   "summary": "Cross Tenant Connection Report Read"
+  },
+  "governance/cross-tenant-connection-reports/list-cross-tenant-connection-reports": {
+   "summary": "Cross Tenant Connection Reports List"
+  },
+  "governance/rule-based-policies/create-enviornment-group-rule-based-assignment": {
+   "summary": "Enviornment Group Rule Based Assignment Create"
+  },
+  "governance/rule-based-policies/create-environment-rule-based-assignment": {
+   "summary": "Environment Rule Based Assignment Create"
+  },
+  "governance/rule-based-policies/create-rule-based-policy": {
+   "summary": "Rule Based Policy Create"
+  },
+  "governance/rule-based-policies/get-rule-based-policy-by-id": {
+   "summary": "Rule Based Policy Read (By ID)"
+  },
+  "governance/rule-based-policies/list-rule-assignments": {
+   "summary": "Rule Assignments List"
+  },
+  "governance/rule-based-policies/list-rule-assignments-by-environment-group-id": {
+   "summary": "Rule Assignments List (By Environment Group Id)"
+  },
+  "governance/rule-based-policies/list-rule-assignments-by-environment-id": {
+   "summary": "Rule Assignments List (By Environment Id)"
+  },
+  "governance/rule-based-policies/list-rule-assignments-by-policy-id": {
+   "summary": "Rule Assignments List (By Policy Id)"
+  },
+  "governance/rule-based-policies/list-rule-based-policies": {
+   "summary": "Rule Based Policies List"
+  },
+  "governance/rule-based-policies/patch-rule-based-policy": {
+   "summary": "Patch Rule Based Policy"
+  },
+  "governance/rule-based-policies/remove-rule-from-rule-based-policy": {
+   "summary": "Rule From Rule Based Policy Remove"
+  },
+  "governance/rule-based-policies/update-rule-based-policy-by-id": {
+   "summary": "Rule Based Policy Update (By ID)"
+  },
+  "governance/rule-sets/create-rule-set": {
+   "summary": "Create"
+  },
+  "governance/rule-sets/delete-rule-set": {
+   "summary": "Delete"
+  },
+  "governance/rule-sets/get-rule-set": {
+   "summary": "Read"
+  },
+  "governance/rule-sets/get-rule-set-list-for-tenant": {
+   "summary": "List Read (For Tenant)"
+  },
+  "governance/rule-sets/update-rule-set": {
+   "summary": "Update"
+  },
+  "licensing/allocation/get-allocations-availability-v2": {
+   "summary": "Allocations Availability V2 Read"
+  },
+  "licensing/allocation/get-many-entitlements-reserved-v2": {
+   "summary": "Many Entitlements Reserved V2 Read"
+  },
+  "licensing/allocation/put-allocations-v2": {
+   "summary": "Put Allocations V2"
+  },
+  "licensing/allocations-by-environment/get-allocations-by-environment": {
+   "summary": "Allocations Read (By Environment)"
+  },
+  "licensing/allocations-by-environment/list-allocations-by-environment": {
+   "summary": "Allocations List (By Environment)"
+  },
+  "licensing/allocations-by-environment/update-allocations-by-environment": {
+   "summary": "Allocations Update (By Environment)"
+  },
+  "licensing/billing-policy-environment/add-billing-policy-environment": {
+   "summary": "Environments Add"
+  },
+  "licensing/billing-policy-environment/get-billing-policy-environment": {
+   "summary": "Read"
+  },
+  "licensing/billing-policy-environment/list-billing-policy-environments": {
+   "summary": "Environments List"
+  },
+  "licensing/billing-policy-environment/remove-billing-policy-environment": {
+   "summary": "Environments Remove"
+  },
+  "licensing/billing-policy/create-billing-policy": {
+   "summary": "Create"
+  },
+  "licensing/billing-policy/delete-billing-policy": {
+   "summary": "Delete"
+  },
+  "licensing/billing-policy/get-billing-policy": {
+   "summary": "Read"
+  },
+  "licensing/billing-policy/list-billing-policies": {
+   "summary": "List"
+  },
+  "licensing/billing-policy/refresh-provisioning-status": {
+   "summary": "Provisioning Status Refresh"
+  },
+  "licensing/billing-policy/update-billing-policy": {
+   "summary": "Update"
+  },
+  "licensing/currency-allocation/get-currency-allocation-by-environment": {
+   "summary": "Read (By Environment)"
+  },
+  "licensing/currency-allocation/patch-currency-allocation-by-environment": {
+   "summary": "Patch (By Environment)"
+  },
+  "licensing/currency-reports/list-currency-reports": {
+   "summary": "Currency Reports List"
+  },
+  "licensing/entitlement-insight/get-environment-resources": {
+   "summary": "Environment Resources Read"
+  },
+  "licensing/entitlement-insight/get-tenant-license-trends": {
+   "summary": "Tenant License Trends Read"
+  },
+  "licensing/entitlement-insight/get-tenant-resource-consumption-by-user": {
+   "summary": "Tenant Resource Consumption Read (By User)"
+  },
+  "licensing/entitlement-insight/get-tenant-resources-across-environments": {
+   "summary": "Tenant Resources Read (Across Environments)"
+  },
+  "licensing/entitlement-insight/get-tenant-user-consumption-by-resource": {
+   "summary": "Tenant User Consumption Read (By Resource)"
+  },
+  "licensing/entitlement-insight/get-tenant-users": {
+   "summary": "Tenant Users Read"
+  },
+  "licensing/entitlement/get-entitlement": {
+   "summary": "Read"
+  },
+  "licensing/entitlement/get-many-environment-entitlements": {
+   "summary": "Many Environment Read"
+  },
+  "licensing/environment-billing-policy/get-environment-billing-policy": {
+   "summary": "Policy Read (For Environment)"
+  },
+  "licensing/fin-ops-licensing/get-fin-ops-license-summary-v2": {
+   "summary": "Fin Ops License Summary V2 Read"
+  },
+  "licensing/isv-contract/create-isv-contract": {
+   "summary": "Create"
+  },
+  "licensing/isv-contract/delete-isv-contract": {
+   "summary": "Delete"
+  },
+  "licensing/isv-contract/get-isv-contract": {
+   "summary": "Read"
+  },
+  "licensing/isv-contract/list-isv-contracts": {
+   "summary": "List"
+  },
+  "licensing/isv-contract/update-isv-contract": {
+   "summary": "Update"
+  },
+  "licensing/resource-threshold/get-all-resource-thresholds": {
+   "summary": "Resource Thresholds List"
+  },
+  "licensing/resource-threshold/upsert-resource-threshold": {
+   "summary": "Upsert Resource Threshold"
+  },
+  "licensing/storage-warnings/get-storage-warning-by-category": {
+   "summary": "Storage Warning Read (By Category)"
+  },
+  "licensing/storage-warnings/get-storage-warning-by-category-and-entity": {
+   "summary": "Storage Warning Read (By Category And Entity)"
+  },
+  "licensing/storage-warnings/list-storage-warnings": {
+   "summary": "Storage Warnings List"
+  },
+  "licensing/temporary-currency-entitlement/retrieve-temporary-currency-entitlement-count": {
+   "summary": "Retrieve Temporary Currency Entitlement Count"
+  },
+  "licensing/tenant-capacity-details/get-tenant-capacity-details": {
+   "summary": "Details Read"
+  },
+  "licensing/user-per-flow-capacity-source/get-user-per-flow-capacity-source": {
+   "summary": "User Per Flow Capacity Source Read"
+  },
+  "licensing/user-per-flow-capacity-source/get-user-per-flow-capacity-source-flow-context-summary": {
+   "summary": "User Per Flow Capacity Source Flow Context Summary Read"
+  },
+  "licensing/user-per-flow-capacity-source/get-user-per-flow-capacity-source-flow-context-summary-for-user-id": {
+   "summary": "User Per Flow Capacity Source Flow Context Summary Read (For User Id)"
+  },
+  "licensing/user-per-flow-capacity-source/get-user-per-flow-capacity-source-tenant-context-summary": {
+   "summary": "User Per Flow Capacity Source Tenant Context Summary Read"
+  },
+  "licensing/user-per-flow-capacity-source/get-user-per-flow-capacity-source-user-context-summary": {
+   "summary": "User Per Flow Capacity Source User Context Summary Read"
+  },
+  "licensing/user-per-flow-capacity-source/get-user-per-flow-capacity-source-user-context-summary-for-user-id": {
+   "summary": "User Per Flow Capacity Source User Context Summary Read (For User Id)"
+  },
+  "powerapps/apps/get-admin-app": {
+   "summary": "AdminApp Read"
+  },
+  "powerapps/apps/get-admin-apps": {
+   "summary": "AdminApps Read"
+  },
+  "powerautomate/cloud-flows/list-cloud-flows": {
+   "summary": "List"
+  },
+  "powerautomate/flow-actions/list-flow-actions": {
+   "summary": "Flow Actions List"
+  },
+  "powerautomate/flow-runs/list-flow-runs": {
+   "summary": "Flow Runs List"
+  },
+  "powerpages/websites/add-allowed-ip-addresses": {
+   "summary": "Allowed Ip Addresses Add"
+  },
+  "powerpages/websites/add-ssl-binding-by-portal": {
+   "summary": "Ssl Binding Add (By Portal)"
+  },
+  "powerpages/websites/convert-trial-to-production": {
+   "summary": "Trial To Production Convert"
+  },
+  "powerpages/websites/create-custom-domain": {
+   "summary": "Custom Domain Create"
+  },
+  "powerpages/websites/create-waf-rules": {
+   "summary": "Waf Rules Create"
+  },
+  "powerpages/websites/create-website": {
+   "summary": "Website Create"
+  },
+  "powerpages/websites/delete-certificate-by-portal": {
+   "summary": "Certificate Delete (By Portal)"
+  },
+  "powerpages/websites/delete-host-name-for-portal": {
+   "summary": "Host Name Delete (For Portal)"
+  },
+  "powerpages/websites/delete-ssl-binding-by-thumbprint": {
+   "summary": "Ssl Binding Delete (By Thumbprint)"
+  },
+  "powerpages/websites/delete-waf-custom-rules": {
+   "summary": "Waf Custom Rules Delete"
+  },
+  "powerpages/websites/delete-website": {
+   "summary": "Website Delete"
+  },
+  "powerpages/websites/disable-waf": {
+   "summary": "Waf Disable"
+  },
+  "powerpages/websites/enable-waf": {
+   "summary": "WAF Enable"
+  },
+  "powerpages/websites/get-allowed-ip-addresses": {
+   "summary": "Allowed Ip Addresses Read"
+  },
+  "powerpages/websites/get-certificates-by-portal": {
+   "summary": "Certificates Read (By Portal)"
+  },
+  "powerpages/websites/get-security-scan-report": {
+   "summary": "Security Scan Report Read"
+  },
+  "powerpages/websites/get-security-scan-score": {
+   "summary": "Security Scan Score Read"
+  },
+  "powerpages/websites/get-waf-rules": {
+   "summary": "WAF Rules Read"
+  },
+  "powerpages/websites/get-waf-status": {
+   "summary": "WAF Status Read"
+  },
+  "powerpages/websites/get-website-by-id": {
+   "summary": "Website Read (By Id)"
+  },
+  "powerpages/websites/get-websites": {
+   "summary": "Websites Read"
+  },
+  "powerpages/websites/list-host-names-for-portal": {
+   "summary": "Host Names List (For Portal)"
+  },
+  "powerpages/websites/list-ssl-bindings-by-thumbprints": {
+   "summary": "Ssl Bindings List (By Thumbprints)"
+  },
+  "powerpages/websites/remove-allowed-ip-addresses": {
+   "summary": "Allowed Ip Addresses Remove"
+  },
+  "powerpages/websites/restart-website": {
+   "summary": "Restart Website"
+  },
+  "powerpages/websites/set-portal-bootstrap-v5-enabled": {
+   "summary": "Portal Bootstrap V5 Enabled Set"
+  },
+  "powerpages/websites/set-portal-data-model-version": {
+   "summary": "Portal Data Model Version Set"
+  },
+  "powerpages/websites/start-deep-scan": {
+   "summary": "Start Deep Scan"
+  },
+  "powerpages/websites/start-quick-scan": {
+   "summary": "Start Quick Scan"
+  },
+  "powerpages/websites/start-website": {
+   "summary": "Start Website"
+  },
+  "powerpages/websites/stop-website": {
+   "summary": "Stop Website"
+  },
+  "powerpages/websites/toggle-afd-traffic-routing": {
+   "summary": "Toggle AFD Traffic Routing"
+  },
+  "powerpages/websites/update-portal-security-group": {
+   "summary": "Portal Security Group Update"
+  },
+  "powerpages/websites/update-site-visibility": {
+   "summary": "Site Visibility Update"
+  },
+  "powerpages/websites/update-waf-policy-settings": {
+   "summary": "Waf Policy Settings Update"
+  },
+  "powerpages/websites/upload-certificate": {
+   "summary": "Certificate Upload"
+  },
+  "resourcequery/resource-query/query-resources": {
+   "summary": "Resources Query"
+  },
+  "usermanagement/users/apply-admin-role": {
+   "summary": "Admin Role Apply"
+  },
+  "workflowsagent/dsr-compliance/delete-approval": {
+   "summary": "Approval Delete"
+  },
+  "workflowsagent/dsr-compliance/delete-connection": {
+   "summary": "Connection Delete"
+  },
+  "workflowsagent/dsr-compliance/delete-flow": {
+   "summary": "Flow Delete"
+  },
+  "workflowsagent/dsr-compliance/delete-prompt": {
+   "summary": "Prompt Delete"
+  },
+  "workflowsagent/dsr-compliance/get-approvals": {
+   "summary": "Approvals Read"
+  },
+  "workflowsagent/dsr-compliance/get-connections": {
+   "summary": "Connections Read"
+  },
+  "workflowsagent/dsr-compliance/get-conversation-transcripts-for-dsr": {
+   "summary": "Conversation Transcripts Read (For Dsr)"
+  },
+  "workflowsagent/dsr-compliance/get-conversation-transcripts-with-environment": {
+   "summary": "Conversation Transcripts Read (With Environment)"
+  },
+  "workflowsagent/dsr-compliance/get-flow-run-actions-for-dsr": {
+   "summary": "Flow Run Actions Read (For Dsr)"
+  },
+  "workflowsagent/dsr-compliance/get-flow-run-actions-with-environment": {
+   "summary": "Flow Run Actions Read (With Environment)"
+  },
+  "workflowsagent/dsr-compliance/get-flow-runs-non-singleton": {
+   "summary": "Flow Runs Non Singleton Read"
+  },
+  "workflowsagent/dsr-compliance/get-flow-runs-singleton": {
+   "summary": "Flow Runs Singleton Read"
+  },
+  "workflowsagent/dsr-compliance/get-flows": {
+   "summary": "Flows Read"
+  },
+  "workflowsagent/dsr-compliance/get-prompts": {
+   "summary": "Prompts Read"
+  },
+  "workflowsagent/dsr-compliance/get-run-history-data": {
+   "summary": "Run History Data Read"
+  },
+  "workflowsagent/dsr-compliance/get-run-history-data-non-singleton": {
+   "summary": "Run History Data Non Singleton Read"
+  }
+ },
+ "tags": {},
+ "schemas": {
+  "Value": {
+   "rename": "RoleDefinition",
+   "notes": [
+    "The docs define one Value model reused for both the role-definition list and the role-assignment list. Verified live, role-assignment items are different and richer (roleAssignmentId, scope, principal fields, createdBy fields, createdOn, expiresOn); this shape reflects the role-definition list, not assignments."
+   ]
+  }
+ },
+ "addSchemas": {
+  "BapLifecycleOperation": {
+   "type": "object",
+   "description": "A Business Application Platform lifecycle operation, returned when polling the Location handed back by an async environment-group membership change. Not documented; shape verified against the live API.",
+   "properties": {
+    "id": {
+     "type": "string",
+     "format": "uuid"
+    },
+    "links": {
+     "type": "object",
+     "properties": {
+      "self": {
+       "type": "object",
+       "properties": {
+        "path": {
+         "type": "string"
+        }
+       }
+      },
+      "environment": {
+       "type": "object",
+       "properties": {
+        "path": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    },
+    "type": {
+     "type": "object",
+     "properties": {
+      "id": {
+       "type": "string",
+       "description": "Operation type, for example Edit."
+      }
+     }
+    },
+    "typeDisplayName": {
+     "type": "string"
+    },
+    "state": {
+     "type": "object",
+     "properties": {
+      "id": {
+       "type": "string",
+       "enum": [
+        "NotStarted",
+        "Succeeded",
+        "Failed"
+       ],
+       "x-ms-enum": {
+        "name": "LifecycleOperationState",
+        "modelAsString": true
+       },
+       "description": "Lifecycle status. NotStarted, Succeeded and Failed were verified against the live API; the API also returns in-progress states that were not observed, so treat the set as open."
+      }
+     }
+    },
+    "createdDateTime": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastActionDateTime": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "requestedBy": {
+     "type": "object",
+     "properties": {
+      "id": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "type": {
+       "type": "string"
+      }
+     }
+    },
+    "stages": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "enum": [
+         "Validate",
+         "Prepare",
+         "Run",
+         "Finalize"
+        ],
+        "description": "Lifecycle stage."
+       },
+       "name": {
+        "type": "string",
+        "enum": [
+         "Validate",
+         "Prepare",
+         "Run",
+         "Finalize"
+        ],
+        "description": "Lifecycle stage."
+       },
+       "state": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "enum": [
+           "NotStarted",
+           "Succeeded",
+           "Failed"
+          ],
+          "x-ms-enum": {
+           "name": "LifecycleOperationState",
+           "modelAsString": true
+          },
+          "description": "Lifecycle status. NotStarted, Succeeded and Failed were verified against the live API; the API also returns in-progress states that were not observed, so treat the set as open."
+         }
+        }
+       },
+       "firstActionDateTime": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "lastActionDateTime": {
+        "type": "string",
+        "format": "date-time"
+       }
+      }
+     }
+    }
+   }
+  },
+  "RbacRoleAssignment": {
+   "type": "object",
+   "description": "A role assignment as returned by the authorization endpoints. Shape verified against the live API; the documentation models the item as a role definition instead.",
+   "properties": {
+    "@odata.context": {
+     "type": "string"
+    },
+    "roleAssignmentId": {
+     "type": "string",
+     "format": "uuid"
+    },
+    "scope": {
+     "type": "string",
+     "description": "Hierarchical scope, for example /tenants/{tenantId} or /tenants/{tenantId}/environments/{environmentId}."
+    },
+    "principalType": {
+     "type": "string",
+     "enum": [
+      "User",
+      "Group",
+      "ApplicationUser"
+     ],
+     "description": "User, Group, or ApplicationUser."
+    },
+    "principalObjectId": {
+     "type": "string",
+     "format": "uuid"
+    },
+    "roleDefinitionId": {
+     "type": "string",
+     "format": "uuid"
+    },
+    "createdByPrincipalType": {
+     "type": "string",
+     "enum": [
+      "User",
+      "Group",
+      "ApplicationUser"
+     ],
+     "description": "The kind of principal."
+    },
+    "createdByPrincipalObjectId": {
+     "type": "string",
+     "format": "uuid"
+    },
+    "createdOn": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expiresOn": {
+     "type": "string",
+     "format": "date-time",
+     "nullable": true
+    }
+   }
+  },
+  "RbacRoleAssignmentList": {
+   "type": "object",
+   "description": "An OData collection of role assignments. Verified against the live API.",
+   "properties": {
+    "@odata.context": {
+     "type": "string"
+    },
+    "value": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/RbacRoleAssignment"
+     }
+    }
+   }
+  }
+ }
+}

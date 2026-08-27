@@ -1,0 +1,47 @@
+name: ppapi-mirror
+
+on:
+  schedule:
+    - cron: "17 19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ppapi
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validator
+        run: pip install openapi-spec-validator
+
+      - name: Fetch docs
+        run: python scripts/fetch.py
+
+      - name: Build catalogue
+        run: python scripts/catalogue.py
+
+      - name: Build OpenAPI spec
+        run: python scripts/oas.py
+
+      - name: Commit changes
+        working-directory: .
+        run: |
+          git config user.name "Adam Coulter"
+          git config user.email "ads@me.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "PPAPI docs mirror update $(date -u +%Y-%m-%d)"
+          git push

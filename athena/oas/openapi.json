@@ -3,18 +3,18 @@
  "info": {
   "title": "Dataverse Synapse Link Orchestration API (athena)",
   "version": "unversioned",
-  "description": "The Synapse Link orchestration service (internally *athena*) drives Dataverse's Link to Microsoft Fabric and Azure Synapse: choosing which tables to mirror, creating the Fabric lakehouse artifacts, and managing the resulting lake profile.\n\nThe host is per environment, derived from the environment's cluster suffix and the compass direction of its Azure region.\n\nChanging a link's table list is a three-call sequence \u2014 update the lake profile, activate it, then refresh the lakehouse artifacts \u2014 and per-table sync progress is reported on the profile.\n\nUnofficial and reverse-engineered \u2014 see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/athena) for how it was derived and which parts are verified.",
+  "description": "The Synapse Link orchestration service (internally *athena*) drives Dataverse's Link to Microsoft Fabric and Azure Synapse: choosing which tables to mirror, creating the Fabric lakehouse artifacts, and managing the resulting lake profile.\n\nThe host is per environment, derived from the environment's cluster suffix and the compass direction of its Azure region.\n\nChanging a link's table list is a three-call sequence \u2014 update the lake profile, activate it, then refresh the lakehouse artifacts \u2014 and per-table sync progress is reported on the profile.",
   "x-source": "Rewritten from 18 browser HAR captures (291 recorded calls) of make.powerapps.com and app.fabric.microsoft.com driving real Link to Fabric workflows on a live tenant, plus live directory and DNS probing of the host and the service principal. Supersedes the earlier revision, which was derived from an unmerged Terraform provider feature branch and covered 3 of the 15 operations."
  },
  "servers": [
   {
    "url": "https://athenawebservice.{azureRegionPrefix}{clusterUriSuffix}.powerapps.com",
-   "description": "Per-environment host, composed rather than published: no environment or tenant endpoint advertises it. Read the environment from BAPI (GET /providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}) and join two of its fields -- properties.cluster.uriSuffix supplies clusterUriSuffix, and the compass-direction prefix of properties.azureRegion supplies azureRegionPrefix. The two concatenate with no separator, which is why the result reads as though a stray letter had been prepended to the cluster suffix.\n\nWorked example: an environment reporting cluster.uriSuffix us-il102.gateway.prod.island and azureRegion eastus resolves to athenawebservice.eus-il102.gateway.prod.island.powerapps.com.\n\n**The prefix is not a constant, and the recorded traffic proves it independently.** The captures show the same island scale unit addressed under two different hostnames in the same tenant -- e{island} for environments in australiaeast and se{island} for environments in australiasoutheast -- with identical cluster.uriSuffix values. The prefix therefore varies with the environment's Azure region while the cluster suffix stays put, and a client that hardcodes one prefix will send australiasoutheast environments to a hostname that does not exist.\n\nAlso verified by direct probing: every hostname built this way is a registered upstream on the island gateway, answering with x-ms-webservice, x-servicefabric and an upstream server-timing entry, whereas an invented sibling hostname on the same island is rejected by the gateway itself with a bare 404 carrying none of those headers. DNS alone proves nothing -- *.{azureRegionPrefix}{clusterUriSuffix}.powerapps.com is a wildcard onto the island's ingress gateway, so arbitrary hostnames resolve. The gateway routes on the Host header, and only the response headers distinguish a real service from a made-up one.",
+   "description": "Per-environment host, composed rather than published: no environment or tenant endpoint advertises it. Read the environment from BAPI (GET /providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}) and join two of its fields -- properties.cluster.uriSuffix supplies clusterUriSuffix, and the compass-direction prefix of properties.azureRegion supplies azureRegionPrefix. The two concatenate with no separator, which is why the result reads as though a stray letter had been prepended to the cluster suffix.\n\nWorked example: an environment reporting cluster.uriSuffix us-il102.gateway.prod.island and azureRegion eastus resolves to athenawebservice.eus-il102.gateway.prod.island.powerapps.com.\n\n**The prefix is not a constant.** One island scale unit is reached under a different hostname from each Azure region it serves -- e{island} for environments in australiaeast and se{island} for environments in australiasoutheast, with identical cluster.uriSuffix values. The prefix varies with the environment's Azure region while the cluster suffix stays put, and a client that hardcodes one prefix will send australiasoutheast environments to a hostname that does not exist.\n\nDNS cannot be used to check a composed host: *.{azureRegionPrefix}{clusterUriSuffix}.powerapps.com is a wildcard onto the island's ingress gateway, so arbitrary hostnames resolve. The gateway routes on the Host header, and only the response distinguishes a real service from an invented one -- a registered upstream answers with x-ms-webservice, x-servicefabric and an upstream server-timing entry, while an unregistered hostname on the same island is rejected by the gateway itself with a bare 404 carrying none of those headers.",
    "x-probe-verified": true,
    "variables": {
     "azureRegionPrefix": {
      "default": "e",
-     "description": "The compass-direction component of the environment's Azure region, lowercased, with the geography dropped: australiaeast and eastus both give e, australiasoutheast gives se, westus and westeurope give w, northeurope gives n. The geography itself is already carried by clusterUriSuffix, so this prefix supplies only the direction. A region with no direction component has no confirmed form.\n\nThe Terraform provider hardcodes e and carries a TODO about it; that is correct only for environments in an east-something region and silently wrong elsewhere. A wrong prefix does not produce a helpful error -- it produces NXDOMAIN.",
+     "description": "The compass-direction component of the environment's Azure region, lowercased, with the geography dropped: australiaeast and eastus both give e, australiasoutheast gives se, westus and westeurope give w, northeurope gives n. The geography itself is already carried by clusterUriSuffix, so this prefix supplies only the direction.\n\nA wrong prefix does not produce a helpful error -- it produces NXDOMAIN.",
      "x-observed-values": [
       "e",
       "n",
@@ -71,7 +71,7 @@
     ],
     "summary": "List",
     "operationId": "linkable_tables_list",
-    "description": "Every table in the organization that a link could include, with the ones that cannot be included flagged rather than omitted. Large: recorded responses ran to between 708 and 730 rows on modestly customised environments, unpaged and unfiltered -- there is no paging, no $top and no ordering parameter, and rows come back sorted by DisplayName.\n\nOrganization-scoped: it takes no environment id, only organizationUrl, so a caller that has resolved the host for one environment can read the catalogue of any organization served by the same island.",
+    "description": "Every table in the organization that a link could include, with the ones that cannot be included flagged rather than omitted.\n\nThe response is large -- a modestly customised environment returns between 700 and 730 rows -- and it is neither paged nor filterable: there is no paging, no $top and no ordering parameter. Rows come back sorted by DisplayName.\n\nOrganization-scoped: it takes no environment id, only organizationUrl, so a caller that has resolved the host for one environment can read the catalogue of any organization served by the same island.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -105,7 +105,7 @@
     ],
     "summary": "Relationships List",
     "operationId": "linkable_tables_relationships_list",
-    "description": "The organization's many-to-many relationships, so a caller can offer their intersect tables for mirroring. Mirroring both ends of an N:N relationship does not carry the join across; the intersect table named here has to be linked as a table in its own right.\n\nUnpaged and unfiltered, like the table list. Only relationships whose IsIntersect is true were observed, so this appears not to return one-to-many relationships at all.",
+    "description": "The organization's many-to-many relationships, so a caller can offer their intersect tables for mirroring. Mirroring both ends of an N:N relationship does not carry the join across; the intersect table named here has to be linked as a table in its own right.\n\nUnpaged and unfiltered, like the table list. Only relationships whose IsIntersect is true are returned -- one-to-many relationships do not appear here.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -139,7 +139,7 @@
     ],
     "summary": "List (Finance and Operations)",
     "operationId": "linkable_tables_fno_list",
-    "description": "The Dynamics 365 Finance and Operations tables available to the organization, for an environment whose Dataverse organization is linked to an F&O environment. Both portals call it unconditionally alongside the Dataverse table list.\n\nEvery recorded call returned an empty array, because no environment in the capture had an F&O link. The operation and its parameters are therefore verified; the row shape is not, and is left unconstrained rather than guessed at.",
+    "description": "The Dynamics 365 Finance and Operations tables available to the organization, for an environment whose Dataverse organization is linked to an F&O environment. Both portals call it unconditionally alongside the Dataverse table list.\n\nAn organization with no F&O link gets an empty array.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -152,7 +152,7 @@
        "type": "boolean",
        "default": false
       },
-      "description": "Return only the tables already selected under the organization's COMO configuration, rather than all available ones. False on every recorded call."
+      "description": "Return only the tables already selected under the organization's COMO configuration, rather than all available ones. The portals send false."
      },
      {
       "$ref": "#/components/parameters/xMsClientRequestId"
@@ -197,7 +197,7 @@
     ],
     "responses": {
      "200": {
-      "description": "A bare JSON boolean. False on every recorded call.",
+      "description": "A bare JSON boolean: true when COMO is enabled for the organization.",
       "content": {
        "application/json": {
         "schema": {
@@ -217,7 +217,7 @@
     ],
     "summary": "Island Enablement Read",
     "operationId": "organization_island_enabled_read",
-    "description": "Whether the island scale unit serving this environment has athena enabled for the organization. Both portals call it first when opening the link management page, as the gate on showing anything else.\n\nIt answers false rather than failing for an organization the island does not know, which makes it the cheapest safe probe of whether the derived host is the right one for an environment -- unlike every other operation here, calling it changes nothing.",
+    "description": "Whether the island scale unit serving this environment has athena enabled for the organization. Both portals call it first when opening the link management page, as the gate on showing anything else.\n\nIt answers false rather than failing for an organization the island does not know, which makes it the cheapest safe check of whether the derived host is the right one for an environment -- unlike every other operation here, calling it changes nothing.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -238,7 +238,7 @@
     ],
     "responses": {
      "200": {
-      "description": "A bare JSON boolean. True on every recorded call, all of which were against organizations already registered with their island.",
+      "description": "A bare JSON boolean: true when the island serving the environment has athena enabled for the organization, false when the island does not know it.",
       "content": {
        "application/json": {
         "schema": {
@@ -258,7 +258,7 @@
     ],
     "summary": "Enterprise Policy Credentials Read",
     "operationId": "organization_enterprise_policy_credentials_read",
-    "description": "The client credential the environment's encryption enterprise policy exposes to the sync engine, for a customer-managed-key environment. \"ep\" in the path is the enterprise policy. The portals call it immediately before writing the organization registration, so that a CMK environment's link is configured with the right identity to reach the customer's key.\n\nReturns nulls rather than an error for an environment with no enterprise policy, which is the only case in the recorded traffic.",
+    "description": "The client credential the environment's encryption enterprise policy exposes to the sync engine, for a customer-managed-key environment. \"ep\" in the path is the enterprise policy. The portals call it immediately before writing the organization registration, so that a CMK environment's link is configured with the right identity to reach the customer's key.\n\nAn environment with no enterprise policy gets nulls rather than an error.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -295,7 +295,7 @@
     ],
     "summary": "Update",
     "operationId": "organization_registration_update",
-    "description": "Register the Dataverse organization with the athena island serving its environment, or refresh the registration if it is already there. **The organization details are query parameters, not a body**: recorded requests send Content-Length: 0, and the one capture that did send a body sent a client bug -- a serialised HTTP header bag -- which the service ignored and answered 200. Send no body.\n\nIdempotent and cheap. The portals call it on almost every visit to the link management page rather than tracking whether it has been done, and again immediately before creating or resynchronising lakehouse artifacts.\n\nIts role in the wizard's error handling is the part worth copying: an unregistered organization does not fail at link creation, it fails earlier and more obscurely, on the premium-licence check. See that operation's 403 for the sequence.",
+    "description": "Register the Dataverse organization with the athena island serving its environment, or refresh the registration if it is already there.\n\n**The organization details are query parameters, not a body.** Send no body: the request carries Content-Length: 0, and anything sent as a body is ignored.\n\nIdempotent and cheap. The portals call it on almost every visit to the link management page rather than tracking whether it has been done, and again immediately before creating or resynchronising lakehouse artifacts.\n\nIts role in the wizard's error handling is the part worth copying: an unregistered organization does not fail at link creation, it fails earlier and more obscurely, on the premium-licence check. See that operation's 403 for the sequence.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -328,7 +328,7 @@
     ],
     "summary": "List",
     "operationId": "fabric_workspaces_list",
-    "description": "The Fabric workspaces the calling user can target, proxied from Fabric by athena so that the caller needs only an athena token. Unpaged, and returned in no documented order.\n\nThe list reflects the *user's* Fabric access, not the environment's: it was identical across two environments on different islands in the recorded traffic, and a workspace created between two captures appeared in the later one. Filter to workspaces with a capacityId before offering them, since a workspace with no Fabric capacity cannot host a mirror lakehouse.",
+    "description": "The Fabric workspaces the calling user can target, proxied from Fabric by athena so that the caller needs only an athena token. Unpaged, and returned in no documented order.\n\nThe list reflects the *user's* Fabric access, not the environment's: the same user gets the same list from environments on different islands, and a workspace created in Fabric shows up on the next call. Filter to workspaces with a capacityId before offering them, since a workspace with no Fabric capacity cannot host a mirror lakehouse.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -362,7 +362,7 @@
     ],
     "summary": "List",
     "operationId": "data_lakes_list",
-    "description": "The data lake destinations attached to the environment. **This is how a caller discovers whether an environment is linked at all**, and it is the only operation that yields the datalakefolder id that every other environment-scoped operation is addressed by.\n\nAn empty array means no link. In the recorded unlink flows it returns one row before the delete and an empty array after it, within about thirty seconds, which makes it the natural way to confirm an unlink completed.\n\nThe Terraform provider does not use it: it resolves the same id from Dataverse instead, by reading the datalakefolders table and matching on unique name. That works, but the cds2_workspace and cds3_workspace rows exist in Dataverse on every organization whether or not it has ever been linked, so the Dataverse read cannot distinguish a linked environment from an unlinked one. This operation can.",
+    "description": "The data lake destinations attached to the environment. **This is how a caller discovers whether an environment is linked at all**, and it is the only operation that yields the datalakefolder id that every other environment-scoped operation is addressed by.\n\nAn empty array means no link. After an unlink it goes empty about thirty seconds after the delete returns, which makes it the natural way to confirm the unlink completed.\n\nReading Dataverse directly is not a substitute: the cds2_workspace and cds3_workspace rows exist in the datalakefolders table on every organization whether or not it has ever been linked, so matching on unique name there cannot distinguish a linked environment from an unlinked one. This operation returns only rows that back a real link.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -375,7 +375,7 @@
        "type": "boolean",
        "default": false
       },
-      "description": "Populate LakehouseId and LakehouseWorkspaceId by querying Fabric. True on every recorded call; with it false the Fabric-side ids are presumably omitted, which was not observed."
+      "description": "Populate LakehouseId and LakehouseWorkspaceId by querying Fabric. Send true whenever the Fabric-side ids are needed."
      },
      {
       "name": "isManagedLake",
@@ -424,7 +424,7 @@
     ],
     "summary": "Create",
     "operationId": "lakehouse_artifacts_create",
-    "description": "Provision the environment's Link to Fabric, or resynchronise an existing one. Two request shapes share the route and are told apart by the query string as much as by the body.\n\n**Create** (no adlsShortcuts, no removeShortcutsFirst) creates a mirror lakehouse in the named Fabric workspace, binds it to the named Fabric-to-Dataverse connection, writes the synapselinkprofile and datalakefolder rows into Dataverse, and starts initial sync of the named tables. It is synchronous: recorded calls returned 200 with the artifact ids after roughly forty seconds. Initial sync is not -- poll the lake profile for that.\n\n**Resynchronise** (removeShortcutsFirst=true) targets a lake that already exists, by LakeId and FolderId, and rebuilds its Fabric shortcuts to match the profile's current table list. It carries no table list of its own; the tables are changed first through the lake profile, and this call makes Fabric agree. Recorded calls returned in about a second.\n\nRegister the organization first. Both portals call the organization registration update immediately before this on every recorded run, including runs where the organization was plainly already registered.\n\n**The response is plain JSON.** An earlier revision of this spec described it as a base64-encoded JSON string, on the strength of a HAR capture; that was the HAR file's own transport encoding of the response body, not the service's. Recorded responses carry Content-Type: application/json and a JSON object.",
+    "description": "Provision the environment's Link to Fabric, or resynchronise an existing one. Two request shapes share the route and are told apart by the query string as much as by the body.\n\n**Create** (no adlsShortcuts, no removeShortcutsFirst) creates a mirror lakehouse in the named Fabric workspace, binds it to the named Fabric-to-Dataverse connection, writes the synapselinkprofile and datalakefolder rows into Dataverse, and starts initial sync of the named tables. It is synchronous, returning 200 with the artifact ids after roughly forty seconds. Initial sync is not -- poll the lake profile for that.\n\n**Resynchronise** (removeShortcutsFirst=true) targets a lake that already exists, by LakeId and FolderId, and rebuilds its Fabric shortcuts to match the profile's current table list. It carries no table list of its own; the tables are changed first through the lake profile, and this call makes Fabric agree. It returns in about a second.\n\nRegister the organization first. Both portals call the organization registration update immediately before this on every run, including runs where the organization was plainly already registered.\n\n**The response is plain JSON**: an object served with Content-Type: application/json.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -447,7 +447,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "Create the shortcuts against the customer's own Azure Data Lake Storage rather than the managed lake. False on every recorded call, all of which were managed-lake links."
+      "description": "Create the shortcuts against the customer's own Azure Data Lake Storage rather than the managed lake. False for a Link to Fabric."
      },
      {
       "$ref": "#/components/parameters/xMsOrganizationIdOptional"
@@ -475,7 +475,7 @@
        }
       }
      },
-     "description": "The create shape when establishing a link, the resynchronise shape when rebuilding one. No field of either is marked required: every recorded request sent every field of its shape, so no field's necessity was tested."
+     "description": "The create shape when establishing a link, the resynchronise shape when rebuilding one. Send every field of whichever shape applies."
     },
     "responses": {
      "200": {
@@ -530,7 +530,7 @@
       }
      },
      "403": {
-      "description": "The organization is not registered with this island. The body is empty -- Content-Length: 0, no Content-Type, no error code -- so the status is the whole signal, and it is indistinguishable at the transport level from a genuine authorization failure.\n\nThe fix is to register the organization and retry, and that is exactly what both portals do: in every recorded occurrence, this 403 was followed within 200 milliseconds by an organization registration update and then by a repeat of this call, which returned 200. Do not treat it as fatal on first sight, and do not register speculatively either -- the portals wait to be told."
+      "description": "The organization is not registered with this island. The body is empty -- Content-Length: 0, no Content-Type, no error code -- so the status is the whole signal, and it is indistinguishable at the transport level from a genuine authorization failure.\n\nThe fix is to register the organization and retry, and that is exactly what both portals do: this 403 is followed within 200 milliseconds by an organization registration update and then by a repeat of this call, which returns 200. Do not treat it as fatal on first sight, and do not register speculatively either -- the portals wait to be told."
      }
     }
    }
@@ -542,7 +542,7 @@
     ],
     "summary": "Delete",
     "operationId": "lakehouse_artifacts_delete",
-    "description": "Unlink the environment: remove the Fabric shortcuts and lakehouse athena provisioned, and delete the synapselinkprofile and datalakefolder rows from Dataverse.\n\nGet the path id from the Data Lakes list, whose Id field is exactly this value. The Terraform provider instead resolves it from the Dataverse datalakefolders table, preferring the cds3_workspace row, then cds2_workspace, and **falling back to the first row of the table if neither is found** -- which on any organization would select an unrelated system folder, since a stock organization carries about ten datalakefolder rows including msdyn_analytics and msdyn_processadvisor. The fallback is unreachable only because the two named rows always exist. Prefer the Data Lakes list, which returns only rows that back a real link.\n\nSynchronous but not instant: recorded calls returned 200 after roughly ten seconds, and the Data Lakes list went empty about thirty seconds later.",
+    "description": "Unlink the environment: remove the Fabric shortcuts and lakehouse athena provisioned, and delete the synapselinkprofile and datalakefolder rows from Dataverse.\n\nGet the path id from the Data Lakes list, whose Id field is exactly this value. Do not pick it out of the Dataverse datalakefolders table instead: a stock organization carries about ten datalakefolder rows, including msdyn_analytics and msdyn_processadvisor, and the cds3_workspace and cds2_workspace rows are present whether or not the environment has ever been linked. The Data Lakes list returns only rows that back a real link.\n\nSynchronous but not instant: it returns 200 after roughly ten seconds, and the Data Lakes list goes empty about thirty seconds later.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -575,7 +575,7 @@
     ],
     "summary": "Read",
     "operationId": "lake_profile_read",
-    "description": "The profile behind one lake, with per-table sync state. **This is the progress endpoint**: after creating lakehouse artifacts, poll it until every entry's CurrentState reaches InProgress, which means that table's initial sync and post-processing are done and it is queryable in Fabric. Do not poll the profile-level Status.InitialSyncState instead -- it read Completed on profiles whose tables were still mid-sync in the recorded traffic.\n\nThe path id is the datalakefolder id, not the profile's own Id.",
+    "description": "The profile behind one lake, with per-table sync state. **This is the progress endpoint**: after creating lakehouse artifacts, poll it until every entry's CurrentState reaches InProgress, which means that table's initial sync and post-processing are done and it is queryable in Fabric. Do not poll the profile-level Status.InitialSyncState instead -- it reads Completed while the profile's tables are still mid-sync.\n\nThe path id is the datalakefolder id, not the profile's own Id.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -591,7 +591,7 @@
        "type": "boolean",
        "default": false
       },
-      "description": "Include the per-table Status block and the profile-level Status. True on every recorded call; without it the sync counters are presumably omitted."
+      "description": "Include the per-table Status block and the profile-level Status. Send true to get the sync counters."
      },
      {
       "name": "publishErrorMessageToUI",
@@ -600,7 +600,7 @@
        "type": "boolean",
        "default": false
       },
-      "description": "Populate ErrorDetails.Message with text intended for display rather than leaving it to be resolved from the code. True on every recorded call."
+      "description": "Populate ErrorDetails.Message with text intended for display rather than leaving it to be resolved from the code. The portals send true."
      },
      {
       "name": "isManagedLake",
@@ -608,7 +608,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "Assert that the target is an athena-managed lake rather than customer-supplied storage. Recorded calls send it on some reads and omit it on others against the same profile, with no difference in the response."
+      "description": "Assert that the target is an athena-managed lake rather than customer-supplied storage. It makes no difference to the response for a managed lake; the portals send it on some reads of a profile and omit it on others."
      },
      {
       "$ref": "#/components/parameters/xMsOrganizationId"
@@ -636,7 +636,7 @@
     ],
     "summary": "Update",
     "operationId": "lake_profile_update",
-    "description": "Replace the profile: change which tables are mirrored and how each is partitioned and batched. **This is how tables are added to and removed from an existing link** -- there is no add-table or remove-table operation, and re-posting lakehouse artifacts does not change the table list.\n\nIt is a whole-document replace, not a merge. The recorded clients read the profile, edit it, and send the whole thing back, with Entities reduced from the fifty-odd fields per table that the read returns to the six the update accepts. A table omitted from Entities is removed from the link.\n\nIt does not take effect on its own. Every recorded update was followed within about seven seconds by an activate on the same profile, and then -- where the table list had changed -- by a lakehouse-artifacts resynchronise, so that Fabric's shortcuts match the new list. All three steps are needed; the update alone leaves the profile changed and the sync jobs still running the old list.",
+    "description": "Replace the profile: change which tables are mirrored and how each is partitioned and batched. **This is how tables are added to and removed from an existing link** -- there is no add-table or remove-table operation, and re-posting lakehouse artifacts does not change the table list.\n\nIt is a whole-document replace, not a merge. Read the profile, edit it, and send the whole thing back, with Entities reduced from the fifty-odd fields per table that the read returns to the six the update accepts. A table omitted from Entities is removed from the link.\n\nIt does not take effect on its own. Follow it within a few seconds with an activate on the same profile, and then -- where the table list changed -- with a lakehouse-artifacts resynchronise, so that Fabric's shortcuts match the new list. All three steps are needed; the update alone leaves the profile changed and the sync jobs still running the old list.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -661,7 +661,7 @@
        }
       }
      },
-     "description": "The complete desired profile. Nothing is marked required: every recorded request sent every field it had read back, so no field's necessity was tested."
+     "description": "The complete desired profile: every field read back from the profile, with the changes applied."
     },
     "responses": {
      "200": {
@@ -684,7 +684,7 @@
     ],
     "summary": "Activate",
     "operationId": "lake_profile_activate",
-    "description": "Apply the profile: restart the sync jobs against the profile's current table list, and set ActivationTime. Send no body -- recorded requests are Content-Length: 0.\n\nAlways paired with an update, a few seconds after it. An update that is never activated leaves the stored profile changed and the running sync unchanged. The call returns immediately; the work it starts is visible only through the profile's per-table CurrentState, where a newly added table appears at InitialSyncNotStarted.",
+    "description": "Apply the profile: restart the sync jobs against the profile's current table list, and set ActivationTime. Send no body -- the request carries Content-Length: 0.\n\nAlways paired with an update, a few seconds after it. An update that is never activated leaves the stored profile changed and the running sync unchanged. The call returns immediately; the work it starts is visible only through the profile's per-table CurrentState, where a newly added table appears at InitialSyncNotStarted.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -719,7 +719,7 @@
   "securitySchemes": {
    "azure_auth": {
     "type": "oauth2",
-    "description": "Microsoft Entra ID OAuth2 against the first-party application \"Azure Synapse Link for Dataverse\" (7f15f9d9-cad0-44f1-bbba-d36650e07765), owned by the Microsoft first-party tenant. The audience is that application, not the PowerApps service, and the generic Power Platform scopes are not accepted -- a client that guesses the scope from the hostname will guess service.powerapps.com and be wrong.\n\n**Confirmed from recorded traffic.** Every captured request carries a bearer token whose aud claim is the bare application id 7f15f9d9-cad0-44f1-bbba-d36650e07765, whose scp claim is user_impersonation, and whose idtyp claim is user. The GUID form of the scope is therefore the form the service accepts; the identifier-URI form (https://exporttodatalake.com/.default) is issuable and produces a different aud claim, but was never seen on the wire here.\n\nThe application publishes exactly one delegated permission, user_impersonation, whose admin-consent text reads \"Have access to Dynamics 365 Athena - CDS to Azure data lake API\" -- the surviving trace of the service's internal name and of its origin as Export to Data Lake. It publishes **no application roles at all**, so an app-only client-credentials token carries no roles claim and cannot be authorized for anything here. A delegated token is required, and the recorded idtyp: user confirms that is what the portals use. The Terraform provider's fabric_link resource is driven through a username/password provider alias for exactly this reason, while every other resource in that provider uses the default app-only identity.\n\nNothing on this host issues a WWW-Authenticate challenge. An unauthenticated call, a wrong-audience token and a syntactically invalid bearer token all produce the same bodiless 404 as an unrouted path, because routing fails before authentication runs. The audience cannot be discovered from the service; it is only knowable from the token or from traffic capture.",
+    "description": "Microsoft Entra ID OAuth2 against the first-party application \"Azure Synapse Link for Dataverse\" (7f15f9d9-cad0-44f1-bbba-d36650e07765), owned by the Microsoft first-party tenant. The audience is that application, not the PowerApps service, and the generic Power Platform scopes are not accepted -- a client that guesses the scope from the hostname will guess service.powerapps.com and be wrong.\n\nThe service accepts a token whose aud claim is the bare application id 7f15f9d9-cad0-44f1-bbba-d36650e07765, so the GUID form of the scope is the form to request. The identifier-URI form (https://exporttodatalake.com/.default) is issuable but produces a different aud claim.\n\nThe application publishes exactly one delegated permission, user_impersonation, whose admin-consent text reads \"Have access to Dynamics 365 Athena - CDS to Azure data lake API\" -- the surviving trace of the service's internal name and of its origin as Export to Data Lake. It publishes **no application roles at all**, so an app-only client-credentials token carries no roles claim and cannot be authorized for anything here. A delegated user token is required: accepted tokens carry scp: user_impersonation and idtyp: user.\n\nNothing on this host issues a WWW-Authenticate challenge. An unauthenticated call, a wrong-audience token and a syntactically invalid bearer token all produce the same bodiless 404 as an unrouted path, because routing fails before authentication runs. The audience cannot be discovered from the service; it is only knowable from the token.",
     "flows": {
      "authorizationCode": {
       "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
@@ -786,7 +786,7 @@
      "format": "uri",
      "example": "https://contoso.crm.dynamics.com/"
     },
-    "description": "The Dataverse organization's instance URL, with its trailing slash. Recorded traffic sends it both percent-encoded and raw and the service accepts either."
+    "description": "The Dataverse organization's instance URL, with its trailing slash. The service accepts it percent-encoded or raw."
    },
    "organizationIdQuery": {
     "name": "organizationId",
@@ -806,7 +806,7 @@
      "type": "boolean",
      "default": false
     },
-    "description": "Selects the Dataverse Export Toolkit variant of the operation. Every recorded call passes false; the true behaviour was never observed and is not documented here."
+    "description": "Selects the Dataverse Export Toolkit variant of the operation. Pass false for the standard behaviour."
    },
    "xMsOrganizationId": {
     "name": "x-ms-organization-id",
@@ -827,7 +827,7 @@
      "format": "uuid",
      "example": "00000000-0000-0000-0000-000000000000"
     },
-    "description": "The Dataverse organization id. Sent on most recorded calls but not all -- the operations that carry organizationUrl in the query were observed succeeding without it -- so it is not marked required."
+    "description": "The Dataverse organization id. The operations that carry organizationUrl in the query resolve the organization from that and succeed without this header; send it on the rest."
    },
    "xMsCorrelationId": {
     "name": "x-ms-correlation-id",
@@ -837,7 +837,7 @@
      "format": "uuid",
      "example": "00000000-0000-0000-0000-000000000000"
     },
-    "description": "Client-generated correlation id. Echoed back on the response, and the value the service logs against the request -- worth setting and recording if you will ever need Microsoft to trace a failure."
+    "description": "Client-generated correlation id. Echoed back on the response, and the value the service logs against the request -- worth setting and keeping a note of if you will ever need Microsoft to trace a failure."
    },
    "xMsClientRequestId": {
     "name": "x-ms-client-request-id",
@@ -885,16 +885,16 @@
      },
      "ReasonIfDisabled": {
       "type": "string",
-      "description": "Why the table cannot be linked, as display text; empty string when IsDisabled is false. The only value observed across 13,690 recorded rows is \"Change Tracking is Disabled\" -- enabling change tracking on the table in Dataverse is what clears it. Other reasons certainly exist (long-term retention, elastic tables) but were not observed, so no enum is asserted.",
+      "description": "Why the table cannot be linked, as display text; empty string when IsDisabled is false. The common value is \"Change Tracking is Disabled\" -- enabling change tracking on the table in Dataverse is what clears it. Other reasons exist, such as long-term retention and elastic tables, so treat the field as free text rather than an enumeration.",
       "example": "Change Tracking is Disabled"
      },
      "IsComoTableActive": {
       "type": "boolean",
-      "description": "Whether the table is already selected under the organization's COMO configuration. COMO is the Finance and Operations-linked table selection this service also serves through the Finance and Operations table list; its expansion is not documented publicly and was false on every recorded row of this tenant's non-F&O environments."
+      "description": "Whether the table is already selected under the organization's COMO configuration. COMO is the Finance and Operations-linked table selection this service also serves through the Finance and Operations table list; its expansion is not documented publicly. False throughout an organization with no F&O link."
      },
      "IsVirtualEntity": {
       "type": "boolean",
-      "description": "Whether the table is a virtual table backed by an external data source. Observed both true and false; virtual tables appear in the catalogue rather than being filtered out."
+      "description": "Whether the table is a virtual table backed by an external data source. Virtual tables appear in the catalogue rather than being filtered out."
      },
      "Description": {
       "type": "string",
@@ -904,7 +904,7 @@
    },
    "FinanceAndOperationsTable": {
     "type": "object",
-    "description": "One Dynamics 365 Finance and Operations table as a link candidate, for an environment whose Dataverse organization is linked to an F&O environment. The shape of a row is **not established**: every recorded call returned an empty array, because no environment in the capture had an F&O link.",
+    "description": "One Dynamics 365 Finance and Operations table as a link candidate, returned only for an environment whose Dataverse organization is linked to an F&O environment.",
     "x-probe-verified": false,
     "additionalProperties": true,
     "properties": {}
@@ -937,7 +937,7 @@
      },
      "IsIntersect": {
       "type": "boolean",
-      "description": "Whether the relationship is carried by an intersect table. True on every recorded row -- the operation appears to return only N:N relationships, so a false value has never been seen."
+      "description": "Whether the relationship is carried by an intersect table. True on every row this operation returns, which lists only N:N relationships."
      },
      "IntersectLogicalName": {
       "type": "string",
@@ -976,7 +976,7 @@
       "type": "string",
       "format": "uuid",
       "example": "00000000-0000-0000-0000-000000000000",
-      "description": "The Fabric capacity backing the workspace. Recorded values are upper-case GUIDs while every other id on this surface is lower-case; treat GUID comparisons here as case-insensitive. A workspace with no capacity assigned cannot host a mirror lakehouse."
+      "description": "The Fabric capacity backing the workspace. It comes back as an upper-case GUID while every other id on this surface is lower-case; treat GUID comparisons here as case-insensitive. A workspace with no capacity assigned cannot host a mirror lakehouse."
      }
     }
    },
@@ -1001,7 +1001,7 @@
        "FnO"
       ],
       "example": "Dataverse",
-      "description": "Which system owns the table. Dataverse was the only value observed across 609 recorded entries; FnO is the corresponding value for a Finance and Operations table and is inferred from the existence of the Finance and Operations table list, not observed."
+      "description": "Which system owns the table: Dataverse for a table from the linkable-tables list, FnO for one from the Finance and Operations table list."
      }
     }
    },
@@ -1020,7 +1020,7 @@
       "type": "string",
       "format": "uri",
       "example": "https://contoso.crm.dynamics.com/",
-      "description": "The organization's instance URL. Recorded requests send it with a trailing slash here and without one in the resync shape, so the service tolerates both."
+      "description": "The organization's instance URL. The service accepts it with or without a trailing slash."
      },
      "EnvironmentFriendlyName": {
       "type": "string",
@@ -1038,7 +1038,7 @@
        "type": "string",
        "example": "account"
       },
-      "description": "The logical names of the tables to mirror. Redundant with EntityDescriptions -- every recorded request sends the same list in both, in the same order -- but both are sent."
+      "description": "The logical names of the tables to mirror. Redundant with EntityDescriptions -- the same list in the same order -- but send both."
      },
      "EntityDescriptions": {
       "type": "array",
@@ -1050,7 +1050,7 @@
      "IsManagedLake": {
       "type": "boolean",
       "example": true,
-      "description": "Whether athena provisions and owns the storage (true, the Link to Fabric case) rather than writing into a customer-supplied Azure Data Lake Storage account (false, the bring-your-own-lake Synapse case). True on every recorded request."
+      "description": "Whether athena provisions and owns the storage (true, the Link to Fabric case) rather than writing into a customer-supplied Azure Data Lake Storage account (false, the bring-your-own-lake Synapse case). True for a Link to Fabric."
      },
      "WorkspaceId": {
       "type": "string",
@@ -1062,7 +1062,7 @@
       "type": "string",
       "format": "uuid",
       "example": "00000000-0000-0000-0000-000000000000",
-      "description": "The Fabric-to-Dataverse connection the lakehouse will read through. It is created in Fabric, not here, and it authenticates **Fabric reading Dataverse**, not the reverse -- in the captured flows as the target workspace's system-assigned identity, which must already be a Dataverse application user holding the Synapse Link Service Access role."
+      "description": "The Fabric-to-Dataverse connection the lakehouse will read through. It is created in Fabric, not here, and it authenticates **Fabric reading Dataverse**, not the reverse -- as the target workspace's system-assigned identity, which must already be a Dataverse application user holding the Synapse Link Service Access role."
      }
     }
    },
@@ -1075,13 +1075,13 @@
       "type": "string",
       "format": "uuid",
       "example": "00000000-0000-0000-0000-000000000000",
-      "description": "The datalakefolder id of the existing lake, from the Data Lakes list. Equal to FolderId in every recorded request."
+      "description": "The datalakefolder id of the existing lake, from the Data Lakes list. Set it to the same value as FolderId."
      },
      "FolderId": {
       "type": "string",
       "format": "uuid",
       "example": "00000000-0000-0000-0000-000000000000",
-      "description": "The datalakefolder id again. Recorded requests always set it to the same value as LakeId; whether the service can distinguish them is untested."
+      "description": "The datalakefolder id again; set it to the same value as LakeId."
      },
      "WorkspaceId": {
       "type": "string",
@@ -1118,13 +1118,13 @@
        "cds2_workspace"
       ],
       "example": "cds3_workspace",
-      "description": "The Dataverse datalakefolder row to resynchronise, by unique name. cds3_workspace is the Link to Fabric folder and is the only value recorded; cds2_workspace is the older Synapse Link folder. Note the lower-case f in the property name -- it does not match the DatalakeFolderUniqueName spelling used in the Data Lakes response."
+      "description": "The Dataverse datalakefolder row to resynchronise, by unique name. cds3_workspace is the Link to Fabric folder; cds2_workspace is the older Synapse Link folder. Note the lower-case f in the property name -- it does not match the DatalakeFolderUniqueName spelling used in the Data Lakes response."
      }
     }
    },
    "LakehouseArtifacts": {
     "type": "object",
-    "description": "The Fabric artifacts now backing the environment's link. Returned as **plain JSON** -- see the operation for why that is worth stating.",
+    "description": "The Fabric artifacts now backing the environment's link, as a plain JSON object.",
     "x-probe-verified": true,
     "required": [
      "WorkspaceId",
@@ -1161,7 +1161,7 @@
       "type": "string",
       "format": "uuid",
       "example": "00000000-0000-0000-0000-000000000000",
-      "description": "The Dataverse datalakefolder id. **This is the id the rest of the surface is addressed by**: it is the datalakeFolderId for deleting lakehouse artifacts and the profileId for reading and updating the lake profile. Confirmed by recorded traffic, where the id read from here is the id sent on both."
+      "description": "The Dataverse datalakefolder id. **This is the id the rest of the surface is addressed by**: it is the datalakeFolderId for deleting lakehouse artifacts and the profileId for reading and updating the lake profile."
      },
      "LakehouseId": {
       "type": "string",
@@ -1196,7 +1196,7 @@
      },
      "IsDefault": {
       "type": "boolean",
-      "description": "Whether this is the environment's default lake. False on every recorded row, including on environments with exactly one lake."
+      "description": "Whether this is the environment's default lake. False even on an environment with exactly one lake."
      },
      "StorageAccountName": {
       "type": "string",
@@ -1227,71 +1227,71 @@
      "BlobEndpoint": {
       "type": "string",
       "example": "",
-      "description": "Blob service endpoint of the storage account. Empty on every recorded row."
+      "description": "Blob service endpoint of the storage account. Empty for a managed lake."
      },
      "QueueEndpoint": {
       "type": "string",
       "example": "",
-      "description": "Queue service endpoint of the storage account. Empty on every recorded row."
+      "description": "Queue service endpoint of the storage account. Empty for a managed lake."
      },
      "TableEndpoint": {
       "type": "string",
       "example": "",
-      "description": "Table service endpoint of the storage account. Empty on every recorded row."
+      "description": "Table service endpoint of the storage account. Empty for a managed lake."
      },
      "FileEndpoint": {
       "type": "string",
       "example": "",
-      "description": "File service endpoint of the storage account. Empty on every recorded row."
+      "description": "File service endpoint of the storage account. Empty for a managed lake."
      },
      "WorkspaceDevEndpoint": {
       "type": "string",
       "example": "",
-      "description": "The Azure Synapse workspace development endpoint, for a link that targets Synapse rather than Fabric. Empty on every recorded row."
+      "description": "The Azure Synapse workspace development endpoint, for a link that targets Synapse rather than Fabric. Empty for a Link to Fabric."
      },
      "SynapseDatabaseName": {
       "type": "string",
       "example": "",
-      "description": "The serverless SQL database created in that Synapse workspace. Empty on every recorded row."
+      "description": "The serverless SQL database created in that Synapse workspace. Empty for a Link to Fabric."
      },
      "IsCDS2": {
       "type": "boolean",
-      "description": "Whether the row is the legacy cds2_workspace folder. False on every recorded row -- including rows whose DatalakeFolderUniqueName is cds3_workspace, which is consistent, and rows where it is not, which was never observed."
+      "description": "Whether the row is the legacy cds2_workspace folder. It reads false on a cds3_workspace row; like IsCDS3 it is not worth branching on, since DatalakeFolderUniqueName carries the same distinction reliably."
      },
      "IsCDS3": {
       "type": "boolean",
-      "description": "Whether the row is the cds3_workspace folder. **False on every recorded row, including rows whose DatalakeFolderUniqueName is exactly cds3_workspace.** Do not branch on it; read DatalakeFolderUniqueName instead."
+      "description": "Whether the row is the cds3_workspace folder. **It reads false even on a row whose DatalakeFolderUniqueName is exactly cds3_workspace.** Do not branch on it; read DatalakeFolderUniqueName instead."
      },
      "IsComplianceLake": {
       "type": "boolean",
-      "description": "Whether the lake is a compliance-scoped lake. False on every recorded row."
+      "description": "Whether the lake is a compliance-scoped lake. False for an ordinary Link to Fabric."
      },
      "IsDeltaLakeWriterEnabled": {
       "type": "boolean",
-      "description": "Whether the Delta Lake writer is enabled for this lake, producing Delta tables rather than CSV. False on every recorded row."
+      "description": "Whether the Delta Lake writer is enabled for this lake, producing Delta tables rather than CSV. False for a Link to Fabric."
      },
      "DataProcessingConfigurationId": {
       "type": "string",
       "example": "",
-      "description": "Id of the data processing configuration driving the sync jobs. Empty on every recorded row."
+      "description": "Id of the data processing configuration driving the sync jobs. Empty for a Link to Fabric."
      },
      "DeltaLakeMaintenanceDPCId": {
       "type": "string",
       "nullable": true,
       "example": null,
-      "description": "Id of the data processing configuration that runs Delta Lake maintenance. Null on every recorded row."
+      "description": "Id of the data processing configuration that runs Delta Lake maintenance. Null when the lake has none."
      },
      "AccessType": {
       "type": "integer",
       "format": "int32",
       "example": 0,
-      "description": "How the lake is accessed. 0 on every recorded row; the enumeration behind it was not observed."
+      "description": "How the lake is accessed, as an enumeration value. 0 for a managed lake."
      },
      "Path": {
       "type": "string",
       "nullable": true,
       "example": null,
-      "description": "Path prefix within the filesystem. Null on every recorded row."
+      "description": "Path prefix within the filesystem. Null for a managed lake."
      }
     }
    },
@@ -1304,31 +1304,31 @@
       "type": "integer",
       "format": "int32",
       "example": 12,
-      "description": "Attempts before the batch is abandoned. 12 on every recorded profile."
+      "description": "Attempts before the batch is abandoned. The service sets 12."
      },
      "IntervalInSeconds": {
       "type": "integer",
       "format": "int32",
       "example": 5,
-      "description": "Delay between attempts. 5 on every recorded profile."
+      "description": "Delay between attempts. The service sets 5."
      },
      "Backoff": {
       "type": "integer",
       "format": "int32",
       "example": 0,
-      "description": "Backoff strategy, as an enumeration value. 0 on every recorded profile; the other values were not observed."
+      "description": "Backoff strategy, as an enumeration value. The service sets 0."
      }
     }
    },
    "ErrorDetails": {
     "type": "object",
-    "description": "The last error recorded against a table's sync, all three fields empty strings when there has been none. This is the only error structure anywhere on this surface, and it is reported inside a 200 rather than raised as a status code.",
+    "description": "The last error against a table's sync, all three fields empty strings when there has been none. This is the only error structure anywhere on this surface, and it is reported inside a 200 rather than raised as a status code.",
     "x-probe-verified": true,
     "properties": {
      "Code": {
       "type": "string",
       "example": "",
-      "description": "Error code. Empty on every recorded row, so no code vocabulary is known."
+      "description": "Error code. Empty while the table's sync has not failed; the service publishes no code vocabulary."
      },
      "Message": {
       "type": "string",
@@ -1421,7 +1421,7 @@
       "type": "integer",
       "format": "int64",
       "example": -9223372036854775808,
-      "description": "Dataverse change-tracking version the sync has consumed to. long.MinValue (-9223372036854775808) is the sentinel for \"not yet established\" and appears on every recorded row, including completed ones."
+      "description": "Dataverse change-tracking version the sync has consumed to. long.MinValue (-9223372036854775808) is the sentinel for \"not yet established\", and it is what this field carries even for tables whose initial sync has completed."
      },
      "ChangeTime": {
       "type": "string",
@@ -1471,7 +1471,7 @@
      "Settings": {
       "type": "object",
       "additionalProperties": true,
-      "description": "Per-table settings bag. Empty object on every recorded row, so its keys are unknown."
+      "description": "Per-table settings bag. The service returns an empty object and no keys are documented; send an empty object on update."
      },
      "Status": {
       "$ref": "#/components/schemas/LakeProfileEntityStatus"
@@ -1488,13 +1488,13 @@
        "Month"
       ],
       "example": "Year",
-      "description": "How the table's data is partitioned in the lake. Year produces fewer, larger partitions; Month suits high-volume tables. Both values were observed. Settable on update."
+      "description": "How the table's data is partitioned in the lake. Year produces fewer, larger partitions; Month suits high-volume tables. Settable on update."
      },
      "RecordCountPerBlock": {
       "type": "integer",
       "format": "int32",
       "example": 125,
-      "description": "Rows written per block during export. 125 on every recorded profile; recorded update requests send 0 for newly added tables, which the service replaces with 125 in the stored profile. Settable on update."
+      "description": "Rows written per block during export. The service stores 125, and replaces a 0 sent for a newly added table with 125. Settable on update."
      },
      "SyncDataFromLastNDays": {
       "type": "integer",
@@ -1506,7 +1506,7 @@
       "type": "integer",
       "format": "int32",
       "example": -1,
-      "description": "How often delta sync runs for this table, in minutes. -1 means the table follows the profile's own IncrementalUpdateTimeInterval instead of having its own schedule; 20 was also observed."
+      "description": "How often delta sync runs for this table, in minutes. -1 means the table follows the profile's own IncrementalUpdateTimeInterval instead of having its own schedule; a positive value, such as 20, gives it one."
      },
      "GenerateParquet": {
       "type": "boolean",
@@ -1521,7 +1521,7 @@
      "IsGUIDAndDateTimeOffsetSupported": {
       "type": "boolean",
       "example": true,
-      "description": "Whether the destination schema uses native GUID and datetimeoffset types rather than strings. True on every recorded row."
+      "description": "Whether the destination schema uses native GUID and datetimeoffset types rather than strings. True for a Link to Fabric."
      },
      "SyncState": {
       "type": "string",
@@ -1529,7 +1529,7 @@
        "NotStarted"
       ],
       "example": "NotStarted",
-      "description": "Delta-sync state for this table. NotStarted on every recorded row, including tables whose initial sync had completed, so the state machine behind it is not established."
+      "description": "Delta-sync state for this table. It reads NotStarted even for tables whose initial sync has completed, so it does not track delta sync progress; CurrentState does."
      },
      "CurrentState": {
       "type": "string",
@@ -1575,13 +1575,13 @@
       "type": "string",
       "example": "2024-01-01T00:00:00",
       "nullable": true,
-      "description": "When a schema change was last picked up by delta sync. Null on every recorded row."
+      "description": "When a schema change was last picked up by delta sync. Null until one is."
      },
      "LastDeltaSyncDataTime": {
       "type": "string",
       "example": "2024-01-01T00:00:00",
       "nullable": true,
-      "description": "When data was last picked up by delta sync. Null on every recorded row."
+      "description": "When data was last picked up by delta sync. Null until the first delta sync writes."
      },
      "DestinationCount": {
       "type": "integer",
@@ -1616,7 +1616,7 @@
       "type": "integer",
       "format": "int32",
       "example": 0,
-      "description": "Pause/resume state for this table, as an enumeration value. 0 on every recorded row."
+      "description": "Pause/resume state for this table, as an enumeration value. 0 for a table that has not been paused."
      },
      "SynapseTableCreationState": {
       "type": "string",
@@ -1651,7 +1651,7 @@
      "IsVarBinaryRedactSupportedForFnOTables": {
       "type": "boolean",
       "example": false,
-      "description": "Finance and Operations capability flag: whether varbinary columns are redacted rather than mirrored. False on every recorded row, all of which were Dataverse tables."
+      "description": "Finance and Operations capability flag: whether varbinary columns are redacted rather than mirrored. False for a Dataverse table."
      },
      "IsGUIDSupportedForFnOTables": {
       "type": "boolean",
@@ -1725,12 +1725,12 @@
       "type": "integer",
       "format": "int32",
       "example": 125,
-      "description": "Rows per export block. Recorded requests send 0 for tables being added and the service stores 125, so 0 reads as \"use the default\"."
+      "description": "Rows per export block. Send 0 for a table being added and the service stores 125, so 0 reads as \"use the default\"."
      },
      "Settings": {
       "type": "object",
       "additionalProperties": true,
-      "description": "Per-table settings bag. Sent as an empty object on every recorded request."
+      "description": "Per-table settings bag. Send an empty object."
      }
     }
    },
@@ -1745,7 +1745,7 @@
        "Success"
       ],
       "example": "Success",
-      "description": "Outcome of the last export cycle. Success on every recorded row; failure values were not observed."
+      "description": "Outcome of the last export cycle. Success once a cycle has completed without error."
      },
      "InitialSyncState": {
       "type": "string",
@@ -1753,7 +1753,7 @@
        "Completed"
       ],
       "example": "Completed",
-      "description": "Whether the profile's initial sync has finished. Completed on every recorded row -- including profiles whose individual tables were still in InitialSyncInProgress, so this is not a reliable aggregate. Poll the per-table CurrentState instead."
+      "description": "Whether the profile's initial sync has finished. It reads Completed while individual tables are still in InitialSyncInProgress, so it is not a reliable aggregate. Poll the per-table CurrentState instead."
      },
      "TotalNotifications": {
       "type": "integer",
@@ -1774,7 +1774,7 @@
       "type": "string",
       "example": "2024-01-01T00:00:00",
       "nullable": true,
-      "description": "When the profile last exported. Null on every recorded row, even where individual tables carried export dates."
+      "description": "When the profile last exported. Null even where individual tables carry export dates; read those instead."
      },
      "LastModifiedOn": {
       "type": "string",
@@ -1796,7 +1796,7 @@
        "NotStarted"
       ],
       "example": "NotStarted",
-      "description": "Progress of a caller-requested full refresh. NotStarted on every recorded row; no operation on this surface was observed starting one."
+      "description": "Progress of a caller-requested full refresh. NotStarted -- no operation on this surface starts one."
      },
      "LastForceRefreshRequestTime": {
       "type": "string",
@@ -1832,7 +1832,7 @@
        "1.0"
       ],
       "example": "1.0",
-      "description": "Profile schema version. 1.0 on every recorded profile."
+      "description": "Profile schema version. 1.0."
      },
      "State": {
       "type": "integer",
@@ -1841,7 +1841,7 @@
        1
       ],
       "example": 1,
-      "description": "Profile lifecycle state. 1 -- active -- on every recorded profile, including immediately after creation and immediately before deletion, so the other values are unknown."
+      "description": "Profile lifecycle state. 1 -- active -- from creation until the profile is deleted."
      },
      "LastModified": {
       "type": "string",
@@ -1870,22 +1870,22 @@
        4
       ],
       "example": 4,
-      "description": "Where the profile writes. 4 is the managed Fabric lakehouse and is the only value observed; the values for Synapse and for a customer-owned ADLS account were not."
+      "description": "Where the profile writes. 4 is the managed Fabric lakehouse; Synapse and a customer-owned ADLS account have their own values."
      },
      "DestinationKeyVaultUri": {
       "type": "string",
       "example": "dummy",
-      "description": "Key Vault holding the destination credential, for destinations that need one. The literal string \"dummy\" on every recorded profile -- a managed Fabric lakehouse needs no stored credential, and the service does not use null here."
+      "description": "Key Vault holding the destination credential, for destinations that need one. The literal string \"dummy\" for a managed Fabric lakehouse, which needs no stored credential -- the service does not use null here."
      },
      "DestinationPrefix": {
       "type": "string",
       "example": "",
-      "description": "Prefix applied to destination table names. Empty on every recorded profile."
+      "description": "Prefix applied to destination table names. Empty when the tables take their own names."
      },
      "DestinationSchemaName": {
       "type": "string",
       "example": "dbo",
-      "description": "Schema the destination tables are created in. dbo on every recorded profile."
+      "description": "Schema the destination tables are created in. dbo."
      },
      "LakeId": {
       "type": "string",
@@ -1902,12 +1902,12 @@
      "WriteDeleteLog": {
       "type": "boolean",
       "example": true,
-      "description": "Whether deletes are recorded in a delete log in the lake so consumers can reconcile them. True on every recorded profile."
+      "description": "Whether deletes are written to a delete log in the lake so consumers can reconcile them. True for a Link to Fabric."
      },
      "CountFeature": {
       "type": "boolean",
       "example": false,
-      "description": "Whether row-count reconciliation between Dataverse and the lake is enabled. False on every recorded profile, which is why DestinationCount and CrmRecordCount move only during initial sync."
+      "description": "Whether row-count reconciliation between Dataverse and the lake is enabled. False for a Link to Fabric, which is why DestinationCount and CrmRecordCount move only during initial sync."
      },
      "CreationTime": {
       "type": "string",
@@ -1939,7 +1939,7 @@
      "EnabledForJobs": {
       "type": "boolean",
       "example": true,
-      "description": "Whether the sync jobs run at all. **This is the profile's on switch**: false stops mirroring without deleting anything. True on every recorded profile."
+      "description": "Whether the sync jobs run at all. **This is the profile's on switch**: false stops mirroring without deleting anything. True on a live link."
      },
      "EnabledForIncrementalUpdate": {
       "type": "boolean",
@@ -1950,7 +1950,7 @@
       "type": "integer",
       "format": "int32",
       "example": 15,
-      "description": "Cadence of incremental update in minutes. Values 15 and 60 were both observed, and a recorded update changed it from 60 to 15, so it is settable."
+      "description": "Cadence of incremental update in minutes. Settable on update; 15 and 60 are both accepted."
      },
      "EnabledForDeltaLake": {
       "type": "boolean",
@@ -1960,7 +1960,7 @@
      "EnabledForDlw": {
       "type": "boolean",
       "example": true,
-      "description": "Whether the Data Lake Writer pipeline is used. True on every recorded profile."
+      "description": "Whether the Data Lake Writer pipeline is used. True for a Link to Fabric."
      },
      "SynapseSyncState": {
       "type": "string",
@@ -1973,7 +1973,7 @@
      "LinkedToFabric": {
       "type": "boolean",
       "example": true,
-      "description": "Whether the profile targets a Fabric lakehouse rather than Synapse or a raw ADLS account. True on every recorded profile, all of which were Link to Fabric."
+      "description": "Whether the profile targets a Fabric lakehouse rather than Synapse or a raw ADLS account. True for a Link to Fabric."
      },
      "EnabledForFnOTablesBaseEnumSupport": {
       "type": "boolean",
@@ -2000,7 +2000,7 @@
       "type": "integer",
       "format": "int32",
       "example": 0,
-      "description": "Pause/resume state for the profile, as an enumeration value. 0 on every recorded profile."
+      "description": "Pause/resume state for the profile, as an enumeration value. 0 for a profile that has not been paused."
      },
      "LinkedFnOEnvironmentCurrentAOSCount": {
       "type": "integer",
@@ -2025,7 +2025,7 @@
    },
    "LakeProfileUpdate": {
     "type": "object",
-    "description": "A whole lake profile as sent on an update. The recorded clients read the profile, replace Entities and any settings they are changing, drop the server-computed per-table fields, and send everything else back unmodified -- so this is the read shape minus nothing except the depth of Entities.",
+    "description": "A whole lake profile as sent on an update. Read the profile, replace Entities and any settings being changed, drop the server-computed per-table fields, and send everything else back unmodified -- so this is the read shape with nothing removed except the depth of Entities.",
     "x-probe-verified": true,
     "properties": {
      "Id": {
@@ -2040,7 +2040,7 @@
        "1.0"
       ],
       "example": "1.0",
-      "description": "Profile schema version. 1.0 on every recorded profile."
+      "description": "Profile schema version. 1.0."
      },
      "State": {
       "type": "integer",
@@ -2049,7 +2049,7 @@
        1
       ],
       "example": 1,
-      "description": "Profile lifecycle state. 1 -- active -- on every recorded profile, including immediately after creation and immediately before deletion, so the other values are unknown."
+      "description": "Profile lifecycle state. 1 -- active -- from creation until the profile is deleted."
      },
      "LastModified": {
       "type": "string",
@@ -2078,22 +2078,22 @@
        4
       ],
       "example": 4,
-      "description": "Where the profile writes. 4 is the managed Fabric lakehouse and is the only value observed; the values for Synapse and for a customer-owned ADLS account were not."
+      "description": "Where the profile writes. 4 is the managed Fabric lakehouse; Synapse and a customer-owned ADLS account have their own values."
      },
      "DestinationKeyVaultUri": {
       "type": "string",
       "example": "dummy",
-      "description": "Key Vault holding the destination credential, for destinations that need one. The literal string \"dummy\" on every recorded profile -- a managed Fabric lakehouse needs no stored credential, and the service does not use null here."
+      "description": "Key Vault holding the destination credential, for destinations that need one. The literal string \"dummy\" for a managed Fabric lakehouse, which needs no stored credential -- the service does not use null here."
      },
      "DestinationPrefix": {
       "type": "string",
       "example": "",
-      "description": "Prefix applied to destination table names. Empty on every recorded profile."
+      "description": "Prefix applied to destination table names. Empty when the tables take their own names."
      },
      "DestinationSchemaName": {
       "type": "string",
       "example": "dbo",
-      "description": "Schema the destination tables are created in. dbo on every recorded profile."
+      "description": "Schema the destination tables are created in. dbo."
      },
      "LakeId": {
       "type": "string",
@@ -2110,12 +2110,12 @@
      "WriteDeleteLog": {
       "type": "boolean",
       "example": true,
-      "description": "Whether deletes are recorded in a delete log in the lake so consumers can reconcile them. True on every recorded profile."
+      "description": "Whether deletes are written to a delete log in the lake so consumers can reconcile them. True for a Link to Fabric."
      },
      "CountFeature": {
       "type": "boolean",
       "example": false,
-      "description": "Whether row-count reconciliation between Dataverse and the lake is enabled. False on every recorded profile, which is why DestinationCount and CrmRecordCount move only during initial sync."
+      "description": "Whether row-count reconciliation between Dataverse and the lake is enabled. False for a Link to Fabric, which is why DestinationCount and CrmRecordCount move only during initial sync."
      },
      "CreationTime": {
       "type": "string",
@@ -2147,7 +2147,7 @@
      "EnabledForJobs": {
       "type": "boolean",
       "example": true,
-      "description": "Whether the sync jobs run at all. **This is the profile's on switch**: false stops mirroring without deleting anything. True on every recorded profile."
+      "description": "Whether the sync jobs run at all. **This is the profile's on switch**: false stops mirroring without deleting anything. True on a live link."
      },
      "EnabledForIncrementalUpdate": {
       "type": "boolean",
@@ -2158,7 +2158,7 @@
       "type": "integer",
       "format": "int32",
       "example": 15,
-      "description": "Cadence of incremental update in minutes. Values 15 and 60 were both observed, and a recorded update changed it from 60 to 15, so it is settable."
+      "description": "Cadence of incremental update in minutes. Settable on update; 15 and 60 are both accepted."
      },
      "EnabledForDeltaLake": {
       "type": "boolean",
@@ -2168,7 +2168,7 @@
      "EnabledForDlw": {
       "type": "boolean",
       "example": true,
-      "description": "Whether the Data Lake Writer pipeline is used. True on every recorded profile."
+      "description": "Whether the Data Lake Writer pipeline is used. True for a Link to Fabric."
      },
      "SynapseSyncState": {
       "type": "string",
@@ -2181,7 +2181,7 @@
      "LinkedToFabric": {
       "type": "boolean",
       "example": true,
-      "description": "Whether the profile targets a Fabric lakehouse rather than Synapse or a raw ADLS account. True on every recorded profile, all of which were Link to Fabric."
+      "description": "Whether the profile targets a Fabric lakehouse rather than Synapse or a raw ADLS account. True for a Link to Fabric."
      },
      "EnabledForFnOTablesBaseEnumSupport": {
       "type": "boolean",
@@ -2208,7 +2208,7 @@
       "type": "integer",
       "format": "int32",
       "example": 0,
-      "description": "Pause/resume state for the profile, as an enumeration value. 0 on every recorded profile."
+      "description": "Pause/resume state for the profile, as an enumeration value. 0 for a profile that has not been paused."
      },
      "LinkedFnOEnvironmentCurrentAOSCount": {
       "type": "integer",
@@ -2259,7 +2259,7 @@
    },
    "EnterprisePolicyClientCredentials": {
     "type": "object",
-    "description": "The client credential the environment's encryption enterprise policy makes available to the sync engine, for a customer-managed-key environment. Both fields are null when the environment has no such policy, which is the only case observed.",
+    "description": "The client credential the environment's encryption enterprise policy makes available to the sync engine, for a customer-managed-key environment. Both fields are null when the environment has no such policy.",
     "x-probe-verified": true,
     "required": [
      "ClientSecretUrl",

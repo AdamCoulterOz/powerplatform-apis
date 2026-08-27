@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Power Platform APIs</title>
+  <meta name="description" content="Browsable OpenAPI specs for the Power Platform admin APIs, reverse-engineered from the public Microsoft Learn reference.">
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    header {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 10px 16px; border-bottom: 1px solid rgba(128,128,128,.35);
+      background: light-dark(#f6f6f7, #1a1a1f);
+    }
+    header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+    header select {
+      font-size: 14px; padding: 4px 8px; border-radius: 6px;
+      border: 1px solid rgba(128,128,128,.5); background: inherit; color: inherit;
+    }
+    header .links { margin-left: auto; font-size: 13px; display: flex; gap: 14px; }
+    header a { color: light-dark(#0057b8, #6cb2ff); text-decoration: none; }
+    header a:hover { text-decoration: underline; }
+    #note { padding: 24px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Power Platform APIs</h1>
+    <select id="spec-picker" aria-label="Select API"></select>
+    <nav class="links">
+      <a id="spec-link" href="#" target="_blank" rel="noopener">raw spec</a>
+      <a id="mirror-link" href="#" target="_blank" rel="noopener">mirror repo</a>
+      <a href="https://github.com/AdamCoulterOz/powerplatform-apis" target="_blank" rel="noopener">this site</a>
+    </nav>
+  </header>
+  <div id="note">Loading spec list…</div>
+  <div id="app"></div>
+  <script>
+    (async () => {
+      const note = document.getElementById('note');
+      let specs;
+      try {
+        specs = await (await fetch('specs.json')).json();
+      } catch (e) {
+        note.textContent = 'Could not load specs.json: ' + e;
+        return;
+      }
+      const params = new URLSearchParams(location.search);
+      const wanted = params.get('spec') || localStorage.getItem('spec') || specs[0].id;
+      const current = specs.find(s => s.id === wanted) || specs[0];
+
+      const picker = document.getElementById('spec-picker');
+      for (const s of specs) {
+        const o = document.createElement('option');
+        o.value = s.id; o.textContent = s.title; o.selected = s.id === current.id;
+        picker.appendChild(o);
+      }
+      picker.addEventListener('change', () => {
+        try { localStorage.setItem('spec', picker.value); } catch (e) {}
+        location.search = '?spec=' + encodeURIComponent(picker.value);
+      });
+
+      document.getElementById('spec-link').href = current.url;
+      document.getElementById('mirror-link').href = current.repo;
+      document.title = current.title;
+      note.remove();
+
+      const holder = document.createElement('script');
+      holder.id = 'api-reference';
+      holder.dataset.url = current.url;
+      holder.dataset.configuration = JSON.stringify({ hideDownloadButton: false });
+      document.getElementById('app').appendChild(holder);
+      const lib = document.createElement('script');
+      lib.src = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.66.1/dist/browser/standalone.min.js';
+      lib.onerror = () => {
+        const d = document.createElement('div');
+        d.id = 'note';
+        d.innerHTML = 'The spec renderer failed to load from the CDN. The raw spec is at <a href="' +
+          current.url + '">' + current.url + '</a>.';
+        document.body.appendChild(d);
+      };
+      document.body.appendChild(lib);
+    })();
+  </script>
+</body>
+</html>

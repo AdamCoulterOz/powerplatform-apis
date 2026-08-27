@@ -346,7 +346,14 @@ html, body {
 }
 .prop__type { font-family: var(--font-mono); color: var(--text-secondary); }
 .prop__sep { opacity: .5; }
-.prop__req { color: var(--warning); }
+/* Required takes no state colour. keel's tones report what a thing IS right
+   now, and being required is not a state the property is in: it is a permanent
+   fact about the shape of the parameter, fixed by the schema and true before
+   the reader arrived. What the word is really doing on this line is standing
+   out from its siblings, which is emphasis, and emphasis is weight and
+   lightness rather than hue. That also survives greyscale and colour vision
+   deficiency, and it needs no per-theme tuning. */
+.prop__req { color: var(--text-primary); font-weight: var(--fw-semibold); }
 .prop__desc {
   margin: var(--space-2) 0 0;
   font-size: 13.5px;

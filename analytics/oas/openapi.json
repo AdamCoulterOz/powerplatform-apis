@@ -3,7 +3,7 @@
  "info": {
   "title": "Power Platform Admin Analytics API (CS Analytics)",
   "version": "v2",
-  "description": "Unofficial. The Power Platform admin analytics API (\"CS Analytics\") backs the *Data export* / Application Insights integration in the Power Platform admin center: the tenant-wide list of analytics data-export connections, each pointing a set of environments at an Azure sink. The service is undocumented and this spec is reverse-engineered — from the wire behaviour encoded in microsoft/terraform-provider-power-platform's client (`internal/clients/analytics`), itself derived from admin-center traffic recordings, and from live probing of a real tenant on 2026-08-27 (see `scripts/probe.py`). It is a map, not a contract.\n\n**Host selection is part of the contract.** There is no single server. The API is deployed once per geography and a caller must reach *its own* geography's host. The service publishes no discovery endpoint for these hosts, so the mapping is a table either way: it is carried here as `info.x-region-hosts`, as the `region` server-variable `enum`, and as the `enum` on `GatewayCluster.geoName`. All twenty commercial hosts accept a valid token and answer, so reaching the wrong one is not an error — a caller that guesses wrong gets a silently incomplete answer.\n\n**Finding your region** takes a second API. `GET /gateway/cluster` on the tenant-scoped Power Platform API host returns the caller's `geoName`, which indexes the host table. That operation belongs to PPAPI, not to this service; it is reproduced here (tag *Region Discovery*, with its own server and scope) because the analytics operations cannot be addressed without it. See [ppapi](../../ppapi) for the rest of that API.\n\n**What live probing established:** the request and response envelope; the complete set of reachable hosts and the physical cluster behind each; that `/api/v2/connections` and its `/api/v1/` twin are read-only; that unknown query parameters are accepted and ignored; that unknown paths return a bodiless 404; and three distinct plain-text 401 bodies. **What it did not:** the probe tenant had no data-export connections configured, so `value` came back empty on every host and the `Connection` item schema remains provider-derived — it and its children carry no `x-probe-verified` flag, and their `enum`s record observed vocabulary rather than a set the service confirmed is closed (each carries `x-enum-evidence`). Nothing is marked `required`.",
+  "description": "The Power Platform admin analytics API manages tenant-level analytics data exports \u2014 the connections that push Power Platform telemetry into a customer-owned data sink.\n\nThere is no single host: analytics is served from **regional** hosts, and a caller must first discover its tenant's region through the Power Platform API's `gateway/cluster` lookup, then address the matching regional host. A request to the wrong region succeeds and silently returns an incomplete answer.\n\nUnofficial and reverse-engineered \u2014 see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/analytics) for how it was derived and which parts are verified.",
   "x-region-hosts": {
    "description": "geoName (from `GET /gateway/cluster`, compared case-insensitively) -> analytics host. Commercial entries give the `region` server-variable value; sovereign entries give a full host, because those sit on different domains.",
    "map": {
@@ -37,7 +37,7 @@
     "us": "United States.",
     "can": "Canada.",
     "sam": "South America.",
-    "emea": "Europe, Middle East and Africa — the catch-all European geography, distinct from the single-country European hosts below.",
+    "emea": "Europe, Middle East and Africa \u2014 the catch-all European geography, distinct from the single-country European hosts below.",
     "oce": "Oceania.",
     "au": "Australia. Live-observed geoName, and **absent from the Terraform provider's map**, which is why its analytics data source fails on Australian tenants. There is no `au` host; `oce` serves it.",
     "pac": "Asia Pacific. Note the geoName and the host prefix differ.",
@@ -58,7 +58,7 @@
     "ita": "Italy. Host live-verified; **absent from the Terraform provider's map**.",
     "gov": "US Government Community Cloud.",
     "high": "US Government GCC High.",
-    "dod": "US Department of Defense. Note the different domain — and see `x-provider-defects` for the malformed hostname the Terraform provider ships."
+    "dod": "US Department of Defense. Note the different domain \u2014 and see `x-provider-defects` for the malformed hostname the Terraform provider ships."
    },
    "verification": {
     "us": [
@@ -223,10 +223,10 @@
      "Data Export Connections"
     ],
     "x-probe-verified": true,
-    "description": "Returns every data-export connection the caller's geography holds for the tenant, wrapped in a `{ \"value\": [...] }` envelope. There is no `@odata` metadata, no `nextLink` and no observed paging; `$top`, `$filter` and every other query parameter are accepted and ignored, so the response is always the full set.\n\n**Resolve the host before calling this.** Results are scoped to the geography the host serves, and a valid token is accepted on *every* regional host, so an unresolved guess succeeds and returns the wrong geography's (usually empty) list. Call *Region Discovery* first, take `geoName` from its response and index `info.x-region-hosts`.\n\nThe path is read-only. The Terraform provider carries a `DataCreateDto` shaped like a create body, but no create operation exists here — connections are configured in the admin center under *Data export*.\n\nEach connection's sink carries its Application Insights instrumentation key in plain text, so treat the whole response body as a credential.\n\nService principals do not work against this API in practice; the Terraform provider documents its analytics data source as user-auth only.",
+    "description": "Returns every data-export connection the caller's geography holds for the tenant, wrapped in a `{ \"value\": [...] }` envelope. There is no `@odata` metadata, no `nextLink` and no observed paging; `$top`, `$filter` and every other query parameter are accepted and ignored, so the response is always the full set.\n\n**Resolve the host before calling this.** Results are scoped to the geography the host serves, and a valid token is accepted on *every* regional host, so an unresolved guess succeeds and returns the wrong geography's (usually empty) list. Call *Region Discovery* first, take `geoName` from its response and index `info.x-region-hosts`.\n\nThe path is read-only. The Terraform provider carries a `DataCreateDto` shaped like a create body, but no create operation exists here \u2014 connections are configured in the admin center under *Data export*.\n\nEach connection's sink carries its Application Insights instrumentation key in plain text, so treat the whole response body as a credential.\n\nService principals do not work against this API in practice; the Terraform provider documents its analytics data source as user-auth only.",
     "responses": {
      "200": {
-      "description": "The tenant's data-export connections in this geography. An empty `value` is normal and ambiguous — it means either that nothing is configured or that this host serves a geography the tenant does not use, so confirm the region before reading it as \"none configured\".",
+      "description": "The tenant's data-export connections in this geography. An empty `value` is normal and ambiguous \u2014 it means either that nothing is configured or that this host serves a geography the tenant does not use, so confirm the region before reading it as \"none configured\".",
       "content": {
        "application/json": {
         "schema": {
@@ -234,13 +234,13 @@
         },
         "examples": {
          "empty": {
-          "summary": "No connections configured — the live-probed result",
+          "summary": "No connections configured \u2014 the live-probed result",
           "value": {
            "value": []
           }
          },
          "appInsights": {
-          "summary": "One Application Insights connection — provider-derived, not live-verified",
+          "summary": "One Application Insights connection \u2014 provider-derived, not live-verified",
           "value": {
            "value": [
             {
@@ -332,7 +332,7 @@
      "variables": {
       "tenantPrefix": {
        "default": "00000000000000000000000000000",
-       "description": "The tenant GUID without hyphens, less its final two characters — 30 characters."
+       "description": "The tenant GUID without hyphens, less its final two characters \u2014 30 characters."
       },
       "tenantSuffix": {
        "default": "00",
@@ -349,7 +349,7 @@
     ],
     "x-probe-verified": true,
     "x-source-api": "ppapi",
-    "description": "Returns the Power Platform cluster serving the caller, whose `geoName` selects the analytics host through `info.x-region-hosts`. This is a PPAPI operation: it lives on the tenant-scoped `api.powerplatform.com` host and takes the Power Platform API scope, not the analytics one — note the per-operation `servers` and `security` overrides.\n\nTwo things about it are surprising, and both were confirmed live. The tenant GUID in the host is **decorative**: a bogus tenant label, and even the bare `api.powerplatform.com` host with no tenant label at all, return the caller's own cluster, because the answer is derived from the bearer token. And `api-version` is optional and ignored — omitting it, or passing `2`, returns the same body as `api-version=1`, which is what the Terraform provider sends.",
+    "description": "Returns the Power Platform cluster serving the caller, whose `geoName` selects the analytics host through `info.x-region-hosts`. This is a PPAPI operation: it lives on the tenant-scoped `api.powerplatform.com` host and takes the Power Platform API scope, not the analytics one \u2014 note the per-operation `servers` and `security` overrides.\n\nTwo things about it are surprising, and both were confirmed live. The tenant GUID in the host is **decorative**: a bogus tenant label, and even the bare `api.powerplatform.com` host with no tenant label at all, return the caller's own cluster, because the answer is derived from the bearer token. And `api-version` is optional and ignored \u2014 omitting it, or passing `2`, returns the same body as `api-version=1`, which is what the Terraform provider sends.",
     "security": [
      {
       "ppapi_auth": [
@@ -367,7 +367,7 @@
        "default": "1",
        "example": "1"
       },
-      "description": "Ignored by the service — omitting it or passing any value returns the same body. The Terraform provider sends `1`."
+      "description": "Ignored by the service \u2014 omitting it or passing any value returns the same body. The Terraform provider sends `1`."
      }
     ],
     "responses": {
@@ -428,7 +428,7 @@
   },
   "responses": {
    "Unauthorized": {
-    "description": "The token was rejected at the gateway, before the service saw the request. The body is `text/plain`, not JSON, and takes one of three observed forms: empty, with `WWW-Authenticate: Bearer error=\"invalid_token\"`, when no `Authorization` header was sent; `MISE unauthorized.` for a malformed bearer; and `An error occurred processing your authentication.` for a well-formed token issued for the wrong audience — the last is the one to check first, since the analytics hosts reject Power Platform API tokens.",
+    "description": "The token was rejected at the gateway, before the service saw the request. The body is `text/plain`, not JSON, and takes one of three observed forms: empty, with `WWW-Authenticate: Bearer error=\"invalid_token\"`, when no `Authorization` header was sent; `MISE unauthorized.` for a malformed bearer; and `An error occurred processing your authentication.` for a well-formed token issued for the wrong audience \u2014 the last is the one to check first, since the analytics hosts reject Power Platform API tokens.",
     "content": {
      "text/plain": {
       "schema": {
@@ -453,13 +453,13 @@
     }
    },
    "Forbidden": {
-    "description": "The token is valid for this audience but the caller is not a tenant administrator. Not reproduced live — the probe account is an admin — but it is the rejection the Terraform provider's tests pin for this operation."
+    "description": "The token is valid for this audience but the caller is not a tenant administrator. Not reproduced live \u2014 the probe account is an admin \u2014 but it is the rejection the Terraform provider's tests pin for this operation."
    },
    "NotFound": {
-    "description": "No such route. The body is empty: the service returns no error document for unknown paths. `/api/v2/connections/{id}` answers this way, so there is no per-connection read — fetch the list and filter it."
+    "description": "No such route. The body is empty: the service returns no error document for unknown paths. `/api/v2/connections/{id}` answers this way, so there is no per-connection read \u2014 fetch the list and filter it."
    },
    "MethodNotAllowed": {
-    "description": "The connections paths are read-only. Every method other than `GET` — including `OPTIONS` and `HEAD` — is refused this way, with an `Allow` header naming `GET` alone.",
+    "description": "The connections paths are read-only. Every method other than `GET` \u2014 including `OPTIONS` and `HEAD` \u2014 is refused this way, with an `Allow` header naming `GET` alone.",
     "headers": {
      "Allow": {
       "description": "Always `GET`.",
@@ -491,7 +491,7 @@
    },
    "Connection": {
     "type": "object",
-    "description": "One data-export connection: a set of environments streaming a set of telemetry scenarios into one Azure sink. Note what is *not* here — there is no schedule, frequency or retention field. Export cadence is fixed by the service and is not caller-configurable; the only timing signal a connection exposes is each scenario's `lastRunOn`. **Provider-derived and not live-verified**: the probe tenant had no connections, so every member below comes from the Terraform provider's DTO and its recorded admin-center fixture, and the service may return more.",
+    "description": "One data-export connection: a set of environments streaming a set of telemetry scenarios into one Azure sink. Note what is *not* here \u2014 there is no schedule, frequency or retention field. Export cadence is fixed by the service and is not caller-configurable; the only timing signal a connection exposes is each scenario's `lastRunOn`. **Provider-derived and not live-verified**: the probe tenant had no connections, so every member below comes from the Terraform provider's DTO and its recorded admin-center fixture, and the service may return more.",
     "properties": {
      "id": {
       "type": "string",
@@ -500,7 +500,7 @@
      },
      "source": {
       "type": "string",
-      "description": "The integration that produced this connection — which admin-center feature created it. Distinct from `resourceProvider`, which names the Power Platform service whose telemetry is being exported.",
+      "description": "The integration that produced this connection \u2014 which admin-center feature created it. Distinct from `resourceProvider`, which names the Power Platform service whose telemetry is being exported.",
       "enum": [
        "AppInsight"
       ],
@@ -516,7 +516,7 @@
      },
      "status": {
       "type": "array",
-      "description": "Ingestion health, one entry per exported scenario — each entry's `name` matches a member of `scenarios`. Health is reported per scenario, not per connection, so a connection can be healthy for some streams and stalled for others.",
+      "description": "Ingestion health, one entry per exported scenario \u2014 each entry's `name` matches a member of `scenarios`. Health is reported per scenario, not per connection, so a connection can be healthy for some streams and stalled for others.",
       "items": {
        "$ref": "#/components/schemas/ConnectionStatus"
       }
@@ -526,7 +526,7 @@
      },
      "packageName": {
       "type": "string",
-      "description": "The analytics package — the named bundle of scenarios — the connection was created from. Set by the admin center at configuration time and not otherwise meaningful to a caller."
+      "description": "The analytics package \u2014 the named bundle of scenarios \u2014 the connection was created from. Set by the admin center at configuration time and not otherwise meaningful to a caller."
      },
      "scenarios": {
       "type": "array",
@@ -541,7 +541,7 @@
      },
      "resourceProvider": {
       "type": "string",
-      "description": "The Power Platform service emitting the telemetry. Despite the name this is not an Azure resource-provider namespace — the observed value is the lower-case service name `dataverse`.",
+      "description": "The Power Platform service emitting the telemetry. Despite the name this is not an Azure resource-provider namespace \u2014 the observed value is the lower-case service name `dataverse`.",
       "enum": [
        "dataverse"
       ],
@@ -550,7 +550,7 @@
      },
      "aiType": {
       "type": "string",
-      "description": "How the Application Insights resource is attached. `Local` means the customer supplied their own component in their own subscription — the only arrangement the admin center's data-export UI offers.",
+      "description": "How the Application Insights resource is attached. `Local` means the customer supplied their own component in their own subscription \u2014 the only arrangement the admin center's data-export UI offers.",
       "enum": [
        "Local"
       ],
@@ -597,7 +597,7 @@
      "lastRunOn": {
       "type": "string",
       "format": "date-time",
-      "description": "When this scenario last exported. With no schedule field on a connection, this is the only freshness signal a caller gets: a `lastRunOn` far in the past is how a stalled export shows up. Serialised in the .NET round-trip form — a numeric UTC offset and seven fractional-second digits — not the `Z`-suffixed form other Power Platform APIs use.",
+      "description": "When this scenario last exported. With no schedule field on a connection, this is the only freshness signal a caller gets: a `lastRunOn` far in the past is how a stalled export shows up. Serialised in the .NET round-trip form \u2014 a numeric UTC offset and seven fractional-second digits \u2014 not the `Z`-suffixed form other Power Platform APIs use.",
       "example": "2025-03-08T06:55:56.0481713+00:00"
      },
      "message": {
@@ -609,7 +609,7 @@
    },
    "Sink": {
     "type": "object",
-    "description": "The Azure destination a connection writes telemetry into — in practice a customer-owned Application Insights component, which is then queried like any other Application Insights data.",
+    "description": "The Azure destination a connection writes telemetry into \u2014 in practice a customer-owned Application Insights component, which is then queried like any other Application Insights data.",
     "properties": {
      "id": {
       "type": "string",
@@ -628,12 +628,12 @@
      "subscriptionId": {
       "type": "string",
       "format": "uuid",
-      "description": "Azure subscription holding the sink. Omitted from the recorded response even though `id` contains it — treat it as optional.",
+      "description": "Azure subscription holding the sink. Omitted from the recorded response even though `id` contains it \u2014 treat it as optional.",
       "example": "00000000-0000-0000-0000-000000000000"
      },
      "resourceGroupName": {
       "type": "string",
-      "description": "Resource group holding the sink. Omitted from the recorded response even though `id` contains it — treat it as optional.",
+      "description": "Resource group holding the sink. Omitted from the recorded response even though `id` contains it \u2014 treat it as optional.",
       "example": "contoso-analytics"
      },
      "resourceName": {
@@ -643,7 +643,7 @@
      },
      "key": {
       "type": "string",
-      "description": "The Application Insights instrumentation key the exporter writes with. This is a live credential returned in plain text by an unprivileged-looking list call — do not log the response, and rotate the key if it leaks.",
+      "description": "The Application Insights instrumentation key the exporter writes with. This is a live credential returned in plain text by an unprivileged-looking list call \u2014 do not log the response, and rotate the key if it leaks.",
       "example": "00000000-0000-0000-0000-000000000000"
      }
     }
@@ -655,7 +655,7 @@
     "properties": {
      "clusterNumber": {
       "type": "string",
-      "description": "Zero-padded ordinal of the cluster within its geography — a string, not a number.",
+      "description": "Zero-padded ordinal of the cluster within its geography \u2014 a string, not a number.",
       "example": "001"
      },
      "geoName": {
@@ -688,7 +688,7 @@
        "high",
        "dod"
       ],
-      "x-enum-evidence": "`au` was observed live; `us` appears in the Terraform provider's recorded fixture; the remainder are the keys of the provider's host map, which the provider documents as gateway-cluster geo names. The set may be incomplete — treat an unknown code as a missing host-table entry, not as an error.",
+      "x-enum-evidence": "`au` was observed live; `us` appears in the Terraform provider's recorded fixture; the remainder are the keys of the provider's host map, which the provider documents as gateway-cluster geo names. The set may be incomplete \u2014 treat an unknown code as a missing host-table entry, not as an error.",
       "example": "au"
      },
      "environment": {
@@ -708,7 +708,7 @@
      },
      "clusterName": {
       "type": "string",
-      "description": "Internal cluster identifier, encoding ring, type, number and Azure region — `prdcm001eau` is production customer-management cluster 001 in East Australia. Useful for correlating with the `x-ms-islandgateway` response header.",
+      "description": "Internal cluster identifier, encoding ring, type, number and Azure region \u2014 `prdcm001eau` is production customer-management cluster 001 in East Australia. Useful for correlating with the `x-ms-islandgateway` response header.",
       "example": "prdcm001eau"
      },
      "geoLongName": {

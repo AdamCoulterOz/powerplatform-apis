@@ -1,6 +1,6 @@
 {
  "info": {
-  "description": "Unofficial. Reverse-engineered from the public Microsoft Learn documentation (learn.microsoft.com), then corrected and extended against two further sources. Recorded first-party traffic is the strongest: operations and schemas carrying x-probe-verified were observed on the wire, and where anything else contradicts them they lose. Microsoft.PowerPlatform.Management — the Kiota-generated client shipped inside the Power Platform CLI, and so a second machine projection of the same internal OpenAPI the Learn pages come from — supplies structure the prose lost: operations and models carrying x-source: pac-cli come from it and have not been seen on the wire. Everything else is docs-derived and unverified, and that is still most of the file. Tags group operations by logical resource; x-ms-namespace records the namespace Microsoft files each under. Note the three servers: many operations are served only from the tenant- or environment-scoped host, whose name is derived from the tenant or environment id. The api-version defaults are observations, not requirements: the service accepts several, the admin centre pins an older one per namespace, and the CLI forces 2024-10-01 on everything."
+  "description": "The Power Platform API is Microsoft's documented control plane for Power Platform administration, organised into namespaces \u2014 environment management, licensing, governance, connectivity, app management, Power Pages, Copilot Studio, analytics and more.\n\nRequests carry an `api-version` query parameter. Alongside the global host, some operations are addressed on **tenant-scoped** (`{tenantId}.tenant.api.powerplatform.com`) or **environment-scoped** (`{environmentId}.environment.api.powerplatform.com`) hosts, where the host itself identifies the scope and the path carries no id.\n\nUnofficial and reverse-engineered \u2014 see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/ppapi) for how it was derived and which parts are verified."
  },
  "servers": [
   {
@@ -9,7 +9,7 @@
   },
   {
    "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-   "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+   "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
    "variables": {
     "tenantIdHead": {
      "default": "000000000000000000000000000000",
@@ -23,7 +23,7 @@
   },
   {
    "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-   "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+   "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
    "variables": {
     "environmentIdHead": {
      "default": "000000000000000000000000000000",
@@ -37,7 +37,7 @@
   }
  ],
  "securityScheme": {
-  "description": "Microsoft Entra ID OAuth2. The audience is `https://api.powerplatform.com` for all three hosts — the tenant- and environment-scoped hosts take the same token as the global one, so there is nothing per-host to acquire. Requesting `.default` yields whatever delegated permissions the client application has been granted; `x-delegated-scopes` lists the granular permissions observed in real first-party tokens. Which scope each operation actually requires was not established — the tokens show what was granted, not what was needed.",
+  "description": "Microsoft Entra ID OAuth2. The audience is `https://api.powerplatform.com` for all three hosts \u2014 the tenant- and environment-scoped hosts take the same token as the global one, so there is nothing per-host to acquire. Requesting `.default` yields whatever delegated permissions the client application has been granted; `x-delegated-scopes` lists the granular permissions observed in real first-party tokens. Which scope each operation actually requires was not established \u2014 the tokens show what was granted, not what was needed.",
   "x-delegated-scopes": [
    "AiFlows.Ai.Execute",
    "AiFlows.Ai.Write",
@@ -137,7 +137,7 @@
    "description": "The regional service cluster that serves a tenant or an environment. Its name appears in the `x-ms-gateway-clusters` response header on every call and identifies which stamp, geography and release ring the caller is talking to."
   },
   "Copilot Governance Setting": {
-   "description": "A single tenant- or environment-level consent switch for a generative AI capability — typically whether a named model provider may be used as a subprocessor. Each setting carries its own admin-centre presentation, the rule that backs it and the effective value."
+   "description": "A single tenant- or environment-level consent switch for a generative AI capability \u2014 typically whether a named model provider may be used as a subprocessor. Each setting carries its own admin-centre presentation, the rule that backs it and the effective value."
   },
   "Feature Gate": {
    "description": "A named feature flag as evaluated for the caller or the environment. Read-only: the platform decides the value and reports where it came from."
@@ -275,7 +275,7 @@
    "summary": "List",
    "notes": [
     "The environment-scoped host serves the same list at `/connectivity/connectors`. Undocumented query options observed there: `$filter` on `environment` and `apiCurationName` (e.g. `PowerAppsClients`), `$expand=api`, and `showApisWithToS` to include connectors that require accepting terms of service.",
-    "The full catalogue is large — 1,563 connectors in one recorded response — and arrives in a single body with no `nextLink`."
+    "The full catalogue is large \u2014 1,563 connectors in one recorded response \u2014 and arrives in a single body with no `nextLink`."
    ]
   },
   "copilotstudio/agent-channels/download-agent-channel-manifest": {
@@ -362,7 +362,7 @@
     "Adds a single environment (the path environmentId) to the group; there is no whole-list replace. The environment must already be a Managed Environment. The REST endpoint does not auto-upgrade it (the admin center does), and an unmanaged environment returns 400 InputValidationError.",
     "The success response is 202 Accepted with an undocumented Location header (shown below) pointing at the group operation to poll; see [Read Operation](#/operations/environmentmanagement_getEnvironmentGroupOperation). No Operation-Location or azure-asyncoperation header is sent.",
     "Membership is recorded on the environment record (its environmentGroupId), not as a members collection on the group. The 400 body is {error:{code:InputValidationError}}, not the documented ProblemDetails. Both api-version 1 and 2024-10-01 are accepted.",
-    "The admin centre sends `{\"properties\":{\"parentEnvironmentGroup\":{\"id\":\"<groupId>\"}}}` — the group id repeated from the path. The path is authoritative; the body is redundant."
+    "The admin centre sends `{\"properties\":{\"parentEnvironmentGroup\":{\"id\":\"<groupId>\"}}}` \u2014 the group id repeated from the path. The path is authoritative; the body is redundant."
    ],
    "responses": {
     "202": {
@@ -431,7 +431,7 @@
    },
    "notes": [
     "A freshly created group returns only `id`, `displayName`, `description`, `createdTime` and `createdBy`; `parentGroupId`, `childrenGroupIds`, `lastModifiedBy` and `lastModifiedTime` are omitted rather than null until they apply.",
-    "`createdBy` is the trimmed principal — `id` and `type` only — not the full principal the docs model."
+    "`createdBy` is the trimmed principal \u2014 `id` and `type` only \u2014 not the full principal the docs model."
    ]
   },
   "environmentmanagement/environment-groups/get-environment-group-operation": {
@@ -557,7 +557,7 @@
     "A setting that has never been set comes back explicitly `null` rather than being omitted, so an entry in `objectResult` is not evidence that the setting has a value.",
     "Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host.",
     {
-     "note": "The documented value is accepted here after all: Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) forces `api-version=2024-10-01` onto every request it makes, overwriting whatever the caller set, and it calls this operation. So `1` is what the admin centre happens to send, not what the service requires — read the recorded defaults throughout this spec as observations of one client, not as a contract.",
+     "note": "The documented value is accepted here after all: Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) forces `api-version=2024-10-01` onto every request it makes, overwriting whatever the caller set, and it calls this operation. So `1` is what the admin centre happens to send, not what the service requires \u2014 read the recorded defaults throughout this spec as observations of one client, not as a contract.",
      "source": "pac-cli"
     }
    ],
@@ -583,7 +583,7 @@
      }
     },
     "412": {
-     "description": "A precondition failed — the settings moved on from the state the request was built against. Re-read and retry rather than forcing.",
+     "description": "A precondition failed \u2014 the settings moved on from the state the request was built against. Re-read and retry rather than forcing.",
      "schema": {
       "$ref": "OperationResponse"
      }
@@ -759,7 +759,7 @@
     }
    },
    "notes": [
-    "A group with no rule set returns 204 with no body, as documented — the common case for a newly created group. Do not treat it as an error."
+    "A group with no rule set returns 204 with no body, as documented \u2014 the common case for a newly created group. Do not treat it as an error."
    ],
    "responses": {
     "204": {
@@ -779,7 +779,7 @@
     }
    },
    "notes": [
-    "With no tenant rule sets configured the body is an empty object `{}` — not `{\"value\":[]}`. Callers must treat a missing `value` as the empty list."
+    "With no tenant rule sets configured the body is an empty object `{}` \u2014 not `{\"value\":[]}`. Callers must treat a missing `value` as the empty list."
    ]
   },
   "governance/rule-sets/update-rule-set": {
@@ -1158,7 +1158,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -1172,7 +1172,7 @@
     }
    ],
    "notes": [
-    "Found in the pac CLI's `advisor` module (pac CLI 2.11.2), which is gated behind the `ModuleAdvisor` feature flag and absent from the CLI's own published command manifest. It is also absent from Microsoft.PowerPlatform.Management, the generated client that covers the rest of this namespace — so the released internal OpenAPI does not describe it yet. Treat it as preview surface that can change or disappear."
+    "Found in the pac CLI's `advisor` module (pac CLI 2.11.2), which is gated behind the `ModuleAdvisor` feature flag and absent from the CLI's own published command manifest. It is also absent from Microsoft.PowerPlatform.Management, the generated client that covers the rest of this namespace \u2014 so the released internal OpenAPI does not describe it yet. Treat it as preview surface that can change or disappear."
    ],
    "x-ms-preview": true
   },
@@ -1182,11 +1182,11 @@
     "Connection"
    ],
    "summary": "List (Environment Host)",
-   "description": "Lists connections in the environment the host names — the same resource as [List](#/operations/connectivity_listConnections), without the `/environments/{environmentId}` segment.",
+   "description": "Lists connections in the environment the host names \u2014 the same resource as [List](#/operations/connectivity_listConnections), without the `/environments/{environmentId}` segment.",
    "servers": [
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -1227,7 +1227,7 @@
      "schema": {
       "type": "string"
      },
-     "description": "`api` inlines the whole connector definition on each connection, which is large — prefer a separate connector read if you only need its display name.",
+     "description": "`api` inlines the whole connector definition on each connection, which is large \u2014 prefer a separate connector read if you only need its display name.",
      "example": "api"
     }
    ],
@@ -1252,11 +1252,11 @@
     "Connector"
    ],
    "summary": "List (Environment Host)",
-   "description": "Lists connectors available in the environment the host names. The full catalogue is large — 1,563 entries in one recorded response, several megabytes — and arrives in a single body with no `nextLink`, so filter rather than paging.",
+   "description": "Lists connectors available in the environment the host names. The full catalogue is large \u2014 1,563 entries in one recorded response, several megabytes \u2014 and arrives in a single body with no `nextLink`, so filter rather than paging.",
    "servers": [
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -1287,7 +1287,7 @@
      "schema": {
       "type": "string"
      },
-     "description": "OData filter. `apiCurationName` narrows to a curated set — `PowerAppsClients` is the set the maker portal offers.",
+     "description": "OData filter. `apiCurationName` narrows to a curated set \u2014 `PowerAppsClients` is the set the maker portal offers.",
      "example": "environment eq '00000000-0000-0000-0000-000000000000' and apiCurationName eq 'PowerAppsClients'"
     },
     {
@@ -1334,7 +1334,7 @@
    "servers": [
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -1399,11 +1399,11 @@
     "Copilot Governance Setting"
    ],
    "summary": "Read",
-   "description": "Reads one generative AI consent switch for the environment the host names, with everything needed to render and interpret it: the effective `value`, the `defaultValue` that applies when nothing is set, whether the toggle is locked (`isDisabled`) and why, and the rule whose inputs actually write it. To change a setting, write the rule inputs named in `rule.ruleInputs` — this resource is read-only.",
+   "description": "Reads one generative AI consent switch for the environment the host names, with everything needed to render and interpret it: the effective `value`, the `defaultValue` that applies when nothing is set, whether the toggle is locked (`isDisabled`) and why, and the rule whose inputs actually write it. To change a setting, write the rule inputs named in `rule.ruleInputs` \u2014 this resource is read-only.",
    "servers": [
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -1466,7 +1466,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -1480,7 +1480,7 @@
     },
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -1530,7 +1530,7 @@
    "servers": [
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -1586,7 +1586,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -1629,7 +1629,7 @@
       "type": "boolean",
       "default": false
      },
-     "description": "Include the tenant-authored content carried by the policies — the maker onboarding message and similar — rather than just their structure."
+     "description": "Include the tenant-authored content carried by the policies \u2014 the maker onboarding message and similar \u2014 rather than just their structure."
     }
    ],
    "responses": {
@@ -1657,7 +1657,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -1724,11 +1724,11 @@
     "Rule Set"
    ],
    "summary": "UI Configurations List",
-   "description": "Lists every rule set the tenant may configure, with the settings each one writes and how the admin centre renders them. Reading this is the practical way to discover a rule set's input names, their types and their defaults — none of which the rule set resource itself exposes.",
+   "description": "Lists every rule set the tenant may configure, with the settings each one writes and how the admin centre renders them. Reading this is the practical way to discover a rule set's input names, their types and their defaults \u2014 none of which the rule set resource itself exposes.",
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -1768,7 +1768,7 @@
    "x-ms-namespace": "governance/rule-sets",
    "x-probe-verified": true,
    "notes": [
-    "The recorded response described six rule sets — `CodeAppsFeature`, `CopilotStudioCodeInterpreter`, `DynamicsProjectIntegration`, `CopilotComputerUse`, `CopilotComputerUseAccessControl` and `CopilotStudioExternalModels` — and their property names are the PascalCase spellings the environment management settings entity uses on the wire."
+    "The recorded response described six rule sets \u2014 `CodeAppsFeature`, `CopilotStudioCodeInterpreter`, `DynamicsProjectIntegration`, `CopilotComputerUse`, `CopilotComputerUseAccessControl` and `CopilotStudioExternalModels` \u2014 and their property names are the PascalCase spellings the environment management settings entity uses on the wire."
    ]
   },
   "GET /governance/tenantRuleBasedPolicies": {
@@ -1781,7 +1781,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -1827,11 +1827,11 @@
     "Canvas App"
    ],
    "summary": "List (Environment Host)",
-   "description": "Lists apps in the environment the host names — the maker-facing form of [AdminApps Read](#/operations/powerapps_getAdminApps). The environment is implied by the host but the portal still repeats it in `$filter`; both were sent on every recorded call.",
+   "description": "Lists apps in the environment the host names \u2014 the maker-facing form of [AdminApps Read](#/operations/powerapps_getAdminApps). The environment is implied by the host but the portal still repeats it in `$filter`; both were sent on every recorded call.",
    "servers": [
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -1910,7 +1910,7 @@
    "servers": [
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -1990,7 +1990,7 @@
    "servers": [
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -2060,7 +2060,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -2140,7 +2140,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -2154,7 +2154,7 @@
     },
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -2204,7 +2204,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -2254,7 +2254,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -2310,11 +2310,11 @@
     "Service Plan"
    ],
    "summary": "List",
-   "description": "Lists the service plans assigned to the calling user, each with the policy limits it grants. Effective entitlement is the union across plans, not the first match — `licensePriority` only decides which plan usage is attributed to.",
+   "description": "Lists the service plans assigned to the calling user, each with the policy limits it grants. Effective entitlement is the union across plans, not the first match \u2014 `licensePriority` only decides which plan usage is attributed to.",
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -2364,7 +2364,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -2414,7 +2414,7 @@
    "x-ms-namespace": "powerapps/user-settings",
    "x-probe-verified": true,
    "notes": [
-    "The maker portal polls `modernLeftNavToolbox_prod` continuously — 104 reads in a single recorded session — so treat it as hot and cache it client-side."
+    "The maker portal polls `modernLeftNavToolbox_prod` continuously \u2014 104 reads in a single recorded session \u2014 so treat it as hot and cache it client-side."
    ]
   },
   "GET /usermanagement/environments/{environmentId}/plugins": {
@@ -2427,7 +2427,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -2491,7 +2491,7 @@
     "Advisor Chat"
    ],
    "summary": "Message Send",
-   "description": "Asks the Power Platform advisor a question about the tenant and returns its answer. Omit `conversationId` to start a new conversation; the response carries the id the service assigned, and passing it back on the next request continues the same thread with its history intact. Answers are generated, so they take seconds to minutes rather than milliseconds — pac allows five minutes before giving up, and a client should budget similarly rather than using a default HTTP timeout.\n\nThis is not the solution-checker advisor at `advisor.powerapps.com`, and it is unrelated to the advisor recommendations elsewhere in this namespace: those return structured findings about resources, this returns prose.",
+   "description": "Asks the Power Platform advisor a question about the tenant and returns its answer. Omit `conversationId` to start a new conversation; the response carries the id the service assigned, and passing it back on the next request continues the same thread with its history intact. Answers are generated, so they take seconds to minutes rather than milliseconds \u2014 pac allows five minutes before giving up, and a client should budget similarly rather than using a default HTTP timeout.\n\nThis is not the solution-checker advisor at `advisor.powerapps.com`, and it is unrelated to the advisor recommendations elsewhere in this namespace: those return structured findings about resources, this returns prose.",
    "parameters": [
     {
      "name": "api-version",
@@ -2521,7 +2521,7 @@
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -2545,7 +2545,7 @@
     }
    },
    "notes": [
-    "Found in the pac CLI's `advisor` module (pac CLI 2.11.2), which is gated behind the `ModuleAdvisor` feature flag and absent from the CLI's own published command manifest. It is also absent from Microsoft.PowerPlatform.Management, the generated client that covers the rest of this namespace — so the released internal OpenAPI does not describe it yet. Treat it as preview surface that can change or disappear."
+    "Found in the pac CLI's `advisor` module (pac CLI 2.11.2), which is gated behind the `ModuleAdvisor` feature flag and absent from the CLI's own published command manifest. It is also absent from Microsoft.PowerPlatform.Management, the generated client that covers the rest of this namespace \u2014 so the released internal OpenAPI does not describe it yet. Treat it as preview surface that can change or disappear."
    ],
    "x-ms-preview": true
   },
@@ -2633,7 +2633,7 @@
     "Environment Operations"
    ],
    "summary": "Enable",
-   "description": "Turns the environment on. The inverse of Disable. It brings back an environment that was switched off, not one that was deleted — a deleted environment is recovered through the recover operation instead. The reason on the request body is recorded against the environment, so supply something a later administrator will understand.",
+   "description": "Turns the environment on. The inverse of Disable. It brings back an environment that was switched off, not one that was deleted \u2014 a deleted environment is recovered through the recover operation instead. The reason on the request body is recorded against the environment, so supply something a later administrator will understand.",
    "parameters": [
     {
      "name": "environmentId",
@@ -2711,7 +2711,7 @@
     "Environment Operations"
    ],
    "summary": "Sku Update",
-   "description": "Moves the environment to a different SKU — for example promoting a Sandbox to Production, or converting a Trial. The change is a lifecycle operation, not a settings edit: it runs asynchronously and the result reports through the returned operation. Which transitions are permitted depends on the tenant's licences and capacity, and neither the Learn reference nor the client enumerates them; send the request with ValidateOnly=true first to find out without committing.",
+   "description": "Moves the environment to a different SKU \u2014 for example promoting a Sandbox to Production, or converting a Trial. The change is a lifecycle operation, not a settings edit: it runs asynchronously and the result reports through the returned operation. Which transitions are permitted depends on the tenant's licences and capacity, and neither the Learn reference nor the client enumerates them; send the request with ValidateOnly=true first to find out without committing.",
    "parameters": [
     {
      "name": "environmentId",
@@ -2920,7 +2920,7 @@
    "servers": [
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -2988,11 +2988,11 @@
     "Notification"
    ],
    "summary": "Channel Subscribe",
-   "description": "Mints a short-lived Azure Web PubSub client credential so the caller can receive notifications over a WebSocket instead of polling. The returned URL already carries the access token, so it is bearer material: do not log it or hand it on. Re-subscribe before it expires — roughly twelve hours in the recorded response — to stay connected.",
+   "description": "Mints a short-lived Azure Web PubSub client credential so the caller can receive notifications over a WebSocket instead of polling. The returned URL already carries the access token, so it is bearer material: do not log it or hand it on. Re-subscribe before it expires \u2014 roughly twelve hours in the recorded response \u2014 to stay connected.",
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -3041,11 +3041,11 @@
     "Service Plan"
    ],
    "summary": "Enrolment Create",
-   "description": "Enrols the calling user in Power Apps and returns their first-run state: the tenant's default environment, the directory domains, and the plans that do and no longer entitle them. It has side effects — by default it will provision the caller a developer environment — so pass `action=skipDevEnvironment` when you only want to read the state. The body is an empty JSON object.",
+   "description": "Enrols the calling user in Power Apps and returns their first-run state: the tenant's default environment, the directory domains, and the plans that do and no longer entitle them. It has side effects \u2014 by default it will provision the caller a developer environment \u2014 so pass `action=skipDevEnvironment` when you only want to read the state. The body is an empty JSON object.",
    "servers": [
     {
      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone \u2014 there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
      "variables": {
       "tenantIdHead": {
        "default": "000000000000000000000000000000",
@@ -3103,11 +3103,11 @@
     "Canvas App"
    ],
    "summary": "DLP Policies Evaluate",
-   "description": "Evaluates an app document against the environment's data loss prevention policies without saving it. The app is sent whole rather than by id, which is what makes this usable on an unsaved draft — the studio calls it on every save attempt to decide whether to block. A non-compliant verdict comes back as 200 with `status: NonCompliant`, not as an error status.",
+   "description": "Evaluates an app document against the environment's data loss prevention policies without saving it. The app is sent whole rather than by id, which is what makes this usable on an unsaved draft \u2014 the studio calls it on every save attempt to decide whether to block. A non-compliant verdict comes back as 200 with `status: NonCompliant`, not as an error status.",
    "servers": [
     {
      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
-     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment \u2014 `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
      "variables": {
       "environmentIdHead": {
        "default": "000000000000000000000000000000",
@@ -3177,7 +3177,7 @@
    ]
   },
   "EnvironmentManagementSetting": {
-   "description": "One environment's management settings, one property per setting. Every property name is PascalCase on the wire — `Id`, `PowerApps_AllowCodeApps` — and `$select` matches it case-sensitively. The docs render each name with a lowercased leading letter; the names below are the wire spelling where recorded traffic established it. A setting that has never been set is returned as an explicit `null`.",
+   "description": "One environment's management settings, one property per setting. Every property name is PascalCase on the wire \u2014 `Id`, `PowerApps_AllowCodeApps` \u2014 and `$select` matches it case-sensitively. The docs render each name with a lowercased leading letter; the names below are the wire spelling where recorded traffic established it. A setting that has never been set is returned as an explicit `null`.",
    "x-probe-verified": true,
    "renameProperties": {
     "id": "Id",
@@ -3197,7 +3197,7 @@
     "PowerApps_AllowCodeApps": {
      "type": "boolean",
      "nullable": true,
-     "description": "Whether makers may run code apps — apps authored outside Power Apps and brought in to run on the platform. Turning it off stops existing code apps running. `null` until the setting has ever been set."
+     "description": "Whether makers may run code apps \u2014 apps authored outside Power Apps and brought in to run on the platform. Turning it off stops existing code apps running. `null` until the setting has ever been set."
     },
     "PowerApps_EnableGenerativePages": {
      "type": "boolean",
@@ -3207,7 +3207,7 @@
     "CopilotStudio_ComputerUseEnabled": {
      "type": "boolean",
      "nullable": true,
-     "description": "Whether Copilot Studio agents may use computer use — driving another system's graphical interface with a vision model. Named as a rule input by the rule-set UI configuration; absent from the docs."
+     "description": "Whether Copilot Studio agents may use computer use \u2014 driving another system's graphical interface with a vision model. Named as a rule input by the rule-set UI configuration; absent from the docs."
     },
     "CopilotStudio_ComputerUseDedicatedMachines": {
      "type": "boolean",
@@ -3228,7 +3228,7 @@
    "notes": [
     {
      "source": "pac-cli",
-     "note": "The casing split is not a documentation bug. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) independently spells these properties camelCase (`powerApps_AllowCodeApps`, `id`) exactly as the docs do, and Kiota preserves wire casing elsewhere in the same assembly — so Microsoft's internal OpenAPI really does declare them camelCase, and the running service really does return PascalCase. The wire spelling is the one kept here, because it is the one `$select` matches."
+     "note": "The casing split is not a documentation bug. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) independently spells these properties camelCase (`powerApps_AllowCodeApps`, `id`) exactly as the docs do, and Kiota preserves wire casing elsewhere in the same assembly \u2014 so Microsoft's internal OpenAPI really does declare them camelCase, and the running service really does return PascalCase. The wire spelling is the one kept here, because it is the one `$select` matches."
     }
    ]
   },
@@ -3558,7 +3558,7 @@
     },
     "conversationId": {
      "type": "string",
-     "description": "The conversation this answer belongs to. Send it back to continue the thread — on a new conversation this is the id the service just assigned."
+     "description": "The conversation this answer belongs to. Send it back to continue the thread \u2014 on a new conversation this is the id the service just assigned."
     }
    },
    "x-source": "pac-cli"
@@ -3573,7 +3573,7 @@
     },
     "conversationId": {
      "type": "string",
-     "description": "The conversation to continue. Omit it to start a new one — the response then carries the id the service assigned."
+     "description": "The conversation to continue. Omit it to start a new one \u2014 the response then carries the id the service assigned."
     }
    },
    "x-source": "pac-cli"
@@ -3594,7 +3594,7 @@
   },
   "AppDlpEvaluationRequest": {
    "type": "object",
-   "description": "The app to evaluate, sent as the app document rather than by id — the point is to evaluate a draft before it is saved. Only the connector-bearing parts matter: `databaseReferences` and the app's connection references drive the verdict. Which fields are genuinely required was not established: every recorded call sent the whole document.",
+   "description": "The app to evaluate, sent as the app document rather than by id \u2014 the point is to evaluate a draft before it is saved. Only the connector-bearing parts matter: `databaseReferences` and the app's connection references drive the verdict. Which fields are genuinely required was not established: every recorded call sent the whole document.",
    "properties": {
     "appType": {
      "type": "string",
@@ -3696,7 +3696,7 @@
     },
     "violationErrorMessage": {
      "type": "string",
-     "description": "Prose summary. Present and populated even when the app is compliant — it lists the connectors that were considered, and is `\"The app uses the following connectors: .\"` for an app with none. Do not read it as an error."
+     "description": "Prose summary. Present and populated even when the app is compliant \u2014 it lists the connectors that were considered, and is `\"The app uses the following connectors: .\"` for an app with none. Do not read it as an error."
     }
    },
    "x-probe-verified": true
@@ -3792,7 +3792,7 @@
   },
   "AppSessionResponse": {
    "type": "object",
-   "description": "The caller's new session, plus every other session currently open on the app — this is what drives the co-authoring presence indicator and the 'someone else is editing' warning.",
+   "description": "The caller's new session, plus every other session currently open on the app \u2014 this is what drives the co-authoring presence indicator and the 'someone else is editing' warning.",
    "properties": {
     "currentSession": {
      "$ref": "AppSession"
@@ -4174,7 +4174,7 @@
      "$ref": "ActionStatus"
     }
    },
-   "description": "How a connector call ended: its status, its outputs, and — on failure — the error code and whether retrying could help.",
+   "description": "How a connector call ended: its status, its outputs, and \u2014 on failure \u2014 the error code and whether retrying could help.",
    "x-source": "pac-cli"
   },
   "ConnectorActionStartEvent": {
@@ -4311,7 +4311,7 @@
     },
     "invertValue": {
      "type": "boolean",
-     "description": "When true the stored value is the negation of what the admin centre shows — the switch reads as 'block' rather than 'allow'."
+     "description": "When true the stored value is the negation of what the admin centre shows \u2014 the switch reads as 'block' rather than 'allow'."
     },
     "storeResource": {
      "type": "string",
@@ -4320,7 +4320,7 @@
     },
     "isDisabled": {
      "type": "boolean",
-     "description": "Whether the toggle is greyed out. It is set when a higher-level control — typically the Microsoft 365 admin centre — has already decided, and the reason is in `statusMessage`."
+     "description": "Whether the toggle is greyed out. It is set when a higher-level control \u2014 typically the Microsoft 365 admin centre \u2014 has already decided, and the reason is in `statusMessage`."
     },
     "enabledStatus": {
      "type": "string",
@@ -4708,9 +4708,9 @@
    "properties": {
     "url": {
      "type": "string",
-     "description": "WebSocket URL with the access token already embedded in the query string. Treat it as a secret — it authenticates the bearer.",
+     "description": "WebSocket URL with the access token already embedded in the query string. Treat it as a secret \u2014 it authenticates the bearer.",
      "format": "uri",
-     "example": "wss://contoso.webpubsub.azure.com/client/hubs/Notifications?access_token=…"
+     "example": "wss://contoso.webpubsub.azure.com/client/hubs/Notifications?access_token=\u2026"
     },
     "expirationTime": {
      "type": "string",
@@ -4911,7 +4911,7 @@
     },
     "parentEnvironmentGroup": {
      "type": "object",
-     "description": "The environment group the environment belongs to. The all-zeros GUID is the sentinel for 'no group' — the field is present even when the environment is ungrouped.",
+     "description": "The environment group the environment belongs to. The all-zeros GUID is the sentinel for 'no group' \u2014 the field is present even when the environment is ungrouped.",
      "properties": {
       "id": {
        "type": "string",
@@ -4952,7 +4952,7 @@
       },
       "runtime": {
        "type": "object",
-       "description": "Runtime state — this is where an admin-disabled environment shows up.",
+       "description": "Runtime state \u2014 this is where an admin-disabled environment shows up.",
        "properties": {
         "id": {
          "type": "string"
@@ -5105,7 +5105,7 @@
      "additionalProperties": {
       "$ref": "PowerAppsEnvironmentPermission"
      },
-     "description": "What the caller may do here, keyed by permission name (`CreatePowerApp`, `ReadEnvironment`, `DeleteEnvironment`, `SetDLPPolicy`, …). Returned only when the request asks for `$expand=properties.permissions`; a permission the caller lacks is absent rather than false."
+     "description": "What the caller may do here, keyed by permission name (`CreatePowerApp`, `ReadEnvironment`, `DeleteEnvironment`, `SetDLPPolicy`, \u2026). Returned only when the request asks for `$expand=properties.permissions`; a permission the caller lacks is absent rather than false."
     }
    },
    "x-probe-verified": true
@@ -5439,7 +5439,7 @@
     },
     "defaultValue": {
      "type": "string",
-     "description": "Always a string, whatever `type` says — `\"True\"`/`\"False\"` for booleans, `\"\"` for an unset string."
+     "description": "Always a string, whatever `type` says \u2014 `\"True\"`/`\"False\"` for booleans, `\"\"` for an unset string."
     }
    },
    "x-probe-verified": true
@@ -5564,7 +5564,7 @@
       },
       "licensePriority": {
        "type": "integer",
-       "description": "Ordering hint — the lowest number wins when the platform picks one plan to attribute usage to."
+       "description": "Ordering hint \u2014 the lowest number wins when the platform picks one plan to attribute usage to."
       },
       "assignedTime": {
        "type": "string",
@@ -5747,7 +5747,7 @@
      "description": "The table the sub-query reads from."
     }
    },
-   "description": "A nested query — the same table-plus-clauses shape as the top-level request — used as the right-hand side of a join.",
+   "description": "A nested query \u2014 the same table-plus-clauses shape as the top-level request \u2014 used as the right-hand side of a join.",
    "x-source": "pac-cli"
   },
   "SummarizeClause": {
@@ -5896,7 +5896,7 @@
   },
   "WebApplicationFirewallStatus": {
    "type": "string",
-   "description": "How far a Power Pages website's web application firewall has got in being provisioned. `None` means no firewall; `Created` is the only state in which it is actually filtering. The two failure states are terminal — retry the enable or disable rather than waiting.",
+   "description": "How far a Power Pages website's web application firewall has got in being provisioned. `None` means no firewall; `Created` is the only state in which it is actually filtering. The two failure states are terminal \u2014 retry the enable or disable rather than waiting.",
    "enum": [
     "None",
     "Creating",

@@ -5,24 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Power Platform APIs</title>
   <meta name="description" content="Browsable OpenAPI reference for the Power Platform admin APIs, reverse-engineered from the public Microsoft Learn documentation.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stoplight/elements@9.0.24/styles.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@stoplight/elements@9.0.24/web-components.min.js"></script>
   <style>
+    :root { --hdr: 52px; }
     html, body { margin: 0; height: 100%; }
     body { display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     header {
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-      padding: 9px 16px; border-bottom: 1px solid #e2e2e4; background: #f6f6f7; flex: 0 0 auto;
+      padding: 9px 16px; border-bottom: 1px solid #e2e2e4; background: #f6f6f7; flex: 0 0 auto; z-index: 40;
     }
     header h1 { font-size: 15px; margin: 0; font-weight: 600; }
     header select { font-size: 14px; padding: 4px 8px; border-radius: 6px; border: 1px solid #c4c4c8; background: #fff; }
-    header .links { margin-left: auto; font-size: 13px; display: flex; gap: 14px; }
+    header .links { margin-left: auto; font-size: 13px; display: flex; gap: 14px; align-items: center; }
     header a { color: #0057b8; text-decoration: none; }
     header a:hover { text-decoration: underline; }
-    #app { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+    #nav-toggle {
+      display: none; margin-left: auto; order: -1; border: 1px solid #c4c4c8; background: #fff;
+      border-radius: 6px; width: 34px; height: 30px; font-size: 16px; cursor: pointer; line-height: 1;
+    }
+    #app { flex: 1 1 auto; min-height: 0; position: relative; }
+    elements-api { display: block; height: 100%; }
     #note { padding: 24px; font-size: 14px; }
+    #scrim { display: none; position: fixed; inset: var(--hdr) 0 0 0; background: rgba(0,0,0,.35); z-index: 29; }
+
+    /* Hide the response-code strip's overlay scrollbar (see earlier fix). */
+    elements-api .sl-stack--horizontal.sl-overflow-x-auto { flex-wrap: wrap; scrollbar-width: none; }
+    elements-api .sl-stack--horizontal.sl-overflow-x-auto::-webkit-scrollbar { display: none; }
+
+    /* --- Responsive layer that Elements' sidebar layout lacks --- */
+    /* Stack the operation's two-column (detail | example) on narrow screens. */
+    @media (max-width: 760px) {
+      elements-api .sl-flex:has(> .sl-w-2\/5) { flex-direction: column; }
+      elements-api .sl-w-2\/5 { width: 100% !important; margin-left: 0 !important; margin-top: 16px; }
+    }
+    /* Collapse the sidebar into a slide-in drawer with a hamburger toggle. */
+    @media (max-width: 900px) {
+      #nav-toggle { display: block; }
+      header .links { margin-left: 0; }
+      elements-api .sl-elements-api > .sl-flex:first-child {
+        position: fixed; top: var(--hdr); left: 0; bottom: 0; width: 300px; max-width: 85vw;
+        z-index: 30; background: #fff; box-shadow: 2px 0 12px rgba(0,0,0,.18);
+        transform: translateX(-100%) !important; transition: transform .2s ease;
+      }
+      body.nav-open elements-api .sl-elements-api > .sl-flex:first-child { transform: translateX(0) !important; }
+      body.nav-open #scrim { display: block; }
+    }
   </style>
 </head>
 <body>
   <header>
+    <button id="nav-toggle" aria-label="Toggle navigation">☰</button>
     <h1>Power Platform APIs</h1>
     <select id="spec-picker" aria-label="Select API"></select>
     <nav class="links">
@@ -32,8 +65,7 @@
     </nav>
   </header>
   <div id="note">Loading spec list…</div>
-  <div id="app"></div>
-  <script src="https://cdn.jsdelivr.net/npm/redoc@2.5.3/bundles/redoc.standalone.js"></script>
+  <div id="app"><div id="scrim"></div></div>
   <script>
     (async () => {
       const note = document.getElementById('note');
@@ -64,26 +96,25 @@
       document.title = current.title;
       note.remove();
 
-      if (!window.Redoc) {
-        const d = document.createElement('div');
-        d.id = 'note';
-        d.innerHTML = 'The spec renderer failed to load from the CDN. The raw spec is at <a href="' +
-          current.url + '">' + current.url + '</a>.';
-        document.getElementById('app').appendChild(d);
-        return;
-      }
-      window.Redoc.init(
-        current.url,
-        {
-          hideDownloadButton: true,
-          expandResponses: '200,201',
-          requiredPropsFirst: true,
-          jsonSampleExpandLevel: 3,
-          hideHostname: false,
-          theme: { sidebar: { width: '270px' } }
-        },
-        document.getElementById('app')
-      );
+      // keep the drawer offset in sync with the (wrapping) header height
+      const header = document.querySelector('header');
+      const syncHdr = () => document.documentElement.style.setProperty('--hdr', header.offsetHeight + 'px');
+      syncHdr();
+      addEventListener('resize', syncHdr);
+
+      // sidebar drawer toggle
+      const closeNav = () => document.body.classList.remove('nav-open');
+      document.getElementById('nav-toggle').addEventListener('click', () => document.body.classList.toggle('nav-open'));
+      document.getElementById('scrim').addEventListener('click', closeNav);
+
+      const api = document.createElement('elements-api');
+      api.setAttribute('apiDescriptionUrl', current.url);
+      api.setAttribute('router', 'hash');
+      api.setAttribute('layout', 'sidebar');
+      api.setAttribute('hideTryIt', 'true');
+      // close the drawer after picking something from the nav
+      api.addEventListener('click', (e) => { if (e.target.closest('a')) closeNav(); });
+      document.getElementById('app').appendChild(api);
     })();
   </script>
 </body>

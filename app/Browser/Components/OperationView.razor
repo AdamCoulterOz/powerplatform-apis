@@ -17,16 +17,14 @@
 
     @if (Operation.IsPreview || Operation.DocsUrl is not null)
     {
-        <div class="badge-row">
+        <div class="cluster cluster--titled">
             @if (Operation.IsPreview)
             {
-                <span class="keel-badge keel-badge--signal">
-                    <span class="keel-badge__dot"></span> Preview
-                </span>
+                <KeelBadge Tone="BadgeTone.Signal" Dot="true">Preview</KeelBadge>
             }
             @if (Operation.DocsUrl is { } docs)
             {
-                <a class="keel-badge badge--learn" href="@docs" target="_blank" rel="noopener"
+                <a class="keel-badge keel-badge--neutral badge-link" href="@docs" target="_blank" rel="noopener"
                    title="Read this operation on Microsoft Learn">
                     <svg class="badge__ms" viewBox="0 0 23 23" aria-hidden="true">
                         <rect x="1" y="1" width="10" height="10" fill="#F25022" />
@@ -46,10 +44,10 @@
                 @if (Operation.Notes.Count > 0)
                 {
                     <KeelCallout Tone="CalloutTone.Info" Title="Verified against the live API" class="section">
-                        <ul style="margin:var(--s-2) 0 0;padding-left:1.15em">
+                        <ul style="margin:var(--space-3) 0 0;padding-left:1.15em">
                             @foreach (var note in Operation.Notes)
                             {
-                                <li style="margin:var(--s-2) 0">@((MarkupString)Markdown.ToHtml(note))</li>
+                                <li style="margin:var(--space-3) 0">@((MarkupString)Markdown.ToHtml(note))</li>
                             }
                         </ul>
                     </KeelCallout>
@@ -71,12 +69,12 @@
                                 Body
                                 @if (Operation.RequestBody.MediaType is { } mt)
                                 {
-                                    <span class="prop__meta" style="margin-left:var(--s-2)">@mt</span>
+                                    <span class="prop__meta" style="margin-left:var(--space-3)">@mt</span>
                                 }
                             </h3>
                             @if (Operation.RequestBody.Description is { } bd)
                             {
-                                <p class="prop__desc" style="margin-bottom:var(--s-3)">@((MarkupString)Markdown.ToHtml(bd))</p>
+                                <p class="prop__desc" style="margin-bottom:var(--space-4)">@((MarkupString)Markdown.ToHtml(bd))</p>
                             }
                             <SchemaTree Schema="bodySchema" OnNavigate="OnNavigate" />
                         }
@@ -87,20 +85,15 @@
                 {
                     <section class="section">
                         <h2 class="section__title">Responses</h2>
-                        <div class="status-row" role="tablist">
-                            @foreach (var r in Operation.Responses)
-                            {
-                                <button type="button" class="status @StatusClass(r)" role="tab"
-                                        aria-selected="@(r.Code == SelectedResponse?.Code ? "true" : "false")"
-                                        @onclick="() => _selected = r.Code">@r.Code</button>
-                            }
-                        </div>
+                        <KeelSegmented TValue="string" class="cluster--titled" Size="Size.Sm"
+                                       Options="ResponseOptions" Value="@SelectedResponse?.Code"
+                                       ValueChanged="@(code => _selected = code)" />
 
                         @if (SelectedResponse is { } resp)
                         {
                             @if (resp.Description is { } rd)
                             {
-                                <p class="prop__desc" style="margin-bottom:var(--s-3)">@rd</p>
+                                <p class="prop__desc" style="margin-bottom:var(--space-4)">@rd</p>
                             }
 
                             @if (resp.Headers.Count > 0)
@@ -169,8 +162,13 @@
 
     protected override void OnParametersSet() => _selected = null;
 
-    private static string StatusClass(Response r) =>
-        r.IsSuccess ? "status--ok" : r.IsError ? "status--err" : "status--other";
+    // KEEL GAP: reported. KeelSegmented has no per-option tone, so a 2xx and a
+    // 4xx read the same here. The code itself still carries the meaning, which
+    // is why this is a plain segmented control rather than a hand-rolled one.
+    private IReadOnlyList<KeelSegmented<string>.Option> ResponseOptions =>
+        Operation.Responses
+            .Select(r => new KeelSegmented<string>.Option(r.Code, r.Code))
+            .ToList();
 
     // Request and response as HTTP files: the request line, the headers, then a
     // body rendered for its own content type. That is the shape the API speaks,

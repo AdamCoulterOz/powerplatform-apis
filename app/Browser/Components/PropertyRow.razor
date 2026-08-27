@@ -100,10 +100,10 @@
 
         @if (EnumValues.Count > 0)
         {
-            <div class="chips">
+            <div class="cluster cluster--tight">
                 @foreach (var v in EnumValues)
                 {
-                    <span class="chip chip--enum">@v</span>
+                    <KeelTag Mono="true">@v</KeelTag>
                 }
             </div>
         }
@@ -113,10 +113,10 @@
         }
         @if (constraints.Count > 0)
         {
-            <div class="chips">
+            <div class="cluster cluster--tight">
                 @foreach (var c in constraints)
                 {
-                    <span class="chip">@c</span>
+                    <KeelTag Mono="true">@c</KeelTag>
                 }
             </div>
         }

@@ -1,28 +1,23 @@
 /* Layout for the API browser.
+
+   This file is meant to stay small. keel owns how controls look; this file only
+   arranges them. Anything here that styles a control rather than placing one is
+   a keel gap that has not been reported yet, and the two that remain are marked
+   as such below.
+
    Responsive-first: the base styles are the narrow-screen layout and every
    wider arrangement is added on top. The operation body splits on a CONTAINER
    query, not a viewport query, so the detail and sample panes respond to the
-   space they actually have (with the nav open or closed, on any screen) rather
+   space they actually have (with the rail open or closed, on any screen) rather
    than to the window. Every grid track is minmax(0, ...) so a long code line
    can never force a column to overflow its share. */
 
 :root {
-  /* spacing scale */
-  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
-  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
-
-  --nav-w: 300px;
+  /* Layout constants for this app's shell. Spacing, colour, radius and type all
+     come from keel; these are the three measurements keel has no opinion on. */
+  --rail-w: 300px;
   --header-h: 56px;
   --content-max: 1120px;
-
-  --mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-}
-
-/* Fira Code everywhere code appears, with its programming ligatures on.
-   keel already does this for .keel-cb; these are the other mono surfaces. */
-.endpoint__path, .prop__name, .prop__type, .chip, code {
-  font-family: var(--mono);
-  font-feature-settings: "liga" 1, "calt" 1;
 }
 
 * { box-sizing: border-box; }
@@ -45,73 +40,46 @@ html, body {
   min-height: 100dvh;
 }
 
-.shell__header { grid-area: header; }
+.shell__header { grid-area: header; position: sticky; top: 0; z-index: 40; }
 .shell__main   { grid-area: main; min-width: 0; }
 
-/* ---------------------------------------------------------------- header - */
-
-.appbar {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  height: var(--header-h);
-  padding: 0 var(--s-4);
-  background: var(--surface-overlay);
-  backdrop-filter: saturate(180%) blur(12px);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.appbar__brand {
+/* The brand is this app's own identity, so its type is set here. */
+.brand {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   letter-spacing: -0.01em;
   white-space: nowrap;
   color: var(--text-primary);
   text-decoration: none;
 }
 
-/* the brand shortens rather than wrapping the bar onto two lines */
-.appbar__brand-long { display: none; }
+/* The brand shortens rather than wrapping the bar onto two lines. */
+.brand__long { display: none; }
 @media (min-width: 560px) {
-  .appbar__brand-short { display: none; }
-  .appbar__brand-long { display: inline; }
+  .brand__short { display: none; }
+  .brand__long { display: inline; }
 }
 
-.appbar__spacer { flex: 1 1 auto; }
+/* A select fills its container by default, which in a bar means it eats the
+   whole row. Cap it at the longest API title and let it shrink below that. */
+.appbar__select { max-width: min(46vw, 17rem); }
 
-.appbar__select {
-  font: inherit;
-  font-size: 13px;
-  padding: var(--s-1) var(--s-2);
-  border-radius: var(--radius-md, 10px);
-  border: 1px solid var(--border-default);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  max-width: 46vw;
-}
+/* Everything after the brand sits to the right of the bar. */
+.appbar .keel-nav__links { margin-left: auto; }
 
-.appbar__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px; height: 34px;
-  border-radius: var(--radius-md, 10px);
-  border: 1px solid transparent;
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: color var(--dur-fast, .14s) var(--ease-out), background var(--dur-fast, .14s) var(--ease-out);
-}
-.appbar__icon:hover { color: var(--text-primary); background: var(--surface-sunken); }
-.appbar__icon svg { width: 20px; height: 20px; }
+/* The rail is a drawer below this width. 880px is keel's Size.Lg, which is the
+   width KeelNavBar collapses at, so the burger and the rail change together
+   without this app inventing a breakpoint of its own. */
+@media (min-width: 880px) { .appbar__rail-toggle { display: none; } }
 
-/* the nav toggle only exists while the nav is a drawer */
-@media (min-width: 1000px) { .appbar__nav-toggle { display: none; } }
+/* ----------------------------------------------------------------- rail -- */
 
-/* ------------------------------------------------------------------ nav -- */
+/* KEEL GAP: reported. keel's navigation vocabulary (NavBar, NavDrawer,
+   NavMenu) is all top-of-page, so this persistent left rail is hand-rolled:
+   grouped and collapsible items, a current item, a count per group, and the
+   same tree becoming the drawer contents on narrow screens. Below the collapse
+   width the tree is handed to KeelNavDrawer, which is why only the wide case is
+   styled here. Replace the whole block when keel grows a rail. */
 
 .layout {
   display: grid;
@@ -119,94 +87,87 @@ html, body {
   min-height: 0;
 }
 
-.nav {
-  position: fixed;
-  inset: var(--header-h) auto 0 0;
-  width: min(var(--nav-w), 86vw);
-  z-index: 35;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface-subtle);
-  border-right: 1px solid var(--border-subtle);
-  transform: translateX(-100%);
-  transition: transform .2s var(--ease-out, ease);
-  overscroll-behavior: contain;
-}
-.nav[data-open="true"] { transform: translateX(0); }
+.rail { display: none; }
 
-.nav__scrim {
-  position: fixed;
-  inset: var(--header-h) 0 0 0;
-  z-index: 34;
-  background: rgba(10, 20, 48, .38);
-  border: 0;
-  padding: 0;
-}
-
-.nav__body { flex: 1 1 auto; overflow-y: auto; padding: var(--s-3) 0 var(--s-6); }
-
-/* wide: the drawer becomes a column in the grid and the scrim disappears */
-@media (min-width: 1000px) {
-  .layout { grid-template-columns: var(--nav-w) minmax(0, 1fr); }
-  .nav {
+@media (min-width: 880px) {
+  .layout { grid-template-columns: var(--rail-w) minmax(0, 1fr); }
+  .rail {
+    display: flex;
+    flex-direction: column;
     position: sticky;
     top: var(--header-h);
     height: calc(100dvh - var(--header-h));
-    width: auto;
-    transform: none;
-    transition: none;
+    background: var(--surface-subtle);
+    border-right: 1px solid var(--border-subtle);
+    overscroll-behavior: contain;
   }
-  .nav__scrim { display: none; }
 }
 
-.nav__search {
-  padding: var(--s-3) var(--s-4);
+.rail__search {
+  padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--border-subtle);
 }
-.nav__search input {
-  width: 100%;
-  font: inherit;
-  font-size: 13px;
-  padding: var(--s-2) var(--s-3);
-  border-radius: var(--radius-md, 10px);
-  border: 1px solid var(--border-default);
-  background: var(--surface-card);
-  color: var(--text-primary);
-}
-.nav__search input:focus { outline: none; box-shadow: var(--ring); border-color: var(--accent); }
 
-.nav__group { border: 0; }
-.nav__group-btn {
+.rail__body { flex: 1 1 auto; overflow-y: auto; padding: var(--space-4) 0 var(--space-8); }
+
+/* Inside the drawer the tree is the whole content, so it scrolls on its own
+   and needs no rail chrome. */
+.rail__drawer-body { overflow-y: auto; }
+
+.rail__group-row { display: flex; align-items: stretch; }
+
+.rail__group-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-2) 0 var(--space-5);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.rail__group-toggle:hover .rail__chev { color: var(--accent); }
+.rail__group-toggle[aria-expanded="true"] .rail__chev { transform: rotate(90deg); }
+
+.rail__group-btn {
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  width: 100%;
-  padding: var(--s-2) var(--s-4);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5) var(--space-3) var(--space-2);
   font: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-align: left;
   color: var(--text-primary);
   background: none;
   border: 0;
   cursor: pointer;
 }
-.nav__group-btn:hover { background: var(--surface-sunken); }
-.nav__chev {
+.rail__group-btn:hover { background: var(--surface-sunken); }
+.rail__group-btn[aria-current="true"] { color: var(--accent); }
+
+/* KEEL GAP #7: disclosure. This chevron and its rotate-on-aria-expanded is the
+   same control as the one in the property tree below, written twice. */
+.rail__chev {
   flex: 0 0 auto;
   width: 14px; height: 14px;
   color: var(--text-tertiary);
-  transition: transform var(--dur-fast, .14s) var(--ease-out);
+  transition: transform var(--dur-fast) var(--ease-out);
 }
-.nav__group-btn[aria-expanded="true"] .nav__chev { transform: rotate(90deg); }
-.nav__count { margin-left: auto; font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 
-.nav__item {
+.rail__count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.rail__item {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: var(--space-3);
   width: 100%;
-  padding: var(--s-2) var(--s-4) var(--s-2) var(--s-6);
+  padding: var(--space-3) var(--space-5) var(--space-3) var(--space-8);
   font: inherit;
   font-size: 13px;
   text-align: left;
@@ -216,20 +177,20 @@ html, body {
   border-left: 2px solid transparent;
   cursor: pointer;
 }
-.nav__item:hover { background: var(--surface-sunken); color: var(--text-primary); }
-.nav__item[aria-current="true"] {
+.rail__item:hover { background: var(--surface-sunken); color: var(--text-primary); }
+.rail__item[aria-current="true"] {
   background: var(--accent-subtle);
   border-left-color: var(--accent);
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
-.nav__item-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nav__item-method { margin-left: auto; flex: 0 0 auto; }
+.rail__item-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail__item-method { margin-left: auto; flex: 0 0 auto; }
 
-.nav__section-label {
-  padding: var(--s-5) var(--s-4) var(--s-2);
+.rail__section-label {
+  padding: var(--space-7) var(--space-5) var(--space-3);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--text-tertiary);
@@ -242,32 +203,33 @@ html, body {
 .page {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: var(--s-5) var(--s-4) var(--s-8);
+  padding: var(--space-7) var(--space-5) var(--space-11);
 }
-@media (min-width: 700px) { .page { padding: var(--s-6) var(--s-6) var(--s-8); } }
+@media (min-width: 700px) { .page { padding: var(--space-8) var(--space-8) var(--space-11); } }
 
 .page__title {
-  margin: 0 0 var(--s-2);
+  margin: 0 0 var(--space-3);
   font-size: clamp(24px, 4vw, 34px);
-  font-weight: 800;
+  font-weight: var(--fw-bold);
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
-.page__lead { margin: 0 0 var(--s-5); color: var(--text-secondary); max-width: 68ch; }
+.page__lead { margin: 0 0 var(--space-7); color: var(--text-secondary); max-width: 68ch; }
 
-/* the request line: method + path, wraps rather than scrolling on small screens */
+/* the request line: method plus path, wraps rather than scrolling when narrow */
 .endpoint {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-3);
-  margin-bottom: var(--s-5);
-  border-radius: var(--radius-lg, 12px);
+  gap: var(--space-3);
+  padding: var(--space-4);
+  margin-bottom: var(--space-7);
+  border-radius: var(--radius-lg);
   background: var(--surface-subtle);
 }
 .endpoint__path {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
+  font-feature-settings: "liga" 1, "calt" 1;
   font-size: 13px;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -275,16 +237,26 @@ html, body {
 }
 .endpoint__host { color: var(--text-tertiary); }
 
+/* a row of small markers: badges under a title, tags under a property */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.cluster--tight { gap: var(--space-2); margin-top: var(--space-3); }
+.cluster--titled { margin-bottom: var(--space-7); }
+
 /* ------------------------------------------------- operation body split -- */
 
 /* The split is driven by the width of THIS element, not the window, so it is
-   correct at every combination of screen size and nav state. */
+   correct at every combination of screen size and rail state. */
 .op-body { container-type: inline-size; }
 
 .op-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--s-6);
+  gap: var(--space-8);
   align-items: start;
 }
 
@@ -295,23 +267,23 @@ html, body {
   /* the samples follow the reader down the page on wide layouts */
   .op-split__aside {
     position: sticky;
-    top: calc(var(--header-h) + var(--s-4));
+    top: calc(var(--header-h) + var(--space-5));
   }
 }
 
-.section { margin-bottom: var(--s-7); }
+.section { margin-bottom: var(--space-10); }
 .section__title {
-  margin: 0 0 var(--s-4);
+  margin: 0 0 var(--space-5);
   font-size: 17px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   letter-spacing: -0.01em;
   color: var(--text-primary);
 }
 /* a quieter label for a group inside a section (Body, Headers) */
 .section__label {
-  margin: var(--s-5) 0 var(--s-3);
+  margin: var(--space-7) 0 var(--space-4);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   color: var(--text-secondary);
 }
 
@@ -319,19 +291,20 @@ html, body {
 
 /* Rows are separated by space, not rules. A long list of hairlines reads as
    a table nobody asked for; whitespace groups just as well and stays quiet. */
-.prop { padding: var(--s-3) 0; min-width: 0; }
+.prop { padding: var(--space-4) 0; min-width: 0; }
 
 .prop__head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--s-2);
+  gap: var(--space-3);
   min-width: 0;
 }
 .prop__name {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
+  font-feature-settings: "liga" 1, "calt" 1;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   overflow-wrap: anywhere;
 }
 
@@ -341,22 +314,30 @@ html, body {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--s-2);
+  gap: var(--space-3);
   font-size: 12.5px;
   color: var(--text-tertiary);
 }
-.prop__type { font-family: var(--mono); color: var(--text-secondary); }
+.prop__type { font-family: var(--font-mono); color: var(--text-secondary); }
 .prop__sep { opacity: .5; }
-.prop__req { color: var(--warning, #C0863B); }
-.prop__desc { margin: var(--s-1) 0 0; font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); max-width: 72ch; }
+.prop__req { color: var(--warning); }
+.prop__desc {
+  margin: var(--space-2) 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  max-width: 72ch;
+}
 
 /* disclosure: the whole header is the control, marked by a chevron in the
-   gutter. No "Show items" / "Hide items" text to read and re-read. */
+   gutter. No "Show items" / "Hide items" text to read and re-read.
+
+   KEEL GAP #7: the second hand-rolled disclosure in this app. */
 .prop--expandable > .prop__row {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
   align-items: start;
-  gap: var(--s-1);
+  gap: var(--space-2);
   width: 100%;
   padding: 0;
   font: inherit;
@@ -370,113 +351,73 @@ html, body {
   margin-top: 3px;
   width: 13px; height: 13px;
   color: var(--text-tertiary);
-  transition: transform var(--dur-fast, .14s) var(--ease-out);
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 .prop--expandable > .prop__row[aria-expanded="true"] .prop__chev { transform: rotate(90deg); }
 .prop--expandable > .prop__row:hover .prop__chev { color: var(--accent); }
 
 /* non-expandable rows align with expandable ones so names form a column */
-.prop--leaf > .prop__row { padding-left: calc(18px + var(--s-1)); }
+.prop--leaf > .prop__row { padding-left: calc(18px + var(--space-2)); }
 
 /* nesting uses a hairline rather than indentation alone, so deep trees stay
    legible on narrow screens where indentation would eat the width */
 .prop__children {
-  margin: var(--s-2) 0 var(--s-3) var(--s-2);
-  padding-left: var(--s-4);
+  margin: var(--space-3) 0 var(--space-4) var(--space-3);
+  padding-left: var(--space-5);
   border-left: 1px solid var(--border-subtle);
 }
 
-.chips { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-top: var(--s-2); }
-.chip {
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 1px var(--s-2);
-  border-radius: 999px;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-}
-.chip--enum { background: var(--accent-subtle); border-color: transparent; color: var(--accent); }
-
 /* --------------------------------------------------------------- method -- */
 
+/* KEEL GAP: reported. keel has no marker for an HTTP verb, so the verb is
+   painted here. Every colour is a keel token rather than a literal, so this
+   at least follows the theme, but the shape and the two densities below are
+   decisions keel should be making. Delete this block when keel grows one. */
+
 .method {
-  font-family: var(--mono);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   letter-spacing: .04em;
-  padding: 2px var(--s-2);
-  border-radius: 6px;
-  color: #fff;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-accent);
   white-space: nowrap;
-  /* The chip is a grid item in a listing, so it stretches to the column and
-     the label has to be centred rather than left against the padding. The
-     indent offsets the trailing letter-space, which otherwise counts toward
-     the width and leaves the glyphs sitting a hair left of centre. */
-  text-align: center;
-  text-indent: .04em;
 }
-.method--get    { background: #1FA855; }
-.method--post   { background: #0B5FFF; }
-.method--put    { background: #C0863B; }
-.method--patch  { background: #8B5CF6; }
-.method--delete { background: #D14343; }
+.method--get    { background: var(--success); }
+.method--post   { background: var(--accent); }
+.method--put    { background: var(--warning); }
+.method--patch  { background: var(--purple-500); }
+.method--delete { background: var(--danger); }
 .method--head, .method--options, .method--trace { background: var(--text-tertiary); }
 
-/* in the nav the verb is coloured text rather than a filled badge: the colour
-   still carries the method at a glance, without a row of solid blocks */
-.nav__item-method .method {
+/* In the rail the verb is coloured text rather than a filled badge: the colour
+   still carries the method at a glance, without a column of solid blocks. */
+.method--quiet {
   background: none;
   padding: 0;
   font-size: 10px;
 }
-.nav__item-method .method--get    { color: #1FA855; }
-.nav__item-method .method--post   { color: #4B87FF; }
-.nav__item-method .method--put    { color: #C0863B; }
-.nav__item-method .method--patch  { color: #A78BFA; }
-.nav__item-method .method--delete { color: #E05C5C; }
-.nav__item-method .method--head,
-.nav__item-method .method--options,
-.nav__item-method .method--trace  { color: var(--text-tertiary); }
-
-.status-row { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-4); }
-
-/* The pill is the control. Previously a button wrapped a pill, which read as
-   a box inside a box. */
-.status {
-  font-family: var(--mono);
-  font-size: 12.5px;
-  font-weight: 600;
-  padding: var(--s-1) var(--s-3);
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition: color var(--dur-fast, .14s) var(--ease-out), background var(--dur-fast, .14s) var(--ease-out);
-}
-.status:hover { background: var(--surface-sunken); color: var(--text-secondary); }
-.status[aria-selected="true"] { color: var(--text-primary); background: var(--surface-sunken); }
-.status[aria-selected="true"].status--ok  { color: var(--success, #1FA855); background: var(--success-subtle, rgba(31,168,85,.12)); }
-.status[aria-selected="true"].status--err { color: #D14343; background: rgba(209,67,67,.12); }
-.status:focus-visible { outline: none; box-shadow: var(--ring); }
+.method--quiet.method--get    { color: var(--success); }
+.method--quiet.method--post   { color: var(--accent); }
+.method--quiet.method--put    { color: var(--warning); }
+.method--quiet.method--patch  { color: var(--purple-500); }
+.method--quiet.method--delete { color: var(--danger); }
+.method--quiet.method--head,
+.method--quiet.method--options,
+.method--quiet.method--trace  { color: var(--text-tertiary); }
 
 /* --------------------------------------------------------------- states -- */
 
 .state {
-  padding: var(--s-8) var(--s-4);
+  padding: var(--space-11) var(--space-5);
   text-align: center;
   color: var(--text-secondary);
 }
-.state__spinner {
-  width: 22px; height: 22px;
-  margin: 0 auto var(--s-3);
-  border: 2px solid var(--border-default);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+.state__spinner { margin: 0 auto var(--space-4); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
@@ -488,31 +429,21 @@ html, body {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 100;
-  padding: var(--s-3) var(--s-4);
-  background: #D14343;
-  color: #fff;
+  padding: var(--space-4) var(--space-5);
+  background: var(--danger);
+  color: var(--text-on-accent);
   font-size: 13px;
 }
 #blazor-error-ui .dismiss { cursor: pointer; float: right; }
 
 /* ------------------------------------------------------- resource pages -- */
 
-/* badges under the endpoint: preview state, and the link out to Learn. The
-   Microsoft mark alone says nothing, so it is labelled. */
-.badge-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s-2);
-  margin-bottom: var(--s-5);
-}
-.badge--learn {
-  background: var(--surface-sunken);
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: color var(--dur-fast, .14s) var(--ease-out), background var(--dur-fast, .14s) var(--ease-out);
-}
-.badge--learn:hover { color: var(--text-primary); background: var(--surface-subtle); }
+/* A badge that is a link. keel's badge renders a span, so the badge class is
+   used directly on an anchor here, which is the static-consumer path keel
+   supports. Only the link behaviour is styled; the badge itself is keel's. */
+.badge-link { text-decoration: none; }
+.badge-link:hover { background: var(--surface-subtle); color: var(--text-primary); }
+
 .badge__ms { width: 12px; height: 12px; flex: none; display: block; }
 
 /* one operation in a resource listing */
@@ -520,49 +451,30 @@ html, body {
   display: grid;
   grid-template-columns: 62px minmax(0, 1fr);
   align-items: baseline;
-  gap: var(--s-3);
+  gap: var(--space-4);
   width: 100%;
-  padding: var(--s-3) var(--s-2);
-  margin: 0 calc(var(--s-2) * -1);
+  padding: var(--space-4) var(--space-3);
+  margin: 0 calc(var(--space-3) * -1);
   font: inherit;
   text-align: left;
   color: inherit;
   background: none;
   border: 0;
-  border-radius: var(--radius-md, 10px);
+  border-radius: var(--radius-md);
   cursor: pointer;
 }
 .op-row:hover { background: var(--surface-subtle); }
 .op-row__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.op-row__name { font-size: 14px; font-weight: 600; }
-.op-row__preview {
-  margin-left: var(--s-2);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--signal-text, var(--text-tertiary));
+.op-row__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 14px;
+  font-weight: var(--fw-semibold);
 }
 .op-row__path {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-tertiary);
   overflow-wrap: anywhere;
 }
-
-/* nav group: a chevron that expands, and a label that opens the resource */
-.nav__group-row { display: flex; align-items: stretch; }
-.nav__group-toggle {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--s-1) 0 var(--s-4);
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-.nav__group-toggle:hover .nav__chev { color: var(--accent); }
-.nav__group-toggle[aria-expanded="true"] .nav__chev { transform: rotate(90deg); }
-.nav__group-btn {
-  flex: 1 1 auto;
-  padding-left: var(--s-1);
-}
-.nav__group-btn[aria-current="true"] { color: var(--accent); }

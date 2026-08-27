@@ -44,10 +44,10 @@ else
     }
     else if (target.Enum.Count > 0)
     {
-        <div class="chips">
+        <div class="cluster cluster--tight">
             @foreach (var v in target.Enum)
             {
-                <span class="chip chip--enum">@v</span>
+                <KeelTag Mono="true">@v</KeelTag>
             }
         </div>
         @if (target.EnumIsOpen)

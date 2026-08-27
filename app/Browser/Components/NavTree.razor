@@ -1,29 +1,29 @@
 @* Operations grouped by logical-resource tag, then the schemas. Filtering
    matches operation summary, path and method, and schema names. *@
 
-<div class="nav__search">
-    <input type="search" placeholder="Filter operations" value="@_filter"
-           @oninput="OnFilter" aria-label="Filter operations" />
+<div class="rail__search">
+    <KeelInput Type="search" Placeholder="Filter operations" Size="Size.Sm"
+               Value="@_filter" ValueChanged="OnFilter" aria-label="Filter operations" />
 </div>
 
-<div class="nav__body">
+<div class="rail__body">
     @foreach (var group in Groups)
     {
         var expanded = IsExpanded(group.Tag.Name);
-        <div class="nav__group">
+        <div class="rail__group">
             @{ var isCurrentResource = Current.Kind == RouteKind.Resource && Current.Id == group.Tag.Name; }
-            <div class="nav__group-row">
-                <button class="nav__group-toggle" aria-expanded="@(expanded ? "true" : "false")"
+            <div class="rail__group-row">
+                <button class="rail__group-toggle" aria-expanded="@(expanded ? "true" : "false")"
                         aria-label="@(expanded ? "Collapse" : "Expand") @group.Tag.Name"
                         @onclick="() => Toggle(group.Tag.Name)">
-                    <svg class="nav__chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="rail__chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M6 4l4 4-4 4" />
                     </svg>
                 </button>
-                <button class="nav__group-btn" aria-current="@(isCurrentResource ? "true" : "false")"
+                <button class="rail__group-btn" aria-current="@(isCurrentResource ? "true" : "false")"
                         @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Resource, group.Tag.Name))">
                     <span>@group.Tag.Name</span>
-                    <span class="nav__count">@group.Operations.Count</span>
+                    <span class="rail__count">@group.Operations.Count</span>
                 </button>
             </div>
 
@@ -32,10 +32,12 @@
                 @foreach (var op in group.Operations)
                 {
                     var isCurrent = Current.Kind == RouteKind.Operation && Current.Id == op.OperationId;
-                    <button class="nav__item" aria-current="@(isCurrent ? "true" : "false")"
+                    <button class="rail__item" aria-current="@(isCurrent ? "true" : "false")"
                             @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Operation, op.OperationId))">
-                        <span class="nav__item-label">@op.Summary</span>
-                        <span class="nav__item-method"><span class="method method--@op.Method.ToLowerInvariant()">@op.Method</span></span>
+                        <span class="rail__item-label">@op.Summary</span>
+                        <span class="rail__item-method">
+                            <span class="method method--quiet method--@op.Method.ToLowerInvariant()">@op.Method</span>
+                        </span>
                     </button>
                 }
             }
@@ -44,13 +46,13 @@
 
     @if (Schemas.Count > 0)
     {
-        <div class="nav__section-label">Schemas</div>
+        <div class="rail__section-label">Schemas</div>
         @foreach (var name in Schemas)
         {
             var isCurrent = Current.Kind == RouteKind.Schema && Current.Id == name;
-            <button class="nav__item" aria-current="@(isCurrent ? "true" : "false")"
+            <button class="rail__item" aria-current="@(isCurrent ? "true" : "false")"
                     @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Schema, name))">
-                <span class="nav__item-label">@name</span>
+                <span class="rail__item-label">@name</span>
             </button>
         }
     }
@@ -121,5 +123,5 @@
         if (!_expanded.Remove(tag)) _expanded.Add(tag);
     }
 
-    private void OnFilter(ChangeEventArgs e) => _filter = e.Value?.ToString() ?? "";
+    private void OnFilter(string? value) => _filter = value ?? "";
 }

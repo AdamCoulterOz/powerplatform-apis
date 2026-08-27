@@ -8,13 +8,14 @@ One folder per API. Each folder is self-contained: its own extraction scripts, i
 
 ```
 powerplatform-apis/
-  index.html, specs.json   the spec browser (Stoplight Elements); reads each spec from its folder
+  app/                     the spec browser, a Blazor WebAssembly app; it is the site itself
+  specs.json               the APIs the browser offers, each pointing at its own oas/openapi.json
   ppapi/                   Power Platform API — reverse-engineered from Microsoft Learn's OpenAPI-generated docs
   bapi/                    Business Application Platform API — reverse-engineered from the Terraform provider's code
   .github/workflows/       per-API refresh jobs (e.g. ppapi-mirror runs daily)
 ```
 
-The site loads each spec from its folder over the same origin (no external fetch), so a spec change is live as soon as Pages redeploys. To surface a new API in the browser, add an entry to `specs.json` pointing at its `oas/openapi.json`.
+The site is published by the `pages` workflow, which builds the browser and assembles it with the specs and mirrors beside it; the build output is not committed. The browser loads each spec from its folder over the same origin, so a spec change is live as soon as the workflow runs. To surface a new API, add an entry to `specs.json` pointing at its `oas/openapi.json`: the deploy checks that every spec named there is actually present, and fails rather than shipping a picker with a dead entry.
 
 ## APIs
 

@@ -142,10 +142,12 @@
         var entry = _catalogue.FirstOrDefault(x => x.Id == id);
         if (entry is null || entry.Id == _current?.Id) return;
 
+        // Clearing _spec puts the loading state on screen. No StateHasChanged
+        // is needed: Blazor renders when an async handler yields at its first
+        // await, which is the load below.
         _current = entry;
         _spec = null;
         _error = null;
-        StateHasChanged();
 
         try { _spec = await Store.LoadSpecAsync(entry); }
         catch (Exception ex) { _error = ex.Message; }

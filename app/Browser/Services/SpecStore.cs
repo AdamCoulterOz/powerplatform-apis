@@ -22,9 +22,9 @@ public sealed class SpecStore(HttpClient http)
 {
     private readonly Dictionary<string, OpenApiSpec> _cache = new(StringComparer.Ordinal);
 
-    // The app is served from a subfolder of the site; specs.json and the specs
-    // it points at live at the site root beside it.
-    private const string SiteRoot = "../";
+    // The app is the site: specs.json and the specs it points at sit beside
+    // index.html, so paths resolve against the base href with no prefix.
+    private const string SiteRoot = "";
 
     public IReadOnlyList<SpecEntry> Catalogue { get; private set; } = Array.Empty<SpecEntry>();
 

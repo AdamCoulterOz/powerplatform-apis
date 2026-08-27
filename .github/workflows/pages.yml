@@ -1,0 +1,109 @@
+name: pages
+
+# Publishes the site: the Blazor API browser at the root, with the spec files
+# and the documentation mirrors it reads served alongside it.
+#
+# The build output is not committed. Pages is deployed from this workflow's
+# artifact instead, so the repository holds source and specs only.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'specs.json'
+      - '*/oas/**'
+      - '*/docs/**'
+      - '*/catalogue/**'
+      - 'nuget.config'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read      # Keel is a private package; this repository is granted access to it
+  pages: write
+  id-token: write
+
+# Never cancel a half-finished deploy, but no point queueing several.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '11.0.x'
+          dotnet-quality: preview
+
+      - name: Authenticate the keel feed
+        run: >
+          dotnet nuget update source keel
+          --username AdamCoulterOz
+          --password "${{ secrets.GITHUB_TOKEN }}"
+          --store-password-in-clear-text
+
+      - name: Publish the browser
+        run: dotnet publish app/Browser -c Release -o app/dist
+
+      - name: Assemble the site
+        # The browser is the site root. Everything it fetches at runtime, and
+        # the markdown mirrors that are worth keeping addressable, are copied
+        # in beside it.
+        run: |
+          set -e
+          mkdir -p _site
+          cp -R app/dist/wwwroot/. _site/
+          cp specs.json _site/
+          for api in $(python3 -c "
+          import json
+          print(' '.join(e['url'].split('/')[0] for e in json.load(open('specs.json'))))"); do
+            [ -d "$api" ] || { echo "specs.json names $api, which is not in the repository"; exit 1; }
+            mkdir -p "_site/$api"
+            for part in oas docs catalogue README.md; do
+              [ -e "$api/$part" ] && cp -R "$api/$part" "_site/$api/"
+            done
+          done
+          touch _site/.nojekyll
+
+      - name: Check the site can boot and resolve its specs
+        # A publish can succeed and still produce a site that cannot start, and
+        # a spec named in specs.json but missing from the artifact would only
+        # show up as an empty picker in the browser.
+        run: |
+          set -e
+          for f in _site/index.html _site/specs.json \
+                   _site/_framework/dotnet.js _site/_framework/blazor.webassembly.js \
+                   _site/_framework/Keel.wasm; do
+            [ -f "$f" ] || { echo "missing: $f"; exit 1; }
+          done
+          python3 - <<'PY'
+          import json, pathlib, sys
+          missing = [e['url'] for e in json.load(open('specs.json'))
+                     if not pathlib.Path('_site', e['url']).is_file()]
+          if missing:
+              sys.exit('specs listed but not deployed: ' + ', '.join(missing))
+          print('all specs present')
+          PY
+          grep -q 'base href="/powerplatform-apis/"' _site/index.html \
+            || { echo 'base href is not the site root'; exit 1; }
+          echo "site assembled: $(du -sh _site | cut -f1)"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

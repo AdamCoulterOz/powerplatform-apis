@@ -46,5 +46,11 @@
     "title": "Dataverse Web API (admin subset)",
     "url": "dataverse/oas/openapi.json",
     "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/dataverse"
+  },
+  {
+    "id": "athena",
+    "title": "Dataverse Synapse Link Orchestration API (athena)",
+    "url": "athena/oas/openapi.json",
+    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/athena"
   }
 ]

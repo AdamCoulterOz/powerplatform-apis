@@ -1,0 +1,10 @@
+{
+    "code": "ApiVersionInvalid",
+    "message": "API version 99 is not supported for resource /powerapps/tenants/{tenantId}/notifications. Supported API versions for the resource are: 1, 3",
+    "innererror": {
+        "code": "ApiVersionUnsupported",
+        "innererror": {
+            "code": "ApiVersionUnsupportedForResource"
+        }
+    }
+}

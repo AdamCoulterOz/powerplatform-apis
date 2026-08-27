@@ -11,6 +11,16 @@
    "2024-10-01",
    "2026-05-01-preview",
    "3"
+  ],
+  "x-notes": [
+   {
+    "note": "Sending a junk *ordinal* `api-version` makes the gateway enumerate that resource's own accepted ordinals in the error message, which is how the per-route sets here were derived rather than inferred. Across the 43 parameterless GET routes, 33 resolve and **32 of them accept only ordinal `1`**; `/powerapps/notifications` is the sole exception, accepting `1` and `3`. The dated versions are validated separately at the gateway and are not enumerated per resource, so a route's ordinal set is not its complete set.",
+    "source": "live"
+   },
+   {
+    "note": "**Nine of the 43 parameterless GET routes in this spec did not resolve**, answering `RouteNotFound` before any version validation: `/analytics/advisor/chat/conversations`, `/connectivity/connections`, `/connectivity/connectors`, `/governance/tenantRuleBasedPolicies`, `/powerapps/environment`, `/powerapps/features`, `/powerapps/globalApps`, `/powerapps/plans`, `/workflowsagent/conversationTranscripts`. Observed as an interactive user on one commercial tenant, so this does not prove the paths are wrong in the documentation: a route gated by licence, by tenant feature flag, or by principal type would look identical. It does mean a client cannot assume a documented path is reachable.",
+    "source": "live"
+   }
   ]
  },
  "servers": [

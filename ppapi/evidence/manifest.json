@@ -39,5 +39,12 @@
       "*"
     ],
     "schema": "Location"
+  },
+  {
+    "file": "ppapi-notifications-apiversion-400-ordinal.json",
+    "request": "GET /powerapps/notifications?api-version=99",
+    "note": "The service enumerates this resource's ordinals (1, 3), confirming both documented values.",
+    "items": [],
+    "schema": "GatewayError"
   }
 ]

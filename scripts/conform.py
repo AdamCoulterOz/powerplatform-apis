@@ -116,13 +116,24 @@ def check(spec: str, doc: dict) -> None:
         if isinstance(n, dict) and path not in ("", "/info"):
             node_level.update(k for k in n if k.startswith("x-"))
     walk(doc, "", collect)
+    # An extension this checker independently polices is safe at any scope: its
+    # meaning is pinned by a rule rather than by where it sits, so the same key
+    # at document level is the same extension applied more broadly. Everything
+    # else is only a name, and a name reused at two scopes is the athena defect
+    # -- x-source holding a grade on nodes and a paragraph of prose on info.
+    #
+    # This set is DERIVED from the checks above rather than listed: an extension
+    # earns document scope by being validated, so adding a check extends it and
+    # there is no second place to update.
+    policed = {"x-source", "x-notes"}   # == the keys checks 1 and 2 walk
     for scope in ("", "/info"):
         holder = doc if scope == "" else doc.get("info", {})
         for k in holder:
-            if k.startswith("x-") and k in node_level:
+            if k.startswith("x-") and k in node_level and k not in policed:
                 fail(spec, f"{scope or '(root)'}/{k}",
-                     f"{k} is also a node-level extension; a document-scoped "
-                     f"key with a different meaning must use its own name")
+                     f"{k} is also a node-level extension and nothing here validates its "
+                     f"meaning, so the same name at two scopes can mean two things -- give "
+                     f"the document-scoped one its own name, or add a check that pins it")
 
     # 5. x-probe-verified is a boolean. The string "false" is truthy.
     def verified(n, path):

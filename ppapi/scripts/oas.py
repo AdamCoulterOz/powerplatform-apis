@@ -706,6 +706,7 @@ def main():
             # a 400 that enumerates what the gateway accepts is better evidence
             # than what the docs list, and the two do not agree.
             "x-api-versions": ENRICH.get("info", {}).get("x-api-versions", versions),
+            **({"x-notes": ENRICH["info"]["notes"]} if ENRICH.get("info", {}).get("notes") else {}),
         },
         "servers": ENRICH.get("servers", DEFAULT_SERVERS),
         "security": [{"azure_auth": ["https://api.powerplatform.com/.default"]}],

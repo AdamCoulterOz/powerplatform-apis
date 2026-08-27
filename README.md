@@ -21,19 +21,18 @@ The site loads each spec from its folder over the same origin (no external fetch
 | Folder | API | Host | Source of the spec |
 |---|---|---|---|
 | [ppapi](ppapi) | Power Platform API | `api.powerplatform.com` | Microsoft Learn (OpenAPI-generated docs) |
-| [bapi](bapi) | Business Application Platform API | `api.bap.microsoft.com` | Terraform provider source (scaffold) |
+| [bapi](bapi) | Business Application Platform API | `api.bap.microsoft.com` | Terraform provider client, corrected by live probing |
+| [dataverse](dataverse) | Dataverse Web API (admin/ALM subset) | `{org}.crm*.dynamics.com` | Terraform provider client, corrected by live probing |
+| [powerapps](powerapps) | PowerApps API | `api.powerapps.com` | Terraform provider client, extended by live probing |
+| [admin](admin) | Power Platform Admin Centre API | `api.admin.powerplatform.microsoft.com` | Terraform provider client, corrected by live probing |
+| [analytics](analytics) | Admin analytics (CS Analytics) | `{geo}.csanalytics.powerplatform.microsoft.com` | Terraform provider client, corrected by live probing |
+| [advisor](advisor) | PowerApps Advisor (solution checker) | `{region}.api.advisor.powerapps.com` | Terraform provider client, extended by live probing |
+| [copilot](copilot) | Copilot Studio | per-environment PVA gateway, e.g. `powervamg.eu-il107.gateway.prod.island.powerapps.com` | Terraform provider client (responses licence-gated, unverified) |
+| [athena](athena) | Synapse Link / Link to Fabric orchestration | `athenawebservice.e{clusterSuffix}.powerapps.com`, e.g. `athenawebservice.eau-il301.gateway.prod.island.powerapps.com` | Terraform provider `feature/fabric-link-ropc` branch |
 
-Not yet built, but part of the intended set (host patterns for reference):
-
-| API | Host |
-|---|---|
-| dataverse | `{org}.crm*.dynamics.com` |
-| powerapps | `api.powerapps.com` |
-| admin | `api.admin.powerplatform.microsoft.com` |
-| analytics | `{geo}.csanalytics.powerplatform.microsoft.com` |
-| advisor | `{region}.api.advisor.powerapps.com` |
-| copilot | per-environment PVA gateway, e.g. `powervamg.eu-il107.gateway.prod.island.powerapps.com` |
-| athena | `athenawebservice.e{clusterSuffix}.powerapps.com` (Fabric link) |
+Note that `admin` and `athena` are entirely different services: `admin` is the
+Power Platform admin centre API, `athena` is the Synapse Link / Link to Fabric
+orchestration service reached at each environment's own gateway cluster.
 
 ## Nature of these specs
 

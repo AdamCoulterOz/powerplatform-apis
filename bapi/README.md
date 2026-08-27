@@ -25,7 +25,15 @@ scripts/extract.py <provider-checkout>            # print the extracted inventor
 scripts/extract.py <provider-checkout> --check    # diff provider vs oas/openapi.json
 ```
 
-`--check` fails when the provider gains BAPI operations the spec lacks, or the spec claims provider-sourced operations the provider no longer performs. Operations documented from live behavior without a provider call site (the lifecycle-operation poll, the admin-applications list) carry `x-provider-unsourced: true` and are excluded from the audit.
+`--check` fails when the provider gains BAPI operations the spec lacks, or the spec claims provider-sourced operations the provider no longer performs. Operations documented from live behavior without a provider call site carry `x-provider-unsourced: true` and are excluded from the audit. That marker is about *provenance*, not confidence: `lifecycleOperations_get` carries it because the provider only ever follows a `Location` header and never builds the path, even though recorded admin-center traffic addresses that path directly.
+
+## Recorded traffic
+
+The third source, and the strongest where it overlaps the other two: **459 real calls to `api.bap.microsoft.com`**, captured as HAR from the Power Platform admin center and the maker portal on a live tenant. Probing can only ask questions an outsider knows to ask; a recording shows the first-party client's actual request bodies, its query parameters, and endpoints nothing else would have revealed — the `lifecycleOperations` list, the maker-scope environment reads, `t2tmigrations`, `countryDefaultOptIn`, per-principal feature gates.
+
+Two things worth knowing about mining this kind of capture. `OPTIONS` entries are browser CORS preflights, not operations. And the admin center tunnels part of its traffic through `GET|POST /api/invoke`, a gateway envelope carrying the real path and query in an `x-ms-path-query` request header — 98 of the 459 calls, all of them ordinary BAPI reads in disguise. `/api/invoke` is not a resource and is not documented as an operation, but it is the reason traffic capture alone understates a client's endpoint surface: on the wire, nine distinct endpoints looked like one.
+
+The HARs themselves are full of tenant data and are not in this repo. As with probing, only shapes came out; every example in the spec is a neutral placeholder.
 
 ## Probing
 
@@ -43,17 +51,21 @@ It authenticates through the logged-in `az` CLI. No tenant id is hardcoded: ids 
 
 ## Conventions
 
-- 39 operations over 29 paths, tagged by logical resource (Environments, DLP Policies, Tenant, …), OpenAPI 3.0.3.
+- 47 operations over 35 paths, tagged by logical resource (Environments, DLP Policies, Tenant, …), OpenAPI 3.0.3.
 - `api-version` defaults are per operation (2019-10-01 → 2023-06-01); the `PowerPlatform.Governance` paths take no api-version at all. The version is not always cosmetic: `locations/{location}/templates` returns a *different response shape* either side of 2021-04-01, and the environment PATCH is pinned to 2021-04-01 because newer versions turn Managed Environments on as a side effect.
 - Contracts live in the schema, not the prose: `enum` for every closed set observed, `format`/`pattern` for real constraints, `example` for id and hostname shapes, `default` on api-version.
 - `required` appears only where a request was actually rejected without the field. On responses it means nothing: BAPI omits members rather than nulling them, and which members appear varies with SKU, Dataverse linkage and `$expand`.
-- `x-probe-verified: true` marks what was confirmed live. Its absence means provider-derived only.
+- `x-probe-verified: true` marks what was confirmed live, by probing or by recorded first-party traffic. Its absence means provider-derived only.
 - Async mutations respond 202 with an absolute poll URL in `Location` (or, for `modifySku`, `Operation-Location`) rendering a `LifecycleOperation`; states run `NotStarted` → `Running` → `Succeeded`/`Failed`.
 
 ## Status
 
-In sync with the provider client (`--check` clean) and **probed against a live tenant**: 26 of 39 operations and 100 of 125 schemas carry `x-probe-verified: true`.
+In sync with the provider client (`--check` clean), **probed against a live tenant** and **corroborated against recorded first-party UI traffic**: 35 of 47 operations and 112 of 137 schemas carry `x-probe-verified: true`.
 
 Probing corrected the provider-only view in ways worth knowing about. A synchronous create returns the entire environment, not the reduced shape the client parses. Environment reads carry roughly twice the properties the client models — `lifecycleOperationsEnforcement` lists exactly which operations the environment will currently accept and why the rest are blocked, and `ongoingOperation` names the operation behind a 409. `properties.databaseType` turns out to be the switch that makes `linkedEnvironmentMetadata` meaningful; omit it and Dataverse is silently skipped. Delete answers a 409 with an empty body, and 204 rather than 404 once the environment is gone. The whole `Environment Role Assignments` tag is refused outright on Dataverse-linked environments. Every failure shares one error envelope, and its `message` is frequently the only place the service enumerates a closed value set.
 
-What was not probed: the tenant-wide write surfaces (tenant settings, tenant isolation, admin application registration, enterprise policies) were deliberately left read-only, so their write semantics stay unverified; and sovereign clouds were not touched at all.
+The recordings then added a second axis. Eight operations the spec had never heard of, most usefully the `lifecycleOperations` **list** — the record of everything that has happened to an environment, including operations raised by the platform itself under `requestedBy.type: Service` that no client ever polled. Two maker-scope environment reads that need no admin role and accept the alias `~default`. `properties.permissions`, `properties.lastActivity` and `properties.scheduledLifecycleOperations` — the last being how an idle environment announces its own disablement and deletion dates before they happen. And the real create request body, which turns out to send explicit `null` for the members it is not setting, and to reach for two undocumented query parameters (`retainOnProvisionFailure`, `overrideEnvironmentGroupAssigned`) to force an ungrouped environment past the tenant's routing rules.
+
+They also settled some corrections. An environment create raises a `Create` lifecycle operation, not `Provision`. Turning Managed Environments on is a **bodyless** POST. `Principal.id` is not always a GUID — a platform-initiated operation reports the literal string `SYSTEM`. And a `t2tmigrations` read answers an unknown migration with 400, not 404.
+
+What is still unverified: the tenant-wide write surfaces — tenant settings, tenant isolation, admin application registration, enterprise policy link/unlink. Probing left them alone deliberately, and **no recording exercises any of them either** — the admin center session that changed settings turned out to be writing Dataverse organization settings, not tenant ones. Their write semantics remain provider-derived. Sovereign clouds were not touched at all, and `t2tmigrations` has been observed only on its not-found path.

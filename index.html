@@ -17,11 +17,11 @@
     }
     header h1 { font-size: 15px; margin: 0; font-weight: 600; }
     header select { font-size: 14px; padding: 4px 8px; border-radius: 6px; border: 1px solid #c4c4c8; background: #fff; }
-    header .links { margin-left: auto; font-size: 13px; display: flex; gap: 14px; align-items: center; }
-    header a { color: #0057b8; text-decoration: none; }
-    header a:hover { text-decoration: underline; }
+    header .repo { margin-left: auto; color: #24292f; display: inline-flex; align-items: center; }
+    header .repo:hover { color: #0057b8; }
+    header a { text-decoration: none; }
     #nav-toggle {
-      display: none; margin-left: auto; order: -1; border: 1px solid #c4c4c8; background: #fff;
+      display: none; border: 1px solid #c4c4c8; background: #fff;
       border-radius: 6px; width: 34px; height: 30px; font-size: 16px; cursor: pointer; line-height: 1;
     }
     #app { flex: 1 1 auto; min-height: 0; position: relative; }
@@ -42,7 +42,6 @@
     /* Collapse the sidebar into a slide-in drawer with a hamburger toggle. */
     @media (max-width: 900px) {
       #nav-toggle { display: block; }
-      header .links { margin-left: 0; }
       elements-api .sl-elements-api > .sl-flex:first-child {
         position: fixed; top: var(--hdr); left: 0; bottom: 0; width: 300px; max-width: 85vw;
         z-index: 30; background: #fff; box-shadow: 2px 0 12px rgba(0,0,0,.18);
@@ -58,11 +57,9 @@
     <button id="nav-toggle" aria-label="Toggle navigation">☰</button>
     <h1>Power Platform APIs</h1>
     <select id="spec-picker" aria-label="Select API"></select>
-    <nav class="links">
-      <a id="spec-link" href="#" target="_blank" rel="noopener">raw spec</a>
-      <a id="mirror-link" href="#" target="_blank" rel="noopener">mirror repo</a>
-      <a href="https://github.com/AdamCoulterOz/powerplatform-apis" target="_blank" rel="noopener">this site</a>
-    </nav>
+    <a id="repo-link" class="repo" href="#" target="_blank" rel="noopener" aria-label="Source repository on GitHub">
+      <svg viewBox="0 0 16 16" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
   </header>
   <div id="note">Loading spec list…</div>
   <div id="app"><div id="scrim"></div></div>
@@ -91,8 +88,7 @@
         location.href = location.pathname + '?spec=' + encodeURIComponent(picker.value);
       });
 
-      document.getElementById('spec-link').href = current.url;
-      document.getElementById('mirror-link').href = current.repo;
+      document.getElementById('repo-link').href = current.repo;
       document.title = current.title;
       note.remove();
 

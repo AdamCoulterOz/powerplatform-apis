@@ -4,7 +4,7 @@
   "title": "Dataverse Synapse Link Orchestration API (athena)",
   "version": "unversioned",
   "description": "The Synapse Link orchestration service (internally *athena*) drives Dataverse's Link to Microsoft Fabric and Azure Synapse: choosing which tables to mirror, creating the Fabric lakehouse artifacts, and managing the resulting lake profile.\n\nThe host is per environment, derived from the environment's cluster suffix and the compass direction of its Azure region.\n\nChanging a link's table list is a three-call sequence \u2014 update the lake profile, activate it, then refresh the lakehouse artifacts \u2014 and per-table sync progress is reported on the profile.\n\nUnofficial and reverse-engineered \u2014 see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/athena) for how it was derived and which parts are verified.",
-  "x-source": "Rewritten from 18 browser HAR captures (291 recorded calls) of make.powerapps.com and app.fabric.microsoft.com driving real Link to Fabric workflows on a live tenant, plus live directory and DNS probing of the host and the service principal. Supersedes the earlier revision, which was derived from an unmerged Terraform provider feature branch and covered 3 of the 15 operations."
+  "x-evidence-sources": "Rewritten from 18 browser HAR captures (291 recorded calls) of make.powerapps.com and app.fabric.microsoft.com driving real Link to Fabric workflows on a live tenant, plus live directory and DNS probing of the host and the service principal. Supersedes the earlier revision, which was derived from an unmerged Terraform provider feature branch and covered 3 of the 15 operations."
  },
  "servers": [
   {

@@ -81,10 +81,13 @@ jobs:
         run: |
           set -e
           for f in _site/index.html _site/specs.json \
-                   _site/_framework/dotnet.js _site/_framework/blazor.webassembly.js \
-                   _site/_framework/Keel.wasm; do
+                   _site/_framework/blazor.webassembly.js; do
             [ -f "$f" ] || { echo "missing: $f"; exit 1; }
           done
+          # Assemblies carry a content hash, so check by pattern rather than by
+          # a fixed name.
+          ls _site/_framework/ | grep -q '^Keel\..*\.wasm$' \
+            || { echo 'Keel assembly missing'; exit 1; }
           python3 - <<'PY'
           import json, pathlib, sys
           missing = [e['url'] for e in json.load(open('specs.json'))

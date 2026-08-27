@@ -201,7 +201,7 @@ def parse_definitions(lines, schemas, seen):
                 for r in rows:
                     if len(r) < 2 or not r[0]:
                         continue
-                    pname = r[0].strip("`")
+                    pname = md_name(r[0])
                     ptype = r[ti] if ti < len(r) else "string"
                     pdesc = r[di] if di < len(r) else ""
                     props[pname] = with_desc(parse_type(ptype, seen), pdesc)
@@ -212,6 +212,12 @@ def parse_definitions(lines, schemas, seen):
                 schemas[current] = schema
             i = j
         i += 1
+
+
+def md_name(cell):
+    """Property/parameter name from a docs table cell: strip code fencing and
+    undo markdown escaping (the docs render field_name as field\\_name)."""
+    return re.sub(r"\\(.)", r"\1", cell.strip("`").strip())
 
 
 def camel(slug):
@@ -282,7 +288,7 @@ def parse_operation(f, paths, schemas, seen):
         for r in rows:
             if len(r) <= ci_type or not r[0]:
                 continue
-            name = r[0].strip("`")
+            name = md_name(r[0])
             where = (r[ci_in] if ci_in < len(r) else "query") or "query"
             required = ci_req < len(r) and r[ci_req].lower() == "true"
             desc = r[ci_desc] if ci_desc < len(r) else ""
@@ -315,7 +321,7 @@ def parse_operation(f, paths, schemas, seen):
         for r in rows:
             if len(r) <= ti or not r[0] or "." in r[0]:
                 continue  # dotted rows re-expand referenced models
-            pname = r[0].strip("`")
+            pname = md_name(r[0])
             desc = r[di] if di < len(r) else ""
             props[pname] = with_desc(parse_type(r[ti], seen), desc)
             if 0 <= ri_req < len(r) and r[ri_req].lower() == "true":
@@ -391,6 +397,15 @@ def parse_operation(f, paths, schemas, seen):
             if ov.get("headers"):
                 resp.setdefault("headers", {}).update(ov["headers"])
             responses[code] = resp
+        rbov = enrich.get("requestBody")
+        if rbov:
+            sch = rbov.get("schema")
+            if isinstance(sch, dict) and set(sch) == {"$ref"} and not sch["$ref"].startswith("#"):
+                sch = {"$ref": f"#/components/schemas/{sch['$ref']}"}
+            body = {"required": rbov.get("required", True),
+                    "content": {"application/json": {"schema": sch}}}
+            if rbov.get("description"):
+                body["description"] = rbov["description"]
     op = {
         "operationId": f"{camel(ns)}_{camel(f.stem)}",
         "tags": tags,

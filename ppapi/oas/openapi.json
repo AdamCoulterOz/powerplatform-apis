@@ -5153,6 +5153,17 @@
      }
     },
     "x-ms-namespace": "environmentmanagement/environment-management-settings",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EnvironmentManagementSetting"
+       }
+      }
+     },
+     "description": "The management settings to apply. The docs omit the request body; it is the settings entity."
+    },
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/environmentmanagement/environment-management-settings/create-environment-management-settings"
     }
@@ -5299,6 +5310,17 @@
      }
     },
     "x-ms-namespace": "environmentmanagement/environment-management-settings",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EnvironmentManagementSetting"
+       }
+      }
+     },
+     "description": "The management settings to change. The docs omit the request body; it is the settings entity (send only the fields to update)."
+    },
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/environmentmanagement/environment-management-settings/update-environment-management-settings"
     }
@@ -19502,31 +19524,31 @@
      "allowedIpRangeForStorageAccessSignatures": {
       "type": "string"
      },
-     "copilotStudio\\_CodeInterpreter": {
+     "copilotStudio_CodeInterpreter": {
       "type": "boolean"
      },
-     "copilotStudio\\_ComputerUseAppAllowlist": {
+     "copilotStudio_ComputerUseAppAllowlist": {
       "type": "string"
      },
-     "copilotStudio\\_ComputerUseCredentialsAllowed": {
+     "copilotStudio_ComputerUseCredentialsAllowed": {
       "type": "boolean"
      },
-     "copilotStudio\\_ComputerUseSharedMachines": {
+     "copilotStudio_ComputerUseSharedMachines": {
       "type": "boolean"
      },
-     "copilotStudio\\_ComputerUseWebAllowlist": {
+     "copilotStudio_ComputerUseWebAllowlist": {
       "type": "string"
      },
-     "copilotStudio\\_ConnectedAgents": {
+     "copilotStudio_ConnectedAgents": {
       "type": "boolean"
      },
-     "copilotStudio\\_ConversationAuditLoggingEnabled": {
+     "copilotStudio_ConversationAuditLoggingEnabled": {
       "type": "boolean"
      },
-     "d365CustomerService\\_AIAgents": {
+     "d365CustomerService_AIAgents": {
       "type": "boolean"
      },
-     "d365CustomerService\\_Copilot": {
+     "d365CustomerService_Copilot": {
       "type": "boolean"
      },
      "enableIpBasedStorageAccessSignatureRule": {
@@ -19542,58 +19564,58 @@
      "loggingEnabledForIpBasedStorageAccessSignature": {
       "type": "boolean"
      },
-     "powerApps\\_AllowCodeApps": {
+     "powerApps_AllowCodeApps": {
       "type": "boolean"
      },
-     "powerApps\\_ChartVisualization": {
+     "powerApps_ChartVisualization": {
       "type": "boolean"
      },
-     "powerApps\\_CopilotChat": {
+     "powerApps_CopilotChat": {
       "type": "boolean"
      },
-     "powerApps\\_EnableFormInsights": {
+     "powerApps_EnableFormInsights": {
       "type": "boolean"
      },
-     "powerApps\\_FormPredictAutomatic": {
+     "powerApps_FormPredictAutomatic": {
       "type": "boolean"
      },
-     "powerApps\\_FormPredictSmartPaste": {
+     "powerApps_FormPredictSmartPaste": {
       "type": "boolean"
      },
-     "powerApps\\_NLSearch": {
+     "powerApps_NLSearch": {
       "type": "boolean"
      },
-     "powerPages\\_AllowIntelligentFormsCopilotForSites": {
+     "powerPages_AllowIntelligentFormsCopilotForSites": {
       "type": "string"
      },
-     "powerPages\\_AllowListSummaryCopilotForSites": {
+     "powerPages_AllowListSummaryCopilotForSites": {
       "type": "string"
      },
-     "powerPages\\_AllowMakerCopilotsForExistingSites": {
+     "powerPages_AllowMakerCopilotsForExistingSites": {
       "type": "string"
      },
-     "powerPages\\_AllowMakerCopilotsForNewSites": {
+     "powerPages_AllowMakerCopilotsForNewSites": {
       "type": "string"
      },
-     "powerPages\\_AllowNonProdPublicSites": {
+     "powerPages_AllowNonProdPublicSites": {
       "type": "string"
      },
-     "powerPages\\_AllowNonProdPublicSites\\_Exemptions": {
+     "powerPages_AllowNonProdPublicSites_Exemptions": {
       "type": "string"
      },
-     "powerPages\\_AllowProDevCopilotsForEnvironment": {
+     "powerPages_AllowProDevCopilotsForEnvironment": {
       "type": "string"
      },
-     "powerPages\\_AllowProDevCopilotsForSites": {
+     "powerPages_AllowProDevCopilotsForSites": {
       "type": "string"
      },
-     "powerPages\\_AllowSearchSummaryCopilotForSites": {
+     "powerPages_AllowSearchSummaryCopilotForSites": {
       "type": "string"
      },
-     "powerPages\\_AllowSiteCopilotForSites": {
+     "powerPages_AllowSiteCopilotForSites": {
       "type": "string"
      },
-     "powerPages\\_AllowSummarizationAPICopilotForSites": {
+     "powerPages_AllowSummarizationAPICopilotForSites": {
       "type": "string"
      },
      "tenantId": {

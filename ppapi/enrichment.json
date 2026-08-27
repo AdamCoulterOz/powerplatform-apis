@@ -271,13 +271,25 @@
    "summary": "Managed Environment Enable"
   },
   "environmentmanagement/environment-management-settings/create-environment-management-settings": {
-   "summary": "Management Settings Create"
+   "summary": "Management Settings Create",
+   "requestBody": {
+    "schema": {
+     "$ref": "EnvironmentManagementSetting"
+    },
+    "description": "The management settings to apply. The docs omit the request body; it is the settings entity."
+   }
   },
   "environmentmanagement/environment-management-settings/list-environment-management-settings": {
    "summary": "Management Settings List"
   },
   "environmentmanagement/environment-management-settings/update-environment-management-settings": {
-   "summary": "Management Settings Update"
+   "summary": "Management Settings Update",
+   "requestBody": {
+    "schema": {
+     "$ref": "EnvironmentManagementSetting"
+    },
+    "description": "The management settings to change. The docs omit the request body; it is the settings entity (send only the fields to update)."
+   }
   },
   "environmentmanagement/environment-provisioning/get-provisioning-currencies": {
    "summary": "Currencies List"

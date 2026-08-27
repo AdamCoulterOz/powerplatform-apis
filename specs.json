@@ -22,5 +22,11 @@
     "title": "Power Platform Admin Centre API (Athena)",
     "url": "admin/oas/openapi.json",
     "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/admin"
+  },
+  {
+    "id": "copilot",
+    "title": "Copilot Studio Bot Management API",
+    "url": "copilot/oas/openapi.json",
+    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/copilot"
   }
 ]

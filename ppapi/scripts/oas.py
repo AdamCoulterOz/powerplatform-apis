@@ -271,7 +271,7 @@ NOTE_HEADINGS = {
     # a decompiled first-party client is strong structural evidence, but it is
     # not an observation: the build can be older than the service, and it must
     # never render under the same heading as something seen on the wire
-    "pac-cli": "From Microsoft's own client, not observed live",
+    "pac-cli": "From Microsoft's own client",
 }
 NOTE_ORDER = [None, "pac-cli"]
 

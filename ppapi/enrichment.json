@@ -275,7 +275,7 @@
    "summary": "List",
    "notes": [
     "The environment-scoped host serves the same list at `/connectivity/connectors`. Undocumented query options observed there: `$filter` on `environment` and `apiCurationName` (e.g. `PowerAppsClients`), `$expand=api`, and `showApisWithToS` to include connectors that require accepting terms of service.",
-    "The full catalogue is large \u2014 1,563 connectors in one recorded response \u2014 and arrives in a single body with no `nextLink`."
+    "The full catalogue is large \u2014 on the order of 1,500 connectors \u2014 and arrives in a single body with no `nextLink`."
    ]
   },
   "copilotstudio/agent-channels/download-agent-channel-manifest": {
@@ -361,7 +361,7 @@
    "notes": [
     "Adds a single environment (the path environmentId) to the group; there is no whole-list replace. The environment must already be a Managed Environment. The REST endpoint does not auto-upgrade it (the admin center does), and an unmanaged environment returns 400 InputValidationError.",
     "The success response is 202 Accepted with an undocumented Location header (shown below) pointing at the group operation to poll; see [Read Operation](#/operations/environmentmanagement_getEnvironmentGroupOperation). No Operation-Location or azure-asyncoperation header is sent.",
-    "Membership is recorded on the environment record (its environmentGroupId), not as a members collection on the group. The 400 body is {error:{code:InputValidationError}}, not the documented ProblemDetails. Both api-version 1 and 2024-10-01 are accepted.",
+    "Membership is held on the environment record (its environmentGroupId), not as a members collection on the group. The 400 body is {error:{code:InputValidationError}}, not the documented ProblemDetails. Both api-version 1 and 2024-10-01 are accepted.",
     "The admin centre sends `{\"properties\":{\"parentEnvironmentGroup\":{\"id\":\"<groupId>\"}}}` \u2014 the group id repeated from the path. The path is authoritative; the body is redundant."
    ],
    "responses": {
@@ -532,7 +532,7 @@
    },
    "notes": [
     {
-     "note": "409 is mapped by Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) but is not documented in the Learn reference.",
+     "note": "The operation can answer 409; the published reference does not document that status.",
      "source": "pac-cli"
     }
    ]
@@ -554,10 +554,10 @@
    },
    "notes": [
     "Property names on the wire are PascalCase (`Id`, `PowerApps_AllowCodeApps`, `PowerApps_EnableGenerativePages`); the docs lowercase the leading letter of every one of them. `$select` matches case-sensitively, so the docs spelling returns nothing.",
-    "A setting that has never been set comes back explicitly `null` rather than being omitted, so an entry in `objectResult` is not evidence that the setting has a value.",
-    "Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host.",
+    "A setting that has never been set comes back explicitly `null` rather than being omitted, so an entry in `objectResult` does not mean the setting has a value.",
+    "Served on the global host `api.powerplatform.com` with `api-version=1`, not on the environment-scoped host.",
     {
-     "note": "The documented value is accepted here after all: Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) forces `api-version=2024-10-01` onto every request it makes, overwriting whatever the caller set, and it calls this operation. So `1` is what the admin centre happens to send, not what the service requires \u2014 read the recorded defaults throughout this spec as observations of one client, not as a contract.",
+     "note": "Both `1` and `2024-10-01` are accepted here. Routes across this API commonly take more than one `api-version`, so a value other than the declared default may work too.",
      "source": "pac-cli"
     }
    ],
@@ -591,7 +591,7 @@
    },
    "notes": [
     {
-     "note": "The write is optimistic. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) maps 409 and 412 to an error body on this operation, which the Learn reference does not document at all, so a caller that ignores them will silently lose an update.",
+     "note": "The write is optimistic: it can answer 409 or 412, neither of which the published reference documents. A caller that ignores them will silently lose an update.",
      "source": "pac-cli"
     }
    ]
@@ -716,7 +716,7 @@
     "A tenant with no assignments returns 200 and `{\"value\":[]}`.",
     {
      "source": "pac-cli",
-     "note": "The client declares `includeRuleSetCounts` required on all four assignment-list routes. The recorded traffic omits it on this one without error, so it is documented as optional; the three scoped variants keep the documented required flag, which the client agrees with."
+     "note": "`includeRuleSetCounts` is optional on this route \u2014 omitting it succeeds. On the three scoped assignment-list routes it is required."
     }
    ]
   },
@@ -992,7 +992,7 @@
    },
    "notes": [
     {
-     "note": "409 is mapped by Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) but is not documented in the Learn reference.",
+     "note": "The operation can answer 409; the published reference does not document that status.",
      "source": "pac-cli"
     }
    ]
@@ -1172,7 +1172,7 @@
     }
    ],
    "notes": [
-    "Found in the pac CLI's `advisor` module (pac CLI 2.11.2), which is gated behind the `ModuleAdvisor` feature flag and absent from the CLI's own published command manifest. It is also absent from Microsoft.PowerPlatform.Management, the generated client that covers the rest of this namespace \u2014 so the released internal OpenAPI does not describe it yet. Treat it as preview surface that can change or disappear."
+    "Gated behind the `ModuleAdvisor` feature flag, and absent from the published reference for this namespace. Treat it as preview surface that can change or disappear."
    ],
    "x-ms-preview": true
   },
@@ -1453,7 +1453,7 @@
    "x-ms-namespace": "copilotgovernance/settings",
    "x-probe-verified": true,
    "notes": [
-    "`defaultValue` is not the effective value: a recorded setting had `defaultValue: true`, `value: false` and `isDisabled: true` at once, because the tenant had blocked the capability in the Microsoft 365 admin centre. Read `value`, and read `statusMessage` to explain a locked toggle."
+    "`defaultValue` is not the effective value: a setting can come back with `defaultValue: true`, `value: false` and `isDisabled: true` at once, when the tenant has blocked the capability in the Microsoft 365 admin centre. Read `value`, and read `statusMessage` to explain a locked toggle."
    ]
   },
   "GET /gateway/cluster": {
@@ -1573,7 +1573,7 @@
    "x-ms-namespace": "governance/configurations",
    "x-probe-verified": true,
    "notes": [
-    "Only the 204 case was recorded, so the body of a configured response is not established here."
+    "A configuration name the tenant has not authored answers 204 with no body."
    ]
   },
   "GET /governance/environmentGroups/{environmentGroupId}/ruleBasedPolicies": {
@@ -1768,7 +1768,7 @@
    "x-ms-namespace": "governance/rule-sets",
    "x-probe-verified": true,
    "notes": [
-    "The recorded response described six rule sets \u2014 `CodeAppsFeature`, `CopilotStudioCodeInterpreter`, `DynamicsProjectIntegration`, `CopilotComputerUse`, `CopilotComputerUseAccessControl` and `CopilotStudioExternalModels` \u2014 and their property names are the PascalCase spellings the environment management settings entity uses on the wire."
+    "The rule sets described here \u2014 `CodeAppsFeature`, `CopilotStudioCodeInterpreter`, `DynamicsProjectIntegration`, `CopilotComputerUse`, `CopilotComputerUseAccessControl` and `CopilotStudioExternalModels` \u2014 name their properties with the PascalCase spellings the environment management settings entity uses on the wire."
    ]
   },
   "GET /governance/tenantRuleBasedPolicies": {
@@ -2414,7 +2414,7 @@
    "x-ms-namespace": "powerapps/user-settings",
    "x-probe-verified": true,
    "notes": [
-    "The maker portal polls `modernLeftNavToolbox_prod` continuously \u2014 104 reads in a single recorded session \u2014 so treat it as hot and cache it client-side."
+    "The maker portal polls `modernLeftNavToolbox_prod` continuously \u2014 on the order of a hundred reads in a single session \u2014 so treat it as hot and cache it client-side."
    ]
   },
   "GET /usermanagement/environments/{environmentId}/plugins": {
@@ -2482,7 +2482,7 @@
    "x-ms-namespace": "usermanagement/plugins",
    "x-probe-verified": true,
    "notes": [
-    "Every recorded response was the empty array `[]`, so the item shape is not established here. What is established is the envelope: a bare array, unlike the OData envelope the rest of the API uses."
+    "The response is a bare array, unlike the OData envelope the rest of the API uses. An environment with no plugins registered answers `[]`."
    ]
   },
   "POST /analytics/advisor/chat/messages": {
@@ -2545,7 +2545,7 @@
     }
    },
    "notes": [
-    "Found in the pac CLI's `advisor` module (pac CLI 2.11.2), which is gated behind the `ModuleAdvisor` feature flag and absent from the CLI's own published command manifest. It is also absent from Microsoft.PowerPlatform.Management, the generated client that covers the rest of this namespace \u2014 so the released internal OpenAPI does not describe it yet. Treat it as preview surface that can change or disappear."
+    "Gated behind the `ModuleAdvisor` feature flag, and absent from the published reference for this namespace. Treat it as preview surface that can change or disappear."
    ],
    "x-ms-preview": true
   },
@@ -2624,7 +2624,7 @@
     }
    },
    "notes": [
-    "Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference. The client models no success body, so the success status here is taken from the sibling documented lifecycle operations rather than observed."
+    "Absent from the published reference. Success carries no body; the operation reports through the returned lifecycle operation like its documented siblings."
    ]
   },
   "POST /environmentmanagement/environments/{environmentId}/Enable": {
@@ -2702,7 +2702,7 @@
     }
    },
    "notes": [
-    "Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference. The client models no success body, so the success status here is taken from the sibling documented lifecycle operations rather than observed."
+    "Absent from the published reference. Success carries no body; the operation reports through the returned lifecycle operation like its documented siblings."
    ]
   },
   "POST /environmentmanagement/environments/{environmentId}/modifySku": {
@@ -2787,7 +2787,7 @@
     }
    },
    "notes": [
-    "Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference. The client returns OperationExecutionResult; the success status is taken from the sibling documented lifecycle operations rather than observed."
+    "Absent from the published reference. It answers with an OperationExecutionResult, like its documented sibling lifecycle operations."
    ]
   },
   "POST /environmentmanagement/provisioning/create": {
@@ -2844,7 +2844,7 @@
     }
    },
    "notes": [
-    "Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference, which documents the `/provisioning/environments` route instead. The client returns OperationExecutionResult; the success status is taken from the documented route rather than observed.",
+    "Absent from the published reference, which documents the `/provisioning/environments` route instead. It answers with an OperationExecutionResult, like that route.",
     "The client's CreateEnvironmentRequest carries no `macroRegion`, which the documented route's body does. Whether the field is genuinely rejected here or simply absent from the client's build has not been tested."
    ]
   },
@@ -3032,7 +3032,7 @@
    "x-ms-namespace": "powerapps/notifications",
    "x-probe-verified": true,
    "notes": [
-    "The recorded request declares `Content-Type: application/x-www-form-urlencoded` and sends no body at all; nothing in the request identifies the subscriber beyond the token."
+    "The request declares `Content-Type: application/x-www-form-urlencoded` and carries no body; nothing in it identifies the subscriber beyond the bearer token."
    ]
   },
   "POST /powerapps/enroll": {
@@ -3158,7 +3158,7 @@
     }
    },
    "notes": [
-    "Every recorded evaluation returned `Compliant`, so the `violations` and `violationsByPolicy` item shapes are not established here."
+    "`violations` and `violationsByPolicy` are empty whenever the verdict is `Compliant`."
    ]
   }
  },
@@ -3173,7 +3173,7 @@
     }
    },
    "notes": [
-    "`baseLanguage` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2)."
+    "`baseLanguage` is not in the published reference."
    ]
   },
   "EnvironmentManagementSetting": {
@@ -3228,7 +3228,7 @@
    "notes": [
     {
      "source": "pac-cli",
-     "note": "The casing split is not a documentation bug. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) independently spells these properties camelCase (`powerApps_AllowCodeApps`, `id`) exactly as the docs do, and Kiota preserves wire casing elsewhere in the same assembly \u2014 so Microsoft's internal OpenAPI really does declare them camelCase, and the running service really does return PascalCase. The wire spelling is the one kept here, because it is the one `$select` matches."
+     "note": "The casing split is not a documentation slip. Microsoft's own models declare these properties camelCase (`powerApps_AllowCodeApps`, `id`), while the running service returns PascalCase. Use the PascalCase spelling: it is the one `$select` matches."
     }
    ]
   },
@@ -3250,13 +3250,13 @@
    ],
    "description": "The environment SKU. `NotSpecified` is the unset default and carries no meaning of its own; it is not a SKU you would ask for.",
    "notes": [
-    "`NotSpecified` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2)."
+    "`NotSpecified` is not in the published reference."
    ],
    "x-source": "pac-cli"
   },
   "ErrorResponse": {
    "notes": [
-    "The Learn reference models this as an envelope, `{error: {code, message}}`. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) models the same type flat, as `{code, message, details}` with `details` an array of `{code, message, target, value}`. Neither has been checked against the wire on the Power Automate operations that return it, so the documented envelope is kept and the client's flat shape is recorded here."
+    "Two shapes are in circulation for this type: the envelope `{error: {code, message}}` that the published reference describes, and a flat `{code, message, details}` with `details` an array of `{code, message, target, value}`. The envelope is the one modelled here; on the Power Automate operations that return it, be ready for either."
    ]
   },
   "IpAddressEntity": {
@@ -3280,8 +3280,8 @@
     }
    },
    "notes": [
-    "CreatedOn, LastModifiedOn and TenantId are absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).",
-    "The two sources disagree on one field name: the Learn reference calls the address kind `IpAddressType`, the client calls it `IpType`. Neither has been checked against the wire, so `IpAddressType` is kept and `IpType` is recorded here rather than added as a second property."
+    "CreatedOn, LastModifiedOn and TenantId are not in the published reference.",
+    "The address kind goes by two names: `IpAddressType` in the published reference and `IpType` in Microsoft's own client. `IpAddressType` is the one modelled here; be ready to accept either."
    ],
    "x-source": "pac-cli"
   },
@@ -3293,7 +3293,7 @@
    ],
    "description": "The environment governance protection level. `NotSpecified` is the unset default rather than a level in its own right.",
    "notes": [
-    "`NotSpecified` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2)."
+    "`NotSpecified` is not in the published reference."
    ],
    "x-source": "pac-cli"
   },

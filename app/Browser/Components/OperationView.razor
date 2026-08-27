@@ -145,7 +145,7 @@
             </div>
 
             <aside class="op-split__aside">
-                <CodeBlock Tabs="SampleTabs" />
+                <CodeBlock Tabs="SampleTabs" ShowLanguage="true" />
             </aside>
         </div>
     </div>
@@ -181,7 +181,7 @@
         {
             var tabs = new List<CodeBlock.Tab>
             {
-                new("Request", SampleBuilder.Curl(Operation, Server), CodeLanguage.Shell)
+                new("Request", SampleBuilder.Curl(Operation, Server), CodeLanguage.Bash)
             };
 
             var resp = SelectedResponse;

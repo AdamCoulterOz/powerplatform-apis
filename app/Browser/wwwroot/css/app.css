@@ -18,6 +18,13 @@
   --mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
 }
 
+/* Fira Code everywhere code appears, with its programming ligatures on.
+   keel already does this for .keel-cb; these are the other mono surfaces. */
+.endpoint__path, .prop__name, .prop__type, .chip, code {
+  font-family: var(--mono);
+  font-feature-settings: "liga" 1, "calt" 1;
+}
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -450,3 +457,42 @@ html, body {
   font-size: 13px;
 }
 #blazor-error-ui .dismiss { cursor: pointer; float: right; }
+
+/* ------------------------------------------------- code block extensions -- */
+/* keel renders tabs as spans; here they are buttons, so the button chrome is
+   reset while keel's own look is kept. The active rule is restated after the
+   reset because this sheet loads after keel.css and the two selectors carry
+   equal specificity. Everything below uses keel's --cb-* block variables, so
+   it re-skins with the surface in both themes. */
+
+.keel-cb__tab {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--cb-line);
+  cursor: pointer;
+}
+.keel-cb__tab--active { background: var(--cb-tab-active-bg); }
+
+/* toolbar actions sit at the right of the chrome row, matching __lang */
+.keel-cb__action {
+  margin-left: auto;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  font: inherit;
+  color: var(--cb-meta);
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--cb-line);
+  cursor: pointer;
+  transition: color var(--dur-fast, .14s) var(--ease-out);
+}
+.keel-cb__action:hover { color: var(--cb-fg); }
+/* when the language label is shown it takes the auto margin, so the action
+   sits tight against it rather than fighting for the same space */
+.keel-cb__action--tight { margin-left: 0; }
+.keel-cb__action:focus-visible { outline: none; box-shadow: var(--ring); }

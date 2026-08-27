@@ -51,7 +51,8 @@
             </div>
 
             <aside class="op-split__aside">
-                <CodeBlock Tabs="@(new List<CodeBlock.Tab> { new("Example", SampleBuilder.Json(Schema), CodeLanguage.Json) })" />
+                <CodeBlock Chrome="CodeChrome.Editor" Title="Example" Code="@SampleBuilder.Json(Schema)"
+                           Language="CodeLanguage.Json" ShowLanguage="true" />
             </aside>
         </div>
     </div>

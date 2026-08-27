@@ -27,8 +27,8 @@ The site loads each spec from its folder over the same origin (no external fetch
 | [admin](admin) | Power Platform Admin Centre API | `api.admin.powerplatform.microsoft.com` | Terraform provider client, corrected by live probing |
 | [analytics](analytics) | Admin analytics (CS Analytics) | `{geo}.csanalytics.powerplatform.microsoft.com` | Terraform provider client, corrected by live probing |
 | [advisor](advisor) | PowerApps Advisor (solution checker) | `{region}.api.advisor.powerapps.com` | Terraform provider client, extended by live probing |
-| [copilot](copilot) | Copilot Studio | per-environment PVA gateway, e.g. `powervamg.eu-il107.gateway.prod.island.powerapps.com` | Terraform provider client (responses licence-gated, unverified) |
-| [athena](athena) | Synapse Link / Link to Fabric orchestration | `athenawebservice.e{clusterSuffix}.powerapps.com`, e.g. `athenawebservice.eau-il301.gateway.prod.island.powerapps.com` | Terraform provider `feature/fabric-link-ropc` branch |
+| [copilot](copilot) | Copilot Studio | per-environment PVA gateway, e.g. `powervamg.wus-il102.gateway.prod.island.powerapps.com` | Terraform provider client (responses licence-gated, unverified) |
+| [athena](athena) | Synapse Link / Link to Fabric orchestration | `athenawebservice.{regionPrefix}{clusterSuffix}.powerapps.com`, e.g. `athenawebservice.wus-il102.gateway.prod.island.powerapps.com` | Recorded UI traffic (the provider's `feature/fabric-link-ropc` branch covers only 3 of its 15 operations) |
 | [licensing](licensing) | Power Platform Licensing | `licensing.powerplatform.microsoft.com` | Recorded UI traffic + live probing |
 
 Note that `admin` and `athena` are entirely different services: `admin` is the

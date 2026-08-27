@@ -221,6 +221,20 @@ def check_catalogue(entries: list, cat: dict) -> None:
              f"spec id {bad!r} is also a fragment kind, which makes a qualified "
              f"deep link ambiguous")
 
+    brand = cat.get("brand")
+    if brand is not None:
+        if not isinstance(brand, dict):
+            fail("specs.json", "brand", "brand must be an object")
+        else:
+            for k in ("long", "short", "description"):
+                v = brand.get(k)
+                if v is not None and (not isinstance(v, str) or not v.strip()):
+                    fail("specs.json", f"brand/{k}", f"brand.{k} must be a non-empty string")
+            if brand.get("long") and not brand.get("short"):
+                fail("specs.json", "brand/short",
+                     "brand.long without brand.short: the shell falls back to the long form "
+                     "in a narrow bar, where it is cramped rather than absent")
+
     default = cat.get("default")
     if cat and default is None:
         fail("specs.json", "default",

@@ -1,6 +1,11 @@
 {
   "default": "ppapi",
   "index": "index.json",
+  "brand": {
+    "long": "Power Platform APIs",
+    "short": "PP APIs",
+    "description": "Unofficial OpenAPI specifications for ten Power Platform APIs, reverse-engineered and graded by the evidence behind each claim."
+  },
   "specs": [
     {
       "id": "ppapi",

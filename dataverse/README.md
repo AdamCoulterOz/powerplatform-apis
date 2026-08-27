@@ -11,19 +11,52 @@ So [`oas/openapi.json`](oas/openapi.json) is deliberately **a curated admin/ALM 
 | Tag | What it covers |
 |---|---|
 | Identity | `WhoAmI` |
+| Discovery | `globaldisco.*` — the Global Discovery Service: which organizations a token can reach, and each one's Web API URL |
 | Table Definitions | `EntityDefinitions`, columns, relationship metadata |
 | Records | generic CRUD and OData query against any table |
 | Relationships | `@odata.bind`, the `$ref` collection, associate/disassociate |
 | Batch | `$batch` — several requests in one `multipart/mixed` round trip |
-| Solutions | the installed inventory, and deleting one |
+| Solutions | the installed inventory, exporting one, and deleting one |
 | Solution Import | `StageSolution`, `ImportSolutionAsync`, `StageAndUpgradeAsync`, `asyncoperations`, `RetrieveSolutionImportResult`, `PublishAllXml` |
 | Environment Variables | definitions and their per-environment values |
 | Publishers | publishers and their customization prefix |
 | Users and Roles | system and application users, security roles, teams, memberships, effective privileges, business units |
-| Organization Settings | the `organizations` row, and the three unrelated settings surfaces beside it |
+| Organization Settings | the three unrelated settings surfaces — the `organizations` row, the OrgDB bag, `settingdefinitions` — and the functions by which an environment describes itself |
 | Feature Control | `GetFeatureEnabledState`, `RetrieveFeatureControlSetting` |
 | Dataverse Search | whether the environment's index has been provisioned |
 | Fabric and Synapse Link | `datalakefolders`, `synapsedatabases`, `synapselinkexternaltablestates`, `entityanalyticsconfigs` |
+
+Every tag but one lives on the per-environment host. **Discovery does not** — it is a separate service on `globaldisco.*` with its own audience, and those paths carry their own `servers` block. It is in this document anyway because it answers the question every other operation here takes for granted: which host?
+
+## Finding an environment's Web API URL
+
+Every other operation here needs a host, and a Dataverse host is not derivable from an environment id — `contoso.crm11.dynamics.com` cannot be computed from a GUID. There are two ways to learn it.
+
+The usual one is the admin APIs: [bapi](../bapi)'s environment record, or the `instanceApiUrl` on [ppapi](../ppapi)'s environment resource. Both require environment-admin reach.
+
+The other is **discovery**, and it needs no admin permission and no environment id at all — just a token. `GET https://globaldisco.crm.dynamics.com/api/discovery/v2.0/Instances` returns every organization the caller can reach across every region at once, each with its organization id, its Power Platform environment id, its platform version and both of its URLs. That makes it the natural first call for a client that has an identity and nothing else, and the natural join between the Power Platform view of an environment and the Dataverse view of an organization.
+
+Two caveats decide whether you can use it:
+
+- **Service principals are not admitted.** App-only identities get nothing from global discovery; `pac` short-circuits and returns an empty set for them without calling, and treats a 401 from a directory-credential profile as evidence the identity is really an SPN — falling back to BAPI's environment list. An app-only client must go through BAPI.
+- **It is per cloud, not global.** `globaldisco.crm.dynamics.com` serves worldwide commercial. China, US Gov High, US Gov DoD and the North America 2 scale group each have their own, and a token for one is not accepted by another.
+
+Build the Web API base from an instance as `{ApiUrl}/api/data/v{major}.{minor}/`, taking major.minor from that instance's own `Version`. Note `ApiUrl` is not `Url`: it carries an extra `api` label (`contoso.api.crm.dynamics.com` against `contoso.crm.dynamics.com`).
+
+### CRM region numbers
+
+The regional discovery endpoints are SOAP and out of scope, but the region-to-host mapping the SDK carries is not recorded anywhere else in this repo, and the same region number appears in every organization's own hostname — so `contoso.crm11.dynamics.com` is a United Kingdom environment. The full table is in the Discovery tag's description in the spec. In brief:
+
+| # | Region | # | Region | # | Region |
+|---|---|---|---|---|---|
+| `crm` | North America | `crm7` | Japan | `crm15` | United Arab Emirates |
+| `crm2` | South America (`LATAM`) | `crm8` | India | `crm16` | Germany (Go Local) |
+| `crm3` | Canada | `crm9` | North America 2 | `crm17` | Switzerland |
+| `crm4` | Europe, Middle East, Africa | `crm11` | United Kingdom | `crm19` | Norway |
+| `crm5` | Asia Pacific | `crm12` | France | `crm20` | Singapore |
+| `crm6` | Oceania (`OCE`) | `crm14` | South Africa | `crm21` | Korea |
+
+Sovereign clouds do not use a number: `crm.dynamics.cn` is China, `crm.microsoftdynamics.us` US Gov High, `crm.appsplatform.us` US Gov DoD, `crm.microsoftdynamics.de` the sovereign German cloud. `crm10` and `crmtest` are Microsoft's own pre-production and test rings. `crm13`, `crm18` and `crm22` upwards are absent from this build — whether unused or merely unshipped is not something the CLI can tell us.
 
 **For anything outside that, go to the environment's own `$metadata`.** It is authoritative, machine-readable, and always current for that environment; this spec never can be.
 
@@ -37,7 +70,9 @@ First, probing a live tenant. That is where the value is: the provider models on
 
 Second, **recorded first-party UI traffic** — HAR captures of the Power Platform admin centre, the maker portal and the Link to Fabric wizard driving nine real Dataverse organizations — 20 captures holding 613 Dataverse entries, of which 322 are requests and the rest CORS preflights. Recorded production traffic is stronger evidence than synthetic probing: it shows the request and response bodies the real first-party client sends and receives, including endpoints and fields no external caller would think to guess. A recorded 200 is treated as confirmation, so `x-probe-verified: true` now means "confirmed against the real service" by either route.
 
-Operations confirmed against the live service carry `x-probe-verified: true` — 64 of 70. The six that do not are `ImportSolutionAsync` and `StageAndUpgradeAsync` (only their rejection paths were exercised; no solution was actually imported), `PublishAllXml`, and application-user create/update/delete, which needs a service principal to register.
+Operations confirmed against the live service carry `x-probe-verified: true` — 64 of 76. The six that do not are `ImportSolutionAsync` and `StageAndUpgradeAsync` (only their rejection paths were exercised; no solution was actually imported), `PublishAllXml`, and application-user create/update/delete, which needs a service principal to register.
+
+Third, the **decompiled Power Platform CLI** (`pac` 2.11.2), which ships Microsoft's own `Microsoft.PowerPlatform.Dataverse.Client` SDK. A first-party client's source is strong *structural* evidence — real route templates, wire names from `[JsonProperty]` and `[DataMember]` attributes, enumerations, headers, retry rules and geography maps — but it is not an observation, and the build can be older than the service. So anything sourced only from it carries **`x-source: pac-cli`** and is deliberately **not** `x-probe-verified`. The entire Discovery tag is in that category: nobody has called those endpoints from here.
 
 Operations that came from the recordings carry `x-observed-api-versions`, listing the `v9.x` segments actually seen on the wire — because the first-party clients are not consistent about the version they call, and neither is the provider.
 
@@ -95,6 +130,39 @@ The corrections and additions the HAR capture produced, over and above what prob
 - **`/api/nosql/audit/isreadenabled` and `/api/search/v1.0/status` are not OData.** They sit on the same host under the same token with no version segment and no envelope; the first answers a bare `true`/`false` literal.
 - **The api-version segments disagree between clients.** The portal calls `datalakefolders` on `v9.2` while the provider pins `v9.1`; `GetOrgDbOrgSetting` was seen on both `v9.0` and `v9.2`. Where the recordings saw only one segment, the path pins it and `x-observed-api-versions` says so.
 
+## What the CLI added
+
+Structural facts no amount of probing this tenant would have produced, because they are about services and messages the provider never calls:
+
+- **The Global Discovery Service, which the spec did not cover at all.** `GET https://globaldisco.{cloud}/api/discovery/v2.0/Instances`, with the `Instances({id})` single-read template beside it — declared by the SDK and, tellingly, never actually issued by this build. The `Instance` model's seventeen fields come from its `[JsonProperty]` names, including the two that make it useful to an infrastructure client: `EnvironmentId`, the join to BAPI and PPAPI, and `ApiUrl`, the host the Web API hangs off.
+- **The sovereign and regional host map**, in full — twenty-two regions with their geo codes, their SOAP discovery hosts and, for the four that need one, their own global discovery host. Nothing else in this repo maps a CRM region number to a geography.
+- **`GET /api/aad/challenge`**, and the rule behind it. An unauthenticated request returns `WWW-Authenticate: Bearer authorization_uri=…, resource_id=…`, and the SDK builds its scope from `resource_id` — `/user_impersonation` appended for a delegated sign-in, `.default` for a certificate or secret. It also rewrites the advertised authority, stripping `oauth2/authorize` and turning `common` into `organizations`, and it treats a 404 or 400 as a dead end rather than reading the header from it.
+- **`RetrieveCurrentOrganization`**, which is discovery's answer read from inside a single environment — the cheapest way to get from a Dataverse hostname back to a Power Platform environment id.
+- **`RetrieveOrganizationInfo`**, which names the instance type (production, trial, developer, Teams) and lists installed solutions. The instance type is the check worth making before writing to an environment, and this is the only call that returns it.
+- **`ExportSolution`** — the missing half of the ALM story, and notably *synchronous*: the whole `.zip` comes back base64 in one response, with no job to poll and no download URL.
+- **Six request headers** the SDK sends that the spec did not carry: `MSCRM.SolutionUniqueName` (which solution a created component lands in — the usual reason automation-created components cannot later be exported), `MSCRM.BypassCustomPluginExecution`, `MSCRM.SuppressDuplicateDetection`, `Consistency: Strong` (see current metadata rather than a cached copy, which matters on the read right after a schema change), and the two impersonation headers `MSCRMCallerID` and `CallerObjectId`.
+- **Three named throttling codes** behind the single 429: `0x80072321` time, `0x80072322` burst, `0x80072326` concurrency. Only the concurrency one warrants exponential backoff; the others are windowed, so `Retry-After` is the real answer.
+
+### What it corroborated
+
+- **The `WWW-Authenticate` challenge** as the reliable way to discover authority and audience — already in the spec from live 401s, and independently how both the SDK and `pac` itself bootstrap.
+- **The api-version scatter has a cause.** The spec had already recorded that clients disagree about the segment. The SDK explains it: it does not pin one. It takes the environment's own build, truncates to major.minor, and composes `/api/data/v{major}.{minor}/` — falling back to `9.0` with no version and refusing the Web API below major 8. The segment tracks the environment, not the client.
+- **`If-Match: *` on update and delete**, which the SDK sends unconditionally — matching what probing found about PATCH upserting without it.
+- **The global discovery host list**, twice over: the SDK's `DiscoveryServers` table and `pac`'s own `AudienceResolver` agree on all five production hosts independently.
+
+### Where it disagreed
+
+One place, and it is unresolved rather than resolved. The SDK matches throttling error codes as **decimal signed integers** (`-2147015902`); every error body observed live on this API spells `code` in hexadecimal. Nobody has captured a live 429 against this tenant, so live evidence cannot win — there is none. Both forms are recorded under the 429 response and a client should match on both.
+
+### What the CLI offered and was left out
+
+- **The SOAP organization service.** `System.ServiceModel.*` assemblies ship inside `pac`, and the SDK translates only ten message types to HTTP — `Create`, `Update`, `Delete`, `WhoAmI`, `RetrieveVersion`, `RetrieveCurrentOrganization`, `RetrieveOrganizationInfo`, `ExportSolution`, `ImportSolution`, `StageSolution` — falling back to SOAP at `/XRMServices/2011/Organization.svc` for everything else. That is worth one honest sentence: the CLI still speaks SOAP, and this spec covers the OData Web API only. Documenting the SOAP surface would mean documenting a different protocol.
+- **The regional discovery endpoints** at `disco.crm{n}.dynamics.com/XRMServices/2011/Discovery.svc`, for the same reason. Their host map is kept; their operations are not.
+- **`ImportSolutionProperties`** — the ten parameter names (`DesiredLayerOrder`, `AsyncRibbonProcessing`, `IsTemplateMode`, `SchemaUpdatesOnly` and the rest) the SDK puts in a SOAP `ImportSolutionRequest`'s parameter bag. They plainly *relate* to `ImportSolutionAsync`'s body, but the SDK never sends them over HTTP, so mapping them onto the Web API action would be inference dressed as evidence.
+- **The synchronous `ImportSolution`**, which the SDK does translate. The spec already documents `ImportSolutionAsync`, which is what any current client should use, and adding the synchronous form would suggest it is a real choice.
+- **`RetrieveUserLicenseInfo`**, which appears in the SDK's verb table but not in its list of messages it will actually send over HTTP — and which belongs to [licensing](../licensing)'s boundary regardless.
+- **The ModelBuilder and codegen surface**, and the SDK's metadata-caching, batching and connection-string machinery. All client-side, none of it a wire contract.
+
 ## What was deliberately left out
 
 The capture also contains Dataverse calls that are **not** in this spec's scope, and they stay out:
@@ -108,4 +176,4 @@ The capture also contains Dataverse calls that are **not** in this spec's scope,
 
 ## Status
 
-Spec validates as OpenAPI 3.0.3; 70 operations over 53 paths, 86 schemas. Rendered by the browser at the repo root.
+Spec validates as OpenAPI 3.0.3; 76 operations over 59 paths, 98 schemas. 64 operations carry `x-probe-verified: true`; the six SDK-derived additions carry `x-source: pac-cli` and claim nothing. Rendered by the browser at the repo root.

@@ -52,5 +52,11 @@
     "title": "Dataverse Synapse Link Orchestration API (athena)",
     "url": "athena/oas/openapi.json",
     "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/athena"
+  },
+  {
+    "id": "licensing",
+    "title": "Power Platform Licensing API",
+    "url": "licensing/oas/openapi.json",
+    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/licensing"
   }
 ]

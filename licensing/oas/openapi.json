@@ -135,7 +135,7 @@
     "Users/{userId}/Trials/{trialType}": "GET"
    },
    "readsThis": "Five routes take writes: create and update/delete a billing policy, refresh its provisioning status, PATCH environment currency allocations, and POST a user trial (which is how a trial is started). The Allow values match the shape of the equivalent Power Platform API operations -- `POST /licensing/billingPolicies`, `PUT`/`DELETE /licensing/billingPolicies/{id}`, `PATCH /licensing/allocationsByEnvironment` -- which is further evidence the two hosts front the same service.",
-   "notDocumented": "None of these is written up as an operation here. `scripts/probe.py` refuses every method but GET, HEAD and OPTIONS, so no body was ever observed and guessing one from the ppapi models would be an invention. Use [ppapi](../../ppapi) for writes; it documents them and the Terraform provider exercises them.",
+   "notDocumented": "None of these is written up as an operation here. `scripts/probe.py` refuses every method but GET, HEAD and OPTIONS, so no body was ever observed and guessing one from the ppapi models would be an invention. Use [ppapi](spec:ppapi) for writes; it documents them and the Terraform provider exercises them.",
    "absent": "`BillingPolicies/{id}/Environments/add` and `.../remove`, which ppapi exposes, are **not** routes here: they bind as `{environmentId}` on the GET route instead, which is why they answer 404 with problem details rather than 405."
   },
   "x-route-existence-oracle": {
@@ -1051,7 +1051,7 @@
      "Billing Policy"
     ],
     "summary": "List",
-    "description": "Lists every pay-as-you-go billing policy in the tenant, richest representation first.\n\nUnpaged and unfiltered: there is no `nextLink` and no continuation token, and `$top` -- along with any other query parameter -- is accepted and ignored.\n\nThis path also accepts `POST` (`Allow: GET, POST`), and the item path `PUT` and `DELETE`, so policies can be created and changed here -- but no request body was ever observed and none is documented. Prefer the [Power Platform API](../../ppapi) for writes, and for reads too unless you specifically need `type`, `payGoEntitlements` or `billingInstrument.provisioningStatus`, none of which it returns.",
+    "description": "Lists every pay-as-you-go billing policy in the tenant, richest representation first.\n\nUnpaged and unfiltered: there is no `nextLink` and no continuation token, and `$top` -- along with any other query parameter -- is accepted and ignored.\n\nThis path also accepts `POST` (`Allow: GET, POST`), and the item path `PUT` and `DELETE`, so policies can be created and changed here -- but no request body was ever observed and none is documented. Prefer the [Power Platform API](spec:ppapi) for writes, and for reads too unless you specifically need `type`, `payGoEntitlements` or `billingInstrument.provisioningStatus`, none of which it returns.",
     "x-notes": [
      {
       "note": "`api-version` is the one query parameter this route does not ignore, on a host that otherwise versions by path segment: `1.0` is accepted and anything else is rejected.",
@@ -1143,7 +1143,7 @@
      "Billing Policy"
     ],
     "summary": "Provisioning Status Refresh",
-    "description": "Re-reads the policy's Azure billing instrument and updates `billingInstrument.provisioningStatus`. Call it after fixing the underlying `Microsoft.PowerPlatform/accounts` resource, rather than waiting for the service to notice.\n\n`POST` is the only method the route accepts: a `GET` against the path answers `405` with `Allow: POST`.\n\nPrefer the equivalent operation on the [Power Platform API](../../ppapi) (`POST /licensing/billingPolicies/{billingPolicyId}/refreshProvisioningStatus`), which is the better-described sibling.",
+    "description": "Re-reads the policy's Azure billing instrument and updates `billingInstrument.provisioningStatus`. Call it after fixing the underlying `Microsoft.PowerPlatform/accounts` resource, rather than waiting for the service to notice.\n\n`POST` is the only method the route accepts: a `GET` against the path answers `405` with `Allow: POST`.\n\nPrefer the equivalent operation on the [Power Platform API](spec:ppapi) (`POST /licensing/billingPolicies/{billingPolicyId}/refreshProvisioningStatus`), which is the better-described sibling.",
     "x-version-segments": [
      "v0.1-alpha",
      "v2.0"

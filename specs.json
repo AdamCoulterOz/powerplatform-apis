@@ -16,5 +16,11 @@
     "title": "Power Platform Admin Analytics API (CS Analytics)",
     "url": "analytics/oas/openapi.json",
     "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/analytics"
+  },
+  {
+    "id": "admin",
+    "title": "Power Platform Admin Centre API (Athena)",
+    "url": "admin/oas/openapi.json",
+    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/admin"
   }
 ]

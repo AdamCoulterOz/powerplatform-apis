@@ -47,6 +47,22 @@ the model reads the JSON directly rather than carrying a full OpenAPI library
 into the browser. Extensions we rely on (`x-notes`, `x-ms-namespace`,
 `x-ms-preview`) need no mapping as a result.
 
+## Notes
+
+`x-notes` is where a spec records that the API's real behaviour contradicts
+Microsoft's published documentation. Each entry is `{"note", "source"}`, where
+`source` is the evidence grade: `live` for something seen on the wire, `pac-cli`
+for something read out of the first-party client Microsoft ships. `NotesPanel`
+renders one callout per grade — accent tone for the observed group, warning tone
+for everything weaker, which also states what it rests on — so a client-derived
+finding is never presented as an observation. Notes appear on operations,
+schemas, resource pages and individual properties, wherever the spec puts them,
+and the note text is markdown rendered exactly as a description is.
+
+Specs used to fold the same text into the owning `description` as a blockquote,
+for Stoplight Elements, which renders `description` and ignores extensions. That
+is gone: the model reads the extension, and descriptions are prose only.
+
 ## Build
 
 ```
@@ -60,9 +76,9 @@ static host with no mapping layer.
 
 ## Status
 
-Viewer reaching parity with Elements: navigation, operations, parameters,
-request and response bodies, recursive schemas with cycle handling, deep
-linking, samples, notes, and the light and dark themes. Not yet wired up:
+Viewer past parity with Elements: navigation, operations, parameters, request
+and response bodies, recursive schemas with cycle handling, deep linking,
+samples, grade-grouped notes, and the light and dark themes. Not yet wired up:
 GitHub-issue comments, and the Terraform resource-to-API view. The GitHub layer
 is intended to sit behind an interface so it can move from unauthenticated
 reads on GitHub Pages to real login without a rewrite.

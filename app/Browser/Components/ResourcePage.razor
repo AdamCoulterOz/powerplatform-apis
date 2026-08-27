@@ -11,6 +11,11 @@
         <p class="page__lead">@((MarkupString)Markdown.ToHtml(d))</p>
     }
 
+    @if (Tag?.Notes is { } notes)
+    {
+        <NotesPanel Notes="notes" />
+    }
+
     <section class="section">
         <h2 class="section__title">@Operations.Count operation@(Operations.Count == 1 ? "" : "s")</h2>
 

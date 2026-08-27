@@ -48,7 +48,7 @@ public sealed class SchemaRef
     public string? Description => OpenApiSpec.Str(_e, "description");
     public bool IsStub => OpenApiSpec.Bool(_e, "x-stub");
     public bool Nullable => OpenApiSpec.Bool(_e, "nullable");
-    public IReadOnlyList<string> Notes => OpenApiSpec.StrArr(_e, "x-notes");
+    public IReadOnlyList<SpecNote> Notes => SpecNote.Read(_e);
     public IReadOnlyList<string> Enum => OpenApiSpec.Arr(_e, "enum")
         .Select(v => v.ValueKind == JsonValueKind.String ? v.GetString()! : v.ToString())
         .ToList();

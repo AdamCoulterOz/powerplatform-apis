@@ -11,14 +11,40 @@ This is the `ppapi` folder of the [powerplatform-apis](..) monorepo; the spec br
 - `oas/openapi.json` is a single OpenAPI 3.0.3 spec: 240 operations over 205 paths and 434 schemas, reverse-engineered from the docs and then corrected and extended against two further sources (see [Sources and how they are graded](#sources-and-how-they-are-graded)). One spec, not one per namespace: the namespaces are transport and org-chart artifacts, and the resources people actually manage span them. Tags group operations by logical resource (the same taxonomy as the catalogue, plus seven resources the docs never describe) and each operation carries `x-ms-namespace` recording where Microsoft filed it. The Learn pages are generated from an internal OpenAPI, so the tables invert cleanly. Treat the unverified majority as a map, not a contract.
 - `enrichment.json` is the hand-maintained layer over the generated spec, and the only place to edit: `oas.py` rebuilds `oas/openapi.json` from `docs/` on every run, so a change made in the spec itself is lost on the next mirror commit. Its sections:
   - `info` overrides the spec description; `servers` declares the host forms (see [Hosts](#hosts)); `securityScheme` merges into the OAuth2 scheme.
-  - `operations`, keyed `namespace/group/slug`, curates a docs-derived operation: a clean `summary`, optional `tags`, `description` and `x-probe-verified`; `parameters` patches a parameter by name (deep-merging into its `schema`, so a wrong default or a missing enum is corrected without restating the type) or appends one the docs never listed; `responses` adds or corrects response bodies, headers and status codes; `requestBody` supplies one the docs omit; and `notes` records a doc-vs-reality discrepancy, which renders as a blockquote callout on the operation and as `x-notes`. A note is a plain string, graded by the entry's own `x-source`, or `{"note": ..., "source": ...}` when it is graded differently — a live-verified operation can still carry a finding only the CLI attests to, and the two render as separate callouts under separate headings rather than one box implying equal weight.
+  - `operations`, keyed `namespace/group/slug`, curates a docs-derived operation: a clean `summary`, optional `tags`, `description` and `x-probe-verified`; `parameters` patches a parameter by name (deep-merging into its `schema`, so a wrong default or a missing enum is corrected without restating the type) or appends one the docs never listed; `responses` adds or corrects response bodies, headers and status codes; `requestBody` supplies one the docs omit; and `notes` records a doc-vs-reality discrepancy, which comes out as `x-notes` (see [Notes](#notes)). A note is a plain string, graded by the entry's own `x-source`, or `{"note": ..., "source": ...}` when it is graded differently — a live-verified operation can still carry a finding only the CLI attests to.
   - `addOperations`, keyed `METHOD /path`, contributes a whole operation the docs do not describe at all. The value is an OAS operation object; `{"$ref": "Name"}` is shorthand for a component schema, `notes` behaves as above, and `servers` names which host serves it (the prose is stripped on the way out, since it already sits in the top-level `servers` list).
   - `schemas` curates an existing model: `rename` (the docs auto-name the OData envelope item type `Value`), `description`, `notes`, `enum`, `required`, `x-probe-verified`, `x-source`, `renameProperties` for names the docs spell wrongly, and `properties` to add or replace individual properties (`null` deletes one).
   - `addSchemas` defines shapes the docs omit or model wrongly, including the two the docs left as `x-stub` placeholders that are really discriminated unions.
-  - `x-source` on any of the above records where non-docs content came from. `pac-cli` means the Power Platform CLI's own client and nothing stronger; it is what keeps client-derived findings out of the "verified against the live API" callout.
+  - `x-source` on any of the above records where non-docs content came from. `pac-cli` means the Power Platform CLI's own client and nothing stronger; it is what keeps client-derived findings out of the "verified against the live API" group.
 
   `oas.py` applies all of it at generate time and warns about keys that no longer match, so docs renames surface in the daily run. New operations that have no entry get a mechanical cleanup of Microsoft's title.
 - `scripts/` regenerates everything: `fetch.py` (stdlib only), then `catalogue.py`, then `oas.py`. `pac_extract.py` is separate: it mines the Power Platform CLI's own client and diffs it against the spec, and never writes the spec itself.
+
+## Notes
+
+A doc-vs-reality finding lives in exactly one place: `x-notes` on the operation
+or schema it belongs to. Descriptions stay clean prose and never restate a note.
+
+```json
+"x-notes": [
+  { "note": "… markdown, one finding …", "source": "live" },
+  { "note": "…", "source": "pac-cli" }
+]
+```
+
+`source` is the evidence grade behind that one finding, and the grades are not
+interchangeable. `live` means someone saw the service do this. `pac-cli` means
+Microsoft's own decompiled client says so, which is strong structural evidence
+and not an observation — the build can be older than the service. Entries come
+out grouped by grade, `live` first, so a consumer groups on `source` without
+parsing prose and a renderer shows the grades in a stable order under separate
+headings.
+
+An earlier revision also folded each note into the owning `description` as a
+`> **Heading**` blockquote, because the site was then Stoplight Elements, which
+renders `description` and ignores extensions. The site is now the Blazor browser
+in [app/](../app), which reads `x-notes` directly and renders it as its own
+element, so the duplication is gone.
 
 ## Hosts
 

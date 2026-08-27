@@ -9,16 +9,9 @@
         <p class="page__lead">@((MarkupString)Markdown.ToHtml(d))</p>
     }
 
-    @if (Schema?.Notes is { Count: > 0 } notes)
+    @if (Schema?.Notes is { } notes)
     {
-        <KeelCallout Tone="CalloutTone.Info" Title="Verified against the live API" class="section">
-            <ul style="margin:var(--s-2) 0 0;padding-left:1.15em">
-                @foreach (var n in notes)
-                {
-                    <li style="margin:var(--s-2) 0">@((MarkupString)Markdown.ToHtml(n))</li>
-                }
-            </ul>
-        </KeelCallout>
+        <NotesPanel Notes="notes" />
     }
 
     <div class="op-body">

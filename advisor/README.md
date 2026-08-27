@@ -113,6 +113,7 @@ What *was* established live for the first three, non-destructively: all three ro
 - `required` is listed only where probing proved presence across all 1531 observed rule objects — on responses, not on the unprobed request bodies (the one exception, `AnalysisRequest.sasUriList`, is Microsoft's documented requirement, corroborated by the SDK refusing to submit without it, and is marked unverified alongside its schema).
 - Closed value sets are carried as `enum` rather than described in prose: severities, categories, `componentType`, ruleset ids and names, api-versions, job statuses, rule override levels, the server region variable.
 - Status-code meanings live under their own response entries, never in operation descriptions.
+- **Doc-vs-reality findings live in `x-notes`, not in prose.** Each entry is `{"note", "source"}`, `source` being the evidence grade behind that one finding — `live` for what probing saw, `pac-cli` for what only the SDK attests to. Descriptions describe the API; the notes are where the published reference is contradicted, and the spec browser renders each grade as its own callout so the two are never read as equally solid. The shape is the one `ppapi/scripts/oas.py` emits.
 - Property-name casing is asserted only where a source proves it. The analysis submission is documented in Microsoft's camelCase with a note that the SDK sends PascalCase and the service accepts both; the Dataverse-context submission, whose only source is the SDK, is documented in the PascalCase the SDK provably sends.
 
 ## Status

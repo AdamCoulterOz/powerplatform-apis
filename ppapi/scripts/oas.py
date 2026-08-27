@@ -266,14 +266,14 @@ def verb_last(name):
     return " ".join(p for p in parts if p).strip()
 
 
-NOTE_HEADINGS = {
-    None: "Verified against the live API",
-    # a decompiled first-party client is strong structural evidence, but it is
-    # not an observation: the build can be older than the service, and it must
-    # never render under the same heading as something seen on the wire
-    "pac-cli": "From Microsoft's own client",
-}
-NOTE_ORDER = [None, "pac-cli"]
+# The evidence grades a note can carry, in the order a renderer should show
+# them. LIVE is the ungraded default: a finding stated without a grade is one
+# seen on the wire. A decompiled first-party client is strong structural
+# evidence, but it is not an observation — the build can be older than the
+# service — so pac-cli is a grade of its own and must never be presented as
+# equally solid.
+NOTE_LIVE = "live"
+NOTE_ORDER = [NOTE_LIVE, "pac-cli"]
 
 
 def note_text(note):
@@ -282,27 +282,27 @@ def note_text(note):
     return note["note"] if isinstance(note, dict) else note
 
 
-def fold_notes(description, notes, source=None):
-    """Doc-vs-reality findings render as blockquote callouts so a spec browser
-    shows note boxes rather than loose sentences. One box per evidence grade,
-    never one box mixing them: an entry verified on the wire can still carry a
-    finding that only Microsoft's client attests to, and the two must not read
-    as equally solid."""
-    if not notes:
-        return description
-    grouped = {}
-    for n in notes:
-        grade = n.get("source", source) if isinstance(n, dict) else source
-        grouped.setdefault(grade, []).append(note_text(n))
-    blocks = []
-    for grade in NOTE_ORDER + [g for g in grouped if g not in NOTE_ORDER]:
-        if grade not in grouped:
-            continue
-        heading = NOTE_HEADINGS.get(grade, NOTE_HEADINGS[None])
-        blocks.append("\n".join([f"> **{heading}**", ">"]
-                                + [f"> - {n}" for n in grouped[grade]]))
-    block = "\n\n".join(blocks)
-    return (description + "\n\n" + block).strip() if description else block
+def note_grade(note, source=None):
+    """A note's evidence grade: its own `source` when it carries one, else the
+    grade of the entry it sits on. Ungraded means observed on the live API."""
+    grade = note.get("source", source) if isinstance(note, dict) else source
+    return grade or NOTE_LIVE
+
+
+def build_notes(notes, source=None):
+    """x-notes as structured data: one object per finding, carrying the note
+    text and the evidence grade behind it.
+
+    Notes live here and nowhere else — they are not folded into `description`,
+    which stays clean prose. A consumer groups by `source` without parsing
+    prose, and an entry verified on the wire can still carry a finding only
+    Microsoft's client attests to without the two reading as equally solid.
+    Emitted grouped in NOTE_ORDER, so grades render in a stable order.
+    """
+    graded = [(note_grade(n, source), note_text(n)) for n in notes]
+    order = NOTE_ORDER + sorted({g for g, _ in graded} - set(NOTE_ORDER))
+    return [{"note": text, "source": grade}
+            for grade in order for g, text in graded if g == grade]
 
 
 def merge_parameters(params, overrides):
@@ -479,8 +479,7 @@ def parse_operation(f, paths, schemas, seen):
         "x-ms-namespace": f"{ns}/{group}",
     }
     if notes:
-        op["x-notes"] = [note_text(n) for n in notes]
-        description = fold_notes(description, notes, (enrich or {}).get("x-source"))
+        op["x-notes"] = build_notes(notes, (enrich or {}).get("x-source"))
     for k, v in (enrich or {}).items():
         if k.startswith("x-"):
             op[k] = v
@@ -624,9 +623,7 @@ def main():
         if cfg.get("description"):
             target["description"] = cfg["description"]
         if cfg.get("notes"):
-            target["x-notes"] = [note_text(n) for n in cfg["notes"]]
-            target["description"] = fold_notes(target.get("description", ""), cfg["notes"],
-                                               cfg.get("x-source"))
+            target["x-notes"] = build_notes(cfg["notes"], cfg.get("x-source"))
         global_schemas[new] = target
         if new != old:
             applied[old] = new
@@ -665,9 +662,7 @@ def main():
             del op["servers"]
         notes = op.pop("notes", [])
         if notes:
-            op["x-notes"] = [note_text(n) for n in notes]
-            op["description"] = fold_notes(op.get("description", ""), notes,
-                                           op.get("x-source"))
+            op["x-notes"] = build_notes(notes, op.get("x-source"))
         op.setdefault("parameters", [])
         op.setdefault("responses", {"200": {"description": "OK"}})
         all_paths.setdefault(path, {})[method] = op

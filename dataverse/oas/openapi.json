@@ -3,7 +3,7 @@
  "info": {
   "title": "Dataverse Web API (admin subset)",
   "version": "v9.2",
-  "description": "Unofficial, and deliberately partial.\n\nThe Dataverse Web API is the per-environment OData v4 endpoint at `https://{organization}.crm{n}.dynamics.com/api/data/v9.2/`. Every table in every environment is addressable through it and the model differs per environment, so a complete document is neither possible nor useful. **This is a curated admin/ALM subset** \u2014 the operation surface an infrastructure client actually uses: table definitions, generic record CRUD and query, relationship manipulation, solutions and solution import, environment variables, publishers, users and security roles, and organization settings. For the full per-environment model, fetch that environment's own CSDL at `GET /api/data/v9.2/$metadata`, which is authoritative and machine-readable; Microsoft Learn documents the same surface in prose.\n\nDerived from the wire behaviour encoded in microsoft/terraform-provider-power-platform's client (`internal/clients/dataverse`) and then **probed against a live tenant**. Envelope and annotation shapes, paging and count behaviour, option-set values, api-version routing and error bodies were all confirmed against a real environment; those operations carry `x-probe-verified: true`. Operations that mutate solutions, settings or users are marked `x-probe-verified: false` \u2014 they are documented from the client and from public behaviour, not from a live write.\n\n## Host and audience\n\nThe host is per environment, so `servers` carries a placeholder. Resolve the real one from the admin APIs \u2014 BAPI's environment record, or the `instanceApiUrl` of the Power Platform API's environment resource \u2014 rather than deriving it from an environment id. The OAuth audience is the environment's own URL, so the scope is `https://{host}/.default`. (A token minted for one environment was observed to be accepted by a sibling environment in the same tenant. Do not build on that; mint per host.)\n\n## Conventions that hold everywhere\n\nStated once here rather than repeated on every operation.\n\n- **Collection names route, logical names do not.** Records live under the table's `EntitySetName` (`accounts`), while callers usually hold the logical name (`account`). Resolve one to the other through `EntityDefinitions` before building a URL.\n- **Envelope.** Collections return `@odata.context`, `value`, and `@odata.nextLink` when truncated. Single records return the row itself with a `/$entity` context and no wrapper. Function results return neither \u2014 their context ends in `#Microsoft.Dynamics.CRM.<Name>Response`. Every row carries `@odata.etag`.\n- **Lookups are asymmetric.** Read `_{navProperty}_value`; write `{navProperty}@odata.bind` with a relative URL; filter on the `_\u2026_value` shadow with the guid unquoted.\n- **Creates answer with an empty body** and put the new id in the `OData-EntityId` header. `Prefer: return=representation` swaps that for the row itself, echoed in `Preference-Applied`.\n- **PATCH upserts.** A PATCH against an id that does not exist creates the record; `If-Match: *` makes it update-only.\n- **Counts saturate at 5000.** Both `@odata.count` and `@Microsoft.Dynamics.CRM.totalrecordcount` cap there, with `@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded: true` as the signal.\n- **Metadata endpoints are not entity sets.** `EntityDefinitions` and its children accept `$top` and ignore it, and never page.\n- **Errors** are `{\"error\":{\"code\",\"message\"}}` with a hexadecimal `code`. Messages are localized and interpolated; match on codes. Two failures escape that envelope: a 401 has an empty body and reports itself in headers, and a request with no api-version segment answers `{\"Message\": \"...\"}` from below the OData layer.\n- **Throttling** is per user per environment over a rolling five-minute window, so parallelising a job across records makes 429s more likely rather than less.\n\n## API versions\n\n`v9.0`, `v9.1` and `v9.2` all route and, for the operations here, answer identically \u2014 the segment selects the CSDL a client validates against rather than different behaviour. Paths are pinned to the version the provider uses in the field: `v9.2` throughout, except `RetrieveSolutionImportResult`, `RetrieveSettingList()`, `SaveSettingValue()` and `organizations`, which it calls on `v9.0`. `v9.3` is not served.",
+  "description": "Unofficial, and deliberately partial.\n\nThe Dataverse Web API is the per-environment OData v4 endpoint at `https://{organization}.crm{n}.dynamics.com/api/data/v9.2/`. Every table in every environment is addressable through it and the model differs per environment, so a complete document is neither possible nor useful. **This is a curated admin/ALM subset** \u2014 the operation surface an infrastructure client actually uses: table definitions, generic record CRUD and query, relationship manipulation, solutions and solution import, environment variables, publishers, users and security roles, and organization settings. For the full per-environment model, fetch that environment's own CSDL at `GET /api/data/v9.2/$metadata`, which is authoritative and machine-readable; Microsoft Learn documents the same surface in prose.\n\nDerived from the wire behaviour encoded in microsoft/terraform-provider-power-platform's client (`internal/clients/dataverse`), then **probed against a live tenant**, then corrected and extended against **recorded first-party UI traffic** \u2014 HAR captures of the Power Platform admin centre, the maker portal and the Link to Fabric wizard driving several real organizations. Envelope and annotation shapes, paging and count behaviour, option-set values, api-version routing and error bodies were all confirmed against a real environment; those operations carry `x-probe-verified: true`, which now covers both live probing and recorded production traffic \u2014 a recorded 200 is treated as confirmation. Operations that mutate solutions, settings or users are marked `x-probe-verified: false` \u2014 they are documented from the client and from public behaviour, not from a live write.\n\n## Host and audience\n\nThe host is per environment, so `servers` carries a placeholder. Resolve the real one from the admin APIs \u2014 BAPI's environment record, or the `instanceApiUrl` of the Power Platform API's environment resource \u2014 rather than deriving it from an environment id. The OAuth audience is the environment's own URL, so the scope is `https://{host}/.default`. (A token minted for one environment was observed to be accepted by a sibling environment in the same tenant. Do not build on that; mint per host.)\n\n## Conventions that hold everywhere\n\nStated once here rather than repeated on every operation.\n\n- **Collection names route, logical names do not.** Records live under the table's `EntitySetName` (`accounts`), while callers usually hold the logical name (`account`). Resolve one to the other through `EntityDefinitions` before building a URL.\n- **Envelope.** Collections return `@odata.context`, `value`, and `@odata.nextLink` when truncated. Single records return the row itself with a `/$entity` context and no wrapper. Function results return neither \u2014 their context ends in `#Microsoft.Dynamics.CRM.<Name>Response`. Every row carries `@odata.etag`.\n- **Lookups are asymmetric.** Read `_{navProperty}_value`; write `{navProperty}@odata.bind` with a relative URL; filter on the `_\u2026_value` shadow with the guid unquoted.\n- **Creates answer with an empty body** and put the new id in the `OData-EntityId` header. `Prefer: return=representation` swaps that for the row itself, echoed in `Preference-Applied`.\n- **PATCH upserts.** A PATCH against an id that does not exist creates the record; `If-Match: *` makes it update-only.\n- **Counts saturate at 5000.** Both `@odata.count` and `@Microsoft.Dynamics.CRM.totalrecordcount` cap there, with `@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded: true` as the signal.\n- **Metadata endpoints are not entity sets.** `EntityDefinitions` and its children accept `$top` and ignore it, and never page.\n- **Errors** are `{\"error\":{\"code\",\"message\"}}` with a hexadecimal `code`. Messages are localized and interpolated; match on codes. Two failures escape that envelope: a 401 has an empty body and reports itself in headers, and a request with no api-version segment answers `{\"Message\": \"...\"}` from below the OData layer.\n- **Throttling** is per user per environment over a rolling five-minute window, so parallelising a job across records makes 429s more likely rather than less.\n\n## API versions\n\n`v9.0`, `v9.1` and `v9.2` all route and, for the operations here, answer identically \u2014 the segment selects the CSDL a client validates against rather than different behaviour. Paths are pinned to the version the provider uses in the field: `v9.2` throughout, except `RetrieveSolutionImportResult`, `RetrieveSettingList()`, `SaveSettingValue()` and `organizations`, which it calls on `v9.0`. `v9.3` is not served.\n\nThe recordings show the first-party clients are not consistent about this either, and where they disagree with the provider it is flagged on the operation. `datalakefolders` is the case that matters: the provider pins `v9.1`, the current portal calls `v9.2`, and both answer identically \u2014 the segment is not what makes the difference there. Operations added from the recordings carry `x-observed-api-versions` listing the segments actually seen on the wire, and **their paths pin the segment observed** rather than claiming the whole family \u2014 unless more than one segment was seen, in which case the path is parameterised, or unless the operation joins a family this spec already parameterises. So a `v9.0` in a path added from a recording means it is where the segment was seen, not the only place it routes.\n\nOne consequence is visible in Users and Roles, where operations the provider calls are pinned at `v9.2` and operations only the portal calls are pinned at `v9.0`. Both were observed against the same table on the same environment.",
   "x-api-versions": [
    "v9.0",
    "v9.1",
@@ -47,6 +47,10 @@
    "description": "Reading and changing the links between records: `@odata.bind` for single-valued lookups, and the `$ref` collection for collection-valued relationships such as a user's security roles."
   },
   {
+   "name": "Batch",
+   "description": "Multiple Web API requests sent as one `multipart/mixed` document. The mechanism by which a client groups reads, or makes a set of writes atomic through a change set."
+  },
+  {
    "name": "Solutions",
    "description": "The inventory of solutions installed in an environment, and their removal. A solution is the unit in which customizations are packaged and moved between environments."
   },
@@ -69,6 +73,18 @@
   {
    "name": "Organization Settings",
    "description": "Environment-level configuration, which lives in two unrelated places: the very wide `organization` row, and a weakly-typed list of backend feature switches beside it."
+  },
+  {
+   "name": "Feature Control",
+   "description": "The per-environment feature switches \u2014 \"feature control bits\" \u2014 that gate platform behaviour independently of the `organization` row and of the backend settings beside it. Read-only from here: a switch is flipped by Microsoft, by the admin centre, or by a setting elsewhere, never by writing to this surface."
+  },
+  {
+   "name": "Dataverse Search",
+   "description": "The environment's search index: whether it has been provisioned, and whether Customer Lockbox gates it. Enabling search is an admin-centre operation; this reports the result."
+  },
+  {
+   "name": "Fabric and Synapse Link",
+   "description": "The Dataverse side of Link to Microsoft Fabric and Azure Synapse Link: the data-lake folder that anchors a link, the Synapse/Fabric database it feeds, the per-table sync state underneath it, and the per-table analytics opt-in that decides which tables take part.\n\nNone of it is created here. The orchestration service specified in [athena](../athena) writes these rows server-side when a link is created and removes them when it is destroyed; this surface is how a client observes and identifies them \u2014 in particular how it obtains the `datalakefolderid` that tearing a link down requires."
   }
  ],
  "paths": {
@@ -116,7 +132,7 @@
      "Table Definitions"
     ],
     "summary": "List",
-    "description": "Lists the tables of this environment's model. Filtering on `LogicalCollectionName` is how a caller inverts a plural collection name back to a table's singular logical name.\n\nMetadata endpoints are not ordinary entity sets: `$top`, `$count` and `$orderby` are accepted and then silently ignored, only `$select` and `$filter` have effect, and there is no paging \u2014 the whole collection arrives in one response.",
+    "description": "Lists the tables of this environment's model. Filtering on `LogicalCollectionName` is how a caller inverts a plural collection name back to a table's singular logical name.\n\nMetadata endpoints are not ordinary entity sets: `$top`, `$count` and `$orderby` are accepted and then silently ignored, only `$select` and `$filter` have effect, and there is no paging \u2014 the whole collection arrives in one response.\n\n`$filter` and `$expand` do work here despite `$top` being ignored, and filtering on metadata properties rather than data is what makes the endpoint useful: `$filter=SyncToExternalSearchIndex eq true and ChangeTrackingEnabled eq true` narrows to the tables eligible for search or for a data-lake link without pulling the whole model. `$expand=Attributes($select=...)` inlines columns in the same call.\n\nThe `@Microsoft.Dynamics.CRM.totalrecordcount` annotation behaves differently from the one on entity sets: it carries a **real count** here rather than `-1`, and it counts the filtered result. It is still capped, so treat a value of 5000 as a floor.\n\n`RetrieveAllSettings=True` is a metadata-only query option, PascalCase and not an OData one; it returns each definition's full property set at a large cost in response size.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -127,6 +143,9 @@
      },
      {
       "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/retrieveAllSettings"
      }
     ],
     "responses": {
@@ -270,6 +289,68 @@
      },
      "501": {
       "$ref": "#/components/responses/501"
+     }
+    }
+   }
+  },
+  "/api/data/{apiVersion}/EntityDefinitions(LogicalName='{logicalName}')/Attributes(LogicalName='{attributeLogicalName}')": {
+   "get": {
+    "operationId": "entityDefinitions_readAttribute",
+    "tags": [
+     "Table Definitions"
+    ],
+    "summary": "Attribute Read",
+    "description": "Reads one column's metadata by logical name.\n\nBoth keys are string arguments and both are quoted, unlike the guid keys used elsewhere. The cheapest way to answer \"does this column exist here\" without pulling the table's whole attribute list \u2014 select `LogicalName` alone and read the status code.\n\nThe response is **cast to the column's concrete metadata type**: the context path carries the cast (`.../Attributes/Microsoft.Dynamics.CRM.BooleanAttributeMetadata(...)`) and the body carries a matching `@odata.type`. A caller cannot know which subtype it will get before asking, so read `@odata.type` rather than assuming.\n\nAn `api-version` **query** parameter was observed alongside the path's version segment, disagreeing with it \u2014 `v9.0` in the path, `api-version=9.1` in the query. The call succeeded; the query parameter appears to be ignored by this route. Do not rely on it to select a version.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/apiVersion"
+     },
+     {
+      "$ref": "#/components/parameters/logicalName"
+     },
+     {
+      "$ref": "#/components/parameters/attributeLogicalName"
+     },
+     {
+      "$ref": "#/components/parameters/select"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The column's metadata, cast to its concrete type.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AttributeMetadata"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such column on that table. Also what a misspelled logical name produces \u2014 and platform columns are occasionally misspelled at source, so check the table's attribute list before concluding a column is absent.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ODataError"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
      }
     }
    }
@@ -945,6 +1026,55 @@
     }
    }
   },
+  "/api/data/v9.0/$batch": {
+   "post": {
+    "operationId": "batch_execute",
+    "tags": [
+     "Batch"
+    ],
+    "summary": "Execute",
+    "description": "Sends several Web API requests in one round trip.\n\nThe body is a `multipart/mixed` document, **not JSON**: each part carries `Content-Type: application/http` and `Content-Transfer-Encoding: binary`, then a complete request line, its own headers, a blank line and its body. The boundary is chosen by the caller and named in the request's own `Content-Type`. Requests inside may use absolute URLs on this host.\n\nThe response is `multipart/mixed` too, with a **service-chosen boundary** that has no relation to the request's \u2014 parse it out of the response `Content-Type` rather than assuming symmetry. Each part holds a full HTTP response, status line and headers included, so a part can fail while the batch returns 200.\n\nReads may be sent loose in the document as shown here. Writes that must succeed or fail together go inside a change set, which is a nested multipart part of its own; only change sets are transactional, a batch of loose requests is not.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "multipart/mixed": {
+       "schema": {
+        "type": "string",
+        "description": "The batch document. Boundary lines, per-part headers and blank-line separators are significant; a missing blank line between a part's headers and its request line is the usual cause of a rejection."
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The batch was parsed and each part attempted. **This says nothing about the parts** \u2014 read the status line inside each one. The boundary is the service's own, given in the response `Content-Type`.",
+      "content": {
+       "multipart/mixed": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
   "/api/data/v9.2/solutions": {
    "get": {
     "operationId": "solutions_list",
@@ -1070,6 +1200,55 @@
     "responses": {
      "204": {
       "description": "Deleted."
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/GetPreferredSolution": {
+   "get": {
+    "operationId": "solutions_readPreferred",
+    "tags": [
+     "Solutions"
+    ],
+    "summary": "Preferred Read",
+    "description": "Returns the solution new components land in when the caller does not name one.\n\nAn unbound function whose result is a single solution row \u2014 the context ends `#solutions/$entity`, so it is shaped like a record read rather than a function response, and `$expand=publisherid` works on it. Expanding the publisher is the usual reason to call it: the publisher's `customizationprefix` is what every component created without an explicit solution will be stamped with.\n\nOn an environment where nothing has been chosen this answers the Common Data Services Default Solution, whose id is the well-known constant below.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The preferred solution. `00000001-0000-0000-0001-00000000009b` is the default solution's fixed id, present on every environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Solution"
+        }
+       }
+      }
      },
      "400": {
       "$ref": "#/components/responses/400"
@@ -2116,7 +2295,7 @@
      "Users and Roles"
     ],
     "summary": "Users List",
-    "description": "Lists the users of this environment. The table holds both interactive users and application (service principal) users; `applicationid` is non-null only on the latter.\n\nTwo filters carry identity resolution: `azureactivedirectoryobjectid` for an interactive user just granted access, and `applicationid` for an application user. Both lag their upstream grant \u2014 a freshly added user is invisible here for tens of seconds \u2014 so an empty result means \"not yet\", and callers should poll rather than conclude absence.\n\nDeleted users are soft-deleted rather than removed, so filter on `deletedstate` or a delete-then-recreate cycle looks like a duplicate.\n\nExpanding `systemuserroles_association` inlines the assigned security roles. That expansion is itself paged: watch for a `systemuserroles_association@odata.nextLink` sibling of the inlined array when a user has many roles.",
+    "description": "Lists the users of this environment. The table holds both interactive users and application (service principal) users; `applicationid` is non-null only on the latter.\n\nTwo filters carry identity resolution: `azureactivedirectoryobjectid` for an interactive user just granted access, and `applicationid` for an application user. The first is also declared as an **alternate key**, so the same lookup can be written as a keyed read \u2014 which returns the row and a 404 rather than an empty page and a 200. Both lag their upstream grant \u2014 a freshly added user is invisible here for tens of seconds \u2014 so an empty result means \"not yet\", and callers should poll rather than conclude absence.\n\nDeleted users are soft-deleted rather than removed, so filter on `deletedstate` or a delete-then-recreate cycle looks like a duplicate.\n\nExpanding `systemuserroles_association` inlines the assigned security roles. That expansion is itself paged: watch for a `systemuserroles_association@odata.nextLink` sibling of the inlined array when a user has many roles.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -2676,6 +2855,398 @@
     }
    }
   },
+  "/api/data/v9.0/systemusers(azureactivedirectoryobjectid={azureActiveDirectoryObjectId})": {
+   "get": {
+    "operationId": "users_readByEntraObjectId",
+    "tags": [
+     "Users and Roles"
+    ],
+    "summary": "Read (By Entra Object Id)",
+    "description": "Reads a user by their Entra object id, addressed as an **alternate key** rather than by filtering.\n\n`systemusers` declares `azureactivedirectoryobjectid` as an alternate key, so it can be written straight into the parentheses in place of the primary key. The guid goes in bare \u2014 `systemusers(azureactivedirectoryobjectid=<guid>)` \u2014 with no quotes and no braces.\n\nThe difference from the equivalent `$filter` is the shape of the answer and of the failure: this returns the row itself with a `/$entity` context, and a 404 when there is no such user, where the filtered list returns an empty `value` array and a 200. For resolving one known person that is the more direct contract; for polling until a freshly granted user appears, the list form's 200-with-nothing is easier to loop on.\n\nWithout `$select` the whole row comes back \u2014 133 columns were observed \u2014 so select what is needed.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/azureActiveDirectoryObjectId"
+     },
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The user.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SystemUser"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No user in this environment carries that Entra object id. Expected for a person who has not been granted access, and also for one granted access seconds ago \u2014 the row lags the grant.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ODataError"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/systemusers({systemUserId})/Microsoft.Dynamics.CRM.RetrieveUserPrivileges": {
+   "get": {
+    "operationId": "users_readPrivileges",
+    "tags": [
+     "Users and Roles"
+    ],
+    "summary": "Privileges Read",
+    "description": "Returns the privileges a user holds through the roles assigned to them directly.\n\nA bound function, so the full namespaced name is appended to the user's URL and the result is a function response rather than a collection: no `value` array, no paging, no query options. On an administrator the set runs to several thousand entries in one body.\n\nIt answers what the user can do, not which roles say so \u2014 the roles are collapsed away, and privileges reaching them through team membership are **not** included. For those, use the through-teams variant beside this one and combine.\n\nThe portal sends `Consistency: Strong` on this call to avoid reading a stale replica after a role change.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/systemUserId"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every directly-held privilege, flattened.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RetrieveUserPrivilegesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/systemusers({systemUserId})/Microsoft.Dynamics.CRM.RetrieveUsersPrivilegesThroughTeams(ExcludeOrgDisabledPrivileges={ExcludeOrgDisabledPrivileges},IncludeSetupUserFiltering={IncludeSetupUserFiltering})": {
+   "get": {
+    "operationId": "users_readPrivilegesThroughTeams",
+    "tags": [
+     "Users and Roles"
+    ],
+    "summary": "Privileges Read (Through Teams)",
+    "description": "Returns the privileges a user inherits from the teams they belong to.\n\nThe complement of the direct read, not a superset of it: a user in no role-bearing team gets an empty `RolePrivileges` array here while holding thousands directly. An empty result is therefore the normal answer and not a sign of a failed call. A caller wanting the effective set must union the two.\n\nBoth arguments are required \u2014 the function cannot be called bare \u2014 and both are written unquoted as `true`/`false` inside the parentheses. The portal sends `true` for both, which excludes privileges whose feature is switched off for the organization and applies setup-user filtering, so the answer reflects what the user can actually exercise.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/systemUserId"
+     },
+     {
+      "$ref": "#/components/parameters/excludeOrgDisabledPrivileges"
+     },
+     {
+      "$ref": "#/components/parameters/includeSetupUserFiltering"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every team-inherited privilege. Empty when the user's teams hold no roles.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RetrieveUserPrivilegesResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/systemuserrolescollection": {
+   "get": {
+    "operationId": "users_listRoleAssignments",
+    "tags": [
+     "Users and Roles"
+    ],
+    "summary": "Role Assignments List",
+    "description": "Lists user-to-role assignments as rows.\n\nThe queryable face of the same intersect table the `systemuserroles_association` `$ref` collection writes to, and the way to ask \"does this user hold these particular roles\" without expanding the user or walking the association. Both ends are plain columns rather than lookups, so they are filtered directly by name.\n\nGuid comparisons here were observed **quoted** \u2014 `$filter=systemuserid eq '<guid>'` \u2014 which is the opposite of the unquoted form ordinary tables require on their `_..._value` shadows.\n\nThe rows carry only the two ids and the assignment's own key; there is no name and no expand path to one, so resolving a role name still needs the `roles` collection.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     },
+     {
+      "$ref": "#/components/parameters/orderby"
+     },
+     {
+      "$ref": "#/components/parameters/top"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching assignments.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SystemUserRoleCollection"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     },
+     "501": {
+      "$ref": "#/components/responses/501"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/teammemberships": {
+   "get": {
+    "operationId": "users_listTeamMemberships",
+    "tags": [
+     "Users and Roles"
+    ],
+    "summary": "Team Memberships List",
+    "description": "Lists which users belong to which teams.\n\nThe second route by which a user acquires privileges: roles held by a team reach every member. A user audit that reads only `systemuserrolescollection` misses whatever their teams grant.\n\nEvery user belongs to at least their business unit's default team, so a non-empty result is the baseline rather than a signal. Guids are filtered unquoted here, unlike on `systemuserrolescollection`.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     },
+     {
+      "$ref": "#/components/parameters/orderby"
+     },
+     {
+      "$ref": "#/components/parameters/top"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching memberships.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TeamMembershipCollection"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     },
+     "501": {
+      "$ref": "#/components/responses/501"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/teams": {
+   "get": {
+    "operationId": "users_listTeams",
+    "tags": [
+     "Users and Roles"
+    ],
+    "summary": "Teams List",
+    "description": "Lists the teams of this environment.\n\nExpanding `teamroles_association` inlines the roles the team holds, which is what a caller needs to explain a privilege a user has but no direct role grants. That expansion is paged like the user one: a `teamroles_association@odata.nextLink` sibling of the inlined array means it was truncated, and it appears even when the array came back empty.\n\nObserved only as a request inside a `$batch` document, filtered with the `Microsoft.Dynamics.CRM.In` function rather than a chain of `eq`s \u2014 which is how a portal asks for a known set of ids without building a long filter string.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     },
+     {
+      "$ref": "#/components/parameters/orderby"
+     },
+     {
+      "$ref": "#/components/parameters/top"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching teams.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TeamCollection"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     },
+     "501": {
+      "$ref": "#/components/responses/501"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/businessunits({businessUnitId})": {
+   "get": {
+    "operationId": "users_readBusinessUnit",
+    "tags": [
+     "Users and Roles"
+    ],
+    "summary": "Business Unit Read",
+    "description": "Reads one business unit.\n\nExpanding `business_unit_roles` inlines the roles scoped to that unit, which is the direct way to enumerate the assignable roles for a user in it \u2014 roles are per unit, and a role from the wrong unit cannot be assigned.\n\nThe portal narrows that expansion with `$filter=issytemgenerated eq false` to hide the roles the platform generates for its own use. **Note the spelling**: the column is `issytemgenerated`, missing an `s`, and the misspelling is the real name.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/businessUnitId"
+     },
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The business unit.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BusinessUnit"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
   "/api/data/v9.0/organizations": {
    "get": {
     "operationId": "organizationSettings_list",
@@ -2751,7 +3322,17 @@
     },
     "responses": {
      "204": {
-      "description": "Applied \u2014 but only for the columns that are writable. Read-only columns in the payload were discarded without comment, so success here does not prove the value changed."
+      "description": "Applied \u2014 but only for the columns that are writable. Read-only columns in the payload were discarded without comment, so success here does not prove the value changed. The response carries a `Location` header naming the row, and `Content-Type: text/html` despite the empty body.",
+      "headers": {
+       "Location": {
+        "description": "Absolute URL of the row that was patched, returned on a successful update as well as on a create. Redundant here \u2014 the caller already had the id.",
+        "schema": {
+         "type": "string",
+         "format": "uri",
+         "example": "https://contoso.crm.dynamics.com/api/data/v9.0/organizations(00000000-0000-0000-0000-000000000000)"
+        }
+       }
+      }
      },
      "400": {
       "description": "The change was refused. A value outside a choice column's range reports `0x8004431a` and the message lists the accepted values; a column that cannot be null reports `0x80040200`; a property that is not on the type at all reports `0x80048d19`. Note that a merely *implausible* value in a writable numeric column is accepted rather than clamped.",
@@ -2889,6 +3470,617 @@
      },
      "429": {
       "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/{apiVersion}/GetOrgDbOrgSetting": {
+   "post": {
+    "operationId": "organizationSettings_readBackendSetting",
+    "tags": [
+     "Organization Settings"
+    ],
+    "summary": "Backend Setting Read",
+    "description": "Reads one backend (\"OrgDB\") setting by name.\n\nThe single-value counterpart of `RetrieveSettingList()`, and the only way to ask about a setting that has never been set here \u2014 the list operation simply omits those. An unbound action, so a POST that only reads.\n\nBoth answers are the empty string: a setting with no value in this environment, and a name that does not exist. Neither is an error, so this operation cannot be used to validate a name. Treat the empty string as \"running on the server-side default\", which is not the same as false.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0",
+     "v9.2"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/apiVersion"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GetOrgDbOrgSettingRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The setting's value, or the empty string when it has none here.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GetOrgDbOrgSettingResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     },
+     "501": {
+      "$ref": "#/components/responses/501"
+     }
+    }
+   }
+  },
+  "/api/data/v9.2/RetrieveSetting(SettingName='{settingName}',AppUniqueName='{appUniqueName}')": {
+   "get": {
+    "operationId": "organizationSettings_readSetting",
+    "tags": [
+     "Organization Settings"
+    ],
+    "summary": "Setting Read",
+    "description": "Resolves one setting for a scope, through the `settingdefinitions` catalogue rather than the OrgDB bag.\n\nThis is the third settings surface, and the newest: settings declared as rows in `settingdefinitions`, each with a type, a default and a scope at which it may be overridden. `AppUniqueName` selects that scope \u2014 a model-driven app's override, or the empty string for the organization-level value \u2014 and it must be present either way; the argument cannot be omitted.\n\nBoth arguments are string function arguments and are quoted inside the parentheses, unlike the guid arguments elsewhere in this spec.\n\nThe response carries the resolved value with its declared type, so unlike the OrgDB surface a caller can tell a real value from an absent one.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.2"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/settingName"
+     },
+     {
+      "$ref": "#/components/parameters/appUniqueName"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The resolved setting.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RetrieveSettingResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/v9.2/settingdefinitions": {
+   "get": {
+    "operationId": "organizationSettings_listSettingDefinitions",
+    "tags": [
+     "Organization Settings"
+    ],
+    "summary": "Setting Definitions List",
+    "description": "Lists the settings this environment declares.\n\nThe catalogue behind `RetrieveSetting`: what each name means, how to parse its value, what it defaults to, and \u2014 through `isoverridable` \u2014 whether this environment is allowed to change it at all. Checking that before writing avoids a write that reports success and does nothing.\n\nA definition can exist while no value has ever been set, so this collection and `RetrieveSettingList()` do not agree by construction: the former is the declared surface, the latter the set that has been touched.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.2"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     },
+     {
+      "$ref": "#/components/parameters/orderby"
+     },
+     {
+      "$ref": "#/components/parameters/top"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching definitions.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SettingDefinitionCollection"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     },
+     "501": {
+      "$ref": "#/components/responses/501"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/RetrieveVersion": {
+   "get": {
+    "operationId": "organizationSettings_readVersion",
+    "tags": [
+     "Organization Settings"
+    ],
+    "summary": "Version Read",
+    "description": "Reports the Dataverse build serving this environment.\n\nAn unbound function, so a plain GET with no arguments. Environments in one tenant are upgraded on their own schedules, so this is a per-environment answer and not a tenant fact \u2014 the right check before relying on a feature whose availability is release-gated.\n\nThe build's major.minor is the platform version family, not the Web API version segment in the URL: an environment reporting `9.2.x` still routes `v9.0` and `v9.1` paths.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "responses": {
+     "200": {
+      "description": "The platform build number.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RetrieveVersionResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/nosql/audit/isreadenabled": {
+   "get": {
+    "operationId": "organizationSettings_readAuditReadAccess",
+    "tags": [
+     "Organization Settings"
+    ],
+    "summary": "Audit Read Access Read",
+    "description": "Reports whether read auditing is active for this environment.\n\n**Not an OData endpoint.** It sits beside the Web API on the same host and the same token, under `/api/nosql/` rather than `/api/data/{version}/`; there is no version segment, no envelope, and the body is the bare JSON literal `true` or `false` with `Content-Type: application/json; charset=utf-8`. `OData-Version` is absent from the response.\n\nIt is the effective answer, not the stored one: the `organization` row's `isreadauditenabled` says what was configured, while this reports whether the audit store is actually serving reads \u2014 which is also false while the master audit switch is off.",
+    "x-probe-verified": true,
+    "responses": {
+     "200": {
+      "description": "Whether read auditing is active. A bare boolean literal, not an object.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "boolean",
+         "example": false
+        }
+       }
+      }
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/GetFeatureEnabledState": {
+   "post": {
+    "operationId": "featureControl_readEnabledState",
+    "tags": [
+     "Feature Control"
+    ],
+    "summary": "Enabled State Read",
+    "description": "Evaluates one feature control bit for this environment.\n\nIt is an unbound **action**, not a function, so it is a POST with a JSON body even though it only reads \u2014 and it takes exactly one bit per call. There is no list form and no bulk form, which is why the admin centre's environment-settings page issues it dozens of times in a row to paint a single screen.\n\nThe answer is a bare boolean with no error path. An unknown feature name, a feature that does not apply here, and a feature that is switched off all answer `false` alike, so a caller cannot validate a name against this operation.\n\nThe bits are read-only from here. What flips one is a Microsoft release, an admin-centre toggle, or a setting on another surface; nothing in this spec writes them.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GetFeatureEnabledStateRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The bit's state. Answered for any name, including one that does not exist.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GetFeatureEnabledStateResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/RetrieveFeatureControlSetting": {
+   "post": {
+    "operationId": "featureControl_readSetting",
+    "tags": [
+     "Feature Control"
+    ],
+    "summary": "Setting Read",
+    "description": "Reads the value of one namespaced feature control setting.\n\nThe sibling of `GetFeatureEnabledState` for settings that are not simply on or off: the name is scoped by an owning namespace and the value comes back as a string. Also an unbound action, so also a POST that only reads.\n\nA namespace whose owning first-party component is not installed answers null rather than failing, so null is the ordinary response on a stock environment, not a signal that something went wrong.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RetrieveFeatureControlSettingRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The setting's value, or null when it has never been set here.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RetrieveFeatureControlSettingResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/search/v1.0/status": {
+   "get": {
+    "operationId": "search_readStatus",
+    "tags": [
+     "Dataverse Search"
+    ],
+    "summary": "Status Read",
+    "description": "Reports whether Dataverse search has been provisioned for this environment.\n\nAnother non-OData sibling of the Web API on the same host and token, under its own `/api/search/v1.0/` prefix with its own version scheme \u2014 `v1.0`, unrelated to the `v9.x` of the data endpoints. The body wraps a single object in `value` rather than an array, and carries no `@odata.context`.\n\nSwitching search on is an admin-centre operation, not one of these; this reports the result, and `notprovisioned` is what a stock environment says.",
+    "x-probe-verified": true,
+    "responses": {
+     "200": {
+      "description": "The index's provisioning state.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SearchStatusResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/{apiVersion}/datalakefolders": {
+   "get": {
+    "operationId": "datalakeFolders_list",
+    "tags": [
+     "Fabric and Synapse Link"
+    ],
+    "summary": "List",
+    "description": "Lists the environment's data-lake folders.\n\n**Read this before picking one.** Eleven rows were observed on a live organization, of which exactly one belonged to the Link to Fabric. The other ten \u2014 `cds_workspace`, `cds2_workspace`, `msdyn_analytics`, `msdyn_processadvisor`, `msdyn_skillmining_workspace`, `msdyn_iap_federated`, `msdyn_nl2sq`, `pai_capi_batch_datalake`, `smartdataimport_workspace` and a per-installation `cds_<guid>` \u2014 are provisioned by the platform and by first-party components, all `statecode` 0, and indistinguishable from a link's folder by state alone.\n\nThe timestamps settle when they appear: `cds_workspace`, `cds2_workspace` and `cds3_workspace` were created within two seconds of each other at organization provisioning, two months before the link that later used `cds3_workspace` existed. **A never-linked organization already has these rows.** They are also not returned in creation order, so nothing about the ordering carries meaning.\n\nSo **there is no \"the\" folder, and `value[0]` is never the right answer.** A client that falls back to the first row picks whichever platform folder the service happened to return first; in the capture that was `cds2_workspace`, while the folder the link actually used was `cds3_workspace`. [athena](../athena)'s unlink takes a `datalakefolderid` in its path, and handing it the wrong one deletes an unrelated system folder.\n\nSelect by `datalakefolder_uniquename` instead \u2014 `cds3_workspace` for a current Link to Fabric, `cds2_workspace` for the older Synapse-era one \u2014 and corroborate with evidence that the folder is actually in use: `extendedproperties` parsing to `{\"IsActiveFabricProfile\":true}`, or a non-empty `synapsedatabases` under `$expand`. Both were observed on the linked folder and on no other.\n\nThe portal filters on the unique name and expands both children in one call. `$expand=synapselinkexternaltablestates,synapsedatabases` is supported and is the cheapest way to get the folder and its state together.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.1",
+     "v9.2"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/apiVersion"
+     },
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     },
+     {
+      "$ref": "#/components/parameters/orderby"
+     },
+     {
+      "$ref": "#/components/parameters/top"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching folders. On an unfiltered read this is every folder the organization has, linked and unlinked alike.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DatalakeFolderCollection"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     },
+     "501": {
+      "$ref": "#/components/responses/501"
+     }
+    }
+   }
+  },
+  "/api/data/v9.2/synapsedatabases": {
+   "get": {
+    "operationId": "synapseDatabases_list",
+    "tags": [
+     "Fabric and Synapse Link"
+    ],
+    "summary": "List",
+    "description": "Lists the Synapse or Fabric databases fed from this environment.\n\nThis is where the Fabric artifact ids live \u2014 lakehouse, lakehouse workspace and the connection binding them \u2014 which the link-create call does not return in a form a client can persist. One row per live link, so an empty result means nothing is linked.\n\nFilter through the parent with `$filter=datalakefolder/datalakefolder_uniquename eq 'cds3_workspace'`; navigation-property filtering works here even though lookup *columns* must be filtered through their `_..._value` shadow.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.2"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     },
+     {
+      "$ref": "#/components/parameters/orderby"
+     },
+     {
+      "$ref": "#/components/parameters/top"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching databases. Empty on an environment with no live link.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SynapseDatabaseCollection"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     },
+     "501": {
+      "$ref": "#/components/responses/501"
+     }
+    }
+   }
+  },
+  "/api/data/v9.1/synapselinkexternaltablestates": {
+   "get": {
+    "operationId": "synapseLinkExternalTableStates_list",
+    "tags": [
+     "Fabric and Synapse Link"
+    ],
+    "summary": "List",
+    "description": "Lists the per-table sync state of a link.\n\nOne row per mirrored table, plus five rows for the metadata pseudo-tables the mirror also writes. Rows appear as the link initialises rather than all at once, so counting them against the table list is not a completeness test while a link is coming up.\n\n`lakehouseshortcutstate` is the field that moves: 1 while the Fabric shortcut is being created, 3 once it is in place. `lastsynchronizedon`, `recordcount` and `sourcerecordcount` were null on every row observed including finished ones, so they are not usable as progress signals.\n\nFilter through the parent with `$filter=datalakefolder/datalakefolder_uniquename eq 'cds3_workspace'` and `$expand=datalakefolder` to get the folder alongside.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.1"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     },
+     {
+      "$ref": "#/components/parameters/orderby"
+     },
+     {
+      "$ref": "#/components/parameters/top"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching table states.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SynapseLinkExternalTableStateCollection"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     },
+     "501": {
+      "$ref": "#/components/responses/501"
+     }
+    }
+   }
+  },
+  "/api/data/v9.1/entityanalyticsconfigs": {
+   "get": {
+    "operationId": "entityAnalyticsConfigs_list",
+    "tags": [
+     "Fabric and Synapse Link"
+    ],
+    "summary": "List",
+    "description": "Lists the per-table analytics opt-ins.\n\n`isenabledforadls` is the switch that decides whether a table takes part in data-lake export. A table with no row here has never been configured, which is not the same as being switched off \u2014 so a client cannot enumerate the excluded tables from this collection, only the considered ones.\n\nA newly provisioned environment carries very few rows; one was observed with a single row, for an internal telemetry table.",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.1"
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/expand"
+     },
+     {
+      "$ref": "#/components/parameters/orderby"
+     },
+     {
+      "$ref": "#/components/parameters/top"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching configurations. Sparse \u2014 absence of a row is the normal state for most tables.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EntityAnalyticsConfigCollection"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "404": {
+      "$ref": "#/components/responses/404"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     },
+     "501": {
+      "$ref": "#/components/responses/501"
      }
     }
    }
@@ -3216,6 +4408,91 @@
       "*"
      ],
      "example": "*"
+    }
+   },
+   "businessUnitId": {
+    "name": "businessUnitId",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    }
+   },
+   "azureActiveDirectoryObjectId": {
+    "name": "azureActiveDirectoryObjectId",
+    "in": "path",
+    "required": true,
+    "description": "Entra object id of an interactive user, used here as an **alternate key** rather than as a filter. Written bare inside the parentheses \u2014 no quotes and no braces \u2014 as `systemusers(azureactivedirectoryobjectid=<guid>)`.",
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    }
+   },
+   "settingName": {
+    "name": "settingName",
+    "in": "path",
+    "required": true,
+    "description": "Case-sensitive name of the setting, quoted inside the function's parentheses.",
+    "schema": {
+     "type": "string",
+     "example": "EnableCopilotAnswerControl"
+    }
+   },
+   "appUniqueName": {
+    "name": "appUniqueName",
+    "in": "path",
+    "required": true,
+    "description": "Unique name of the model-driven app whose override should be read, or the empty string for the organization-level value. Required even when empty \u2014 the argument cannot be omitted.",
+    "schema": {
+     "type": "string",
+     "default": "",
+     "example": ""
+    }
+   },
+   "attributeLogicalName": {
+    "name": "attributeLogicalName",
+    "in": "path",
+    "required": true,
+    "description": "Logical name of the column, always lower case. Platform columns are occasionally misspelled and the misspelling is the real name \u2014 `role` carries `issytemgenerated`, not `issystemgenerated`.",
+    "schema": {
+     "type": "string",
+     "pattern": "^[a-z0-9_]+$",
+     "example": "issytemgenerated"
+    }
+   },
+   "retrieveAllSettings": {
+    "name": "RetrieveAllSettings",
+    "in": "query",
+    "required": false,
+    "description": "Metadata-only query option, spelled in PascalCase and not an OData one. Returns the full property set of each table definition including the properties normally elided from a list, at a noticeable cost in response size.",
+    "schema": {
+     "type": "boolean",
+     "example": true
+    }
+   },
+   "excludeOrgDisabledPrivileges": {
+    "name": "ExcludeOrgDisabledPrivileges",
+    "in": "path",
+    "required": true,
+    "description": "Drop privileges whose underlying feature is switched off for the organization, so the result reflects what the user can actually do rather than what the role grants on paper.",
+    "schema": {
+     "type": "boolean",
+     "default": true,
+     "example": true
+    }
+   },
+   "includeSetupUserFiltering": {
+    "name": "IncludeSetupUserFiltering",
+    "in": "path",
+    "required": true,
+    "description": "Apply the filtering that hides privileges only a setup user holds.",
+    "schema": {
+     "type": "boolean",
+     "default": true,
+     "example": true
     }
    }
   },
@@ -5028,7 +6305,7 @@
    },
    "SystemUser": {
     "type": "object",
-    "description": "A row of the `systemusers` table. Holds both interactive users and application users; which one it is is told by whether `applicationid` is set.",
+    "description": "A row of the `systemusers` table. Holds both interactive users and application users; which one it is is told by whether `applicationid` is set.\n\nIt is a very wide row \u2014 133 columns on a stock environment \u2014 of which the admin-relevant ones are listed. An unqualified read returns all of them, so `$select`.",
     "properties": {
      "@odata.etag": {
       "type": "string"
@@ -5049,7 +6326,8 @@
      },
      "firstname": {
       "type": "string",
-      "nullable": true
+      "nullable": true,
+      "description": "Maintained from the directory on an interactive user."
      },
      "lastname": {
       "type": "string",
@@ -5057,7 +6335,7 @@
      },
      "applicationid": {
       "type": "string",
-      "description": "Entra application (client) id. **Non-null only on application users** \u2014 this is what distinguishes a service principal's user row from a person's.",
+      "description": "Entra application (client) id. **Non-null only on application users** \u2014 this is what distinguishes a service principal's user row from a person's. Absent from a `$select` that does not ask for it, and **null rather than absent** on an interactive user's full row.",
       "format": "uuid",
       "example": "00000000-0000-0000-0000-000000000000",
       "nullable": true
@@ -5108,6 +6386,94 @@
       "description": "Assigned security roles. Present only under `$expand`, and itself paged \u2014 a `systemuserroles_association@odata.nextLink` sibling of this array means the role list was truncated.",
       "items": {
        "$ref": "#/components/schemas/SecurityRole"
+      }
+     },
+     "internalemailaddress": {
+      "type": "string",
+      "nullable": true,
+      "description": "The user's primary email as Dataverse holds it. Distinct from `domainname`, which is the sign-in identity \u2014 they were observed **differing** on a live user, so neither substitutes for the other."
+     },
+     "islicensed": {
+      "type": "boolean",
+      "description": "Whether the user holds a licence that entitles them to this environment. False on an application user, which is what makes application users free."
+     },
+     "setupuser": {
+      "type": "boolean",
+      "description": "Marks a user as an administrative \"setup\" account, which is exempt from some licence enforcement and from parts of privilege filtering."
+     },
+     "azurestate": {
+      "type": "integer",
+      "format": "int32",
+      "enum": [
+       0,
+       1,
+       2
+      ],
+      "example": 0,
+      "description": "State of the backing Entra object as Dataverse last saw it: 0 Exists, 1 Soft deleted, 2 Hard deleted. Independent of `isdisabled`, which is a Dataverse-side block."
+     },
+     "azuredeletedon": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true,
+      "description": "When the Entra object was deleted, if it was. Null while `azurestate` is 0."
+     },
+     "title": {
+      "type": "string",
+      "nullable": true,
+      "description": "Job title, synchronised from the directory when the directory carries one."
+     },
+     "organizationid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The organization the row belongs to, carried as a **plain column rather than a `_..._value` lookup** \u2014 so it is read and filtered by this name directly."
+     },
+     "_parentsystemuserid_value": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The user's manager, for hierarchy security. Null unless a hierarchy has been configured."
+     },
+     "systemmanagedusertype": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0,
+      "description": "Marks users the platform manages for itself rather than for a person or a registered application. 0 on an ordinary user."
+     },
+     "userlicensetype": {
+      "type": "integer",
+      "format": "int32",
+      "example": 20,
+      "description": "Which licence class the user is counted under. Not the same axis as `accessmode`, and not documented as a stable enum."
+     },
+     "caltype": {
+      "type": "integer",
+      "format": "int32",
+      "example": 7,
+      "description": "Client access licence type, a legacy on-premises concept that survives as a column."
+     },
+     "invitestatuscode": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0,
+      "description": "Where the user is in the invitation flow, for environments that use one."
+     },
+     "issyncwithdirectory": {
+      "type": "boolean",
+      "description": "Whether the row is kept in step with the directory. True on interactive users, and the reason writes to `fullname` and `domainname` do not stick."
+     },
+     "identityid": {
+      "type": "integer",
+      "format": "int32",
+      "description": "A small per-environment sequence number, not a guid and not stable across environments."
+     },
+     "teammembership_association": {
+      "type": "array",
+      "description": "Teams the user belongs to. Present only under `$expand`, and paged like the roles association \u2014 a `teammembership_association@odata.nextLink` sibling appears **even when the inlined array is complete**, so its presence is not evidence of truncation on this association.",
+      "items": {
+       "$ref": "#/components/schemas/Team"
       }
      }
     },
@@ -5217,6 +6583,105 @@
       "description": "The unit this copy of the role belongs to. Must match the user's unit for an assignment to succeed.",
       "format": "uuid",
       "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "roleidunique": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The role's identity **across** business units and environments, where `roleid` is only unique within one. The right key for recognising the same role in two places."
+     },
+     "_roletemplateid_value": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The platform template the role was stamped from, which is stable across every environment \u2014 `627090ff-40a3-4053-8790-584edc5be201` is System Administrator everywhere. Filtering on it is how the portal finds the administrator roles without matching on a localized name. Null on a role that was authored rather than templated."
+     },
+     "_parentrootroleid_value": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The copy of this role in the root business unit. Roles are replicated down the unit tree and every copy points back at the same root, which is how copies of one role are recognised as one role."
+     },
+     "_parentroleid_value": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The copy in the immediate parent unit. Null on the root copy."
+     },
+     "isinherited": {
+      "type": "integer",
+      "format": "int32",
+      "enum": [
+       0,
+       1
+      ],
+      "example": 1,
+      "description": "How the role's access level combines with team privileges: 0 Team privileges only, 1 Direct User (Basic) access level and Team privileges."
+     },
+     "issytemgenerated": {
+      "type": "boolean",
+      "description": "True on roles the platform generates for its own use, which admins are not meant to see. **The name is missing an `s`** \u2014 `issytemgenerated` \u2014 and the misspelling is the real column name, in filters and in `$select` alike."
+     },
+     "isautoassigned": {
+      "type": "integer",
+      "format": "int32",
+      "nullable": true,
+      "example": 0,
+      "description": "Whether the role is assigned automatically on user creation. Null on most roles."
+     },
+     "applicationid": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The Entra application that owns the role, on roles shipped by a first-party service for its own application user. Null on ordinary roles."
+     },
+     "appliesto": {
+      "type": "string",
+      "nullable": true,
+      "description": "Free-text note on who the role is intended for. Null on every role observed."
+     },
+     "description": {
+      "type": "string",
+      "nullable": true
+     },
+     "organizationid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Plain column, not a `_..._value` lookup."
+     },
+     "componentstate": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0,
+      "description": "Solution component state: 0 Published, 1 Unpublished, 2 Deleted, 3 Deleted Unpublished."
+     },
+     "solutionid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "createdon": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "modifiedon": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "versionnumber": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "canbedeleted": {
+      "$ref": "#/components/schemas/ManagedProperty"
+     },
+     "iscustomizable": {
+      "$ref": "#/components/schemas/ManagedProperty"
      }
     },
     "additionalProperties": true
@@ -5281,6 +6746,17 @@
       "format": "uuid",
       "example": "00000000-0000-0000-0000-000000000000",
       "nullable": true
+     },
+     "isdisabled": {
+      "type": "boolean",
+      "description": "Disabled units keep their rows and their roles but cannot own new records. Filter on `isdisabled eq false` to list the units a user may actually be placed in."
+     },
+     "business_unit_roles": {
+      "type": "array",
+      "description": "The security roles scoped to this unit \u2014 the assignable set for any user in it. Present only under `$expand`, where it accepts its own `$select` and `$filter`.",
+      "items": {
+       "$ref": "#/components/schemas/SecurityRole"
+      }
      }
     },
     "additionalProperties": true
@@ -5399,7 +6875,8 @@
      },
      "powerappsmakerbotenabled": {
       "type": "boolean",
-      "description": "Enables the Power Apps maker assistant for makers in this environment."
+      "description": "Enables the Power Apps maker assistant for makers in this environment. **Null rather than false** when it has never been set, which is the state of a stock environment \u2014 so a client reading it as a boolean must treat null as \"unset\".",
+      "nullable": true
      },
      "enableipbasedfirewallrule": {
       "type": "boolean",
@@ -5465,6 +6942,22 @@
      "createdon": {
       "type": "string",
       "format": "date-time"
+     },
+     "suppressvalidationemails": {
+      "type": "boolean",
+      "description": "Suppresses the notification emails the platform sends when solution-checker validation finds problems during a solution import. Set it when an automated pipeline imports frequently and the mail is noise; it does not change whether validation runs."
+     },
+     "validationmode": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0,
+      "description": "How hard solution-checker validation is enforced on import \u2014 0 was observed and is the stock value. The full value set is not established from the recordings."
+     },
+     "releasechannel": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0,
+      "description": "Which release wave the environment's model-driven apps follow: 0 Semi-Annual (the default), against the earlier Monthly channel. Determines when new platform behaviour reaches this environment's users, which is why two environments in one tenant can disagree about a feature."
      }
     },
     "additionalProperties": true
@@ -5516,7 +7009,7 @@
      },
      "SettingDetailCollection": {
       "type": "array",
-      "description": "One entry per setting that has ever been set here. Around 112 on a stock environment; the set differs per environment and grows with each platform release. A setting that is absent is running on its server-side default, which is not the same as being false.",
+      "description": "One entry per setting that has ever been set here. 113 were observed on a stock environment \u2014 77 boolean, 23 integer, 13 string \u2014 and the set differs per environment and grows with each platform release. A setting that is absent is running on its server-side default, which is not the same as being false; ask about one by name with `GetOrgDbOrgSetting`.",
       "items": {
        "$ref": "#/components/schemas/SettingDetail"
       }
@@ -5534,7 +7027,7 @@
      },
      "Value": {
       "type": "string",
-      "description": "Always a string; parse it according to `DataType`.",
+      "description": "Always a string; parse it according to `DataType`. String-typed values are **not consistently unquoted**: an empty string arrives as the two-character JSON literal `\"\"` while a non-empty one arrives bare, so a client must strip surrounding quotes before using the value.",
       "example": "6"
      },
      "DataType": {
@@ -5572,6 +7065,1361 @@
     "example": {
      "SettingName": "NotificationToastFadeInterval",
      "Value": "6"
+    }
+   },
+   "ManagedProperty": {
+    "type": "object",
+    "description": "A managed property: a boolean whose value is fixed by the solution that shipped the component, together with whether that lock can itself be lifted. Appears on solution-aware rows in place of a plain boolean.",
+    "properties": {
+     "Value": {
+      "type": "boolean",
+      "description": "The effective value."
+     },
+     "CanBeChanged": {
+      "type": "boolean",
+      "description": "Whether the publisher allowed this environment to change `Value`. False means the component is sealed."
+     },
+     "ManagedPropertyLogicalName": {
+      "type": "string",
+      "description": "Logical name of the column that carries the lock, which is usually not the name of the property it guards.",
+      "example": "iscustomizableanddeletable"
+     }
+    }
+   },
+   "GetFeatureEnabledStateRequest": {
+    "type": "object",
+    "description": "Names the single feature control bit to evaluate.",
+    "required": [
+     "FeatureName"
+    ],
+    "properties": {
+     "FeatureName": {
+      "type": "string",
+      "description": "Case-sensitive name of the feature control bit. The namespace is open and grows every release, so this is not a closed set; an unrecognised name is answered `false` rather than refused, which means a typo is indistinguishable from a switched-off feature.\n\nTwo naming conventions coexist and neither is authoritative: the older bits are prefixed `FCB.` (occasionally `FCB_`), the newer ones are bare. Both were observed against the same environment in the same session.",
+      "example": "FCB.ModernAdvancedFind",
+      "x-observed-values": [
+       "BasicIndexModeSupport",
+       "EnableAutomationCenterPreviewFeaturesSetting",
+       "EnableDesktopFlowActionLogsConfiguration",
+       "EnableDesktopFlowActionLogsV2",
+       "EnableDesktopFlowActionLogsVerbosity",
+       "EnableDesktopFlowRuntimeRepairAttended",
+       "EnableDesktopFlowRuntimeRepairUnattended",
+       "EnableDesktopFlowShareVanillaImage",
+       "EnableDesktopFlowVersionControlOverride",
+       "EnablePowerAutomateSavingsFeature",
+       "EnableProcessCapacityAutoClaimAdminSetting",
+       "EnableProcessCapacityOverageToggle",
+       "EnableProcessInsightsPreviewFeaturesSetting",
+       "EnableSearchAndCopilotIndexMode",
+       "EnableSecurityOnAttachment",
+       "FCB.AdminNotifyIEUsers",
+       "FCB.April2020Update",
+       "FCB.April2021Update",
+       "FCB.April2022Update",
+       "FCB.April2023Update",
+       "FCB.DesktopFlowHostedGroupsEnabled",
+       "FCB.DesktopFlowRpaBoxCrossGeoEnabled",
+       "FCB.DesktopFlowRpaBoxEnabled",
+       "FCB.DesktopFlowSchemaV2IsDefault",
+       "FCB.DesktopFlowSchemaWriteToV2Enabled",
+       "FCB.EnableCanvasAppsInSolutionsByDefault",
+       "FCB.EnableFlowsInSolutionByDefault",
+       "FCB.EnableMultiColumnSortEditor",
+       "FCB.EnableTableScopedDataverseSearch",
+       "FCB.GridSearchCanUseCurrentView",
+       "FCB.HideCategorizedSearch",
+       "FCB.IsFnoUserImpersonationEnabled",
+       "FCB.LeadingWildcardInGridSearchWarning",
+       "FCB.ModernAdvancedFind",
+       "FCB.ModernAdvancedFindNaturalLanguageAssist",
+       "FCB.NewActivityRibbonButtonAdminSetting",
+       "FCB.NewSearchExperience",
+       "FCB.October2020Update",
+       "FCB.October2021Update",
+       "FCB.October2022Update",
+       "FCB.RelevanceSearchAsDefault",
+       "FCB.RelevanceSearchQueryLoggingConsent",
+       "FCB.SearchQuickActionOpenInSidePane",
+       "FCB.UCIExpressionBuilderAdvancedLookup",
+       "FCB_EnableEnvironmentSettingsAppPhaseOne",
+       "FCB_EnableLockdownOfUnmanagedCustomization",
+       "IsDesktopFlowVersionControlEnabled",
+       "RecycleBinEnabled",
+       "ShowLicenseEnforcementToggle"
+      ]
+     }
+    },
+    "example": {
+     "FeatureName": "FCB.ModernAdvancedFind"
+    }
+   },
+   "GetFeatureEnabledStateResponse": {
+    "type": "object",
+    "description": "Whether the named feature control bit is on for this environment.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "IsFeatureEnabled": {
+      "type": "boolean",
+      "description": "True when the bit is on. **False conflates three states**: the bit is off, the bit does not apply to this environment, and the name does not exist. There is no error path, so a caller cannot distinguish them.",
+      "example": true
+     }
+    }
+   },
+   "RetrieveFeatureControlSettingRequest": {
+    "type": "object",
+    "description": "Names a feature control setting within one owning namespace. Unlike `GetFeatureEnabledState` this reads the setting's *value*, which need not be boolean.",
+    "required": [
+     "NamespaceValue",
+     "FeatureControlName"
+    ],
+    "properties": {
+     "NamespaceValue": {
+      "type": "string",
+      "description": "The owning first-party component's namespace. Feature control names are unique only within one.",
+      "example": "SalesService.Workspace"
+     },
+     "FeatureControlName": {
+      "type": "string",
+      "description": "Case-sensitive name of the setting inside that namespace.",
+      "example": "AddFocusedViewInShowAs"
+     }
+    },
+    "example": {
+     "NamespaceValue": "SalesService.Workspace",
+     "FeatureControlName": "AddFocusedViewInShowAs"
+    }
+   },
+   "RetrieveFeatureControlSettingResponse": {
+    "type": "object",
+    "description": "The value of one feature control setting.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "FeatureControlSetting": {
+      "type": "string",
+      "nullable": true,
+      "description": "The setting's value as a string, or **null when nothing has been set** \u2014 which is the normal answer for a namespace whose owning component is not installed. Null is not an error and does not mean \"off\"; it means the component's own default applies."
+     }
+    }
+   },
+   "DatalakeFolder": {
+    "type": "object",
+    "description": "A row of the `datalakefolders` table: one named folder in a data lake that Dataverse writes into, and the anchor a Link to Fabric or Azure Synapse Link hangs off.\n\n**A stock organization already has ten or so of these before it has ever been linked to anything.** They are provisioned by first-party components \u2014 process advisor, skill mining, analytics, the smart data import service and others \u2014 and they are indistinguishable from a link's folder by row count alone. Identify the one wanted by `datalakefolder_uniquename`.",
+    "properties": {
+     "@odata.etag": {
+      "type": "string"
+     },
+     "datalakefolderid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The id [athena](../athena)'s unlink operation takes in its path. It is not returned by the link-create call, so it must be read from here and persisted at create time."
+     },
+     "datalakefolder_uniquename": {
+      "type": "string",
+      "description": "The stable, unlocalised key of the folder and the only sound way to pick one out. `cds3_workspace` is the folder a current Link to Fabric uses; `cds2_workspace` is the older Synapse-era equivalent that persists alongside it. The rest name their owning first-party component.",
+      "example": "cds3_workspace",
+      "x-observed-values": [
+       "cds2_workspace",
+       "cds3_workspace",
+       "cds_workspace",
+       "msdyn_analytics",
+       "msdyn_iap_federated",
+       "msdyn_nl2sq",
+       "msdyn_processadvisor",
+       "msdyn_skillmining_workspace",
+       "pai_capi_batch_datalake",
+       "smartdataimport_workspace"
+      ]
+     },
+     "name": {
+      "type": "string",
+      "description": "Display name. Not unique and not a key \u2014 two folders were observed sharing the display name of their unique name while a third differed from it entirely.",
+      "example": "CDS3"
+     },
+     "path": {
+      "type": "string",
+      "description": "Folder path inside the container. A short mnemonic (`CDS`, `CDS2`, `CDS3`) on the platform folders, and a bare guid on the ones a first-party component provisioned for itself.",
+      "example": "CDS3"
+     },
+     "containerendpoint": {
+      "type": "string",
+      "format": "uri",
+      "nullable": true,
+      "description": "ADLS Gen2 filesystem endpoint the folder lives under, in the Microsoft-managed storage account backing the environment. Null when the folder has no container of its own \u2014 which a linked folder can be, so its presence says nothing about whether a link exists.",
+      "example": "https://examplestorage.dfs.core.windows.net/example-filesystem"
+     },
+     "extendedproperties": {
+      "type": "string",
+      "nullable": true,
+      "description": "A **JSON document carried as a string** \u2014 parse it, do not read it as an object. The only key observed is `IsActiveFabricProfile`, and it is the closest thing to a positive signal that this folder is the one a live Link to Fabric is using. Null on folders that have never been part of a link, and `{}` on at least one that has not.",
+      "example": "{\"IsActiveFabricProfile\":true}"
+     },
+     "cdmpath": {
+      "type": "string",
+      "nullable": true,
+      "description": "Relative path of the Common Data Model manifest describing what is written into the folder.",
+      "example": "default.manifest.cdm.json",
+      "x-observed-values": [
+       "default.manifest.cdm.json",
+       "default.manifest.analytics.json"
+      ]
+     },
+     "deltaLakePath": {
+      "type": "string",
+      "nullable": true,
+      "description": "Sub-path holding the Delta Lake form of the data, when the folder maintains one. **Camel-cased**, unlike every other column on the row.",
+      "example": "deltalake"
+     },
+     "isexternallake": {
+      "type": "boolean",
+      "description": "True when the folder points at a customer-owned storage account rather than the Microsoft-managed one. False on every folder observed, including linked ones."
+     },
+     "isexternallakereadonly": {
+      "type": "boolean",
+      "description": "True when an external lake is attached for reading only, so Dataverse does not write into it."
+     },
+     "iscustomercapacity": {
+      "type": "boolean",
+      "description": "True when the storage consumed counts against the customer's own capacity rather than the platform's."
+     },
+     "iscompliancelake": {
+      "type": "boolean",
+      "description": "True on a folder provisioned for compliance export rather than for analytics."
+     },
+     "compliancelakelocation": {
+      "type": "string",
+      "nullable": true,
+      "description": "Region of the compliance lake, when there is one."
+     },
+     "isdeepcopyenabled": {
+      "type": "boolean",
+      "description": "True when the folder receives a full copy of each table rather than an incremental feed."
+     },
+     "isprivate": {
+      "type": "boolean"
+     },
+     "sharedforreadaccess": {
+      "type": "boolean",
+      "description": "True when the folder is shared out for read access beyond the environment."
+     },
+     "synchronizeschematosynapsedb": {
+      "type": "boolean",
+      "description": "True when Dataverse schema changes are pushed into the Synapse/Fabric database. True on the folders that back a link, false on the component-owned ones."
+     },
+     "synchronizeschematodataverse": {
+      "type": "boolean",
+      "description": "The reverse direction \u2014 schema changes made in the lake reflected back into Dataverse. False on every folder observed."
+     },
+     "accesstype": {
+      "type": "integer",
+      "format": "int32",
+      "nullable": true,
+      "description": "Null on every folder observed."
+     },
+     "readersecuritygroupid": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "description": "Entra group granted read access to the folder's storage. Null unless the link was configured with one."
+     },
+     "contributorsecuritygroupid": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "description": "Entra group granted write access to the folder's storage."
+     },
+     "tenant": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "description": "Azure tenant of an external lake. Null for the managed one."
+     },
+     "subscription": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "description": "Azure subscription of an external lake. Null for the managed one."
+     },
+     "resourcegroup": {
+      "type": "string",
+      "nullable": true,
+      "description": "Azure resource group of an external lake. Null for the managed one."
+     },
+     "owningappid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Entra application id of the first-party component that provisioned the folder. The platform folders share one id; a component-owned folder carries its own, which is a reliable way to tell them apart."
+     },
+     "_parentfolderid_value": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Null on every folder observed; the table is flat in practice."
+     },
+     "statecode": {
+      "type": "integer",
+      "format": "int32",
+      "enum": [
+       0,
+       1
+      ],
+      "example": 0,
+      "description": "0 Active, 1 Inactive. 0 on every folder observed, including folders belonging to links that had been torn down."
+     },
+     "statuscode": {
+      "type": "integer",
+      "format": "int32",
+      "example": 1
+     },
+     "ismanaged": {
+      "type": "boolean",
+      "description": "True on the platform-provisioned folders. A folder created by a component that installed unmanaged is false, so this does not separate link folders from the rest."
+     },
+     "componentstate": {
+      "type": "integer",
+      "format": "int32",
+      "enum": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "example": 0,
+      "description": "Solution component state: 0 Published, 1 Unpublished, 2 Deleted, 3 Deleted Unpublished."
+     },
+     "componentidunique": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "solutionid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "versionnumber": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "createdon": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "modifiedon": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "overwritetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "`1900-01-01T00:00:00Z` when the row has never been overwritten by a solution import.",
+      "example": "1900-01-01T00:00:00Z"
+     },
+     "iscustomizable": {
+      "$ref": "#/components/schemas/ManagedProperty"
+     },
+     "synapsedatabases": {
+      "type": "array",
+      "description": "The Synapse/Fabric databases fed from this folder. Present only under `$expand`, and **empty on all but the linked folder** \u2014 which makes a non-empty array the most direct evidence of which folder a live link uses.",
+      "items": {
+       "$ref": "#/components/schemas/SynapseDatabase"
+      }
+     },
+     "synapselinkexternaltablestates": {
+      "type": "array",
+      "description": "Per-table sync state under this folder. Present only under `$expand`; one row per mirrored table plus the metadata pseudo-tables.",
+      "items": {
+       "$ref": "#/components/schemas/SynapseLinkExternalTableState"
+      }
+     }
+    },
+    "additionalProperties": true
+   },
+   "DatalakeFolderCollection": {
+    "type": "object",
+    "description": "A page of data-lake folders, both the link's and the ten or so a stock organization already carries.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "@odata.nextLink": {
+      "type": "string",
+      "format": "uri",
+      "description": "Present when the result was truncated by the server-driven page size. Follow it verbatim."
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcount": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Present only when the `odata.include-annotations` preference asked for it. `-1` means the service did not count. Saturates at 5000.",
+      "example": -1
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded": {
+      "type": "boolean",
+      "example": false
+     },
+     "value": {
+      "type": "array",
+      "description": "Data-lake folders, both the link's and the ten or so a stock organization already carries.",
+      "items": {
+       "$ref": "#/components/schemas/DatalakeFolder"
+      }
+     }
+    }
+   },
+   "SynapseDatabase": {
+    "type": "object",
+    "description": "A row of the `synapsedatabases` table: the Synapse or Fabric database that one data-lake folder feeds, and the Fabric artifact ids behind it. Written by the link orchestration service, never by a caller.",
+    "properties": {
+     "@odata.etag": {
+      "type": "string"
+     },
+     "synapsedatabaseid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "name": {
+      "type": "string",
+      "description": "Mirrors the owning folder's unique name.",
+      "example": "cds3_workspace"
+     },
+     "uniquename": {
+      "type": "string",
+      "description": "The folder's unique name under the `synlink` schema prefix.",
+      "example": "synlink_cds3_workspace"
+     },
+     "schemaprefix": {
+      "type": "string",
+      "example": "synlink"
+     },
+     "databasename": {
+      "type": "string",
+      "description": "Name of the database as it exists in Synapse or Fabric. A guid on a Fabric-backed link.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "workspacename": {
+      "type": "string",
+      "description": "Synapse workspace, or Fabric workspace id, holding the database.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "lakehouseid": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Fabric lakehouse the mirror writes into \u2014 the `LakehouseId` the link-create call returned. Null on a Synapse-era link."
+     },
+     "lakehouseworkspaceid": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Fabric workspace containing that lakehouse."
+     },
+     "lakehouseconnectionid": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true,
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The Fabric-to-Dataverse connection keeping the mirror fed \u2014 the `ConnectionId` supplied when the link was created."
+     },
+     "serverlesssqlendpoint": {
+      "type": "string",
+      "nullable": true,
+      "description": "Serverless SQL endpoint over the database. A guid on a Fabric-backed link rather than a hostname.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "developmentendpoint": {
+      "type": "string",
+      "nullable": true,
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "sparkpoolconfig": {
+      "type": "string",
+      "nullable": true,
+      "description": "Null on every row observed."
+     },
+     "_datalakefolder_value": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The folder this database is fed from. Filter on `datalakefolder/datalakefolder_uniquename` to go the other way."
+     },
+     "datalakefolder": {
+      "$ref": "#/components/schemas/DatalakeFolder"
+     },
+     "tenant": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true
+     },
+     "subscription": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true
+     },
+     "resourcegroup": {
+      "type": "string",
+      "nullable": true
+     },
+     "statecode": {
+      "type": "integer",
+      "format": "int32",
+      "enum": [
+       0,
+       1
+      ],
+      "example": 0
+     },
+     "statuscode": {
+      "type": "integer",
+      "format": "int32",
+      "example": 1
+     },
+     "ismanaged": {
+      "type": "boolean",
+      "description": "False on the row a live link writes, because the link creates it in this environment rather than shipping it in a managed solution."
+     },
+     "componentstate": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0
+     },
+     "versionnumber": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "createdon": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "modifiedon": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "iscustomizable": {
+      "$ref": "#/components/schemas/ManagedProperty"
+     }
+    },
+    "additionalProperties": true
+   },
+   "SynapseDatabaseCollection": {
+    "type": "object",
+    "description": "A page of synapse or Fabric databases fed from this environment.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "@odata.nextLink": {
+      "type": "string",
+      "format": "uri",
+      "description": "Present when the result was truncated by the server-driven page size. Follow it verbatim."
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcount": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Present only when the `odata.include-annotations` preference asked for it. `-1` means the service did not count. Saturates at 5000.",
+      "example": -1
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded": {
+      "type": "boolean",
+      "example": false
+     },
+     "value": {
+      "type": "array",
+      "description": "Synapse or Fabric databases fed from this environment.",
+      "items": {
+       "$ref": "#/components/schemas/SynapseDatabase"
+      }
+     }
+    }
+   },
+   "SynapseLinkExternalTableState": {
+    "type": "object",
+    "description": "A row of the `synapselinkexternaltablestates` table: the sync state of one Dataverse table inside one link. One row per mirrored table, plus rows for the metadata pseudo-tables the link also writes \u2014 `TargetMetadata`, `OptionsetMetadata`, `GlobalOptionsetMetadata`, `StateMetadata`, `StatusMetadata` \u2014 which are part of the mirror and not tables of the environment's model.",
+    "properties": {
+     "@odata.etag": {
+      "type": "string"
+     },
+     "synapselinkexternaltablestateid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "entityname": {
+      "type": "string",
+      "description": "Logical name of the mirrored table, or the name of one of the five metadata pseudo-tables. Case follows the source: table logical names are lower case, the pseudo-tables are PascalCase.",
+      "example": "account"
+     },
+     "name": {
+      "type": "string",
+      "description": "A guid and the entity name joined by an underscore. Not a display name and not stable across links.",
+      "example": "00000000-0000-0000-0000-000000000000_account"
+     },
+     "synapseworkspacename": {
+      "type": "string",
+      "description": "The workspace the external table lives in."
+     },
+     "synapsedatabasename": {
+      "type": "string",
+      "description": "The database the external table lives in."
+     },
+     "tablestate": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0,
+      "description": "State of the external table itself. 0 on every row observed, including rows in a fully initialised mirror.",
+      "x-observed-values": [
+       0
+      ]
+     },
+     "lastsyncstate": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0,
+      "description": "Outcome of the most recent sync. 0 on every row observed.",
+      "x-observed-values": [
+       0
+      ]
+     },
+     "lakehouseshortcutstate": {
+      "type": "integer",
+      "format": "int32",
+      "example": 3,
+      "description": "Progress of the Fabric lakehouse shortcut over this table. Two values were observed \u2014 1 on a mirror still initialising, 3 on one that had finished \u2014 so this is the field that distinguishes a link that is up from one that is still coming up. The full value set is not established.",
+      "x-observed-values": [
+       1,
+       3
+      ]
+     },
+     "trinostate": {
+      "type": "integer",
+      "format": "int32",
+      "nullable": true,
+      "description": "Null on every row observed."
+     },
+     "metadataversion": {
+      "type": "string",
+      "example": "1.0"
+     },
+     "schemamodifiedon": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the external table's schema was last rewritten, which is not the same as when its data last moved."
+     },
+     "lastsynchronizedon": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true,
+      "description": "Null on every row observed, including rows whose shortcut had completed \u2014 so an unpopulated value here does not mean the table has never synced."
+     },
+     "recordcount": {
+      "type": "integer",
+      "format": "int64",
+      "nullable": true,
+      "description": "Null on every row observed."
+     },
+     "sourcerecordcount": {
+      "type": "integer",
+      "format": "int64",
+      "nullable": true,
+      "description": "Null on every row observed."
+     },
+     "maxrecordversion": {
+      "type": "integer",
+      "format": "int64",
+      "nullable": true
+     },
+     "minsynceddataversion": {
+      "type": "integer",
+      "format": "int64",
+      "nullable": true
+     },
+     "_datalakefolder_value": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "datalakefolder": {
+      "$ref": "#/components/schemas/DatalakeFolder"
+     },
+     "_organizationid_value": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "statecode": {
+      "type": "integer",
+      "format": "int32",
+      "enum": [
+       0,
+       1
+      ],
+      "example": 0
+     },
+     "statuscode": {
+      "type": "integer",
+      "format": "int32",
+      "example": 1
+     },
+     "versionnumber": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "createdon": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "modifiedon": {
+      "type": "string",
+      "format": "date-time"
+     }
+    },
+    "additionalProperties": true
+   },
+   "SynapseLinkExternalTableStateCollection": {
+    "type": "object",
+    "description": "A page of per-table sync states.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "@odata.nextLink": {
+      "type": "string",
+      "format": "uri",
+      "description": "Present when the result was truncated by the server-driven page size. Follow it verbatim."
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcount": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Present only when the `odata.include-annotations` preference asked for it. `-1` means the service did not count. Saturates at 5000.",
+      "example": -1
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded": {
+      "type": "boolean",
+      "example": false
+     },
+     "value": {
+      "type": "array",
+      "description": "Per-table sync states.",
+      "items": {
+       "$ref": "#/components/schemas/SynapseLinkExternalTableState"
+      }
+     }
+    }
+   },
+   "EntityAnalyticsConfig": {
+    "type": "object",
+    "description": "A row of the `entityanalyticsconfigs` table: one table's opt-in to analytics export. The row exists only for tables that have been considered, so an absent row means \"not configured\", not \"disabled\".",
+    "properties": {
+     "@odata.etag": {
+      "type": "string"
+     },
+     "entityanalyticsconfigid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "parententitylogicalname": {
+      "type": "string",
+      "description": "Logical name of the table this configuration is for.",
+      "example": "account"
+     },
+     "_parententityid_value": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "MetadataId of that table's definition, not a record id."
+     },
+     "isenabledforadls": {
+      "type": "boolean",
+      "description": "Whether the table is exported to the data lake \u2014 the per-table switch a Link to Fabric or Synapse Link honours when deciding what to mirror."
+     },
+     "isenabledfortimeseries": {
+      "type": "boolean",
+      "description": "Whether the table is additionally exported in time-series form."
+     },
+     "entitydatasource": {
+      "type": "integer",
+      "format": "int32",
+      "example": 1,
+      "description": "Which store the table's data is read from for export. Only 1 was observed."
+     },
+     "_organizationid_value": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "ismanaged": {
+      "type": "boolean"
+     },
+     "componentstate": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0
+     },
+     "componentidunique": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "solutionid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "versionnumber": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "createdon": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "modifiedon": {
+      "type": "string",
+      "format": "date-time"
+     }
+    },
+    "additionalProperties": true
+   },
+   "EntityAnalyticsConfigCollection": {
+    "type": "object",
+    "description": "A page of per-table analytics configurations.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "@odata.nextLink": {
+      "type": "string",
+      "format": "uri",
+      "description": "Present when the result was truncated by the server-driven page size. Follow it verbatim."
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcount": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Present only when the `odata.include-annotations` preference asked for it. `-1` means the service did not count. Saturates at 5000.",
+      "example": -1
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded": {
+      "type": "boolean",
+      "example": false
+     },
+     "value": {
+      "type": "array",
+      "description": "Per-table analytics configurations.",
+      "items": {
+       "$ref": "#/components/schemas/EntityAnalyticsConfig"
+      }
+     }
+    }
+   },
+   "GetOrgDbOrgSettingRequest": {
+    "type": "object",
+    "description": "Names the single backend setting to read.",
+    "required": [
+     "SettingName"
+    ],
+    "properties": {
+     "SettingName": {
+      "type": "string",
+      "description": "Case-sensitive name of the backend (\"OrgDB\") setting.",
+      "example": "IsLockdownOfUnmanagedCustomizationEnabled",
+      "x-observed-values": [
+       "IsLockdownOfUnmanagedCustomizationEnabled",
+       "SearchAndCopilotIndexMode"
+      ]
+     }
+    },
+    "example": {
+     "SettingName": "IsLockdownOfUnmanagedCustomizationEnabled"
+    }
+   },
+   "GetOrgDbOrgSettingResponse": {
+    "type": "object",
+    "description": "The value of one backend setting, as a string.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "SettingValue": {
+      "type": "string",
+      "description": "The setting's value, always a string. **The empty string is the answer for a setting that has never been set here**, which is also the answer for a name that does not exist \u2014 the two are indistinguishable, and neither is an error. An empty string is not false.",
+      "example": ""
+     }
+    }
+   },
+   "RetrieveSettingResponse": {
+    "type": "object",
+    "description": "One setting resolved for a scope: the organization, or one model-driven app's override of it.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "SettingDetail": {
+      "$ref": "#/components/schemas/SettingDetail"
+     }
+    }
+   },
+   "RetrieveVersionResponse": {
+    "type": "object",
+    "description": "The Dataverse build serving this environment.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "Version": {
+      "type": "string",
+      "description": "Four-part platform build number. The major and minor parts track the Web API version family and were `9.2` on an environment whose paths still route `v9.0`; the last two parts identify the release. Environments in one tenant are upgraded independently, so this differs between them.",
+      "example": "9.2.26082.126",
+      "pattern": "^\\d+\\.\\d+\\.\\d+\\.\\d+$"
+     }
+    }
+   },
+   "SettingDefinition": {
+    "type": "object",
+    "description": "A row of the `settingdefinitions` table: the declaration behind one named setting \u2014 its type, its default, who may override it and at what scope. The catalogue `RetrieveSetting` and `SaveSettingValue` resolve names against.",
+    "properties": {
+     "@odata.etag": {
+      "type": "string"
+     },
+     "settingdefinitionid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "uniquename": {
+      "type": "string",
+      "description": "The name callers pass to `RetrieveSetting` and `SaveSettingValue`. Case-sensitive, and publisher-prefixed only when the owning solution prefixes it.",
+      "example": "msdyn_EnableTeamsChat"
+     },
+     "displayname": {
+      "type": "string",
+      "description": "Admin-facing label, localized."
+     },
+     "description": {
+      "type": "string",
+      "nullable": true,
+      "description": "Admin-facing explanation, localized."
+     },
+     "datatype": {
+      "type": "integer",
+      "format": "int32",
+      "enum": [
+       0,
+       1,
+       2
+      ],
+      "example": 2,
+      "description": "How `defaultvalue` and any stored value should be parsed: 0 integer, 1 string, 2 boolean. Matches `SettingDetail.DataType`."
+     },
+     "defaultvalue": {
+      "type": "string",
+      "nullable": true,
+      "description": "The value that applies when nothing has been set, carried as a string whatever the type says.",
+      "example": "false"
+     },
+     "isoverridable": {
+      "type": "boolean",
+      "description": "Whether this environment may change the value at all. False means the setting is fixed by the platform and a write will not take."
+     },
+     "overridablelevel": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0,
+      "description": "The scope at which an override may be set \u2014 app, organization, or both. Only 0, whose formatted label is \"App And Organization\", was observed."
+     },
+     "ishidden": {
+      "type": "boolean",
+      "description": "True when the setting is not surfaced in the admin UI. Hidden settings are still readable and, if overridable, still writable."
+     },
+     "ispreview": {
+      "type": "boolean",
+      "description": "True while the setting gates a preview feature, in which case its meaning and its existence can both change between releases."
+     },
+     "isplatform": {
+      "type": "boolean",
+      "description": "True when the setting belongs to the platform rather than to an installed first-party solution."
+     },
+     "releaselevel": {
+      "type": "integer",
+      "format": "int32",
+      "example": 2,
+      "description": "How far through its release the underlying feature is."
+     },
+     "informationurl": {
+      "type": "string",
+      "format": "uri",
+      "nullable": true,
+      "description": "Documentation link for the setting, when the publisher supplied one."
+     },
+     "_organizationid_value": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "ismanaged": {
+      "type": "boolean"
+     },
+     "componentstate": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0
+     },
+     "statecode": {
+      "type": "integer",
+      "format": "int32",
+      "enum": [
+       0,
+       1
+      ],
+      "example": 0
+     },
+     "statuscode": {
+      "type": "integer",
+      "format": "int32",
+      "example": 1
+     },
+     "solutionid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "versionnumber": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "createdon": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "modifiedon": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "iscustomizable": {
+      "$ref": "#/components/schemas/ManagedProperty"
+     }
+    },
+    "additionalProperties": true
+   },
+   "SettingDefinitionCollection": {
+    "type": "object",
+    "description": "A page of setting definitions.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "@odata.nextLink": {
+      "type": "string",
+      "format": "uri",
+      "description": "Present when the result was truncated by the server-driven page size. Follow it verbatim."
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcount": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Present only when the `odata.include-annotations` preference asked for it. `-1` means the service did not count. Saturates at 5000.",
+      "example": -1
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded": {
+      "type": "boolean",
+      "example": false
+     },
+     "value": {
+      "type": "array",
+      "description": "Setting definitions.",
+      "items": {
+       "$ref": "#/components/schemas/SettingDefinition"
+      }
+     }
+    }
+   },
+   "SearchStatusResponse": {
+    "type": "object",
+    "description": "Provisioning state of the environment's search index. Not an OData payload: `value` holds a single object rather than an array, and there is no `@odata.context`.",
+    "properties": {
+     "value": {
+      "type": "object",
+      "properties": {
+       "status": {
+        "type": "string",
+        "description": "Whether Dataverse search has been provisioned for this environment. `notprovisioned` is the state of an environment where search has never been switched on, and is what a stock environment reports.",
+        "example": "notprovisioned",
+        "x-observed-values": [
+         "notprovisioned"
+        ]
+       },
+       "lockboxstatus": {
+        "type": "string",
+        "description": "Whether Customer Lockbox gates the index. `Unknown` is reported when Lockbox has never applied to the environment; note the differing capitalisation from `status` beside it.",
+        "example": "Unknown",
+        "x-observed-values": [
+         "Unknown"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "RolePrivilege": {
+    "type": "object",
+    "description": "One privilege a user holds, together with the depth at which they hold it and the business unit the grant is anchored to.",
+    "properties": {
+     "PrivilegeId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "PrivilegeName": {
+      "type": "string",
+      "description": "The privilege's platform name: the verb and the table run together after a `prv` prefix \u2014 `prvCreateaccount`, `prvAppendToorganizationdatasyncsubscriptionentity`. Privileges over custom tables carry a generated suffix, so the name is not a stable identifier across environments.",
+      "example": "prvShareMailboxTrackingFolder"
+     },
+     "Depth": {
+      "type": "string",
+      "description": "How far the privilege reaches: `Basic` the user's own records, `Local` their business unit, `Deep` that unit and its children, `Global` the organization.",
+      "enum": [
+       "Basic",
+       "Local",
+       "Deep",
+       "Global"
+      ],
+      "example": "Global"
+     },
+     "BusinessUnitId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "The unit the grant is anchored to. Not necessarily the user's own unit once team-inherited privileges are involved."
+     },
+     "RecordFilterId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Record filter narrowing the privilege further. The all-zeros guid means unfiltered, which is the usual value."
+     },
+     "RecordFilterUniqueName": {
+      "type": "string",
+      "description": "Name of that filter, or the empty string when there is none.",
+      "example": ""
+     }
+    }
+   },
+   "RetrieveUserPrivilegesResponse": {
+    "type": "object",
+    "description": "The flattened privilege set of one user. A function result, so no `value` array and no paging \u2014 the whole set comes back, and on an administrator it runs to thousands of entries.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "RolePrivileges": {
+      "type": "array",
+      "description": "Every privilege the user holds through the requested path, ordered by privilege id. Empty is a meaningful answer rather than an error.",
+      "items": {
+       "$ref": "#/components/schemas/RolePrivilege"
+      }
+     }
+    }
+   },
+   "SystemUserRole": {
+    "type": "object",
+    "description": "A row of the `systemuserroles` intersect table, exposed for query as `systemuserrolescollection`: one user-to-role assignment. The same link the `systemuserroles_association` `$ref` collection creates and removes \u2014 this is the readable, filterable form of it.",
+    "properties": {
+     "@odata.etag": {
+      "type": "string"
+     },
+     "systemuserroleid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Key of the assignment itself, which is not the user id or the role id."
+     },
+     "systemuserid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Filtered as a bare column here, not through a `_..._value` shadow \u2014 the intersect table exposes both ends as plain columns. Guid comparisons on it were observed **quoted**, unlike guid filters on ordinary tables."
+     },
+     "roleid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "versionnumber": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "additionalProperties": true
+   },
+   "SystemUserRoleCollection": {
+    "type": "object",
+    "description": "A page of user-to-role assignments.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "@odata.nextLink": {
+      "type": "string",
+      "format": "uri",
+      "description": "Present when the result was truncated by the server-driven page size. Follow it verbatim."
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcount": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Present only when the `odata.include-annotations` preference asked for it. `-1` means the service did not count. Saturates at 5000.",
+      "example": -1
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded": {
+      "type": "boolean",
+      "example": false
+     },
+     "value": {
+      "type": "array",
+      "description": "User-to-role assignments.",
+      "items": {
+       "$ref": "#/components/schemas/SystemUserRole"
+      }
+     }
+    }
+   },
+   "TeamMembership": {
+    "type": "object",
+    "description": "A row of the `teammemberships` intersect table: one user's membership of one team. Roles held by a team reach its members, so this is the second path by which a user acquires privileges.",
+    "properties": {
+     "@odata.etag": {
+      "type": "string"
+     },
+     "teammembershipid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "systemuserid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "teamid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "versionnumber": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "additionalProperties": true
+   },
+   "TeamMembershipCollection": {
+    "type": "object",
+    "description": "A page of team memberships.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "@odata.nextLink": {
+      "type": "string",
+      "format": "uri",
+      "description": "Present when the result was truncated by the server-driven page size. Follow it verbatim."
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcount": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Present only when the `odata.include-annotations` preference asked for it. `-1` means the service did not count. Saturates at 5000.",
+      "example": -1
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded": {
+      "type": "boolean",
+      "example": false
+     },
+     "value": {
+      "type": "array",
+      "description": "Team memberships.",
+      "items": {
+       "$ref": "#/components/schemas/TeamMembership"
+      }
+     }
+    }
+   },
+   "Team": {
+    "type": "object",
+    "description": "A row of the `teams` table: a group of users that can own records and hold security roles of its own.",
+    "properties": {
+     "@odata.etag": {
+      "type": "string"
+     },
+     "teamid": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "name": {
+      "type": "string",
+      "description": "Every environment has a default team named after its root business unit, which every user belongs to."
+     },
+     "teamtype": {
+      "type": "integer",
+      "format": "int32",
+      "example": 0,
+      "description": "What created the team: 0 Owner (the ordinary kind, and the only one observed), 1 Access, 2 Entra ID Security Group, 3 Entra ID Office Group. Only owner teams can own records."
+     },
+     "emailaddress": {
+      "type": "string",
+      "nullable": true
+     },
+     "_businessunitid_value": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "teamroles_association": {
+      "type": "array",
+      "description": "Security roles held by the team, and through it by every member. Present only under `$expand`, and itself paged \u2014 watch for a `teamroles_association@odata.nextLink` sibling.",
+      "items": {
+       "$ref": "#/components/schemas/SecurityRole"
+      }
+     }
+    },
+    "additionalProperties": true
+   },
+   "TeamCollection": {
+    "type": "object",
+    "description": "A page of teams.",
+    "properties": {
+     "@odata.context": {
+      "$ref": "#/components/schemas/ODataContext"
+     },
+     "@odata.nextLink": {
+      "type": "string",
+      "format": "uri",
+      "description": "Present when the result was truncated by the server-driven page size. Follow it verbatim."
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcount": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Present only when the `odata.include-annotations` preference asked for it. `-1` means the service did not count. Saturates at 5000.",
+      "example": -1
+     },
+     "@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded": {
+      "type": "boolean",
+      "example": false
+     },
+     "value": {
+      "type": "array",
+      "description": "Teams.",
+      "items": {
+       "$ref": "#/components/schemas/Team"
+      }
+     }
     }
    }
   }

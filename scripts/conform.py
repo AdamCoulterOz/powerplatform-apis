@@ -211,15 +211,27 @@ def check_catalogue(entries: list, cat: dict) -> None:
     if len(ids) != len(set(ids)):
         fail("specs.json", "specs", "duplicate spec ids")
 
-    # A spec id that collides with a fragment kind makes #/<a>/<b>/<c> ambiguous:
-    # the first segment is a spec id unless it is a kind. The reserved set is the
-    # kinds this checker already validates fragments against, so adding a kind
-    # updates the validator and this rule in one edit.
-    reserved = set(targets({}).keys())
+    # A spec id that collides with a route segment makes #/<a>/<b>/<c> ambiguous:
+    # the first segment is a spec id unless it is a segment name.
+    #
+    # This was derived from the fragment kinds above, which was wrong -- and wrong
+    # in the way that is hardest to see, because it looked derived. The constraint
+    # is about the *browser's route* vocabulary, and the fragment vocabulary is a
+    # different set that happened to be identical. `coverage` is a route segment
+    # and not a fragment kind, so the derivation would have kept passing while the
+    # thing it was guarding broke. A derivation is only better than a literal when
+    # it derives the property you actually need.
+    #
+    # So: an honest literal here, and the authoritative check lives in the browser,
+    # which owns the route table and can derive it. This is fast feedback, not truth.
+    ROUTE_SEGMENTS = {"operations", "schemas", "resources", "coverage"}
+    reserved = set(targets({}).keys()) | ROUTE_SEGMENTS
     for bad in sorted(set(ids) & reserved):
         fail("specs.json", f"specs/{bad}",
-             f"spec id {bad!r} is also a fragment kind, which makes a qualified "
-             f"deep link ambiguous")
+             f"spec id {bad!r} is also a browser route segment, which makes a "
+             f"qualified deep link ambiguous. This list is remembered, not derived: "
+             f"the browser's route table is authoritative, so a failure here may mean "
+             f"this checker is out of date rather than the catalogue wrong.")
 
     brand = cat.get("brand")
     if brand is not None:

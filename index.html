@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Power Platform APIs</title>
   <meta name="description" content="Browsable OpenAPI reference for the Power Platform admin APIs, reverse-engineered from the public Microsoft Learn documentation.">
+  <script>
+    /* Track the system light/dark preference; Elements reads data-theme on an
+       ancestor. Set it before Elements renders to avoid a flash. */
+    (function () {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      var apply = function () { document.documentElement.setAttribute('data-theme', mq.matches ? 'dark' : 'light'); };
+      apply();
+      mq.addEventListener('change', apply);
+    })();
+  </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stoplight/elements@9.0.24/styles.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@stoplight/elements@9.0.24/web-components.min.js"></script>
   <style>
@@ -28,6 +38,22 @@
     elements-api { display: block; height: 100%; }
     #note { padding: 24px; font-size: 14px; }
     #scrim { display: none; position: fixed; inset: var(--hdr) 0 0 0; background: rgba(0,0,0,.35); z-index: 29; }
+    body { background: #ffffff; }
+
+    /* Dark theme: Elements themes itself from data-theme (set above); style the
+       custom header to match. */
+    @media (prefers-color-scheme: dark) {
+      body { background: #0b0e14; }
+      header { background: #12141a; border-bottom-color: #262b36; }
+      header h1 { color: #e6e8eb; }
+      header select { background: #1a1e27; color: #e6e8eb; border-color: #3a4150; }
+      header .repo { color: #c9d1d9; }
+      header .repo:hover { color: #6cb2ff; }
+      #nav-toggle { background: #1a1e27; color: #e6e8eb; border-color: #3a4150; }
+    }
+    @media (max-width: 900px) and (prefers-color-scheme: dark) {
+      elements-api .sl-elements-api > .sl-flex:first-child { background: #12141a; }
+    }
 
     /* Hide the response-code strip's overlay scrollbar (see earlier fix). */
     elements-api .sl-stack--horizontal.sl-overflow-x-auto { flex-wrap: wrap; scrollbar-width: none; }

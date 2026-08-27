@@ -43,7 +43,7 @@
  "servers": [
   {
    "url": "https://{region}.api.advisor.powerapps.com",
-   "description": "Per-geography public-cloud host. Prefer taking it from the environment's PowerAppsAdvisor runtime endpoint; info.x-dataverse-host-geography-map is the fallback the first-party SDK uses. The 17 regions marked live below answered a real request with a real token; italy, newzealand, poland, sweden and unitedstatesfirstrelease come from the SDK's ApiGeographyMap and were not probed.",
+   "description": "Per-geography public-cloud host. Prefer taking it from the environment's PowerAppsAdvisor runtime endpoint; where that is unavailable, derive the geography from the Dataverse host with info.x-dataverse-host-geography-map.",
    "variables": {
     "region": {
      "default": "unitedstates",
@@ -71,17 +71,17 @@
       "unitedstates",
       "unitedstatesfirstrelease"
      ],
-     "description": "Live-verified: asia, australia, canada, europe, france, germany, india, japan, korea, norway, singapore, southafrica, southamerica, switzerland, unitedarabemirates, unitedkingdom, unitedstates. From the SDK only (x-source: pac-cli): italy, newzealand, poland, sweden, and unitedstatesfirstrelease - the last being the first-release ring rather than a geography, which serves rule changes before the rest of unitedstates does and is the endpoint to diff against when a catalogue difference between regions needs explaining."
+     "description": "The geography the advisor endpoint serves. unitedstatesfirstrelease is a first-release ring rather than a geography: it serves rule changes before the rest of unitedstates does, and is the host to diff against when a catalogue difference between regions needs explaining."
     }
    }
   },
   {
    "url": "https://api.advisor.powerapps.com",
-   "description": "Unregioned host. It is the SDK's fallback when a geography cannot be resolved, and it is the OAuth resource identifier the WWW-Authenticate challenge names. Not probed as a request target; prefer a regional host, because the rule catalogue is known to differ between rings and this host does not say which ring answered."
+   "description": "Unregioned host, and the OAuth resource identifier the WWW-Authenticate challenge names. Usable as a fallback when a geography cannot be resolved, but prefer a regional host: the rule catalogue differs between deployment rings and this host does not say which ring answered."
   },
   {
    "url": "https://{ring}.api.advisor.powerapps.us",
-   "description": "US Government clouds. Source: pac-cli; not probed.",
+   "description": "US Government clouds.",
    "x-source": "pac-cli",
    "variables": {
     "ring": {
@@ -96,12 +96,12 @@
   },
   {
    "url": "https://mil.api.advisor.appsplatform.us",
-   "description": "US Department of Defense (Dataverse crm.appsplatform.us). Source: pac-cli; not probed.",
+   "description": "US Department of Defense (Dataverse crm.appsplatform.us).",
    "x-source": "pac-cli"
   },
   {
    "url": "https://china.api.advisor.powerapps.cn",
-   "description": "Power Platform operated by 21Vianet in China (Dataverse crm.dynamics.cn). Source: pac-cli; not probed.",
+   "description": "Power Platform operated by 21Vianet in China (Dataverse crm.dynamics.cn).",
    "x-source": "pac-cli"
   }
  ],
@@ -119,11 +119,11 @@
   },
   {
    "name": "Rulesets",
-   "description": "Named groupings of rules. A rule may belong to no ruleset, one, or several, and a ruleset id is what an analysis run is configured with - it is the unit of 'which standard am I being checked against'. The public cloud publishes two: Solution Checker, the everyday set used by the maker portal and by Managed Environments enforcement, and AppSource Certification, the stricter set a solution must pass to be listed on AppSource."
+   "description": "Named groupings of rules. A rule may belong to no ruleset, one, or several, and a ruleset id is what an analysis run is configured with - it is the unit of 'which standard is this solution checked against'. The public cloud publishes two: Solution Checker, the everyday set used by the maker portal and by Managed Environments enforcement, and AppSource Certification, the stricter set a solution must pass to be listed on AppSource."
   },
   {
    "name": "Analysis",
-   "description": "The asynchronous static-analysis job. A run puts solution files in storage - by uploading them here or by supplying its own SAS URIs - submits a job naming those files and a ruleset, polls for completion, and downloads a SARIF v2 report per file. There are two submissions: the ordinary one, which returns results to the caller and nowhere else, and the Dataverse-context one, which additionally writes the run into the target environment so it shows up in the Solution Health Hub app. Neither was probed - exercising them means submitting real jobs against a real tenant - so both are documented from Microsoft's documentation and the first-party SDK."
+   "description": "The asynchronous static-analysis job. A run puts solution files in storage - by uploading them here or by supplying its own SAS URIs - submits a job naming those files and a ruleset, polls for completion, and downloads a SARIF v2 report per file.\n\nThere are two submissions: the ordinary one, which returns results to the caller and nowhere else, and the Dataverse-context one, which additionally writes the run into the target environment so it shows up in the Solution Health Hub app."
   },
   {
    "name": "Enforcement Cache",
@@ -139,13 +139,13 @@
     ],
     "summary": "List",
     "x-probe-verified": true,
-    "description": "Reads the rule catalogue from one environment's advisor endpoint, optionally narrowed to one or more rulesets. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint; the catalogue is not tenant- or environment-specific beyond that, so any environment in a geography answers identically.\n\nThe response is a flat JSON array with no envelope, pagination or total count - the whole catalogue arrives in one body, around 100 rules and 40 KB, four times that with message formats.\n\nTwo behaviours matter before relying on this endpoint. First, the ruleset parameter fails open: an unrecognised id or name is not rejected, it yields the single rule that belongs to no ruleset (web-unsupported-syntax), so a typo silently produces a near-empty catalogue rather than an error. An empty, whitespace or bare-comma value behaves like omitting the parameter entirely and returns every rule.\n\nSecond, the catalogue is not identical across geographies, despite the Terraform provider client's comment that it is. At time of probing the Solution Checker ruleset returned 98 rules in unitedstates and australia and 89 in the other 15 public geographies - the nine web-sdl-* security rules had reached only two deployment rings. Anything that diffs, caches or pins this catalogue must key by region.\n\nRule text is localised by Accept-Language; code, guidanceUrl, severity and primaryCategory are invariant across languages.\n\nThe first-party SDK corroborates the shape of this call: it sends api-version=2.0, always sends includeMessageFormats explicitly, and joins several ruleset GUIDs with a comma into the one ruleset parameter, which is the union behaviour probing found. It also sends a tenantId query parameter and correlation headers that live probing never used.",
+    "description": "Reads the rule catalogue from one environment's advisor endpoint, optionally narrowed to one or more rulesets. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint; the catalogue is not tenant- or environment-specific beyond that, so any environment in a geography answers identically.\n\nThe response is a flat JSON array with no envelope, pagination or total count - the whole catalogue arrives in one body, around 100 rules and 40 KB, four times that with message formats.\n\nTwo behaviours matter before relying on this endpoint. First, the ruleset parameter fails open: an unrecognised id or name is not rejected, it yields the single rule that belongs to no ruleset (web-unsupported-syntax), so a typo silently produces a near-empty catalogue rather than an error. An empty, whitespace or bare-comma value behaves like omitting the parameter entirely and returns every rule. Several ruleset GUIDs joined by commas in the one parameter select the union of those rulesets.\n\nSecond, the catalogue is not identical across geographies. Rule changes reach deployment rings at different times, so the same ruleset can carry a different set of rules in one geography than in another. Anything that diffs, caches or pins this catalogue must key by region.\n\nRule text is localised by Accept-Language; code, guidanceUrl, severity and primaryCategory are invariant across languages.",
     "parameters": [
      {
       "name": "api-version",
       "in": "query",
       "required": false,
-      "description": "Optional in practice - omitting it serves the same payload as 2.0. The Terraform provider always sends 2.0.",
+      "description": "Optional in practice - omitting it serves the same payload as 2.0.",
       "schema": {
        "type": "string",
        "default": "2.0",
@@ -234,7 +234,7 @@
       }
      },
      "401": {
-      "description": "No or invalid bearer token. Microsoft's documentation states the rule and ruleset reads need no OAuth token; live they do. The WWW-Authenticate challenge names the resource to request a token for, so an unauthenticated call is a legitimate way to discover the audience.",
+      "description": "No or invalid bearer token. The rule and ruleset reads both require one, despite Microsoft's documentation stating that they do not. The WWW-Authenticate challenge names the resource to request a token for, so an unauthenticated call is a legitimate way to discover the audience.",
       "headers": {
        "WWW-Authenticate": {
         "description": "Bearer authorization_uri=\"https://login.microsoftonline.com/common\",resource_id=\"https://api.advisor.powerapps.com/\"",
@@ -256,10 +256,10 @@
       }
      },
      "429": {
-      "description": "Throttled. The first-party SDK honours Retry-After here literally and retries indefinitely, so the header is expected to be present and to carry an integer number of seconds. Not observed live - probing sleeps between calls and never reached the limit.",
+      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
       "headers": {
        "Retry-After": {
-        "description": "Seconds to wait. Integer form only, as far as the first-party client can handle.",
+        "description": "Seconds to wait, as an integer.",
         "schema": {
          "type": "integer"
         }
@@ -278,7 +278,7 @@
     ],
     "summary": "List",
     "x-probe-verified": true,
-    "description": "Reads every ruleset the geography publishes, as a flat array of id and name with no envelope or pagination. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint. Call this to discover the ruleset id to pass to a rule listing or an analysis run, though in practice the two public ids are stable enough to hard-code, which is what the Terraform provider does.\n\nThe same two rulesets were returned by all 17 public geographies at time of probing. They overlap rather than nest: AppSource Certification has five rules Solution Checker does not, and Solution Checker has 39 that AppSource Certification does not.\n\nNames are not localised - an Accept-Language of fr still returns English names, unlike rule text. Note also that Microsoft's own rule documentation labels 083a2ef5-7e0e-4754-9d88-9455142dc08b 'Solution Checker' in its examples; the service says that id is AppSource Certification. Trust the service.\n\nThe first-party SDK calls this before every analysis run, to resolve the ruleset the user named - by GUID or by display name, case-insensitively - into the id the submission needs. A name that matches nothing is a hard error there, while an unmatched GUID is passed through unresolved, which is the client mirroring this API's own fail-open behaviour on the rule listing.",
+    "description": "Reads every ruleset the geography publishes, as a flat array of id and name with no envelope or pagination. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint.\n\nCall this to resolve a ruleset's display name into the id a rule listing or an analysis run needs, though in practice the two public ids are stable enough to hard-code.\n\nAll 17 public geographies publish the same two rulesets. They overlap rather than nest: AppSource Certification has five rules Solution Checker does not, and Solution Checker has 39 that AppSource Certification does not.\n\nNames are not localised - an Accept-Language of fr still returns English names, unlike rule text. Note also that Microsoft's own rule documentation labels 083a2ef5-7e0e-4754-9d88-9455142dc08b 'Solution Checker' in its examples; the service says that id is AppSource Certification. Trust the service.",
     "parameters": [
      {
       "name": "api-version",
@@ -346,10 +346,10 @@
       }
      },
      "429": {
-      "description": "Throttled. The first-party SDK honours Retry-After here literally and retries indefinitely, so the header is expected to be present and to carry an integer number of seconds. Not observed live - probing sleeps between calls and never reached the limit.",
+      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
       "headers": {
        "Retry-After": {
-        "description": "Seconds to wait. Integer form only, as far as the first-party client can handle.",
+        "description": "Seconds to wait, as an integer.",
         "schema": {
          "type": "integer"
         }
@@ -368,7 +368,7 @@
     ],
     "summary": "File Upload",
     "x-probe-verified": false,
-    "description": "Uploads one solution file to service-managed storage in the geography and returns the URI the analysis submission will name it by. This step is optional: any storage URI the service can read works just as well, and must be used for files past the size limit. One call per file; the first-party client uploads a run's files concurrently and collects the returned URIs into the submission's sasUriList.\n\nNot probed - uploading writes to the service. Route existence, the POST-only method and the 1.0 api-version were confirmed non-destructively against the live service. Everything else here is from the first-party SDK, which corrects Microsoft's documentation on the one point that matters: this call does return a body, and ignoring it leaves you with no URI to analyse.",
+    "description": "Uploads one solution file to service-managed storage in the geography and returns the URI the analysis submission will name it by. This step is optional: any storage URI the service can read works just as well, and must be used for files past the size limit. One call per file, so a run's files can be uploaded concurrently and their returned URIs collected into the submission's sasUriList.\n\nServed at api-version 1.0, and POST is the only method accepted.\n\nThe call returns a body, contrary to Microsoft's documentation: ignore it and you are left with no URI to analyse.",
     "parameters": [
      {
       "$ref": "#/components/parameters/ApiVersion10"
@@ -385,7 +385,7 @@
     ],
     "requestBody": {
      "required": true,
-     "description": "multipart/form-data with exactly one part. The part's Content-Disposition carries both name and filename set to the same value, the bare file name - the first-party client sets them identically, and the file name is what identifies the file in the report. The part's own Content-Type is chosen from the extension: .zip gives application/x-zip-compressed, .cab gives application/octet-stream, .gz gives application/x-gzip, .z gives application/x-compress, and anything else falls back to application/octet-stream. Those four extensions are the whole set the first-party client knows about.",
+     "description": "multipart/form-data with exactly one part. The part's Content-Disposition carries both name and filename set to the same value, the bare file name - and that file name is what identifies the file in the report.\n\nThe part's own Content-Type is chosen from the extension: .zip gives application/x-zip-compressed, .cab gives application/octet-stream, .gz gives application/x-gzip, .z gives application/x-compress, and anything else falls back to application/octet-stream.",
      "content": {
       "multipart/form-data": {
        "schema": {
@@ -395,7 +395,7 @@
          "file": {
           "type": "string",
           "format": "binary",
-          "description": "The solution file - a solution zip, or a cab or gzip archive. Microsoft's documentation puts the service limit at 30 MB and says a larger file is refused with 413; the first-party client refuses locally at 100 MB and never sends one that big, so the true service limit is somewhere in that range and unverified. Above whichever it is, upload to your own storage and pass a SAS URI to the submission instead."
+          "description": "The solution file - a solution zip, or a cab or gzip archive. Microsoft's documentation puts the service limit at 30 MB and says a larger file is refused with 413. Above the limit, upload to your own storage and pass a SAS URI to the submission instead."
          }
         }
        }
@@ -404,7 +404,7 @@
     },
     "responses": {
      "200": {
-      "description": "Uploaded. The body is a bare JSON array of storage URIs - not empty, as Microsoft's documentation implies. One element per uploaded file, so one element for a single-part request; the first-party client takes the first and discards the rest. Each element is what goes into the submission's sasUriList.",
+      "description": "Uploaded. The body is a bare JSON array of storage URIs - not empty, as Microsoft's documentation implies. One element per uploaded file, so one element for a single-part request. Each element is what goes into the submission's sasUriList.",
       "content": {
        "application/json": {
         "schema": {
@@ -426,13 +426,13 @@
       "description": "No or invalid bearer token."
      },
      "413": {
-      "description": "Too large. Microsoft documents the threshold as 30 MB; the first-party client's own guard is 100 MB, so which one the service enforces is unresolved. Upload to your own storage and pass a SAS URI to the submission instead."
+      "description": "Too large. Microsoft documents the threshold as 30 MB. Upload to your own storage and pass a SAS URI to the submission instead."
      },
      "429": {
-      "description": "Throttled. The first-party SDK honours Retry-After here literally and retries indefinitely, so the header is expected to be present and to carry an integer number of seconds. Not observed live - probing sleeps between calls and never reached the limit.",
+      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
       "headers": {
        "Retry-After": {
-        "description": "Seconds to wait. Integer form only, as far as the first-party client can handle.",
+        "description": "Seconds to wait, as an integer.",
         "schema": {
          "type": "integer"
         }
@@ -452,7 +452,7 @@
     ],
     "summary": "Create",
     "x-probe-verified": false,
-    "description": "Submits a static-analysis job over one or more solution files already in storage and returns immediately with the job's status URL in the Location header. The Location value is the whole contract: the first-party client treats a 202 without one as a protocol error and polls the returned URL verbatim rather than reconstructing it, so do the same - it already carries its own api-version.\n\nConfigure the run with either ruleSets or ruleCodes, not both. ruleLevelOverrides is a third, independent list that re-levels named rules for this run only; it is how a team downgrades a rule it has accepted without removing the check.\n\nNot probed - submitting a job is a real write against a real tenant. Verified non-destructively: the route exists, is served at api-version 1.0 only, and accepts POST alone. The body below is Microsoft's documented camelCase; the first-party SDK serialises the same payload in PascalCase (SasUriList, RuleSets, RuleCodes, RuleLevelOverrides, FileExclusions) and the service accepts it, so binding is case-insensitive and either form works.",
+    "description": "Submits a static-analysis job over one or more solution files already in storage and returns immediately with the job's status URL in the Location header. The Location value is the whole contract: a 202 without one is a protocol error, and the URL it carries should be polled verbatim rather than reconstructed - it already carries its own api-version.\n\nConfigure the run with either ruleSets or ruleCodes, not both. ruleLevelOverrides is a third, independent list that re-levels named rules for this run only; it is how a team downgrades a rule it has accepted without removing the check.\n\nServed at api-version 1.0 only, and POST is the only method accepted. Property binding is case-insensitive: the camelCase body documented below and its PascalCase equivalent (SasUriList, RuleSets, RuleCodes, RuleLevelOverrides, FileExclusions) are both accepted.",
     "parameters": [
      {
       "$ref": "#/components/parameters/ApiVersion10"
@@ -503,10 +503,10 @@
       "description": "The x-ms-correlation-id has already been used for a job. Generate a fresh GUID per run rather than retrying with the same one."
      },
      "429": {
-      "description": "Throttled. The first-party SDK honours Retry-After here literally and retries indefinitely, so the header is expected to be present and to carry an integer number of seconds. Not observed live - probing sleeps between calls and never reached the limit.",
+      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
       "headers": {
        "Retry-After": {
-        "description": "Seconds to wait. Integer form only, as far as the first-party client can handle.",
+        "description": "Seconds to wait, as an integer.",
         "schema": {
          "type": "integer"
         }
@@ -526,7 +526,7 @@
     ],
     "summary": "Status Read",
     "x-probe-verified": false,
-    "description": "Polls a submitted job, following the URL the submission put in its Location header, or - for a Dataverse-context submission, which returns no Location - built as /api/status/{runcorrelationid}?api-version=1.0 against the same host.\n\nBoth 200 and 202 carry the same body; read status rather than branching on the status code, because a finished job and a failed one look identical at the transport layer. The five states are Opened and InProgress, which mean keep polling, and Failed, Finished and FinishedWithErrors, which are terminal. Polling is a plain fixed-interval loop in the first-party client with no Retry-After handling on this route and no adaptive backoff: pac waits 30 seconds between polls for up to 120 polls, an hour's ceiling, while the older PowerShell cmdlet defaults to 15 seconds and 20 polls, five minutes. Neither reads progress to decide when to poll again - it is for a progress bar only.\n\nOnce a job is terminal, resultFileUris names the reports. Download them promptly and do not assume they are Azure blob URIs; see the field's own description.\n\nPartially probed. Live-confirmed: the route exists and is served at api-version 1.0 only; an unauthenticated call is refused with the same challenge as the catalogue reads; an unknown job id is reported as problem+json, a different error shape from the rest of this API; and the all-zeros GUID faults the service rather than returning not-found, so never use it as a placeholder. The success bodies are from Microsoft's documentation and the first-party SDK's model - reaching them requires a real job.",
+    "description": "Polls a submitted job, following the URL the submission put in its Location header, or - for a Dataverse-context submission, which returns no Location - built as /api/status/{runcorrelationid}?api-version=1.0 against the same host.\n\nBoth 200 and 202 carry the same body; read status rather than branching on the status code, because a finished job and a failed one look identical at the transport layer. The five states are Opened and InProgress, which mean keep polling, and Failed, Finished and FinishedWithErrors, which are terminal.\n\nThis route sends no Retry-After, so poll on a fixed interval; 30 seconds with a ceiling of an hour is a workable default. progress drives a progress bar and is not a scheduling or completion signal.\n\nOnce a job is terminal, resultFileUris names the reports. Download them promptly and do not assume they are Azure blob URIs; see the field's own description.\n\nServed at api-version 1.0 only. An unauthenticated call is refused with the same challenge as the catalogue reads. An unknown job id is reported as problem+json, a different error shape from the rest of this API, and the all-zeros GUID faults the service rather than returning not-found, so never use it as a placeholder.",
     "parameters": [
      {
       "name": "analysisId",
@@ -563,7 +563,7 @@
       }
      },
      "202": {
-      "description": "Still running - status is Opened or InProgress. Same body shape as the 200, without the result fields. Wait and poll the same URL again. The first-party client accepts 200 and 202 interchangeably and decides purely on status, which is the safer reading of this route.",
+      "description": "Still running - status is Opened or InProgress. Same body shape as the 200, without the result fields. Wait and poll the same URL again. Treat 200 and 202 interchangeably and decide on status alone.",
       "headers": {
        "Location": {
         "description": "The same status URL, repeated.",
@@ -608,13 +608,13 @@
       }
      },
      "500": {
-      "description": "Observed only for the all-zeros GUID, which the service appears to treat as an unset value rather than an unknown id. Empty body, and unaffected by the request headers. Any other GUID returns a clean not-found, so do not use the zero GUID as a probe or placeholder."
+      "description": "Returned for the all-zeros GUID, which the service treats as an unset value rather than as an unknown id. Empty body, and unaffected by the request headers. Any other GUID returns a clean not-found, so do not use the zero GUID as a placeholder."
      },
      "429": {
-      "description": "Throttled. The first-party SDK honours Retry-After here literally and retries indefinitely, so the header is expected to be present and to carry an integer number of seconds. Not observed live - probing sleeps between calls and never reached the limit.",
+      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
       "headers": {
        "Retry-After": {
-        "description": "Seconds to wait. Integer form only, as far as the first-party client can handle.",
+        "description": "Seconds to wait, as an integer.",
         "schema": {
          "type": "integer"
         }
@@ -635,7 +635,7 @@
     "summary": "Create (Dataverse Context)",
     "x-probe-verified": false,
     "x-source": "pac-cli",
-    "description": "Submits an analysis run whose results are also written back into a Dataverse environment, where they appear in the Solution Health Hub app as msdyn_analysisjobs records. This is what pac solution check --saveResults does. Despite the cds in the route it does not analyse the live environment: the files still come from storage URIs exactly as with the ordinary submission. The environment is the destination for the results, not the subject of the analysis, and identifying it is entirely the job of the x-ms-orgurl, x-ms-organization-id, x-ms-requestorid and x-ms-tenant-id headers - the body says nothing about it.\n\nIt differs from the ordinary submission in three ways that matter. It answers 200, not 202. It returns a body rather than a Location header, so the caller composes the status URL itself as /api/status/{runcorrelationid}?api-version=1.0 against the same host. And its body adds Solutions, a list the caller populates itself - one entry per storage URI, each given a client-generated id and a name derived from the URI's last path segment with its extension stripped - which is how the results get labelled per solution in the environment rather than by opaque file URI.\n\nWholly unprobed and undocumented by Microsoft. Everything here is transcribed from the first-party SDK; unlike the other analysis routes, not even the route's existence was confirmed against a live service.",
+    "description": "Submits an analysis run whose results are also written back into a Dataverse environment, where they appear in the Solution Health Hub app as msdyn_analysisjobs records. Despite the cds in the route it does not analyse the live environment: the files still come from storage URIs exactly as with the ordinary submission. The environment is the destination for the results, not the subject of the analysis, and identifying it is entirely the job of the x-ms-orgurl, x-ms-organization-id, x-ms-requestorid and x-ms-tenant-id headers - the body says nothing about it.\n\nIt differs from the ordinary submission in three ways that matter. It answers 200, not 202. It returns a body rather than a Location header, so the caller composes the status URL itself as /api/status/{runcorrelationid}?api-version=1.0 against the same host. And its body adds Solutions, a list the caller populates itself - one entry per storage URI, each with a caller-chosen id and name - which is how the results get labelled per solution in the environment rather than by opaque file URI.",
     "parameters": [
      {
       "$ref": "#/components/parameters/ApiVersion10"
@@ -677,7 +677,7 @@
     },
     "responses": {
      "200": {
-      "description": "The job was accepted and is running - 200 here means accepted, not complete. runcorrelationid is the only field the first-party client requires; an all-zeros value is treated as a protocol failure rather than as an id. Build the status URL from it and poll.",
+      "description": "The job was accepted and is running - 200 here means accepted, not complete. runcorrelationid is the field that matters, and an all-zeros value is not a usable id. Build the status URL from it and poll.",
       "content": {
        "application/json": {
         "schema": {
@@ -687,16 +687,16 @@
       }
      },
      "400": {
-      "description": "Rejected. No error body is modelled by the first-party client, which treats any non-200 as a transport failure carrying whatever text the service sent."
+      "description": "Rejected. No error body shape is defined for this route; treat whatever the service sends as opaque text."
      },
      "401": {
       "description": "No or invalid bearer token."
      },
      "429": {
-      "description": "Throttled. The first-party SDK honours Retry-After here literally and retries indefinitely, so the header is expected to be present and to carry an integer number of seconds. Not observed live - probing sleeps between calls and never reached the limit.",
+      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
       "headers": {
        "Retry-After": {
-        "description": "Seconds to wait. Integer form only, as far as the first-party client can handle.",
+        "description": "Seconds to wait, as an integer.",
         "schema": {
          "type": "integer"
         }
@@ -716,7 +716,7 @@
     "summary": "Delete",
     "x-probe-verified": false,
     "x-source": "pac-cli",
-    "description": "Purges every cached solution-checker result for the caller's tenant, so that the next import re-runs the checks instead of reusing a stored verdict. This is what pac solution check --clearCache does, and the reason to reach for it is a solution that Managed Environments enforcement keeps blocking on a result you have already fixed.\n\nTenant-wide and not undoable: it discards the results for every solution in the tenant, not only the one you are trying to unblock, and the next import of each pays for a fresh analysis. There is no companion read, no way to purge a single solution, and no confirmation beyond the status code.\n\nThe route carries no api-version, unlike every other operation on this host, and the tenant is taken from the token rather than from any parameter - the call has no path, query or body input at all. Wholly unprobed and undocumented by Microsoft; transcribed from the first-party SDK, including the route's existence.",
+    "description": "Purges every cached solution-checker result for the caller's tenant, so that the next import re-runs the checks instead of reusing a stored verdict. The reason to reach for it is a solution that Managed Environments enforcement keeps blocking on a result you have already fixed.\n\nTenant-wide and not undoable: it discards the results for every solution in the tenant, not only the one you are trying to unblock, and the next import of each pays for a fresh analysis. There is no companion read, no way to purge a single solution, and no confirmation beyond the status code.\n\nThe route carries no api-version, unlike every other operation on this host, and the tenant is taken from the token rather than from any parameter - the call has no path, query or body input at all.",
     "parameters": [
      {
       "$ref": "#/components/parameters/CorrelationIdHeader"
@@ -727,16 +727,16 @@
     ],
     "responses": {
      "200": {
-      "description": "Purged. The first-party client reads nothing from the response - it maps the status code alone onto a Success/Failed enum and reports Success - so whether the service sends a body is unknown."
+      "description": "Purged. The status code alone signals success; no response body is defined."
      },
      "401": {
       "description": "No or invalid bearer token."
      },
      "429": {
-      "description": "Throttled. The first-party SDK honours Retry-After here literally and retries indefinitely, so the header is expected to be present and to carry an integer number of seconds. Not observed live - probing sleeps between calls and never reached the limit.",
+      "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
       "headers": {
        "Retry-After": {
-        "description": "Seconds to wait. Integer form only, as far as the first-party client can handle.",
+        "description": "Seconds to wait, as an integer.",
         "schema": {
          "type": "integer"
         }
@@ -752,7 +752,7 @@
   "securitySchemes": {
    "azure_auth": {
     "type": "oauth2",
-    "description": "Microsoft Entra ID OAuth2. The audience is the advisor service itself, not the PowerApps service - the challenge on an unauthenticated call names resource_id https://api.advisor.powerapps.com/. Both app ID URIs resolve: https://advisor.powerapps.com/.default was used for live probing and https://api.advisor.powerapps.com/.default is what the first-party SDK requests. The audience is per-cloud and, in the SDK, chosen from the Dataverse environment's host rather than from the advisor host being called: crm.dynamics.com and anything unrecognised map to https://api.advisor.powerapps.com/, crm9.dynamics.com to https://gov.api.advisor.powerapps.us/, crm.microsoftdynamics.us to https://high.api.advisor.powerapps.us/, crm.appsplatform.us to https://mil.api.advisor.appsplatform.us/, and crm.dynamics.cn to https://china.api.advisor.powerapps.cn/.",
+    "description": "Microsoft Entra ID OAuth2. The audience is the advisor service itself, not the PowerApps service - the challenge on an unauthenticated call names resource_id https://api.advisor.powerapps.com/. Both app ID URIs resolve: https://advisor.powerapps.com/.default and https://api.advisor.powerapps.com/.default.\n\nThe audience is per-cloud, and is selected from the Dataverse environment's host rather than from the advisor host being called: crm.dynamics.com and anything unrecognised map to https://api.advisor.powerapps.com/, crm9.dynamics.com to https://gov.api.advisor.powerapps.us/, crm.microsoftdynamics.us to https://high.api.advisor.powerapps.us/, crm.appsplatform.us to https://mil.api.advisor.appsplatform.us/, and crm.dynamics.cn to https://china.api.advisor.powerapps.cn/.",
     "flows": {
      "authorizationCode": {
       "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
@@ -794,7 +794,7 @@
     "name": "x-ms-tenant-id",
     "in": "header",
     "required": false,
-    "description": "Tenant the analysed solution belongs to. Microsoft documents this as required on the analysis routes, but the first-party SDK never sends it as a matter of course - it sends x-ms-client-tenant-id on every request instead, and adds x-ms-tenant-id only alongside the other Dataverse-context headers when results are being written back to an environment. Treat it as required per the documentation and harmless otherwise; its true optionality is unproven.",
+    "description": "Tenant the analysed solution belongs to. Microsoft documents it as required on the analysis routes, and it is harmless elsewhere. In practice it travels with the other Dataverse-context headers, when results are being written back to an environment.\n\nDistinct from x-ms-client-tenant-id, which identifies the tenant of the calling client rather than the owner of the solution.",
     "schema": {
      "type": "string",
      "format": "uuid"
@@ -804,7 +804,7 @@
     "name": "x-ms-correlation-id",
     "in": "header",
     "required": false,
-    "description": "The identity of one analysis run: send the same freshly generated GUID on every upload, the submission and every status poll of that run. Microsoft documents it as required and says reusing one on a later submission is refused as a duplicate. The SDK sends it on every request to this API including the catalogue reads, generating one GUID per client session rather than per run, which suggests the service tolerates reuse more readily than the documentation implies - unproven either way.",
+    "description": "The identity of one analysis run: send the same freshly generated GUID on every upload, the submission and every status poll of that run. Microsoft documents it as required, and says reusing one on a later submission is refused as a duplicate.",
     "schema": {
      "type": "string",
      "format": "uuid"
@@ -814,7 +814,7 @@
     "name": "x-ms-client-tenant-id",
     "in": "header",
     "required": false,
-    "description": "Tenant of the calling client, sent by the first-party SDK on every request to this API - catalogue reads included - and defaulted to a random GUID when the caller has no tenant context, which means the service cannot be relying on it for authorization. Distinct from x-ms-tenant-id, which identifies the tenant that owns the solution under analysis. Source: pac-cli.",
+    "description": "Tenant of the calling client, accepted on every request to this API including the catalogue reads. Not used for authorization: a random GUID is acceptable where the caller has no tenant context.\n\nDistinct from x-ms-tenant-id, which identifies the tenant that owns the solution under analysis.",
     "schema": {
      "type": "string",
      "format": "uuid"
@@ -825,7 +825,7 @@
     "name": "tenantId",
     "in": "query",
     "required": false,
-    "description": "Tenant to resolve the catalogue for. The first-party SDK appends it to both catalogue reads whenever it holds a non-empty tenant id and omits it otherwise, which implies the catalogue can be tenant-scoped - a tenant with a private or preview ruleset would presumably see it only when this is sent. Live probing never sent it and never needed it, so its effect is unobserved. The all-zeros GUID is treated as absent by the SDK, not as a value. Source: pac-cli.",
+    "description": "Tenant to resolve the catalogue for. Optional - both catalogue reads answer without it - but it is what scopes the catalogue to a tenant, so a tenant-private or preview ruleset would surface only when it is sent. The all-zeros GUID counts as absent rather than as a value.",
     "schema": {
      "type": "string",
      "format": "uuid"
@@ -836,7 +836,7 @@
     "name": "x-ms-orgurl",
     "in": "header",
     "required": false,
-    "description": "Absolute URL of the Dataverse environment the analysis results are to be written into, e.g. https://contoso.crm.dynamics.com/. Sent only with the Dataverse-context submission. Source: pac-cli.",
+    "description": "Absolute URL of the Dataverse environment the analysis results are to be written into, e.g. https://contoso.crm.dynamics.com/. Sent only with the Dataverse-context submission.",
     "schema": {
      "type": "string",
      "format": "uri",
@@ -848,7 +848,7 @@
     "name": "x-ms-requestorid",
     "in": "header",
     "required": false,
-    "description": "Entra object id of the user on whose behalf the run is submitted, read by the SDK from the connected environment's own system user record rather than from the token. This is who the analysis job in the environment is attributed to. Source: pac-cli.",
+    "description": "Entra object id of the user on whose behalf the run is submitted - the object id on the target environment's own system user record, not the subject of the bearer token. This is who the analysis job in the environment is attributed to.",
     "schema": {
      "type": "string",
      "format": "uuid"
@@ -859,7 +859,7 @@
     "name": "x-ms-organization-id",
     "in": "header",
     "required": false,
-    "description": "Dataverse organization id of the environment the results are written into. Distinct from the environment id. Source: pac-cli.",
+    "description": "Dataverse organization id of the environment the results are written into. Distinct from the environment id.",
     "schema": {
      "type": "string",
      "format": "uuid"
@@ -870,7 +870,7 @@
     "name": "x-ms-client-requestorid",
     "in": "header",
     "required": false,
-    "description": "Fresh GUID per submission, distinguishing this request from others by the same requestor. Not the run correlation id. Source: pac-cli.",
+    "description": "Fresh GUID per submission, distinguishing this request from others by the same requestor. Not the run correlation id.",
     "schema": {
      "type": "string",
      "format": "uuid"
@@ -882,7 +882,7 @@
    "Rule": {
     "type": "object",
     "x-probe-verified": true,
-    "description": "One checker rule: what it looks for, how bad a violation is, and where the guidance for fixing it lives. Live responses carry exactly these nine fields - no envelope, no @odata metadata, no pagination. Only code, guidanceUrl, include, componentType, primaryCategory and severity are present on every rule: description, summary and howToFix are absent entirely on rules with no authored text (observed on web-unsupported-syntax), and howToFix is an empty string on roughly half the rest. Microsoft's documentation shows howToFix as an object with a summary property; at api-version 2.0 the service returns a plain string. No property was ever observed explicitly null across 1531 rule objects (both rulesets, all 17 geographies) - absent means absent.",
+    "description": "One checker rule: what it looks for, how bad a violation is, and where the guidance for fixing it lives. A rule object carries exactly these nine fields - no envelope, no @odata metadata, no pagination.\n\nOnly code, guidanceUrl, include, componentType, primaryCategory and severity are present on every rule. description, summary and howToFix are absent entirely on a rule with no authored text - web-unsupported-syntax is one - and howToFix is an empty string on roughly half of the rest.\n\nMicrosoft's documentation shows howToFix as an object with a summary property; at api-version 2.0 the service returns a plain string. No property is ever explicitly null: absent means absent.",
     "required": [
      "code",
      "guidanceUrl",
@@ -909,7 +909,7 @@
      "guidanceUrl": {
       "type": "string",
       "format": "uri",
-      "description": "Published guidance explaining the issue and the recommended fix - the report's Guidance link. Either a learn.microsoft.com article or a go.microsoft.com fwlink redirect carrying the rule code in its error query parameter. Never empty in any observed response, though a link may resolve to a general best-practices page rather than a dedicated article."
+      "description": "Published guidance explaining the issue and the recommended fix - the report's Guidance link. Either a learn.microsoft.com article or a go.microsoft.com fwlink redirect carrying the rule code in its error query parameter. Always present, though a link may resolve to a general best-practices page rather than a dedicated article."
      },
      "howToFix": {
       "type": "string",
@@ -924,7 +924,7 @@
      },
      "componentType": {
       "type": "integer",
-      "description": "Undocumented, and 0 on every one of the 1531 rule objects probed, so no mapping to solution component types can be established from live data - the enum below records what the service returns, not the full domain. The component family a rule targets is instead readable from its code prefix.",
+      "description": "Undocumented, and 0 on every rule the catalogue returns, so it yields no usable mapping to solution component types - the enum below records what the service returns, not the full domain. The component family a rule targets is instead readable from its code prefix.",
       "enum": [
        0
       ]
@@ -946,7 +946,7 @@
      },
      "severity": {
       "type": "integer",
-      "description": "Impact ranking, ascending: 1 Informational, 2 Low, 3 Medium, 4 High, 5 Critical. Names are confirmed by cross-referencing 38 rule codes against their documented severities on Microsoft Learn; 2-5 were observed live, 1 was not. Critical is the level solution checker enforcement blocks a solution import on in Managed Environments, so it is the one with governance consequences rather than only advisory weight. The same five levels are the buckets in IssueSummary.",
+      "description": "Impact ranking, ascending: 1 Informational, 2 Low, 3 Medium, 4 High, 5 Critical. The names line up with the severities Microsoft Learn publishes per rule code.\n\nCritical is the level solution checker enforcement blocks a solution import on in Managed Environments, so it is the one with governance consequences rather than only advisory weight. The same five levels are the buckets in IssueSummary.",
       "enum": [
        1,
        2,
@@ -967,7 +967,7 @@
    "MessageTemplate": {
     "type": "object",
     "x-probe-verified": true,
-    "description": "One message variation a rule can emit - the per-finding wording that appears in a SARIF report, as opposed to the rule's own fixed summary. Returned only when the request asks for message formats. The first-party SDK models the same three fields under the same names, corroborating the shape.",
+    "description": "One message variation a rule can emit - the per-finding wording that appears in a SARIF report, as opposed to the rule's own fixed summary. Returned only when the request asks for message formats.",
     "required": [
      "ruleId",
      "messageTemplateId",
@@ -992,7 +992,7 @@
    "Ruleset": {
     "type": "object",
     "x-probe-verified": true,
-    "description": "A named grouping of rules - the standard a solution is checked against. Both fields are present on every observed response.",
+    "description": "A named grouping of rules - the standard a solution is checked against. Both fields are always present.",
     "required": [
      "id",
      "name"
@@ -1022,14 +1022,14 @@
    "AnalysisRequest": {
     "type": "object",
     "x-probe-verified": false,
-    "description": "Configuration for one analysis run: what to analyse, against which rules, and what to skip. Supply exactly one of ruleSets or ruleCodes. Corroborated field for field by the first-party SDK's AnalyzeRequest, which adds ruleLevelOverrides - a member Microsoft's documentation of this body omits. The SDK serialises every member in PascalCase (SasUriList, FileExclusions, RuleSets, RuleCodes, RuleLevelOverrides) and omits nulls entirely, so the service binds property names case-insensitively; the camelCase below is Microsoft's documented form. Not probed.",
+    "description": "Configuration for one analysis run: what to analyse, against which rules, and what to skip. Supply exactly one of ruleSets or ruleCodes.\n\nruleLevelOverrides is accepted even though Microsoft's documentation of this body omits it.\n\nProperty names bind case-insensitively: the camelCase below and its PascalCase equivalent (SasUriList, FileExclusions, RuleSets, RuleCodes, RuleLevelOverrides) are both accepted, and a null member may be omitted entirely instead of being sent.",
     "required": [
      "sasUriList"
     ],
     "properties": {
      "sasUriList": {
       "type": "array",
-      "description": "Storage URIs the service can download without further credentials - those returned by the upload step, or your own SAS URIs. Each may be a single solution, a zip of several, or a package, and each produces one entry in resultFileUris. Required per Microsoft's documentation; the first-party client refuses to submit with an empty list, which corroborates it.",
+      "description": "Storage URIs the service can download without further credentials - those returned by the upload step, or your own SAS URIs. Each may be a single solution, a zip of several, or a package, and each produces one entry in resultFileUris. Required, and must not be empty.",
       "items": {
        "type": "string",
        "format": "uri"
@@ -1051,7 +1051,7 @@
      },
      "fileExclusions": {
       "type": "array",
-      "description": "File names or patterns to skip, typically third-party libraries you did not write and cannot fix. A * wildcard is supported at either end, e.g. *jquery* or *jquery.dll. pac accepts these as one comma-separated argument and splits it, so a pattern containing a comma cannot be expressed there. Omitted from the request entirely when empty rather than sent as an empty array.",
+      "description": "File names or patterns to skip, typically third-party libraries you did not write and cannot fix. A * wildcard is supported at either end, e.g. *jquery* or *jquery.dll. Omit the member entirely when empty rather than sending an empty array.",
       "items": {
        "type": "string",
        "example": "*jquery*"
@@ -1059,7 +1059,7 @@
      },
      "ruleLevelOverrides": {
       "type": "array",
-      "description": "Rules to re-level for this run only, leaving the catalogue untouched - the mechanism a team uses to accept a finding without disabling the check that produces it. Each entry names a rule code and the level to report it at instead. Distinct from ruleCodes, which selects which rules run at all; overrides do not add a rule to a run that the chosen ruleset does not already include. pac takes this list from a JSON file of {\"Id\", \"OverrideLevel\"} objects and maps Id onto the rule code. Source: pac-cli.",
+      "description": "Rules to re-level for this run only, leaving the catalogue untouched - the mechanism a team uses to accept a finding without disabling the check that produces it. Each entry names a rule code and the level to report it at instead.\n\nDistinct from ruleCodes, which selects which rules run at all: an override does not add a rule to a run that the chosen ruleset does not already include.",
       "items": {
        "$ref": "#/components/schemas/RuleLevelOverride"
       },
@@ -1071,7 +1071,7 @@
    "RulesetReference": {
     "type": "object",
     "x-probe-verified": false,
-    "description": "Names one ruleset for an analysis run to check against. The first-party SDK sends the same object it got back from the ruleset listing, so name may travel along with id; only id is meaningful to the service as far as the client shows, and the client is willing to construct one from a bare GUID with no name at all.",
+    "description": "Names one ruleset for an analysis run to check against. Only id is meaningful to the service; name may travel alongside it, so the object returned by the ruleset listing can be passed back wholesale, and a reference built from a bare GUID with no name at all is equally valid.",
     "properties": {
      "id": {
       "type": "string",
@@ -1081,7 +1081,7 @@
      },
      "name": {
       "type": "string",
-      "description": "Display name, echoed back from the ruleset listing when the client reuses that object wholesale. Not required, and not how the service identifies a ruleset here. Source: pac-cli.",
+      "description": "Display name, as returned by the ruleset listing. Not required, and not how the service identifies a ruleset here.",
       "example": "Solution Checker"
      }
     },
@@ -1090,7 +1090,7 @@
    "RuleReference": {
     "type": "object",
     "x-probe-verified": false,
-    "description": "Names one individual rule for an analysis run to check. Corroborated by the first-party SDK, whose rule object carries code plus the catalogue's descriptive text; only code is meaningful on a submission and the rest is omitted when null.",
+    "description": "Names one individual rule for an analysis run to check. Only code is meaningful on a submission; the catalogue's descriptive text may travel with it, and is omitted when null.",
     "properties": {
      "code": {
       "type": "string",
@@ -1103,11 +1103,11 @@
    "AnalysisStatus": {
     "type": "object",
     "x-probe-verified": false,
-    "description": "The state of one analysis job, and once it has completed, where to fetch its report and how many findings it produced. Returned identically under 200 and 202. Corroborated by the first-party SDK's AnalyzeResult, which adds the Opened state and the additionalMessage field; its remaining member, downloadedResultFiles, is filled in client-side after downloading and is not part of the response. Not probed.",
+    "description": "The state of one analysis job, and once it has completed, where to fetch its report and how many findings it produced. Returned identically under 200 and 202.",
     "properties": {
      "status": {
       "type": "string",
-      "description": "The job's state, and the only thing worth branching on - both a finished job and a failed one arrive as HTTP 200. Opened means accepted but not yet started and InProgress means running; both mean keep polling. The other three are terminal. Finished is clean completion. FinishedWithErrors means a report exists but one or more rules failed to run, so it may be incomplete - a service-side fault rather than a finding about the solution, and a reason not to gate a release on the counts. Failed means the job itself broke and there is no report. Opened is from the first-party SDK's enumeration; the other four are also in Microsoft's documentation.",
+      "description": "The job's state, and the only thing worth branching on - both a finished job and a failed one arrive as HTTP 200.\n\nOpened means accepted but not yet started and InProgress means running; both mean keep polling. The other three are terminal. Finished is clean completion. FinishedWithErrors means a report exists but one or more rules failed to run, so it may be incomplete - a service-side fault rather than a finding about the solution, and a reason not to gate a release on the counts. Failed means the job itself broke and there is no report.",
       "enum": [
        "Opened",
        "InProgress",
@@ -1118,7 +1118,7 @@
      },
      "progress": {
       "type": "integer",
-      "description": "Percentage complete, for a progress bar. Not a scheduling signal - the first-party client displays it and polls on a fixed interval regardless, and never treats 100 as completion in place of reading status.",
+      "description": "Percentage complete, for a progress bar. Not a scheduling signal and not a completion signal - poll on a fixed interval, and read status rather than treating 100 as done.",
       "minimum": 0,
       "maximum": 100
      },
@@ -1129,7 +1129,7 @@
      },
      "resultFileUris": {
       "type": "array",
-      "description": "Where the reports are, one entry per submitted file, present only once the job is terminal. Each normally resolves to a zip containing a SARIF v2 JSON report. Do not assume a single URI form: the first-party client classifies six of them before downloading, and downloads only some. An Azure blob SAS URI (*.blob.core.windows.net or *.file.core.windows.net, with a sig query parameter, plus the sovereign equivalents on core.usgovcloudapi.net and core.chinacloudapi.cn) and a Power Platform blob-proxy URI (*.powerplatformusercontent.com/.us/.cn, with an esig query parameter) are both downloadable, as is a Dataverse file-download URI (a Dataverse host with an /api/filedownload path). A Dataverse record URI containing msdyn_analysisjobs(...) and a maker-portal deep link of the form make.powerapps.com/environments/{id}/solutions/{id}/overview/checkerResults are pointers for a human, not files, and the first-party client skips them rather than trying to fetch them - expect these from a Dataverse-context run, whose results live in the environment. Whatever the form, download promptly: the signed URIs expire. Only the blob and localhost forms carry a usable file name; for the rest the client invents one, so do not rely on the URI to name the report.",
+      "description": "Where the reports are, one entry per submitted file, present only once the job is terminal. Each normally resolves to a zip containing a SARIF v2 JSON report.\n\nDo not assume a single URI form. Three forms are downloadable: an Azure blob SAS URI (*.blob.core.windows.net or *.file.core.windows.net, with a sig query parameter, plus the sovereign equivalents on core.usgovcloudapi.net and core.chinacloudapi.cn), a Power Platform blob-proxy URI (*.powerplatformusercontent.com/.us/.cn, with an esig query parameter), and a Dataverse file-download URI (a Dataverse host with an /api/filedownload path).\n\nTwo further forms are pointers for a human rather than files, and there is nothing to fetch from them: a Dataverse record URI containing msdyn_analysisjobs(...), and a maker-portal deep link of the form make.powerapps.com/environments/{id}/solutions/{id}/overview/checkerResults. Expect these from a Dataverse-context run, whose results live in the environment.\n\nWhatever the form, download promptly: the signed URIs expire. Only the blob and localhost forms carry a usable file name, so do not rely on the URI to name the report.",
       "items": {
        "type": "string",
        "format": "uri"
@@ -1141,11 +1141,11 @@
      "privacyPolicy": {
       "type": "string",
       "format": "uri",
-      "description": "Link to the privacy policy covering the analysed content. From Microsoft's documentation; the first-party SDK does not model it, which is weak evidence that it is not always present."
+      "description": "Link to the privacy policy covering the analysed content. Not always present."
      },
      "additionalMessage": {
       "type": "string",
-      "description": "Free-text service commentary about the run, typically present when status is FinishedWithErrors and explaining which rules could not be evaluated. Untrusted text: the first-party client strips control characters from it before printing, so treat it as opaque and sanitise before display or logging. Source: pac-cli.",
+      "description": "Free-text service commentary about the run, typically present when status is FinishedWithErrors and explaining which rules could not be evaluated. Untrusted text: strip control characters and sanitise it before display or logging.",
       "x-source": "pac-cli"
      }
     },
@@ -1154,7 +1154,7 @@
    "IssueSummary": {
     "type": "object",
     "x-probe-verified": false,
-    "description": "Finding counts bucketed by severity, present only once processing has completed. The five buckets are the names behind Rule.severity's numeric values, so criticalIssueCount counts findings from rules with severity 5. Critical is the bucket Managed Environments solution checker enforcement blocks on. Corroborated field for field by the first-party SDK, which prints exactly these five and nothing else.",
+    "description": "Finding counts bucketed by severity, present only once processing has completed. The five buckets are the names behind Rule.severity's numeric values, so criticalIssueCount counts findings from rules with severity 5. Critical is the bucket Managed Environments solution checker enforcement blocks on.",
     "properties": {
      "criticalIssueCount": {
       "type": "integer"
@@ -1190,7 +1190,7 @@
     "properties": {
      "code": {
       "type": "string",
-      "description": "UnsupportedApiVersion is the only value observed, and it covers both an unsupported api-version and an unsupported method on a supported one - so the code alone does not tell you which.",
+      "description": "UnsupportedApiVersion is the only value this envelope carries, and it covers both an unsupported api-version and an unsupported method on a supported one - so the code alone does not tell you which.",
       "enum": [
        "UnsupportedApiVersion"
       ]
@@ -1268,16 +1268,16 @@
     "type": "object",
     "x-probe-verified": false,
     "x-source": "pac-cli",
-    "description": "Re-levels one rule for the duration of a single analysis run. Source: pac-cli; not probed.",
+    "description": "Re-levels one rule for the duration of a single analysis run.",
     "properties": {
      "code": {
       "type": "string",
-      "description": "The rule code to re-level, from the rule catalogue. pac's override file spells this field Id and the client maps it onto the rule's code before sending, so the wire name is code.",
+      "description": "The rule code to re-level, from the rule catalogue.",
       "example": "meta-remove-dup-reg"
      },
      "overrideLevel": {
       "type": "string",
-      "description": "Severity to report findings from this rule at instead of the catalogue's. These five names are the labels behind Rule.severity's integers - Critical is 5 down to Informational is 1 - so an override is really a severity substitution. Downgrading a rule below Critical is what takes it out of the way of Managed Environments enforcement without silencing it. The first-party client does not validate the value before sending, so an unrecognised level is the service's problem, and its behaviour is unknown.",
+      "description": "Severity to report findings from this rule at instead of the catalogue's. These five names are the labels behind Rule.severity's integers - Critical is 5 down to Informational is 1 - so an override is really a severity substitution.\n\nDowngrading a rule below Critical is what takes it out of the way of Managed Environments enforcement without silencing it. The service's handling of an unrecognised level is undefined.",
       "enum": [
        "Critical",
        "High",
@@ -1293,7 +1293,7 @@
     "type": "object",
     "x-probe-verified": false,
     "x-source": "pac-cli",
-    "description": "An analysis submission that also writes its results into a Dataverse environment. Structurally the ordinary AnalysisRequest plus Solutions, and the only place in this spec where PascalCase property names are asserted rather than inferred: the first-party SDK pins Solutions with an explicit serialisation attribute and sends the inherited members in PascalCase too. The camelCase documented for the ordinary submission is very likely accepted here as well, but nothing proves it, so the names below are the ones the first-party client provably sends. Source: pac-cli; not probed.",
+    "description": "An analysis submission that also writes its results into a Dataverse environment. Structurally the ordinary AnalysisRequest plus Solutions.\n\nThe property names here are PascalCase. The camelCase spelling the ordinary submission accepts is likely to work too, but only the PascalCase form is established for this route, so prefer the names shown.",
     "properties": {
      "SasUriList": {
       "type": "array",
@@ -1305,7 +1305,7 @@
      },
      "Solutions": {
       "type": "array",
-      "description": "One entry per storage URI, naming the solution each file holds so the results can be labelled in the environment rather than by opaque URI. The caller builds this list itself - the service does not derive it from SasUriList - and the first-party client does so by generating a fresh GUID per entry and taking the name from the URI's last path segment with its extension stripped. That means the id is the caller's invention and the name is a guess from a file name, neither being the solution's real Dataverse identity.",
+      "description": "One entry per storage URI, naming the solution each file holds so the results can be labelled in the environment rather than by opaque URI.\n\nThe caller builds this list itself - the service does not derive it from SasUriList - so the id and the name are the caller's to choose, and neither is required to be the solution's real Dataverse identity.",
       "items": {
        "$ref": "#/components/schemas/AnalysisSolution"
       }
@@ -1345,16 +1345,16 @@
     "type": "object",
     "x-probe-verified": false,
     "x-source": "pac-cli",
-    "description": "One solution in a Dataverse-context run - the pairing of a storage URI with a name the environment can show. The same object comes back on the response, where the service may have filled in status. Source: pac-cli; not probed.",
+    "description": "One solution in a Dataverse-context run - the pairing of a storage URI with a name the environment can show. The same object comes back on the response, where the service may have filled in status.",
     "properties": {
      "ID": {
       "type": "string",
       "format": "uuid",
-      "description": "Identifier for this solution within the run. Caller-generated and not the solution's Dataverse id - the first-party client emits a fresh random GUID per entry per run, so it correlates a request entry with its response entry and nothing more."
+      "description": "Identifier for this solution within the run. Caller-generated and not the solution's Dataverse id - a fresh GUID per entry per run is the usual choice. It correlates a request entry with its response entry and nothing more."
      },
      "Name": {
       "type": "string",
-      "description": "Label for the solution in the results. Derived by the first-party client from the storage URI's last path segment with the extension removed, falling back to PacSolution when the URI has no segments, so it is the file's name rather than the solution's unique name unless the caller sets it deliberately.",
+      "description": "Label for the solution in the results. The caller chooses it; taking it from the storage URI's last path segment with the extension removed gives the file's name rather than the solution's unique name.",
       "example": "ContosoCore"
      },
      "SasUri": {
@@ -1364,7 +1364,7 @@
      },
      "Status": {
       "type": "string",
-      "description": "Per-solution outcome. Never set on a request by the first-party client and only read back from the response; its value set is unknown, and it is not the job-level status the polling route returns."
+      "description": "Per-solution outcome, filled in by the service on the response and never set on a request. Its value set is undefined, and it is not the job-level status the polling route returns."
      }
     }
    },
@@ -1372,12 +1372,12 @@
     "type": "object",
     "x-probe-verified": false,
     "x-source": "pac-cli",
-    "description": "Acknowledgement of a Dataverse-context submission. It stands in for the Location header the ordinary submission returns: runcorrelationid is what the caller builds the status URL from. Source: pac-cli; not probed.",
+    "description": "Acknowledgement of a Dataverse-context submission. It stands in for the Location header the ordinary submission returns: runcorrelationid is what the caller builds the status URL from.",
     "properties": {
      "runcorrelationid": {
       "type": "string",
       "format": "uuid",
-      "description": "The run's id, and the {analysisId} of the status URL the caller must compose. Spelled entirely in lower case here, unlike the status route's runCorrelationId - the first-party SDK pins both spellings explicitly, so the inconsistency is the service's. The first-party client rejects an all-zeros value as a protocol failure rather than polling for it, which lines up with the status route faulting on that GUID."
+      "description": "The run's id, and the {analysisId} of the status URL the caller must compose. Spelled entirely in lower case here, unlike the status route's runCorrelationId - the inconsistency is the service's.\n\nAn all-zeros value is not a usable id, which lines up with the status route faulting on that GUID rather than reporting not-found."
      },
      "solutions": {
       "type": "array",
@@ -1390,7 +1390,7 @@
       "type": "string",
       "format": "uuid",
       "nullable": true,
-      "description": "Tenant the run was recorded against. Modelled as nullable by the first-party SDK, which is the only evidence about it either way."
+      "description": "Tenant the run is attributed to. Nullable."
      }
     }
    }

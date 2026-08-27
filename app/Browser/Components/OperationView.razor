@@ -11,7 +11,7 @@
     }
 
     <div class="endpoint">
-        <span class="method method--@Operation.Method.ToLowerInvariant()">@Operation.Method</span>
+        <KeelChip Emphasis="Emphasis.Filled" Mono="true" Tone="@MethodTone.For(Operation.Method)">@Operation.Method</KeelChip>
         <span class="endpoint__path"><span class="endpoint__host">@Server</span>@Operation.Path</span>
     </div>
 

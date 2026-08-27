@@ -393,56 +393,6 @@ html, body {
   border-left: 1px solid var(--border-subtle);
 }
 
-/* --------------------------------------------------------------- method -- */
-
-/* KEEL GAP: reported and settled. keel will not learn what an HTTP verb is,
-   which is right: the verb-to-colour mapping is this app's domain knowledge,
-   not a design-system concern. What keel is growing is the general marker at
-   the two densities below, filled for a listing and colour-only for a dense
-   row, with the tone left open.
-
-   So when that lands, the shape here goes and this block keeps only the map
-   from verb to keel tone. The verbs are a closed set with conventional colours
-   people already read, which is why they are their own scale rather than being
-   bent onto the semantic tones: PUT is amber because PUT is amber, not because
-   a PUT is a warning. Every value is a keel token, so it follows the theme. */
-
-.method {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: var(--fw-bold);
-  letter-spacing: .04em;
-  padding: 2px var(--space-3);
-  border-radius: var(--radius-sm);
-  color: var(--text-on-accent);
-  white-space: nowrap;
-}
-.method--get    { background: var(--success); }
-.method--post   { background: var(--accent); }
-.method--put    { background: var(--warning); }
-.method--patch  { background: var(--purple-500); }
-.method--delete { background: var(--danger); }
-.method--head, .method--options, .method--trace { background: var(--text-tertiary); }
-
-/* In the rail the verb is coloured text rather than a filled badge: the colour
-   still carries the method at a glance, without a column of solid blocks. */
-.method--quiet {
-  background: none;
-  padding: 0;
-  font-size: 10px;
-}
-.method--quiet.method--get    { color: var(--success); }
-.method--quiet.method--post   { color: var(--accent); }
-.method--quiet.method--put    { color: var(--warning); }
-.method--quiet.method--patch  { color: var(--purple-500); }
-.method--quiet.method--delete { color: var(--danger); }
-.method--quiet.method--head,
-.method--quiet.method--options,
-.method--quiet.method--trace  { color: var(--text-tertiary); }
-
 /* --------------------------------------------------------------- states -- */
 
 .state {
@@ -493,6 +443,11 @@ html, body {
   cursor: pointer;
 }
 .op-row:hover { background: var(--surface-subtle); }
+/* The verb keeps its own width. A grid item is stretched to its track by
+   default, which would pull the chip out to the full 62px and leave the label
+   hanging off one end of it. The track stays fixed, so the names still line up
+   whatever the verb is; only the chip stops being stretched. */
+.op-row__method { justify-self: start; }
 .op-row__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .op-row__name {
   display: flex;

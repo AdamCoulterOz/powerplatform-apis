@@ -31,7 +31,7 @@
                             <div class="prop">
                                 <button class="prop__head" style="background:none;border:0;padding:0;cursor:pointer;text-align:left"
                                         @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Operation, op.OperationId))">
-                                    <span class="method method--@op.Method.ToLowerInvariant()">@op.Method</span>
+                                    <KeelChip Emphasis="Emphasis.Filled" Mono="true" Tone="@MethodTone.For(op.Method)">@op.Method</KeelChip>
                                     <span class="prop__name" style="color:var(--accent)">@op.Summary</span>
                                 </button>
                             </div>

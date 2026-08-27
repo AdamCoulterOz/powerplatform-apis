@@ -22,7 +22,7 @@
         @foreach (var op in Operations)
         {
             <button type="button" class="op-row" @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Operation, op.OperationId))">
-                <span class="method method--@op.Method.ToLowerInvariant()">@op.Method</span>
+                <KeelChip class="op-row__method" Emphasis="Emphasis.Filled" Mono="true" Tone="@MethodTone.For(op.Method)">@op.Method</KeelChip>
                 <span class="op-row__body">
                     <span class="op-row__name">
                         @op.Summary

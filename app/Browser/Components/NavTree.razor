@@ -35,8 +35,10 @@
                     <button class="rail__item" aria-current="@(isCurrent ? "true" : "false")"
                             @onclick="() => OnNavigate.InvokeAsync(new Route(RouteKind.Operation, op.OperationId))">
                         <span class="rail__item-label">@op.Summary</span>
+                        @* Quiet: forty rows of filled chips would read as a
+                           column of blocks rather than a column of labels. *@
                         <span class="rail__item-method">
-                            <span class="method method--quiet method--@op.Method.ToLowerInvariant()">@op.Method</span>
+                            <KeelChip Emphasis="Emphasis.Quiet" Mono="true" Tone="@MethodTone.For(op.Method)">@op.Method</KeelChip>
                         </span>
                     </button>
                 }

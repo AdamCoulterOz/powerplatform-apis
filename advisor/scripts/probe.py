@@ -8,6 +8,14 @@ with an Allow header, and the wrong api-version answers 400
 UnsupportedApiVersion, so both confirm a route exists without submitting work.
 There is no code path here that POSTs, uploads, or starts an analysis.
 
+Two of the routes it checks - /api/cds/analysisrequest and
+/api/QueryValidationResults - were found in the decompiled first-party SDK
+(Microsoft.PowerApps.Checker.Client, shipped in pac CLI) rather than in any
+documentation, and have never been confirmed against a live service. The
+cache-purge route answers DELETE, which is destructive and tenant-wide, so it
+is probed with GET alone: a 405 naming DELETE in Allow confirms it exists
+without purging anything.
+
 It prints shapes, counts and enum distributions - never a tenant identifier,
 an environment id, or a token.
 
@@ -45,11 +53,19 @@ import urllib.request
 SCOPE = "https://advisor.powerapps.com/.default"
 HOST_TEMPLATE = "{region}.api.advisor.powerapps.com"
 
-# Public-cloud geographies. Sovereign clouds use different hostnames.
+# Public-cloud geographies. Sovereign clouds use different hostnames
+# (china.api.advisor.powerapps.cn, {gov,high}.api.advisor.powerapps.us,
+# mil.api.advisor.appsplatform.us) and are not surveyed here.
+#
+# The first 17 answered a live request. The rest come from ApiGeographyMap in
+# the first-party SDK inside pac CLI and have never been reached;
+# unitedstatesfirstrelease is the first-release ring rather than a geography,
+# and is where a catalogue difference between regions usually shows up first.
 REGIONS = [
-    "asia", "unitedstates", "canada", "europe", "france", "germany", "india",
+    "asia", "australia", "canada", "europe", "france", "germany", "india",
     "japan", "korea", "norway", "singapore", "southafrica", "southamerica",
     "switzerland", "unitedarabemirates", "unitedkingdom", "unitedstates",
+    "italy", "newzealand", "poland", "sweden", "unitedstatesfirstrelease",
 ]
 
 # Product constants, not tenant data: the ruleset the maker portal and the
@@ -332,7 +348,7 @@ def probe_negative(client: Advisor, host: str, ruleset: str) -> None:
 
     print()
     print("-- analysis routes: existence probed by version and method, never invoked --")
-    for path in ("/api/analyze", "/api/upload"):
+    for path in ("/api/analyze", "/api/upload", "/api/cds/analysisrequest"):
         status_v2, _, body_v2 = client.request(
             url_for(host, path, **{"api-version": CATALOGUE_API_VERSION}))
         status_v1, headers_v1, _ = client.request(
@@ -345,6 +361,25 @@ def probe_negative(client: Advisor, host: str, ruleset: str) -> None:
         print("  %-28s GET@%s -> %s (%s);  GET@%s -> %s Allow=%s"
               % (path, CATALOGUE_API_VERSION, status_v2, code,
                  ANALYSIS_API_VERSION, status_v1, headers_v1.get("Allow")))
+
+    print()
+    print("-- enforcement cache purge: existence only, never DELETEd --")
+    for version in (None, ANALYSIS_API_VERSION, CATALOGUE_API_VERSION):
+        params = {} if version is None else {"api-version": version}
+        status, headers, body = client.request(
+            url_for(host, "/api/QueryValidationResults", **params))
+        print("  GET api-version=%-6s -> %s  Allow=%s keys=%s"
+              % (version, status, headers.get("Allow"), _json_keys(body)))
+
+    print()
+    print("-- catalogue reads with the SDK's tenantId query parameter --")
+    for label, tenant in (("random tenant", str(uuid.uuid4())),
+                          ("all-zeros tenant", "00000000-0000-0000-0000-000000000000")):
+        status, payload = client.get_json(
+            url_for(host, "/api/ruleset", **{"api-version": CATALOGUE_API_VERSION,
+                                             "tenantId": tenant}))
+        count = len(payload) if isinstance(payload, list) else None
+        print("  %-18s %s  rulesets=%s" % (label, status, count))
 
     print()
     print("-- analysis status: reading a job that does not exist --")

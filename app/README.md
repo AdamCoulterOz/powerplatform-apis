@@ -51,13 +51,15 @@ into the browser. Extensions we rely on (`x-notes`, `x-ms-namespace`,
 
 `x-notes` is where a spec records that the API's real behaviour contradicts
 Microsoft's published documentation. Each entry is `{"note", "source"}`, where
-`source` is the evidence grade: `live` for something seen on the wire, `pac-cli`
-for something read out of the first-party client Microsoft ships. `NotesPanel`
-renders one callout per grade — accent tone for the observed group, warning tone
-for everything weaker, which also states what it rests on — so a client-derived
-finding is never presented as an observation. Notes appear on operations,
-schemas, resource pages and individual properties, wherever the spec puts them,
-and the note text is markdown rendered exactly as a description is.
+`source` is the provenance behind that one finding: `live` for something seen on
+the wire, `pac-cli` for something read out of the first-party client Microsoft
+ships, `provider` for something read out of the Terraform provider's client,
+which neither the wire nor Microsoft attests. `NotesPanel` renders one callout
+per grade — accent tone for the observed group, warning tone for everything
+weaker, which also states what it rests on — so a finding taken from a client is
+never presented as an observation. Notes appear on operations, schemas, resource
+pages and individual properties, wherever the spec puts them, and the note text
+is markdown rendered exactly as a description is.
 
 Specs used to fold the same text into the owning `description` as a blockquote,
 for Stoplight Elements, which renders `description` and ignores extensions. That
@@ -69,10 +71,12 @@ is gone: the model reads the extension, and descriptions are prose only.
 dotnet publish app/Browser -c Release -o app/dist
 ```
 
-The published site expects to be served at `/powerplatform-apis/app/` (see
-`base href` in `wwwroot/index.html`), with `specs.json` and the API folders one
-level up. Asset fingerprinting is off so the plain `_framework` paths work on a
-static host with no mapping layer.
+The published site expects to be served at `/powerplatform-apis/` (see
+`base href` in `wwwroot/index.html`): the browser is the site root, and
+`specs.json` and the API folders are copied in beside the published `wwwroot`
+rather than a level above it. Assets are fingerprinted, so a deploy cannot serve
+a returning visitor a stale runtime; `fingerprint-importmap.py` points the
+loader at the fingerprinted name after publish.
 
 ## Status
 

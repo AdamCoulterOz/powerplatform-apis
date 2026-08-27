@@ -3,7 +3,7 @@
  "info": {
   "title": "Power Platform API",
   "version": "2024-10-01",
-  "description": "Unofficial. Reverse-engineered from the public Microsoft Learn documentation (learn.microsoft.com), then corrected and extended against recorded first-party traffic: operations and schemas carrying x-probe-verified were observed on the wire, everything else is docs-derived and unverified. Tags group operations by logical resource; x-ms-namespace records the namespace Microsoft files each under. Note the three servers: many operations are served only from the tenant- or environment-scoped host, whose name is derived from the tenant or environment id.",
+  "description": "Unofficial. Reverse-engineered from the public Microsoft Learn documentation (learn.microsoft.com), then corrected and extended against two further sources. Recorded first-party traffic is the strongest: operations and schemas carrying x-probe-verified were observed on the wire, and where anything else contradicts them they lose. Microsoft.PowerPlatform.Management — the Kiota-generated client shipped inside the Power Platform CLI, and so a second machine projection of the same internal OpenAPI the Learn pages come from — supplies structure the prose lost: operations and models carrying x-source: pac-cli come from it and have not been seen on the wire. Everything else is docs-derived and unverified, and that is still most of the file. Tags group operations by logical resource; x-ms-namespace records the namespace Microsoft files each under. Note the three servers: many operations are served only from the tenant- or environment-scoped host, whose name is derived from the tenant or environment id. The api-version defaults are observations, not requirements: the service accepts several, the admin centre pins an older one per namespace, and the CLI forces 2024-10-01 on everything.",
   "x-api-versions": [
    "1",
    "2021-10-01-preview",
@@ -54,6 +54,10 @@
   }
  ],
  "tags": [
+  {
+   "name": "Advisor Chat",
+   "description": "A conversational assistant that answers questions about the tenant in prose, backed by whatever the service knows about it. Separate from the advisor recommendations in the same namespace, which return structured findings against specific resources, and from the solution-checker advisor on another host entirely. Preview: the surface is feature-gated in the only client known to call it."
+  },
   {
    "name": "Advisor Recommendation",
    "description": "Recommendations and actions"
@@ -280,6 +284,122 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/analytics/recommendations/execute-recommendation-action"
     }
+   }
+  },
+  "/analytics/advisor/chat/conversations": {
+   "get": {
+    "operationId": "analytics_listAdvisorConversations",
+    "tags": [
+     "Advisor Chat"
+    ],
+    "summary": "Conversations List",
+    "description": "Lists the advisor conversations belonging to the calling user. The caller is taken from the token, so there is no way to list another user's threads here. Each entry gives the id to pass as `conversationId` when resuming a thread.\n\n> **From Microsoft's own client, not observed live**\n>\n> - Found in the pac CLI's `advisor` module (pac CLI 2.11.2), which is gated behind the `ModuleAdvisor` feature flag and absent from the CLI's own published command manifest. It is also absent from Microsoft.PowerPlatform.Management, the generated client that covers the rest of this namespace — so the released internal OpenAPI does not describe it yet. Treat it as preview surface that can change or disappear.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version. The pac CLI pins `2024-10-01` on every request to this API, overwriting any value a caller supplies."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The calling user's conversations.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AdvisorChatConversationCollection"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "analytics/advisor-chat",
+    "x-source": "pac-cli",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "x-ms-preview": true,
+    "x-notes": [
+     "Found in the pac CLI's `advisor` module (pac CLI 2.11.2), which is gated behind the `ModuleAdvisor` feature flag and absent from the CLI's own published command manifest. It is also absent from Microsoft.PowerPlatform.Management, the generated client that covers the rest of this namespace — so the released internal OpenAPI does not describe it yet. Treat it as preview surface that can change or disappear."
+    ]
+   }
+  },
+  "/analytics/advisor/chat/messages": {
+   "post": {
+    "operationId": "analytics_askAdvisor",
+    "tags": [
+     "Advisor Chat"
+    ],
+    "summary": "Message Send",
+    "description": "Asks the Power Platform advisor a question about the tenant and returns its answer. Omit `conversationId` to start a new conversation; the response carries the id the service assigned, and passing it back on the next request continues the same thread with its history intact. Answers are generated, so they take seconds to minutes rather than milliseconds — pac allows five minutes before giving up, and a client should budget similarly rather than using a default HTTP timeout.\n\nThis is not the solution-checker advisor at `advisor.powerapps.com`, and it is unrelated to the advisor recommendations elsewhere in this namespace: those return structured findings about resources, this returns prose.\n\n> **From Microsoft's own client, not observed live**\n>\n> - Found in the pac CLI's `advisor` module (pac CLI 2.11.2), which is gated behind the `ModuleAdvisor` feature flag and absent from the CLI's own published command manifest. It is also absent from Microsoft.PowerPlatform.Management, the generated client that covers the rest of this namespace — so the released internal OpenAPI does not describe it yet. Treat it as preview surface that can change or disappear.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version. The pac CLI pins `2024-10-01` on every request to this API, overwriting any value a caller supplies."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The advisor's answer.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AdvisorChatMessage"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "analytics/advisor-chat",
+    "x-source": "pac-cli",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AdvisorChatRequest"
+       }
+      }
+     }
+    },
+    "x-ms-preview": true,
+    "x-notes": [
+     "Found in the pac CLI's `advisor` module (pac CLI 2.11.2), which is gated behind the `ModuleAdvisor` feature flag and absent from the CLI's own published command manifest. It is also absent from Microsoft.PowerPlatform.Management, the generated client that covers the rest of this namespace — so the released internal OpenAPI does not describe it yet. Treat it as preview surface that can change or disappear."
+    ]
    }
   },
   "/analytics/advisorRecommendations": {
@@ -4370,6 +4490,166 @@
     }
    }
   },
+  "/environmentmanagement/environments/{environmentId}/Disable": {
+   "post": {
+    "operationId": "environmentmanagement_disableEnvironment",
+    "tags": [
+     "Environment Operations"
+    ],
+    "summary": "Disable",
+    "description": "Turns the environment off. A disabled environment stays provisioned and keeps its data and its capacity allocation; it simply stops serving. Re-enable it with the sibling operation. The reason on the request body is recorded against the environment, so supply something a later administrator will understand.\n\n> **From Microsoft's own client, not observed live**\n>\n> - Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference. The client models no success body, so the success status here is taken from the sibling documented lifecycle operations rather than observed.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "The ID of the environment."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version. The pac CLI pins `2024-10-01` on every request to this API, overwriting any value a caller supplies."
+     },
+     {
+      "name": "ValidateOnly",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "When true, validates the request without executing it. Use with ValidateProperties to validate only specific fields. If ValidateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+     },
+     {
+      "name": "ValidateProperties",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when ValidateOnly is true."
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "The state change was accepted and runs asynchronously. Poll the environment's operations to follow it."
+     },
+     "400": {
+      "description": "The request was rejected. `errorDetail.fieldErrors` names the offending fields, and a validation-only request that fails reports here rather than by executing.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ValidationResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "environmentmanagement/environment-state",
+    "x-source": "pac-cli",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/StateChangeRequest"
+       }
+      }
+     }
+    },
+    "x-notes": [
+     "Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference. The client models no success body, so the success status here is taken from the sibling documented lifecycle operations rather than observed."
+    ]
+   }
+  },
+  "/environmentmanagement/environments/{environmentId}/Enable": {
+   "post": {
+    "operationId": "environmentmanagement_enableEnvironment",
+    "tags": [
+     "Environment Operations"
+    ],
+    "summary": "Enable",
+    "description": "Turns the environment on. The inverse of Disable. It brings back an environment that was switched off, not one that was deleted — a deleted environment is recovered through the recover operation instead. The reason on the request body is recorded against the environment, so supply something a later administrator will understand.\n\n> **From Microsoft's own client, not observed live**\n>\n> - Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference. The client models no success body, so the success status here is taken from the sibling documented lifecycle operations rather than observed.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "The ID of the environment."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version. The pac CLI pins `2024-10-01` on every request to this API, overwriting any value a caller supplies."
+     },
+     {
+      "name": "ValidateOnly",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "When true, validates the request without executing it. Use with ValidateProperties to validate only specific fields. If ValidateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+     },
+     {
+      "name": "ValidateProperties",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when ValidateOnly is true."
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "The state change was accepted and runs asynchronously. Poll the environment's operations to follow it."
+     },
+     "400": {
+      "description": "The request was rejected. `errorDetail.fieldErrors` names the offending fields, and a validation-only request that fails reports here rather than by executing.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ValidationResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "environmentmanagement/environment-state",
+    "x-source": "pac-cli",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/StateChangeRequest"
+       }
+      }
+     }
+    },
+    "x-notes": [
+     "Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference. The client models no success body, so the success status here is taken from the sibling documented lifecycle operations rather than observed."
+    ]
+   }
+  },
   "/environmentmanagement/environments/{environmentId}/backups": {
    "post": {
     "operationId": "environmentmanagement_createEnvironmentBackup",
@@ -5207,6 +5487,93 @@
     }
    }
   },
+  "/environmentmanagement/environments/{environmentId}/modifySku": {
+   "post": {
+    "operationId": "environmentmanagement_modifyEnvironmentSku",
+    "tags": [
+     "Environment Operations"
+    ],
+    "summary": "Sku Update",
+    "description": "Moves the environment to a different SKU — for example promoting a Sandbox to Production, or converting a Trial. The change is a lifecycle operation, not a settings edit: it runs asynchronously and the result reports through the returned operation. Which transitions are permitted depends on the tenant's licences and capacity, and neither the Learn reference nor the client enumerates them; send the request with ValidateOnly=true first to find out without committing.\n\n> **From Microsoft's own client, not observed live**\n>\n> - Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference. The client returns OperationExecutionResult; the success status is taken from the sibling documented lifecycle operations rather than observed.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "The ID of the environment."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version. The pac CLI pins `2024-10-01` on every request to this API, overwriting any value a caller supplies."
+     },
+     {
+      "name": "ValidateOnly",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "When true, validates the request without executing it. Use with ValidateProperties to validate only specific fields. If ValidateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+     },
+     {
+      "name": "ValidateProperties",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when ValidateOnly is true."
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "The SKU change was accepted and runs asynchronously.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OperationExecutionResult"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "The request was rejected. `errorDetail.fieldErrors` names the offending fields, and a validation-only request that fails reports here rather than by executing.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ValidationResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "environmentmanagement/environment-sku",
+    "x-source": "pac-cli",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ModifyEnvironmentSkuRequest"
+       }
+      }
+     }
+    },
+    "x-notes": [
+     "Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference. The client returns OperationExecutionResult; the success status is taken from the sibling documented lifecycle operations rather than observed."
+    ]
+   }
+  },
   "/environmentmanagement/environments/{environmentId}/operations": {
    "get": {
     "operationId": "environmentmanagement_getOperationsForEnvironment",
@@ -5541,9 +5908,23 @@
         }
        }
       }
+     },
+     "409": {
+      "description": "Settings already exist for this environment. Update them instead of creating them.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CreateEnvironmentManagementSettingResponse"
+        }
+       }
+      }
      }
     },
     "x-ms-namespace": "environmentmanagement/environment-management-settings",
+    "x-notes": [
+     "409 is mapped by Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) but is not documented in the Learn reference."
+    ],
+    "description": "> **From Microsoft's own client, not observed live**\n>\n> - 409 is mapped by Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) but is not documented in the Learn reference.",
     "requestBody": {
      "required": true,
      "content": {
@@ -5651,10 +6032,11 @@
     "x-notes": [
      "Property names on the wire are PascalCase (`Id`, `PowerApps_AllowCodeApps`, `PowerApps_EnableGenerativePages`); the docs lowercase the leading letter of every one of them. `$select` matches case-sensitively, so the docs spelling returns nothing.",
      "A setting that has never been set comes back explicitly `null` rather than being omitted, so an entry in `objectResult` is not evidence that the setting has a value.",
-     "Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host."
+     "Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host.",
+     "The documented value is accepted here after all: Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) forces `api-version=2024-10-01` onto every request it makes, overwriting whatever the caller set, and it calls this operation. So `1` is what the admin centre happens to send, not what the service requires — read the recorded defaults throughout this spec as observations of one client, not as a contract."
     ],
     "x-probe-verified": true,
-    "description": "> **Verified against the live API**\n>\n> - Property names on the wire are PascalCase (`Id`, `PowerApps_AllowCodeApps`, `PowerApps_EnableGenerativePages`); the docs lowercase the leading letter of every one of them. `$select` matches case-sensitively, so the docs spelling returns nothing.\n> - A setting that has never been set comes back explicitly `null` rather than being omitted, so an entry in `objectResult` is not evidence that the setting has a value.\n> - Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host.",
+    "description": "> **Verified against the live API**\n>\n> - Property names on the wire are PascalCase (`Id`, `PowerApps_AllowCodeApps`, `PowerApps_EnableGenerativePages`); the docs lowercase the leading letter of every one of them. `$select` matches case-sensitively, so the docs spelling returns nothing.\n> - A setting that has never been set comes back explicitly `null` rather than being omitted, so an entry in `objectResult` is not evidence that the setting has a value.\n> - Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host.\n\n> **From Microsoft's own client, not observed live**\n>\n> - The documented value is accepted here after all: Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) forces `api-version=2024-10-01` onto every request it makes, overwriting whatever the caller set, and it calls this operation. So `1` is what the admin centre happens to send, not what the service requires — read the recorded defaults throughout this spec as observations of one client, not as a contract.",
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/environmentmanagement/environment-management-settings/list-environment-management-settings"
     }
@@ -5706,9 +6088,33 @@
         }
        }
       }
+     },
+     "409": {
+      "description": "Another change to this environment's settings is in flight, so this one was not applied. Re-read the settings and reapply the change; `errors` carries the detail.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OperationResponse"
+        }
+       }
+      }
+     },
+     "412": {
+      "description": "A precondition failed — the settings moved on from the state the request was built against. Re-read and retry rather than forcing.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OperationResponse"
+        }
+       }
+      }
      }
     },
     "x-ms-namespace": "environmentmanagement/environment-management-settings",
+    "x-notes": [
+     "The write is optimistic. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) maps 409 and 412 to an error body on this operation, which the Learn reference does not document at all, so a caller that ignores them will silently lose an update."
+    ],
+    "description": "> **From Microsoft's own client, not observed live**\n>\n> - The write is optimistic. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) maps 409 and 412 to an error body on this operation, which the Learn reference does not document at all, so a caller that ignores them will silently lose an update.",
     "requestBody": {
      "required": true,
      "content": {
@@ -6261,6 +6667,66 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/environmentmanagement/operation/get-operation-by-id"
     }
+   }
+  },
+  "/environmentmanagement/provisioning/create": {
+   "post": {
+    "operationId": "environmentmanagement_createEnvironment",
+    "tags": [
+     "Environment"
+    ],
+    "summary": "Create (Alternate Route)",
+    "description": "Provisions a new environment. This is the same operation as `POST /environmentmanagement/provisioning/environments`, on a different path: the Learn reference documents only the `/environments` form, and Microsoft's own generated client calls only this one. Both take a create-environment body and return an asynchronous operation. Prefer the documented route unless you are matching pac's behaviour, and treat the pair as one resource when reasoning about permissions or quotas.\n\n> **From Microsoft's own client, not observed live**\n>\n> - Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference, which documents the `/provisioning/environments` route instead. The client returns OperationExecutionResult; the success status is taken from the documented route rather than observed.\n> - The client's CreateEnvironmentRequest carries no `macroRegion`, which the documented route's body does. Whether the field is genuinely rejected here or simply absent from the client's build has not been tested.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version. The pac CLI pins `2024-10-01` on every request to this API, overwriting any value a caller supplies."
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "The environment is being provisioned. Follow the returned operation to completion; the environment does not exist until it succeeds.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OperationExecutionResult"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "The request was rejected. `errorDetail.fieldErrors` names the offending fields, and a validation-only request that fails reports here rather than by executing.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ValidationResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "environmentmanagement/environment-provisioning",
+    "x-source": "pac-cli",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CreateEnvironmentRequest"
+       }
+      }
+     }
+    },
+    "x-notes": [
+     "Present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, shipped in pac CLI 2.11.2) but absent from the Learn reference, which documents the `/provisioning/environments` route instead. The client returns OperationExecutionResult; the success status is taken from the documented route rather than observed.",
+     "The client's CreateEnvironmentRequest carries no `macroRegion`, which the documented route's body does. Whether the field is genuinely rejected here or simply absent from the client's build has not been tested."
+    ]
    }
   },
   "/environmentmanagement/provisioning/environments": {
@@ -7561,7 +8027,7 @@
        "type": "string",
        "default": "2021-10-01-preview"
       },
-      "description": "The API version. The docs show `2024-10-01`; the admin centre sends `2021-10-01-preview` on every recorded call to this operation. Whether the documented value is also accepted here was not tested."
+      "description": "The API version. The docs show `2024-10-01`; the admin centre sends `2021-10-01-preview` on every recorded call to this operation. Both work: Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) forces `2024-10-01` onto every request and calls this route, so the recorded value is one client's habit rather than a requirement."
      },
      {
       "name": "includeRuleSetCounts",
@@ -7571,7 +8037,7 @@
        "type": "boolean",
        "default": false
       },
-      "description": "When true, each assignment also carries how many rule sets the assigned policy contains. Undocumented."
+      "description": "When true, each assignment also carries how many rule sets the assigned policy contains. Undocumented. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) declares it required on this route and on the three scoped variants; the recorded calls omit it and still succeed, so it is optional here."
      },
      {
       "name": "resourceType",
@@ -7613,10 +8079,11 @@
     },
     "x-ms-namespace": "governance/rule-based-policies",
     "x-notes": [
-     "A tenant with no assignments returns 200 and `{\"value\":[]}`."
+     "A tenant with no assignments returns 200 and `{\"value\":[]}`.",
+     "The client declares `includeRuleSetCounts` required on all four assignment-list routes. The recorded traffic omits it on this one without error, so it is documented as optional; the three scoped variants keep the documented required flag, which the client agrees with."
     ],
     "x-probe-verified": true,
-    "description": "> **Verified against the live API**\n>\n> - A tenant with no assignments returns 200 and `{\"value\":[]}`.",
+    "description": "> **Verified against the live API**\n>\n> - A tenant with no assignments returns 200 and `{\"value\":[]}`.\n\n> **From Microsoft's own client, not observed live**\n>\n> - The client declares `includeRuleSetCounts` required on all four assignment-list routes. The recorded traffic omits it on this one without error, so it is documented as optional; the three scoped variants keep the documented required flag, which the client agrees with.",
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/governance/rule-based-policies/list-rule-assignments"
     }
@@ -15184,9 +15651,23 @@
         }
        }
       }
+     },
+     "409": {
+      "description": "The firewall is already present or is mid-provisioning. Read the WAF status and act on what it reports rather than retrying blindly.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
      }
     },
     "x-ms-namespace": "powerpages/websites",
+    "x-notes": [
+     "409 is mapped by Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) but is not documented in the Learn reference."
+    ],
+    "description": "> **From Microsoft's own client, not observed live**\n>\n> - 409 is mapped by Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) but is not documented in the Learn reference.",
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/powerpages/websites/enable-waf"
     }
@@ -18352,9 +18833,205 @@
   },
   "schemas": {
    "ActionEvent": {
+    "description": "One entry in the trace of an AI flow run: the trigger that started it, a model reasoning step, a connector call beginning or ending, an approval exchange, or the final output. The `type` field selects which. Events carry `previousActionIds`, so the trace is a graph rather than a flat list.",
+    "oneOf": [
+     {
+      "$ref": "#/components/schemas/ActionSuggestionRequestEvent"
+     },
+     {
+      "$ref": "#/components/schemas/ActionValidationResponseEvent"
+     },
+     {
+      "$ref": "#/components/schemas/ConnectorActionEndEvent"
+     },
+     {
+      "$ref": "#/components/schemas/ConnectorActionStartEvent"
+     },
+     {
+      "$ref": "#/components/schemas/FlowOutputEvent"
+     },
+     {
+      "$ref": "#/components/schemas/ThoughtEvent"
+     },
+     {
+      "$ref": "#/components/schemas/TriggerEvent"
+     }
+    ],
+    "discriminator": {
+     "propertyName": "type",
+     "mapping": {
+      "ActionSuggestionRequest": "#/components/schemas/ActionSuggestionRequestEvent",
+      "ActionValidationResponse": "#/components/schemas/ActionValidationResponseEvent",
+      "ConnectorActionEnd": "#/components/schemas/ConnectorActionEndEvent",
+      "ConnectorActionStart": "#/components/schemas/ConnectorActionStartEvent",
+      "Output": "#/components/schemas/FlowOutputEvent",
+      "Thought": "#/components/schemas/ThoughtEvent",
+      "Trigger": "#/components/schemas/TriggerEvent"
+     }
+    },
+    "x-source": "pac-cli"
+   },
+   "ActionEventBase": {
     "type": "object",
-    "x-stub": true,
-    "description": "Referenced by the docs but not defined on any page."
+    "properties": {
+     "actionId": {
+      "type": "string",
+      "description": "Identifies this event within the run. Other events reference it through `previousActionIds`."
+     },
+     "previousActionIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "The events this one followed. More than one entry means several branches converged here, which is why the trace is a graph and not a list."
+     },
+     "time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the event was recorded."
+     },
+     "type": {
+      "$ref": "#/components/schemas/ActionEventType"
+     }
+    },
+    "description": "The fields every action event in a flow-run trace carries.",
+    "x-source": "pac-cli"
+   },
+   "ActionEventType": {
+    "type": "string",
+    "enum": [
+     "NotSpecified",
+     "Trigger",
+     "Thought",
+     "ConnectorActionStart",
+     "ConnectorActionEnd",
+     "ActionValidationResponse",
+     "ActionSuggestionRequest",
+     "Output"
+    ],
+    "description": "Which kind of action event this is. It is the discriminator for `ActionEvent`. `NotSpecified` is the unset default and should not appear on a real event.",
+    "x-source": "pac-cli"
+   },
+   "ActionOutputProperties": {
+    "type": "object",
+    "properties": {
+     "body": {
+      "$ref": "#/components/schemas/BodyProperties"
+     },
+     "headers": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "string"
+      },
+      "description": "The response headers the connector returned, verbatim."
+     },
+     "statusCode": {
+      "type": "integer",
+      "format": "int32",
+      "description": "The HTTP status the connector returned."
+     }
+    },
+    "description": "What a connector call returned: its HTTP status, headers and body.",
+    "x-source": "pac-cli"
+   },
+   "ActionProperties": {
+    "type": "object",
+    "properties": {
+     "api": {
+      "$ref": "#/components/schemas/ApiProperties"
+     },
+     "connection": {
+      "$ref": "#/components/schemas/ConnectionProperties"
+     },
+     "isA2aServerCall": {
+      "type": "boolean",
+      "description": "Whether the call went to an agent-to-agent server rather than a conventional connector operation."
+     },
+     "operation": {
+      "$ref": "#/components/schemas/OperationProperties"
+     },
+     "serverName": {
+      "type": "string",
+      "description": "The agent-to-agent server that served the call, when `isA2aServerCall` is true."
+     }
+    },
+    "description": "Identifies the connector operation an action invoked, and the connection it went through.",
+    "x-source": "pac-cli"
+   },
+   "ActionResponse": {
+    "type": "string",
+    "enum": [
+     "NotSpecified",
+     "Approved",
+     "Rejected",
+     "Pending"
+    ],
+    "description": "The outcome of an approval request. `Pending` means the run is still waiting on a human. `NotSpecified` is the unset default.",
+    "x-source": "pac-cli"
+   },
+   "ActionStatus": {
+    "type": "string",
+    "enum": [
+     "NotSpecified",
+     "Succeeded",
+     "Failed"
+    ],
+    "description": "How a connector call finished. `NotSpecified` is the unset default.",
+    "x-source": "pac-cli"
+   },
+   "ActionSuggestionRequestEvent": {
+    "description": "The flow proposing an action and pausing for approval before it runs.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ActionEventBase"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "properties": {
+        "$ref": "#/components/schemas/ActionSuggestionRequestProperties"
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
+   },
+   "ActionSuggestionRequestProperties": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "$ref": "#/components/schemas/ActionProperties"
+     }
+    },
+    "description": "The action that was proposed for approval.",
+    "x-source": "pac-cli"
+   },
+   "ActionValidationResponseEvent": {
+    "description": "The answer to an approval request, recorded as its own event so the trace shows both sides of the exchange.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ActionEventBase"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "properties": {
+        "$ref": "#/components/schemas/ActionValidationResponseProperties"
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
+   },
+   "ActionValidationResponseProperties": {
+    "type": "object",
+    "properties": {
+     "response": {
+      "$ref": "#/components/schemas/ActionResponse"
+     }
+    },
+    "description": "How the approval request was answered.",
+    "x-source": "pac-cli"
    },
    "AdvisorAction": {
     "description": "The allowed action.",
@@ -18423,6 +19100,78 @@
      }
     },
     "type": "object"
+   },
+   "AdvisorChatConversation": {
+    "type": "object",
+    "description": "One advisor conversation belonging to the calling user.",
+    "properties": {
+     "conversationId": {
+      "type": "string",
+      "description": "Pass this as `conversationId` to resume the thread."
+     },
+     "title": {
+      "type": "string",
+      "description": "A short label for the conversation, derived by the service from its content rather than set by the caller."
+     },
+     "timestamp": {
+      "type": "string",
+      "format": "date-time"
+     }
+    },
+    "x-source": "pac-cli"
+   },
+   "AdvisorChatConversationCollection": {
+    "type": "object",
+    "description": "A page of advisor conversations. No continuation token appears in the client, so the collection is returned whole.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/AdvisorChatConversation"
+      }
+     }
+    },
+    "x-source": "pac-cli"
+   },
+   "AdvisorChatMessage": {
+    "type": "object",
+    "description": "The advisor's reply to a question.",
+    "properties": {
+     "message": {
+      "type": "string",
+      "description": "The answer, as Markdown. pac renders it; `pac advisor ask --raw` prints it unrendered."
+     },
+     "role": {
+      "type": "string",
+      "description": "Who the message is from, following the usual chat-completion convention.",
+      "example": "assistant"
+     },
+     "executionTimeMs": {
+      "type": "integer",
+      "format": "int32",
+      "description": "How long the service spent generating the answer, in milliseconds. Useful for deciding a client timeout; pac allows five minutes."
+     },
+     "conversationId": {
+      "type": "string",
+      "description": "The conversation this answer belongs to. Send it back to continue the thread — on a new conversation this is the id the service just assigned."
+     }
+    },
+    "x-source": "pac-cli"
+   },
+   "AdvisorChatRequest": {
+    "type": "object",
+    "description": "A question put to the advisor, optionally within an existing conversation.",
+    "properties": {
+     "message": {
+      "type": "string",
+      "description": "The question, in natural language."
+     },
+     "conversationId": {
+      "type": "string",
+      "description": "The conversation to continue. Omit it to start a new one — the response then carries the id the service assigned."
+     }
+    },
+    "x-source": "pac-cli"
    },
    "AdvisorRecommendation": {
     "description": "Information for a recommendation.",
@@ -18742,6 +19491,20 @@
      }
     },
     "type": "object"
+   },
+   "ApiProperties": {
+    "type": "object",
+    "properties": {
+     "logicalName": {
+      "type": "string",
+      "description": "The connector's stable identifier, which is what to match on. `name` is for display and can change."
+     },
+     "name": {
+      "type": "string"
+     }
+    },
+    "description": "The connector an action called.",
+    "x-source": "pac-cli"
    },
    "AppDlpEvaluationRequest": {
     "type": "object",
@@ -19349,6 +20112,30 @@
      }
     }
    },
+   "Base64ThoughtImage": {
+    "type": "object",
+    "properties": {
+     "contentType": {
+      "type": "string"
+     },
+     "data": {
+      "type": "string"
+     },
+     "format": {
+      "$ref": "#/components/schemas/Base64ThoughtImage_format"
+     }
+    },
+    "description": "An image the model produced or looked at while reasoning, inlined as base64 rather than linked.",
+    "x-source": "pac-cli"
+   },
+   "Base64ThoughtImage_format": {
+    "type": "string",
+    "enum": [
+     "base64"
+    ],
+    "description": "How the image is encoded. Only base64 inlining is used.",
+    "x-source": "pac-cli"
+   },
    "BillingInstrumentModel": {
     "description": "The ISV billing instrument information.",
     "properties": {
@@ -19562,6 +20349,35 @@
      "Disabled"
     ],
     "type": "string"
+   },
+   "BodyProperties": {
+    "type": "object",
+    "properties": {
+     "category": {
+      "$ref": "#/components/schemas/ContentTypeCategory"
+     },
+     "contentLength": {
+      "type": "integer",
+      "format": "int64",
+      "description": "The size of the body in bytes, whether or not it was inlined."
+     },
+     "contentType": {
+      "type": "string"
+     },
+     "fileName": {
+      "type": "string",
+      "description": "The filename the body was transferred under, when it was a file."
+     },
+     "value": {
+      "description": "The body itself, inlined. Absent when the body was too large, in which case fetch `valueLink` instead. Interpret it according to `category`."
+     },
+     "valueLink": {
+      "type": "string",
+      "description": "Where to fetch the body when it was too large to inline."
+     }
+    },
+    "description": "A request or response body in a run trace. The body is inlined in `value` when it is small enough, and otherwise omitted in favour of `valueLink`, so a reader must handle either.",
+    "x-source": "pac-cli"
    },
    "BotQuarantineStatus": {
     "properties": {
@@ -19855,9 +20671,77 @@
     "type": "object"
    },
    "Clause": {
+    "description": "One step of a resource query. Clauses form an ordered pipeline evaluated in sequence, so each clause sees the rows the previous one produced. The `$type` field selects which clause this is.",
+    "oneOf": [
+     {
+      "$ref": "#/components/schemas/CountClause"
+     },
+     {
+      "$ref": "#/components/schemas/DistinctClause"
+     },
+     {
+      "$ref": "#/components/schemas/ExtendClause"
+     },
+     {
+      "$ref": "#/components/schemas/JoinClause"
+     },
+     {
+      "$ref": "#/components/schemas/OrderByClause"
+     },
+     {
+      "$ref": "#/components/schemas/ProjectClause"
+     },
+     {
+      "$ref": "#/components/schemas/SummarizeClause"
+     },
+     {
+      "$ref": "#/components/schemas/TakeClause"
+     },
+     {
+      "$ref": "#/components/schemas/WhereClause"
+     }
+    ],
+    "discriminator": {
+     "propertyName": "$type",
+     "mapping": {
+      "count": "#/components/schemas/CountClause",
+      "distinct": "#/components/schemas/DistinctClause",
+      "extend": "#/components/schemas/ExtendClause",
+      "join": "#/components/schemas/JoinClause",
+      "orderby": "#/components/schemas/OrderByClause",
+      "project": "#/components/schemas/ProjectClause",
+      "summarize": "#/components/schemas/SummarizeClause",
+      "take": "#/components/schemas/TakeClause",
+      "where": "#/components/schemas/WhereClause"
+     }
+    },
+    "x-source": "pac-cli"
+   },
+   "ClauseBaseClass": {
     "type": "object",
-    "x-stub": true,
-    "description": "Referenced by the docs but not defined on any page."
+    "properties": {
+     "$type": {
+      "$ref": "#/components/schemas/ClauseBaseClass_Type"
+     }
+    },
+    "description": "The fields every resource-query clause carries.",
+    "x-source": "pac-cli"
+   },
+   "ClauseBaseClass_Type": {
+    "type": "string",
+    "enum": [
+     "where",
+     "project",
+     "take",
+     "orderby",
+     "distinct",
+     "count",
+     "summarize",
+     "extend",
+     "join"
+    ],
+    "description": "Which kind of clause this is. It is the discriminator for `Clause`, and must agree with the rest of the object's shape.",
+    "x-source": "pac-cli"
    },
    "Connection": {
     "properties": {
@@ -19875,6 +20759,19 @@
      }
     },
     "type": "object"
+   },
+   "ConnectionProperties": {
+    "type": "object",
+    "properties": {
+     "connectionId": {
+      "type": "string"
+     },
+     "connectionReferenceLogicalName": {
+      "type": "string"
+     }
+    },
+    "description": "The connection an action authenticated with. `connectionReferenceLogicalName` is the solution-aware indirection; `connectionId` is what it resolved to.",
+    "x-source": "pac-cli"
    },
    "ConnectionReference": {
     "properties": {
@@ -19939,6 +20836,91 @@
     },
     "type": "object"
    },
+   "ConnectorActionEndEvent": {
+    "description": "A connector call completing, successfully or not.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ActionEventBase"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "properties": {
+        "$ref": "#/components/schemas/ConnectorActionEndProperties"
+       },
+       "synchronousOperationName": {
+        "type": "string"
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
+   },
+   "ConnectorActionEndProperties": {
+    "type": "object",
+    "properties": {
+     "errorCode": {
+      "type": "string",
+      "description": "The connector's own error code, present only on failure."
+     },
+     "isRetryable": {
+      "type": "boolean",
+      "description": "Whether the failure is transient. False means retrying the same call will fail the same way."
+     },
+     "outputs": {
+      "$ref": "#/components/schemas/ActionOutputProperties"
+     },
+     "responseMetadata": {
+      "$ref": "#/components/schemas/ResponseMetadataProperties"
+     },
+     "status": {
+      "$ref": "#/components/schemas/ActionStatus"
+     }
+    },
+    "description": "How a connector call ended: its status, its outputs, and — on failure — the error code and whether retrying could help.",
+    "x-source": "pac-cli"
+   },
+   "ConnectorActionStartEvent": {
+    "description": "A connector call beginning. Its matching end event carries the result.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ActionEventBase"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "properties": {
+        "$ref": "#/components/schemas/ConnectorActionStartProperties"
+       },
+       "runningActionType": {
+        "$ref": "#/components/schemas/RunningActionType"
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
+   },
+   "ConnectorActionStartProperties": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "$ref": "#/components/schemas/ActionProperties"
+     },
+     "inputs": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "The parameters passed to the connector operation. Its shape is whatever that operation defines, so it is not modelled here. Large payloads are omitted and delivered through inputsLink instead."
+     },
+     "inputsLink": {
+      "$ref": "#/components/schemas/LinkProperties"
+     },
+     "validation": {
+      "$ref": "#/components/schemas/ValidationProperties"
+     }
+    },
+    "description": "What a connector call was invoked with.",
+    "x-source": "pac-cli"
+   },
    "ConnectorConsentBypassResponse": {
     "description": "The admin connector consent bypass setting for a bot.",
     "properties": {
@@ -19980,6 +20962,17 @@
      }
     },
     "type": "object"
+   },
+   "ContentTypeCategory": {
+    "type": "string",
+    "enum": [
+     "NotSpecified",
+     "Text",
+     "Json",
+     "Other"
+    ],
+    "description": "How to interpret a body's `value`. `NotSpecified` is the unset default.",
+    "x-source": "pac-cli"
    },
    "ConversationTranscript": {
     "description": "A single conversation transcript record.",
@@ -20453,6 +21446,18 @@
     ],
     "type": "string"
    },
+   "CountClause": {
+    "description": "Replaces the rows with a single count of them. Nothing survives it but the count, so it belongs last in the pipeline.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ClauseBaseClass"
+     },
+     {
+      "type": "object"
+     }
+    ],
+    "x-source": "pac-cli"
+   },
    "CreateBackupRequest": {
     "description": "Request model for creating a backup.",
     "properties": {
@@ -20633,7 +21638,7 @@
     "type": "object"
    },
    "CreateEnvironmentRequestLinkedMetadata": {
-    "description": "Metadata for the linked Dataverse environment.",
+    "description": "Metadata for the linked Dataverse environment.\n\n> **Verified against the live API**\n>\n> - `baseLanguage` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).",
     "properties": {
      "baseLanguageCode": {
       "description": "The base language code (for example, 1033 for English).",
@@ -20666,9 +21671,18 @@
        "type": "string"
       },
       "type": "array"
+     },
+     "baseLanguage": {
+      "type": "integer",
+      "format": "int32",
+      "description": "The LCID of the Dataverse base language, for example 1033 for English. Fixed at creation and not changeable afterwards.",
+      "example": 1033
      }
     },
-    "type": "object"
+    "type": "object",
+    "x-notes": [
+     "`baseLanguage` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2)."
+    ]
    },
    "CreateEnvironmentRequestParentGroup": {
     "description": "Parent environment group.",
@@ -21057,6 +22071,26 @@
      }
     },
     "type": "object"
+   },
+   "DistinctClause": {
+    "description": "Collapses rows that agree on every field in `FieldList`, keeping one of each.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ClauseBaseClass"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "FieldList": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
    },
    "DocumentUri": {
     "description": "PowerApp appUri document URI object.",
@@ -21920,7 +22954,10 @@
     },
     "type": "object",
     "x-probe-verified": true,
-    "description": "One environment's management settings, one property per setting. Every property name is PascalCase on the wire — `Id`, `PowerApps_AllowCodeApps` — and `$select` matches it case-sensitively. The docs render each name with a lowercased leading letter; the names below are the wire spelling where recorded traffic established it. A setting that has never been set is returned as an explicit `null`."
+    "description": "One environment's management settings, one property per setting. Every property name is PascalCase on the wire — `Id`, `PowerApps_AllowCodeApps` — and `$select` matches it case-sensitively. The docs render each name with a lowercased leading letter; the names below are the wire spelling where recorded traffic established it. A setting that has never been set is returned as an explicit `null`.\n\n> **From Microsoft's own client, not observed live**\n>\n> - The casing split is not a documentation bug. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) independently spells these properties camelCase (`powerApps_AllowCodeApps`, `id`) exactly as the docs do, and Kiota preserves wire casing elsewhere in the same assembly — so Microsoft's internal OpenAPI really does declare them camelCase, and the running service really does return PascalCase. The wire spelling is the one kept here, because it is the one `$select` matches.",
+    "x-notes": [
+     "The casing split is not a documentation bug. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) independently spells these properties camelCase (`powerApps_AllowCodeApps`, `id`) exactly as the docs do, and Kiota preserves wire casing elsewhere in the same assembly — so Microsoft's internal OpenAPI really does declare them camelCase, and the running service really does return PascalCase. The wire spelling is the one kept here, because it is the one `$select` matches."
+    ]
    },
    "EnvironmentPagedCollection": {
     "properties": {
@@ -22176,8 +23213,9 @@
     "type": "object"
    },
    "EnvironmentSku": {
-    "description": "The environment SKU.",
+    "description": "The environment SKU. `NotSpecified` is the unset default and carries no meaning of its own; it is not a SKU you would ask for.\n\n> **From Microsoft's own client, not observed live**\n>\n> - `NotSpecified` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).",
     "enum": [
+     "NotSpecified",
      "Standard",
      "Premium",
      "Developer",
@@ -22191,7 +23229,11 @@
      "Teams",
      "Platform"
     ],
-    "type": "string"
+    "type": "string",
+    "x-source": "pac-cli",
+    "x-notes": [
+     "`NotSpecified` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2)."
+    ]
    },
    "EnvironmentTemplate": {
     "description": "Represents a template available for environment provisioning.",
@@ -22337,13 +23379,16 @@
     "type": "object"
    },
    "ErrorResponse": {
-    "description": "The error response object.",
+    "description": "The error response object.\n\n> **Verified against the live API**\n>\n> - The Learn reference models this as an envelope, `{error: {code, message}}`. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) models the same type flat, as `{code, message, details}` with `details` an array of `{code, message, target, value}`. Neither has been checked against the wire on the Power Automate operations that return it, so the documented envelope is kept and the client's flat shape is recorded here.",
     "properties": {
      "error": {
       "$ref": "#/components/schemas/Error_powerautomate"
      }
     },
-    "type": "object"
+    "type": "object",
+    "x-notes": [
+     "The Learn reference models this as an envelope, `{error: {code, message}}`. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) models the same type flat, as `{code, message, details}` with `details` an array of `{code, message, target, value}`. Neither has been checked against the wire on the Power Automate operations that return it, so the documented envelope is kept and the client's flat shape is recorded here."
+    ]
    },
    "Error_powerautomate": {
     "properties": {
@@ -22411,6 +23456,27 @@
      "Unknown"
     ],
     "type": "string"
+   },
+   "ExtendClause": {
+    "description": "Adds a computed column named `FieldName` whose value is `Expression`, evaluated per row.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ClauseBaseClass"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "Expression": {
+        "type": "string",
+        "description": "The expression evaluated per row to produce the new column."
+       },
+       "FieldName": {
+        "type": "string"
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
    },
    "ExternalCurrencyType": {
     "description": "Available currency type which can be allocated to environment.",
@@ -22774,6 +23840,36 @@
     },
     "type": "object"
    },
+   "FlowOutputEvent": {
+    "description": "The flow run finishing, carrying its final status and output.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ActionEventBase"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "properties": {
+        "$ref": "#/components/schemas/FlowOutputProperties"
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
+   },
+   "FlowOutputProperties": {
+    "type": "object",
+    "properties": {
+     "body": {
+      "$ref": "#/components/schemas/BodyProperties"
+     },
+     "status": {
+      "$ref": "#/components/schemas/RunStatus"
+     }
+    },
+    "description": "What the run produced and how it ended.",
+    "x-source": "pac-cli"
+   },
    "ForceFailoverRequest": {
     "description": "Request model for force failover operation on an environment.",
     "properties": {
@@ -23105,7 +24201,7 @@
     "type": "object"
    },
    "IpAddressEntity": {
-    "description": "Represents an IP address entry in the allow list.",
+    "description": "One entry in a Power Pages website's IP allow list, with the audit fields the service maintains for it.\n\n> **From Microsoft's own client, not observed live**\n>\n> - CreatedOn, LastModifiedOn and TenantId are absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).\n> - The two sources disagree on one field name: the Learn reference calls the address kind `IpAddressType`, the client calls it `IpType`. Neither has been checked against the wire, so `IpAddressType` is kept and `IpType` is recorded here rather than added as a second property.",
     "properties": {
      "IpAddress": {
       "description": "The IP address or CIDR range (e.g., \"208.130.0.0/16\")",
@@ -23118,9 +24214,30 @@
        }
       ],
       "description": "The type of the IP address."
+     },
+     "CreatedOn": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the entry was added to the allow list."
+     },
+     "LastModifiedOn": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the entry was last changed."
+     },
+     "TenantId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The tenant the entry belongs to.",
+      "example": "00000000-0000-0000-0000-000000000000"
      }
     },
-    "type": "object"
+    "type": "object",
+    "x-source": "pac-cli",
+    "x-notes": [
+     "CreatedOn, LastModifiedOn and TenantId are absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).",
+     "The two sources disagree on one field name: the Learn reference calls the address kind `IpAddressType`, the client calls it `IpType`. Neither has been checked against the wire, so `IpAddressType` is kept and `IpType` is recorded here rather than added as a second property."
+    ]
    },
    "IpAddressType": {
     "description": "The type of the IP address.",
@@ -23302,6 +24419,35 @@
      }
     },
     "type": "object"
+   },
+   "JoinClause": {
+    "description": "Joins the current rows against a sub-query on a single column pair.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ClauseBaseClass"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "JoinKind": {
+        "type": "string",
+        "description": "Which rows survive the join, for example `inner` or `leftouter`. The set of kinds the service accepts is not enumerated by any source available here."
+       },
+       "LeftColumnName": {
+        "type": "string",
+        "description": "The join column on the rows already in the pipeline."
+       },
+       "RightColumnName": {
+        "type": "string",
+        "description": "The join column on `RightTable`."
+       },
+       "RightTable": {
+        "$ref": "#/components/schemas/SubQuery"
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
    },
    "LastModifiedBy": {
     "description": "PowerApp last modified by object.",
@@ -23488,6 +24634,22 @@
      }
     },
     "type": "object"
+   },
+   "LinkProperties": {
+    "type": "object",
+    "properties": {
+     "contentSize": {
+      "type": "integer",
+      "format": "int64",
+      "description": "The size in bytes of the content behind `uri`, so a caller can decide whether to fetch it."
+     },
+     "uri": {
+      "type": "string",
+      "description": "Where to fetch the content."
+     }
+    },
+    "description": "A pointer to content too large to inline, with the size the caller should expect before fetching it.",
+    "x-source": "pac-cli"
    },
    "ListConnectionsResponse": {
     "properties": {
@@ -24069,6 +25231,21 @@
     },
     "type": "object"
    },
+   "ModifyEnvironmentSkuRequest": {
+    "type": "object",
+    "description": "The body of an environment SKU change request.",
+    "properties": {
+     "environmentSku": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/EnvironmentSku"
+       }
+      ],
+      "description": "The SKU to move the environment to."
+     }
+    },
+    "x-source": "pac-cli"
+   },
    "NeptuneOperationResult": {
     "description": "The result of a Neptune operation.",
     "properties": {
@@ -24357,6 +25534,19 @@
     },
     "type": "object"
    },
+   "OperationProperties": {
+    "type": "object",
+    "properties": {
+     "displayName": {
+      "type": "string"
+     },
+     "operationId": {
+      "type": "string"
+     }
+    },
+    "description": "The specific operation invoked on a connector.",
+    "x-source": "pac-cli"
+   },
    "OperationResponse": {
     "description": "Represents the response object for APIs in this service.",
     "properties": {
@@ -24395,6 +25585,31 @@
      "ValidationPassed"
     ],
     "type": "string"
+   },
+   "OrderByClause": {
+    "description": "Sorts the rows. `FieldNamesAscDesc` maps each field to its direction, and the key order is the sort precedence.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ClauseBaseClass"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "FieldNamesAscDesc": {
+        "type": "object",
+        "additionalProperties": {
+         "type": "string",
+         "enum": [
+          "asc",
+          "desc"
+         ]
+        },
+        "description": "Sort direction per field, keyed by field name. Ordering of the keys is the ordering of the sort."
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
    },
    "OverageStatus": {
     "description": "The overage status of an entitled capacity.",
@@ -25222,6 +26437,26 @@
     ],
     "type": "string"
    },
+   "ProjectClause": {
+    "description": "Narrows each row to the fields in `FieldList`, dropping the rest.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ClauseBaseClass"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "FieldList": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
+   },
    "Properties": {
     "description": "PowerApp properties object.",
     "properties": {
@@ -25437,12 +26672,17 @@
     "type": "object"
    },
    "ProtectionLevel": {
-    "description": "The environment governance protection level.",
+    "description": "The environment governance protection level. `NotSpecified` is the unset default rather than a level in its own right.\n\n> **From Microsoft's own client, not observed live**\n>\n> - `NotSpecified` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).",
     "enum": [
+     "NotSpecified",
      "Basic",
      "Standard"
     ],
-    "type": "string"
+    "type": "string",
+    "x-source": "pac-cli",
+    "x-notes": [
+     "`NotSpecified` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2)."
+    ]
    },
    "ProvisioningLocations": {
     "description": "Response envelope for the list-provisioning-locations endpoint. Surfaces the list of locations at the top level alongside tenant-scoped provisioning metadata.",
@@ -25848,6 +27088,16 @@
     },
     "type": "object"
    },
+   "ResponseMetadataProperties": {
+    "type": "object",
+    "properties": {
+     "sensitivityLabel": {
+      "$ref": "#/components/schemas/SensitivityLabelProperties"
+     }
+    },
+    "description": "Metadata the platform attached to a connector response, as opposed to anything the connector itself returned.",
+    "x-source": "pac-cli"
+   },
    "RestoreRequest": {
     "description": "Request model for restoring an environment to a previous backup.",
     "properties": {
@@ -25959,7 +27209,7 @@
     "x-notes": [
      "The docs define one Value model reused for both the role-definition list and the role-assignment list. Verified live, role-assignment items are different and richer (roleAssignmentId, scope, principal fields, createdBy fields, createdOn, expiresOn); this shape reflects the role-definition list, not assignments."
     ],
-    "description": "Note (verified against the live API): The docs define one Value model reused for both the role-definition list and the role-assignment list. Verified live, role-assignment items are different and richer (roleAssignmentId, scope, principal fields, createdBy fields, createdOn, expiresOn); this shape reflects the role-definition list, not assignments."
+    "description": "> **Verified against the live API**\n>\n> - The docs define one Value model reused for both the role-definition list and the role-assignment list. Verified live, role-assignment items are different and richer (roleAssignmentId, scope, principal fields, createdBy fields, createdOn, expiresOn); this shape reflects the role-definition list, not assignments."
    },
    "RoleDefinitionResponse": {
     "description": "The available role definitions for assignment.",
@@ -26298,6 +27548,20 @@
     },
     "type": "object"
    },
+   "RunStatus": {
+    "type": "string",
+    "enum": [
+     "NotSpecified",
+     "Running",
+     "Succeeded",
+     "Failed",
+     "Canceled",
+     "Waiting",
+     "FailedWithRetry"
+    ],
+    "description": "The state of a flow run. `Waiting` means it is paused on an external event such as an approval; `FailedWithRetry` means it failed but a retry is scheduled. `NotSpecified` is the unset default.",
+    "x-source": "pac-cli"
+   },
    "RunStatusResponse": {
     "description": "The response payload from triggering an evaluation run request.",
     "properties": {
@@ -26368,6 +27632,16 @@
     },
     "type": "object"
    },
+   "RunningActionType": {
+    "type": "string",
+    "enum": [
+     "NotSpecified",
+     "Synchronous",
+     "Webhook"
+    ],
+    "description": "How a connector operation is executed: `Synchronous` returns inline, `Webhook` returns immediately and calls back on completion. `NotSpecified` is the unset default.",
+    "x-source": "pac-cli"
+   },
    "ScopeModel": {
     "properties": {
      "environmentGroupId": {
@@ -26390,6 +27664,35 @@
      }
     },
     "type": "object"
+   },
+   "SensitivityLabelProperties": {
+    "type": "object",
+    "properties": {
+     "color": {
+      "type": "string",
+      "description": "The label's display colour as configured in Purview."
+     },
+     "displayName": {
+      "type": "string"
+     },
+     "isEncrypted": {
+      "type": "boolean",
+      "description": "Whether the label applies encryption and usage rights, as opposed to only marking the content."
+     },
+     "priority": {
+      "type": "integer",
+      "format": "int32",
+      "description": "The label's rank in the tenant's ordering, from least to most restrictive."
+     },
+     "sensitivityLabelId": {
+      "type": "string"
+     },
+     "tooltip": {
+      "type": "string"
+     }
+    },
+    "description": "The Microsoft Purview sensitivity label carried by a connector response. `priority` orders labels from least to most restrictive, and `isEncrypted` says whether the label applies protection rather than only marking. See https://learn.microsoft.com/en-us/purview/sensitivity-labels.",
+    "x-source": "pac-cli"
    },
    "ServicePlan": {
     "type": "object",
@@ -26726,6 +28029,17 @@
     },
     "type": "object"
    },
+   "StateChangeRequest": {
+    "type": "object",
+    "description": "The body of an environment enable or disable request.",
+    "properties": {
+     "reason": {
+      "type": "string",
+      "description": "Why the state is being changed. Recorded against the environment, so write it for whoever reads the history later."
+     }
+    },
+    "x-source": "pac-cli"
+   },
    "StateCode": {
     "description": "The state of an evaluation run describing the currently active stage.",
     "enum": [
@@ -26785,6 +28099,70 @@
     },
     "type": "object"
    },
+   "SubQuery": {
+    "type": "object",
+    "properties": {
+     "Clauses": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Clause"
+      }
+     },
+     "TableName": {
+      "type": "string",
+      "description": "The table the sub-query reads from."
+     }
+    },
+    "description": "A nested query — the same table-plus-clauses shape as the top-level request — used as the right-hand side of a join.",
+    "x-source": "pac-cli"
+   },
+   "SummarizeClause": {
+    "description": "Aggregates rows into groups.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ClauseBaseClass"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "SummarizeClauseExpression": {
+        "$ref": "#/components/schemas/SummarizeClause_SummarizeClauseExpression"
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
+   },
+   "SummarizeClause_SummarizeClauseExpression": {
+    "type": "object",
+    "properties": {
+     "FieldList": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "The fields to group by. An empty list aggregates every row into one group."
+     },
+     "OperatorFieldName": {
+      "type": "string",
+      "description": "The field the operator reads. Ignored by `count`."
+     },
+     "OperatorName": {
+      "$ref": "#/components/schemas/SummarizeClause_SummarizeClauseExpression_OperatorName"
+     }
+    },
+    "description": "The aggregation a summarize clause performs: which fields to group by, which operator to apply, and which field it applies to.",
+    "x-source": "pac-cli"
+   },
+   "SummarizeClause_SummarizeClauseExpression_OperatorName": {
+    "type": "string",
+    "enum": [
+     "count",
+     "argmax"
+    ],
+    "description": "The aggregation to apply. `count` tallies the rows in each group; `argmax` returns the row holding the maximum of `OperatorFieldName`.",
+    "x-source": "pac-cli"
+   },
    "Tags": {
     "description": "tags",
     "properties": {
@@ -26827,6 +28205,25 @@
      }
     },
     "type": "object"
+   },
+   "TakeClause": {
+    "description": "Limits the result to the first `TakeCount` rows. Apply an order-by first if which rows you get matters.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ClauseBaseClass"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "TakeCount": {
+        "type": "integer",
+        "format": "int32",
+        "description": "The maximum number of rows to keep."
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
    },
    "TemplateAvailability": {
     "description": "Availability of a template for a specific environment SKU.",
@@ -27501,6 +28898,41 @@
     },
     "type": "object"
    },
+   "ThoughtEvent": {
+    "description": "A model reasoning step recorded between actions.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ActionEventBase"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "properties": {
+        "$ref": "#/components/schemas/ThoughtProperties"
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
+   },
+   "ThoughtProperties": {
+    "type": "object",
+    "properties": {
+     "images": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Base64ThoughtImage"
+      },
+      "description": "Images produced or examined during the step."
+     },
+     "text": {
+      "type": "string",
+      "description": "The reasoning text."
+     }
+    },
+    "description": "The content of a reasoning step.",
+    "x-source": "pac-cli"
+   },
    "ToggleAFDTrafficRoutingResponse": {
     "properties": {
      "message": {
@@ -27539,6 +28971,38 @@
      }
     },
     "type": "object"
+   },
+   "TriggerEvent": {
+    "description": "The event that started the run.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ActionEventBase"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "properties": {
+        "$ref": "#/components/schemas/TriggerProperties"
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
+   },
+   "TriggerProperties": {
+    "type": "object",
+    "properties": {
+     "inputs": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "The trigger payload. Its shape is whatever the trigger's connector defines, so it is not modelled here. Large payloads are omitted and delivered through inputsLink instead."
+     },
+     "inputsLink": {
+      "$ref": "#/components/schemas/LinkProperties"
+     }
+    },
+    "description": "What the trigger fired with.",
+    "x-source": "pac-cli"
    },
    "UpdateFinOpsAdminSettingsRequestBody": {
     "description": "Request body for updating Finance and Operations Maintenance.",
@@ -27759,6 +29223,17 @@
     },
     "type": "object"
    },
+   "ValidationProperties": {
+    "type": "object",
+    "properties": {
+     "requiresInlineApproval": {
+      "type": "boolean",
+      "description": "Whether the run must pause for a person to approve this action before it executes."
+     }
+    },
+    "description": "Whether an action must be approved by a person before it runs.",
+    "x-source": "pac-cli"
+   },
    "ValidationResponse": {
     "description": "Represents the response for validation of an operation.",
     "properties": {
@@ -27861,9 +29336,17 @@
     "type": "object"
    },
    "WebApplicationFirewallStatus": {
-    "type": "object",
-    "x-stub": true,
-    "description": "Referenced by the docs but not defined on any page."
+    "type": "string",
+    "description": "How far a Power Pages website's web application firewall has got in being provisioned. `None` means no firewall; `Created` is the only state in which it is actually filtering. The two failure states are terminal — retry the enable or disable rather than waiting.",
+    "enum": [
+     "None",
+     "Creating",
+     "Deleting",
+     "Created",
+     "CreationFailed",
+     "DeletionFailed"
+    ],
+    "x-source": "pac-cli"
    },
    "WebsiteDto": {
     "properties": {
@@ -28008,6 +29491,34 @@
      }
     },
     "type": "object"
+   },
+   "WhereClause": {
+    "description": "Filters rows by comparing `FieldName` against `Values` with `Operator`.",
+    "allOf": [
+     {
+      "$ref": "#/components/schemas/ClauseBaseClass"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "FieldName": {
+        "type": "string"
+       },
+       "Operator": {
+        "type": "string",
+        "description": "The comparison to apply, for example `eq`, `ne`, `contains` or `in`. The set of operators the service accepts is not enumerated by any source available here."
+       },
+       "Values": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "description": "The values to compare against. A single-element list is an equality test; several elements make it a set membership test."
+       }
+      }
+     }
+    ],
+    "x-source": "pac-cli"
    }
   }
  }

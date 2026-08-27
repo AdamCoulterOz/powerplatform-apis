@@ -1,31 +1,35 @@
 name: pages
 
-# Publishes the site: the Blazor API browser at the root, with the spec files
-# and the documentation mirrors it reads served alongside it.
+# Publishes the corpus: the specs, the catalogue, the deep-link index and the
+# documentation mirrors, plus a redirect at the root that sends a reader to the
+# OpenAPI browser with this catalogue selected.
 #
-# The build output is not committed. Pages is deployed from this workflow's
-# artifact instead, so the repository holds source and specs only.
+# The browser itself is no longer built here. It lives in AdamCoulterOz/oas-browser
+# and is deployed from that repository, so this workflow no longer needs .NET, the
+# keel package feed, or an asset-fingerprinting step. What it must keep doing is
+# serving every file the browser fetches cross-origin -- specs.json, index.json and
+# each spec -- with the CORS header GitHub Pages sets by default. If that ever
+# stops, the browser fails to load this corpus and does so silently.
 
 on:
   push:
     branches: [main]
     paths:
-      - 'app/**'
+      - 'index.html'
       - 'specs.json'
+      - 'index.json'
       - '*/oas/**'
       - '*/docs/**'
       - '*/catalogue/**'
-      - 'nuget.config'
+      - '*/README.md'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
-  packages: read      # Keel is a private package; this repository is granted access to it
   pages: write
   id-token: write
 
-# Never cancel a half-finished deploy, but no point queueing several.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -36,33 +40,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '11.0.x'
-          dotnet-quality: preview
-
-      - name: Authenticate the keel feed
-        run: >
-          dotnet nuget update source keel
-          --username AdamCoulterOz
-          --password "${{ secrets.GITHUB_TOKEN }}"
-          --store-password-in-clear-text
-
-      - name: Publish the browser
-        run: dotnet publish app/Browser -c Release -o app/dist
-
-      - name: Point the loader at the fingerprinted runtime
-        run: python3 app/fingerprint-importmap.py app/dist/wwwroot
-
       - name: Assemble the site
-        # The browser is the site root. Everything it fetches at runtime, and
-        # the markdown mirrors that are worth keeping addressable, are copied
-        # in beside it.
         run: |
           set -e
           mkdir -p _site
-          cp -R app/dist/wwwroot/. _site/
-          cp specs.json _site/
+          cp index.html specs.json _site/
           [ -f index.json ] && cp index.json _site/
           for api in $(python3 -c "
           import json
@@ -71,26 +53,21 @@ jobs:
           print(' '.join(e['url'].split('/')[0] for e in entries))"); do
             [ -d "$api" ] || { echo "specs.json names $api, which is not in the repository"; exit 1; }
             mkdir -p "_site/$api"
-            for part in oas docs catalogue README.md; do
+            for part in oas docs catalogue evidence README.md; do
               [ -e "$api/$part" ] && cp -R "$api/$part" "_site/$api/"
             done
           done
           touch _site/.nojekyll
 
-      - name: Check the site can boot and resolve its specs
-        # A publish can succeed and still produce a site that cannot start, and
-        # a spec named in specs.json but missing from the artifact would only
-        # show up as an empty picker in the browser.
+      - name: Check the site serves what the browser will ask for
+        # The browser fetches this corpus from another origin, so a spec named in
+        # specs.json but missing from the artifact shows up as an empty picker
+        # over there rather than as a failure here.
         run: |
           set -e
-          for f in _site/index.html _site/specs.json \
-                   _site/_framework/blazor.webassembly.js; do
+          for f in _site/index.html _site/specs.json; do
             [ -f "$f" ] || { echo "missing: $f"; exit 1; }
           done
-          # Assemblies carry a content hash, so check by pattern rather than by
-          # a fixed name.
-          ls _site/_framework/ | grep -q '^Keel\..*\.wasm$' \
-            || { echo 'Keel assembly missing'; exit 1; }
           python3 - <<'PY'
           import json, pathlib, sys
           raw = json.load(open('specs.json'))
@@ -100,18 +77,15 @@ jobs:
           if isinstance(raw, dict) and raw.get('index') and not pathlib.Path('_site', raw['index']).is_file():
               missing.append(raw['index'])
           if missing:
-              sys.exit('specs listed but not deployed: ' + ', '.join(missing))
-          print('all specs present')
+              sys.exit('listed but not deployed: ' + ', '.join(missing))
+          print(f'all {len(entries)} specs and the index are present')
           PY
-          grep -q 'base href="/powerplatform-apis/"' _site/index.html \
-            || { echo 'base href is not the site root'; exit 1; }
-          # Assets are fingerprinted so a deploy cannot serve a returning
-          # visitor a stale assembly. That only works if the loader is actually
-          # pointed at this build's runtime, so check the mapping resolves.
-          runtime=$(grep -oE '_framework/dotnet\.[a-z0-9]+\.js' _site/index.html | tail -1)
-          [ -n "$runtime" ] || { echo 'index.html does not map the fingerprinted runtime'; exit 1; }
-          [ -f "_site/$runtime" ] || { echo "index.html points at $runtime, which is not deployed"; exit 1; }
-          echo "loader mapped to $runtime"
+          # The redirect is the only thing a reader arriving at the root will see,
+          # so a redirect that does not name the browser is a dead landing page.
+          grep -q 'oas-browser' _site/index.html \
+            || { echo 'index.html does not point at the browser'; exit 1; }
+          grep -q 'location.hash' _site/index.html \
+            || { echo 'index.html drops the fragment, so deep links would not survive'; exit 1; }
           echo "site assembled: $(du -sh _site | cut -f1)"
 
       - uses: actions/upload-pages-artifact@v3

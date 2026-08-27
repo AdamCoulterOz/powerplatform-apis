@@ -43,7 +43,7 @@ headings.
 An earlier revision also folded each note into the owning `description` as a
 `> **Heading**` blockquote, because the site was then Stoplight Elements, which
 renders `description` and ignores extensions. The site is now the Blazor browser
-in [app/](../app), which reads `x-notes` directly and renders it as its own
+in the [OpenAPI browser](https://github.com/AdamCoulterOz/oas-browser), which reads `x-notes` directly and renders it as its own
 element, so the duplication is gone.
 
 ## Hosts

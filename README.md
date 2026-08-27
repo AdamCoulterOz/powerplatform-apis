@@ -4,18 +4,24 @@ Browsable, machine-readable references for the family of APIs behind Microsoft P
 
 ## Layout
 
-One folder per API. Each folder is self-contained: its own extraction scripts, its source material where relevant, and a generated `oas/openapi.json` in the same shape, so the browser at the repo root can render any of them.
+One folder per API. Each folder is self-contained: its own extraction scripts, its source material where relevant, and a generated `oas/openapi.json` in the same shape, so any OpenAPI reader can render it.
 
 ```
 powerplatform-apis/
-  app/                     the spec browser, a Blazor WebAssembly app; it is the site itself
+  index.html               redirect to the browser, with this catalogue selected
   specs.json               the APIs the browser offers, each pointing at its own oas/openapi.json
   ppapi/                   Power Platform API — reverse-engineered from Microsoft Learn's OpenAPI-generated docs
   bapi/                    Business Application Platform API — reverse-engineered from the Terraform provider's code
   .github/workflows/       per-API refresh jobs (e.g. ppapi-mirror runs daily)
 ```
 
-The site is published by the `pages` workflow, which builds the browser and assembles it with the specs and mirrors beside it; the build output is not committed. The browser loads each spec from its folder over the same origin, so a spec change is live as soon as the workflow runs. To surface a new API, add an entry to `specs.json` pointing at its `oas/openapi.json`: the deploy checks that every spec named there is actually present, and fails rather than shipping a picker with a dead entry.
+The site is published by the `pages` workflow, which serves the specs, the catalogue, the deep-link index and the documentation mirrors, plus a redirect at the root.
+
+**The viewer lives elsewhere.** It is a general OpenAPI browser at [AdamCoulterOz/oas-browser](https://github.com/AdamCoulterOz/oas-browser), which knows nothing about Power Platform and loads this corpus by URL. The root redirect sends a reader there with this catalogue selected, preserving any fragment so an existing deep link survives the hop. The specs themselves stay addressable here and are readable without the viewer at all.
+
+That the browser fetches this corpus from another origin makes one header load-bearing: GitHub Pages serves `access-control-allow-origin: *`, and if that ever stops the browser fails to load this corpus silently rather than loudly.
+
+To surface a new API, add an entry to `specs.json` pointing at its `oas/openapi.json`: the deploy checks that every spec named there is actually present, and fails rather than shipping a picker with a dead entry.
 
 ## APIs
 

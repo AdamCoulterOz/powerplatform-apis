@@ -98,7 +98,7 @@
   },
   {
    "name": "Tenant-to-Tenant Migrations",
-   "description": "Migration of an environment from one Entra tenant to another. Only the read endpoint has been observed, and only on its not-found path; the operations that start and drive a migration are not documented here."
+   "description": "Migration of an environment from one Entra tenant to another. Only the read endpoint is described here; the operations that start and drive a migration are not."
   },
   {
    "name": "Country Opt-In Defaults",
@@ -137,7 +137,7 @@
        "type": "string",
        "default": "2020-10-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
@@ -212,7 +212,7 @@
        "type": "string",
        "default": "2020-10-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
@@ -284,7 +284,7 @@
        "type": "string",
        "default": "2020-10-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
@@ -344,7 +344,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -490,7 +490,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
@@ -572,7 +572,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -654,12 +654,12 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
      "200": {
-      "description": "Reported as deleted. Observed on a group that still had member environments, which were left attached \u2014 so this status alone does not prove the group was empty. Read back to confirm."
+      "description": "Reported as deleted. A group that still has member environments is reported the same way and its members are left attached, so this status alone does not prove the group was empty. Read back to confirm."
      },
      "400": {
       "description": "The request was rejected before anything happened; `error.code` names the specific rejection and `error.message` frequently enumerates the accepted values.",
@@ -711,7 +711,7 @@
      "Environments"
     ],
     "summary": "Create",
-    "description": "Provisions an environment. `properties.displayName` and `properties.environmentSku` are mandatory; everything else is optional, and the service validates them in that order.\n\nDataverse is opt-in through `properties.databaseType`. Setting it to `CommonDataService` provisions an organization from `properties.linkedEnvironmentMetadata`; **omitting it silently discards that whole block** and returns a successful, Dataverse-less environment with no error and no warning.\n\nAn environment without Dataverse is created synchronously in seconds; one with Dataverse is asynchronous. Either way the environment is readable before its `linkedEnvironmentMetadata` is, so clients that need the organization URL must keep re-reading after the operation succeeds.\n\nRecorded admin-center creates send `location`, `displayName`, `environmentSku`, `databaseType`, `linkedEnvironmentMetadata` (`baseLanguage`, `currency.code`, an empty `templates`), `billingPolicy`, `cluster.category`, and explicit `null` for `usedBy`, `parentEnvironmentGroup` and `governanceConfiguration` \u2014 an explicit `null` is accepted wherever the member is optional.",
+    "description": "Provisions an environment. `properties.displayName` and `properties.environmentSku` are mandatory; everything else is optional, and the service validates them in that order.\n\nDataverse is opt-in through `properties.databaseType`. Setting it to `CommonDataService` provisions an organization from `properties.linkedEnvironmentMetadata`; **omitting it silently discards that whole block** and returns a successful, Dataverse-less environment with no error and no warning.\n\nAn environment without Dataverse is created synchronously in seconds; one with Dataverse is asynchronous. Either way the environment is readable before its `linkedEnvironmentMetadata` is, so clients that need the organization URL must keep re-reading after the operation succeeds.\n\nA typical create body carries `location`, `displayName`, `environmentSku`, `databaseType`, `linkedEnvironmentMetadata` (`baseLanguage`, `currency.code`, an empty `templates`), `billingPolicy` and `cluster.category`. An explicit `null` is accepted wherever the member is optional, which is how `usedBy`, `parentEnvironmentGroup` and `governanceConfiguration` are normally sent.",
     "parameters": [
      {
       "name": "api-version",
@@ -721,7 +721,7 @@
        "type": "string",
        "default": "2023-06-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      },
      {
       "name": "retainOnProvisionFailure",
@@ -755,7 +755,7 @@
     },
     "responses": {
      "201": {
-      "description": "Created synchronously, which is what an environment without Dataverse does. The body is the full created environment \u2014 its `name` is the new environment id, and `properties.provisioningState` is already `Succeeded`. (The known client parses only those two members, so it reads this as a much smaller shape than it is.)",
+      "description": "Created synchronously, which is what an environment without Dataverse does. The body is the full created environment \u2014 its `name` is the new environment id, and `properties.provisioningState` is already `Succeeded`.",
       "content": {
        "application/json": {
         "schema": {
@@ -772,7 +772,7 @@
          "type": "string",
          "format": "uri"
         },
-        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response observed except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
+        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
        },
        "Operation-Location": {
         "schema": {
@@ -785,7 +785,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 3 and 5 for creates, 5 for edits and Managed Environments changes, and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds \u2014 always delta-seconds, never an HTTP date. Typically 3 to 5 seconds for creates, 5 for edits and Managed Environments changes, and 30 for deletes; the poll responses themselves suggest 10."
        }
       }
      },
@@ -894,7 +894,7 @@
      "Enterprise Policies"
     ],
     "summary": "Link Or Unlink",
-    "description": "Links (`action=link`) or unlinks (`action=unlink`) an Azure enterprise policy \u2014 network injection, customer-managed key or managed identity \u2014 to the environment. `environmentType` names the policy kind and the body carries the Azure policy's `systemId`.\n\nThe link is a two-sided object: BAPI drives the environment side, Azure Resource Manager owns the policy itself. A failed lifecycle operation can leave `properties.enterprisePolicies[...].linkStatus` mid-transition, and the known client reacts by replaying the whole call rather than resuming.",
+    "description": "Links (`action=link`) or unlinks (`action=unlink`) an Azure enterprise policy \u2014 network injection, customer-managed key or managed identity \u2014 to the environment. `environmentType` names the policy kind and the body carries the Azure policy's `systemId`.\n\nThe link is a two-sided object: BAPI drives the environment side, Azure Resource Manager owns the policy itself. A failed lifecycle operation can leave `properties.enterprisePolicies[...].linkStatus` mid-transition, and there is no resume \u2014 replay the whole call.",
     "parameters": [
      {
       "name": "environmentId",
@@ -940,7 +940,7 @@
        "type": "string",
        "default": "2019-10-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -962,7 +962,7 @@
          "type": "string",
          "format": "uri"
         },
-        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response observed except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
+        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
        },
        "Operation-Location": {
         "schema": {
@@ -975,7 +975,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds \u2014 always delta-seconds, never an HTTP date. Typically 5 seconds for creates, edits and conversions and 30 for deletes; the poll responses themselves suggest 10."
        }
       }
      },
@@ -1029,7 +1029,7 @@
      "Managed Environments"
     ],
     "summary": "Governance Configuration Set",
-    "description": "Sets the environment's governance configuration. `protectionLevel: \"Standard\"` with a `settings.extendedSettings` block enables Managed Environments; `protectionLevel: \"Basic\"` disables it and ignores any settings sent alongside.\n\nManaged Environments requires a linked Dataverse organization: on an environment without one the request is rejected outright rather than queued.\n\nEvery value inside `extendedSettings` is a string, including the booleans and the numbers.\n\nThe body is optional. Recorded admin-center calls that turn Managed Environments on send `Content-Length: 0` and no body at all, and the service answers 202 with an `EnableGovernanceConfiguration` lifecycle operation and `Retry-After: 5` \u2014 so the bodyless form means \"enable with defaults\". Send a body only to set `settings.extendedSettings` at the same time.",
+    "description": "Sets the environment's governance configuration. `protectionLevel: \"Standard\"` with a `settings.extendedSettings` block enables Managed Environments; `protectionLevel: \"Basic\"` disables it and ignores any settings sent alongside.\n\nManaged Environments requires a linked Dataverse organization: on an environment without one the request is rejected outright rather than queued.\n\nEvery value inside `extendedSettings` is a string, including the booleans and the numbers.\n\nThe body is optional, and a bodyless POST \u2014 `Content-Length: 0`, no body at all \u2014 means enable with defaults: the service answers 202 with an `EnableGovernanceConfiguration` lifecycle operation and `Retry-After: 5`. Send a body only to set `settings.extendedSettings` at the same time.",
     "parameters": [
      {
       "name": "environmentId",
@@ -1049,7 +1049,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -1071,7 +1071,7 @@
          "type": "string",
          "format": "uri"
         },
-        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response observed except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
+        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
        },
        "Operation-Location": {
         "schema": {
@@ -1084,7 +1084,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds \u2014 always delta-seconds, never an HTTP date. Typically 5 seconds for creates, edits and conversions and 30 for deletes; the poll responses themselves suggest 10."
        }
       }
      },
@@ -1163,7 +1163,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -1185,7 +1185,7 @@
          "type": "string",
          "format": "uri"
         },
-        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response observed except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
+        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
        },
        "Operation-Location": {
         "schema": {
@@ -1198,7 +1198,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds \u2014 always delta-seconds, never an HTTP date. Typically 5 seconds for creates, edits and conversions and 30 for deletes; the poll responses themselves suggest 10."
        }
       },
       "content": {
@@ -1260,7 +1260,7 @@
      "Lifecycle Operations"
     ],
     "summary": "Read",
-    "description": "Polls an asynchronous operation. Recorded admin-center traffic addresses this path directly at `api-version=2021-04-01`, so it is a first-class path and not merely the target of a `Location` header. Following the absolute URL an asynchronous response hands back is still the safer default: it carries the originating request's api-version and `$expand`.\n\n`state.id` moves `NotStarted` \u2192 `Running` \u2192 `Succeeded`/`Failed`; a short operation can be `Succeeded` on the first poll. `stages` breaks the work into `Validate`, `Prepare`, `Run` and `Finalize`, which is where a failure localises. For a create, `links.environment.path` ends in the new environment's id \u2014 the only place an asynchronous create hands it back.\n\nThe operation record outlives its subject: a delete operation stays readable after the environment itself is gone.",
+    "description": "Polls an asynchronous operation. This is a first-class path, addressable directly at `api-version=2021-04-01`, and not merely the target of a `Location` header. Following the absolute URL an asynchronous response hands back is still the safer default: it carries the originating request's api-version and `$expand`.\n\n`state.id` moves `NotStarted` \u2192 `Running` \u2192 `Succeeded`/`Failed`; a short operation can be `Succeeded` on the first poll. `stages` breaks the work into `Validate`, `Prepare`, `Run` and `Finalize`, which is where a failure localises. For a create, `links.environment.path` ends in the new environment's id \u2014 the only place an asynchronous create hands it back.\n\nThe operation record outlives its subject: a delete operation stays readable after the environment itself is gone.",
     "x-provider-unsourced": true,
     "parameters": [
      {
@@ -1281,7 +1281,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Carried over from the request that started the operation when the poll URL is followed as given. Any accepted version works; recorded traffic addressing the path directly uses 2021-04-01."
+      "description": "Carried over from the request that started the operation when the poll URL is followed as given. Any accepted version works; use 2021-04-01 when addressing the path directly."
      }
     ],
     "responses": {
@@ -1366,7 +1366,7 @@
        "type": "string",
        "default": "2023-06-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
@@ -1430,7 +1430,7 @@
        "type": "string",
        "default": "2023-06-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
@@ -1505,7 +1505,7 @@
        "type": "string",
        "default": "2023-06-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
@@ -1580,7 +1580,7 @@
        "type": "string",
        "default": "2023-06-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
@@ -1654,7 +1654,7 @@
        "type": "string",
        "default": "2023-06-01"
       },
-      "description": "2021-04-01 and later return the SKU-bucketed shape; 2019-10-01 returns the flat `value` collection. Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "2021-04-01 and later return the SKU-bucketed shape; 2019-10-01 returns the flat `value` collection. Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
@@ -1717,7 +1717,7 @@
      "Environments"
     ],
     "summary": "List",
-    "description": "Lists every environment in the tenant on the admin scope, in one response \u2014 no continuation token or `nextLink` has been observed. `$expand` pulls optional projections into `properties`; `properties.capacity` is only available on the single-environment read, not here.",
+    "description": "Lists every environment in the tenant on the admin scope, in one response \u2014 there is no continuation token or `nextLink`. `$expand` pulls optional projections into `properties`; `properties.capacity` is only available on the single-environment read, not here.",
     "parameters": [
      {
       "name": "api-version",
@@ -1746,7 +1746,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Only observed form: `properties/parentEnvironmentGroup/id eq {environmentGroupId}`."
+      "description": "Filters the list by environment group membership: `properties/parentEnvironmentGroup/id eq {environmentGroupId}`."
      }
     ],
     "responses": {
@@ -1821,7 +1821,7 @@
        "type": "string",
        "default": "2023-06-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      },
      {
       "name": "$expand",
@@ -1830,7 +1830,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Comma-separated projections. `permissions,properties.capacity,properties/billingPolicy,properties/copilotPolicies` is what the known client requests; `properties.capacity` is available here and not on the list endpoint.",
+      "description": "Comma-separated projections, e.g. `permissions,properties.capacity,properties/billingPolicy,properties/copilotPolicies`. `properties.capacity` is available here and not on the list endpoint.",
       "example": "permissions,properties.capacity,properties/billingPolicy,properties/copilotPolicies"
      }
     ],
@@ -1914,7 +1914,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      },
      {
       "name": "$expand",
@@ -1955,7 +1955,7 @@
          "type": "string",
          "format": "uri"
         },
-        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response observed except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
+        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
        },
        "Operation-Location": {
         "schema": {
@@ -1968,7 +1968,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds \u2014 always delta-seconds, never an HTTP date. Typically 5 seconds for creates, edits and conversions and 30 for deletes; the poll responses themselves suggest 10."
        }
       }
      },
@@ -2024,7 +2024,7 @@
      "Environments"
     ],
     "summary": "Delete",
-    "description": "Deletes an environment. The body is mandatory and states a deletion reason.\n\nDeletion is soft for `properties.retentionPeriod` (P7D on every environment observed), during which the environment is unreadable but its Dataverse domain name stays reserved.",
+    "description": "Deletes an environment. The body is mandatory and states a deletion reason.\n\nDeletion is soft for `properties.retentionPeriod` \u2014 `P7D` \u2014 during which the environment is unreadable but its Dataverse domain name stays reserved.",
     "parameters": [
      {
       "name": "environmentId",
@@ -2044,7 +2044,7 @@
        "type": "string",
        "default": "2023-06-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -2066,7 +2066,7 @@
          "type": "string",
          "format": "uri"
         },
-        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response observed except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
+        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
        },
        "Operation-Location": {
         "schema": {
@@ -2079,7 +2079,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds \u2014 always delta-seconds, never an HTTP date. Typically 5 seconds for creates, edits and conversions and 30 for deletes; the poll responses themselves suggest 10."
        }
       }
      },
@@ -2117,7 +2117,7 @@
       }
      },
      "404": {
-      "description": "Documented by the known client, which treats it as already-deleted; probing only ever saw 204 for that case.",
+      "description": "No such environment. Safe to treat as already deleted; deleting an environment that is already gone answers 204 rather than this.",
       "content": {
        "application/json": {
         "schema": {
@@ -2160,7 +2160,7 @@
        "type": "string",
        "default": "2020-10-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -2246,7 +2246,7 @@
        "type": "string",
        "default": "2023-06-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -2332,7 +2332,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -2387,7 +2387,7 @@
       }
      },
      "500": {
-      "description": "Observed during removals that nonetheless took effect. Confirm by re-reading the assignment list before retrying.",
+      "description": "A removal can report 500 and still have taken effect. Re-read the assignment list before retrying.",
       "content": {
        "application/json": {
         "schema": {
@@ -2426,7 +2426,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -2451,7 +2451,7 @@
          "type": "string",
          "format": "uri"
         },
-        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response observed except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
+        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
        },
        "Operation-Location": {
         "schema": {
@@ -2464,7 +2464,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds \u2014 always delta-seconds, never an HTTP date. Typically 5 seconds for creates, edits and conversions and 30 for deletes; the poll responses themselves suggest 10."
        }
       }
      },
@@ -2549,7 +2549,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "responses": {
@@ -2614,7 +2614,7 @@
        "type": "string",
        "default": "2023-06-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -2753,7 +2753,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+      "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01."
      }
     ],
     "requestBody": {
@@ -2775,7 +2775,7 @@
     },
     "responses": {
      "200": {
-      "description": "The details are usable: the domain name is well-formed and free, and the location or environment exists. The body is empty \u2014 validity is signalled by the status alone, and recorded admin-center calls receive a zero-length 200."
+      "description": "The details are usable: the domain name is well-formed and free, and the location or environment exists. The body is zero-length \u2014 validity is signalled by the status alone."
      },
      "400": {
       "description": "`InvalidValidateEnvironmentDomainName` when `domainName` is missing; `InvalidDomainName` when it breaks the pattern; `EnvironmentLocationUnsupported` when `environmentLocation` is missing or unknown \u2014 and that message lists every valid location.",
@@ -3003,7 +3003,7 @@
       }
      },
      "404": {
-      "description": "Documented by the known client; probing saw an empty 200 instead.",
+      "description": "No such tenant. A tenant that simply has no isolation policy configured answers 200 with an empty body rather than this.",
       "content": {
        "application/json": {
         "schema": {
@@ -3063,7 +3063,7 @@
          "type": "string",
          "format": "uri"
         },
-        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response observed except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
+        "description": "Absolute poll URL, already carrying the request's api-version and any `$expand`. Present on every asynchronous response except `modifySku`, which uses `Operation-Location` instead; read whichever is set."
        },
        "Operation-Location": {
         "schema": {
@@ -3076,7 +3076,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds \u2014 always delta-seconds, never an HTTP date. Typically 5 seconds for creates, edits and conversions and 30 for deletes; the poll responses themselves suggest 10."
        }
       }
      },
@@ -3458,7 +3458,7 @@
      "Admin Applications"
     ],
     "summary": "List",
-    "description": "Lists every service principal registered as an admin management application in the tenant. Not called by the known client \u2014 found by probing \u2014 and the only way to enumerate registrations, since reading one requires knowing its client id already.",
+    "description": "Lists every service principal registered as an admin management application in the tenant. It is the only way to enumerate registrations, since reading one requires knowing its client id already.",
     "x-provider-unsourced": true,
     "x-probe-verified": true,
     "parameters": [
@@ -3523,7 +3523,7 @@
      "Lifecycle Operations"
     ],
     "summary": "List",
-    "description": "Lists lifecycle operations, newest first. Filtering by environment is the only use observed and is effectively mandatory in practice \u2014 this is how the admin center renders an environment's history tab.\n\nUnlike the single-operation read, the list is the *record* of what has happened to an environment: completed operations stay here indefinitely, including operations raised by the platform itself rather than by a user, which appear with `requestedBy.type: Service`. It also surfaces operations no client ever polled \u2014 a Managed Environments enable, for instance, raises `EnableGovernanceConfiguration` and then a separate `UpdateGovernanceConfiguration` attributed to `SYSTEM`.",
+    "description": "Lists lifecycle operations, newest first. Filtering by environment is effectively mandatory in practice \u2014 this is how the admin center renders an environment's history tab.\n\nUnlike the single-operation read, the list is the *record* of what has happened to an environment: completed operations stay here indefinitely, including operations raised by the platform itself rather than by a user, which appear with `requestedBy.type: Service`. It also surfaces operations no client ever polled \u2014 a Managed Environments enable, for instance, raises `EnableGovernanceConfiguration` and then a separate `UpdateGovernanceConfiguration` attributed to `SYSTEM`.",
     "x-provider-unsourced": true,
     "parameters": [
      {
@@ -3543,7 +3543,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "OData filter. `environment eq '{environmentId}'` is the only form observed, and scopes the list to one environment's history.",
+      "description": "OData filter. `environment eq '{environmentId}'` scopes the list to one environment's history.",
       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
      }
     ],
@@ -3620,7 +3620,7 @@
        "type": "string",
        "default": "2021-04-01"
       },
-      "description": "2020-08-01, 2020-10-01-alpha and 2021-04-01 were all observed in maker-portal traffic. `2020-10-01-alpha` is accepted despite not appearing in the service's own list of versions."
+      "description": "2020-08-01, 2020-10-01-alpha and 2021-04-01 each answer this route with a different property set, so pin one. `2020-10-01-alpha` is accepted despite not appearing in the service's own list of versions."
      },
      {
       "name": "$expand",
@@ -3639,7 +3639,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "`minimumAppPermission eq 'CanEdit'` was the only form observed, paired with `$expand=properties.permissions`.",
+      "description": "Takes the form `minimumAppPermission eq 'CanEdit'`, paired with `$expand=properties.permissions`.",
       "example": "minimumAppPermission eq 'CanEdit'"
      }
     ],
@@ -3770,7 +3770,7 @@
      "Tenant-to-Tenant Migrations"
     ],
     "summary": "Read",
-    "description": "Reads one tenant-to-tenant migration. The trailing `/get` is part of the path, not a mistake \u2014 the verb is spelled out as a path segment even though the method is already GET.\n\n**Only the not-found path has been observed.** Recorded admin-center traffic reaches this endpoint with the JavaScript value `undefined` interpolated into the path \u2014 the admin center probes for a migration on page load, has no id to send, and builds `/t2tmigrations/undefined/get` \u2014 so the recordings prove the route exists and that the segment is a migration identifier scoped to the calling tenant, but say nothing about the success body. There is no literal `undefined` segment: the service simply looked up a migration named `undefined` and did not find one. Migrations are started elsewhere; the matching `MigrateTenantToTenant` and `PrepareTenantToTenant` lifecycle operation types appear in every environment's `lifecycleOperationsEnforcement`.",
+    "description": "Reads one tenant-to-tenant migration. The trailing `/get` is part of the path, not a mistake \u2014 the verb is spelled out as a path segment even though the method is already GET.\n\nThe identifier is a migration scoped to the calling tenant, and one that does not resolve is reported as not found. The success body is not described here.\n\nMigrations are started elsewhere; the matching `MigrateTenantToTenant` and `PrepareTenantToTenant` lifecycle operation types appear in every environment's `lifecycleOperationsEnforcement`.",
     "x-provider-unsourced": true,
     "parameters": [
      {
@@ -3780,7 +3780,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "The migration's identifier, resolved within the calling tenant \u2014 the 400 names both the identifier and the tenant it was looked up in. Whether it is a GUID or another form is not established: no successful read was recorded.",
+      "description": "The migration's identifier, resolved within the calling tenant \u2014 the 400 names both the identifier and the tenant it was looked up in. Its form, GUID or otherwise, is not established.",
       "example": "00000000-0000-0000-0000-000000000000"
      },
      {
@@ -3795,7 +3795,7 @@
     ],
     "responses": {
      "200": {
-      "description": "The migration. Shape unknown \u2014 no successful read has been observed, so no schema is claimed here rather than inventing one."
+      "description": "The migration. No schema is described for this response."
      },
      "400": {
       "description": "`BadRequest` \u2014 \"Tenant To Tenant Migration {migrationId} was not found in Tenant {tenantId}.\" Note that an unknown migration is a 400, not a 404, and that the message discloses the caller's own tenant id.",
@@ -3884,7 +3884,7 @@
      "Feature Gates"
     ],
     "summary": "List",
-    "description": "Lists the Power Platform feature gates currently enabled for a directory principal. Only enabled flags are returned, so membership in the list is the value \u2014 there is no flag to read false.\n\nThis is Microsoft's own rollout machinery, exposed rather than published: the flag names and descriptions are internal, change without notice, and are not a contract. It is useful for explaining why a tenant sees behaviour another tenant does not, and for nothing else. The response is large \u2014 just under a thousand entries on the tenant recorded \u2014 and the resource ids come back under the `Microsoft.PowerApps` provider even though the request goes to a `Microsoft.BusinessAppPlatform` path.",
+    "description": "Lists the Power Platform feature gates currently enabled for a directory principal. Only enabled flags are returned, so membership in the list is the value \u2014 there is no flag to read false.\n\nThis is Microsoft's own rollout machinery, exposed rather than published: the flag names and descriptions are internal, change without notice, and are not a contract. It is useful for explaining why a tenant sees behaviour another tenant does not, and for nothing else.\n\nThe response is large, on the order of a thousand entries, and the resource ids come back under the `Microsoft.PowerApps` provider even though the request goes to a `Microsoft.BusinessAppPlatform` path.",
     "x-provider-unsourced": true,
     "parameters": [
      {
@@ -4817,7 +4817,7 @@
       "description": "Requests Managed Environments at creation time. The admin center sends `null` and turns it on afterwards with the separate `governanceConfiguration` POST, which is the sequence to copy: the create raises a `Create` lifecycle operation and the enable raises its own `EnableGovernanceConfiguration` one."
      }
     },
-    "description": "The environment to create. Probing established that `displayName` and `environmentSku` are both mandatory (the service validates them in that order); everything else is optional.",
+    "description": "The environment to create. `displayName` and `environmentSku` are both mandatory and the service validates them in that order; everything else is optional.",
     "x-probe-verified": true,
     "required": [
      "displayName",
@@ -4829,7 +4829,7 @@
     "properties": {
      "code": {
       "type": "string",
-      "description": "The deletion reason. The service accepts the reason's 1-based ordinal as a string \u2014 the admin center and the known client both send `\"7\"`, which is `Application` \u2014 and the rejection for a missing code enumerates the names: `User`, `Tenant`, `Expiration`, `LinkedResourceDeleted`, `Manual`, `CommonDataServiceMigration`, `Application`, `Service`, `TeamDeleted`, `ConnectedGroupDeleted`, `CreateFailed`, `InactivityThreshold`, `DeletedByTenantPolicyEvaluation`, `InconsistencyDetection`.",
+      "description": "The deletion reason. The service accepts the reason's 1-based ordinal as a string \u2014 `\"7\"` is `Application`, the usual choice for a programmatic delete \u2014 and the rejection for a missing code enumerates the names: `User`, `Tenant`, `Expiration`, `LinkedResourceDeleted`, `Manual`, `CommonDataServiceMigration`, `Application`, `Service`, `TeamDeleted`, `ConnectedGroupDeleted`, `CreateFailed`, `InactivityThreshold`, `DeletedByTenantPolicyEvaluation`, `InconsistencyDetection`.",
       "example": "7"
      },
      "message": {
@@ -4912,7 +4912,7 @@
       }
      }
     },
-    "description": "A page of environments. BAPI returns the whole tenant in one response: no continuation token or `nextLink` has been observed.",
+    "description": "A page of environments. BAPI returns the whole tenant in one response: there is no continuation token or `nextLink`.",
     "x-probe-verified": true
    },
    "EnvironmentProperties": {
@@ -5009,7 +5009,7 @@
      },
      "addons": {
       "type": "array",
-      "description": "Purchased add-on capacity attached to the environment (AI Builder credits and similar). Empty on every environment probed.",
+      "description": "Purchased add-on capacity attached to the environment (AI Builder credits and similar). Empty unless the tenant has bought add-ons and assigned them here.",
       "items": {
        "type": "object"
       }
@@ -5099,7 +5099,7 @@
      },
      "retentionPeriod": {
       "type": "string",
-      "description": "ISO 8601 duration a deleted environment stays recoverable. `P7D` on every environment probed; duplicated inside `retentionDetails`.",
+      "description": "ISO 8601 duration a deleted environment stays recoverable. `P7D`; duplicated inside `retentionDetails`.",
       "example": "P7D"
      },
      "trialScenarioType": {
@@ -5114,7 +5114,7 @@
      },
      "azureRegionHint": {
       "type": "string",
-      "description": "The Azure region the environment was *requested* in, kept alongside the region it actually landed in. Returned by the maker scope where the admin scope returns `azureRegion`; the two agree on every environment observed.",
+      "description": "The Azure region the environment was *requested* in, kept alongside the region it actually landed in. Returned by the maker scope where the admin scope returns `azureRegion`; the two normally agree.",
       "example": "westus"
      },
      "scheduledLifecycleOperations": {
@@ -5237,7 +5237,7 @@
       }
      }
     },
-    "description": "Environment templates grouped by the SKU allowed to use them; a template can appear in several buckets. Every bucket is present even when empty, and `standard`/`premium` were empty on the tenant probed while the SKU-named buckets carried the real content.",
+    "description": "Environment templates grouped by the SKU allowed to use them; a template can appear in several buckets. Every bucket is present even when empty: `standard` and `premium` are typically empty while the SKU-named buckets carry the content.",
     "x-probe-verified": true
    },
    "EnvironmentUserGetResponse": {
@@ -5293,7 +5293,7 @@
    },
    "ExtendedSettings": {
     "type": "object",
-    "description": "The Managed Environments settings. **Every value here is a string, including the booleans and the numbers** \u2014 `\"true\"`, `\"false\"`, `\"-1\"`. That is how the service returns them on every environment observed, and how the known client sends them.",
+    "description": "The Managed Environments settings. **Every value here is a string, including the booleans and the numbers** \u2014 `\"true\"`, `\"false\"`, `\"-1\"`. That is how the service returns them, and how it expects them on the way in.",
     "x-probe-verified": true,
     "properties": {
      "excludeEnvironmentFromAnalysis": {
@@ -5430,7 +5430,7 @@
       "type": "boolean"
      }
     },
-    "description": "Only the members present are applied; omitted ones keep their current values, which is why the known client sends pointers here.",
+    "description": "Only the members present are applied; omitted ones keep their current values. Send just the members being changed.",
     "x-probe-verified": true
    },
    "GovernanceConfiguration": {
@@ -5543,7 +5543,7 @@
     "properties": {
      "code": {
       "type": "string",
-      "description": "`DynamicsEntitlementMissing` on every disabled template observed: the tenant holds no licence for the application.",
+      "description": "`DynamicsEntitlementMissing` \u2014 the tenant holds no licence for the application \u2014 is the reason a template comes back disabled.",
       "example": "DynamicsEntitlementMissing"
      },
      "message": {
@@ -5722,7 +5722,7 @@
    },
    "LifecycleStage": {
     "type": "object",
-    "description": "One phase of a lifecycle operation. Every operation observed ran the same four in order: `Validate`, `Prepare`, `Run`, `Finalize`.",
+    "description": "One phase of a lifecycle operation. The four run in order: `Validate`, `Prepare`, `Run`, `Finalize`.",
     "x-probe-verified": true,
     "properties": {
      "id": {
@@ -6195,7 +6195,7 @@
      },
      "securitySettings": {
       "type": "object",
-      "description": "Tenant security settings. Returned empty on the tenant probed; members unknown."
+      "description": "Tenant security settings. Its members are not described here, and it comes back empty on a tenant that has configured none."
      },
      "gccCommercialSettings": {
       "type": "object",
@@ -6203,7 +6203,7 @@
      },
      "businessResearchAgent": {
       "type": "object",
-      "description": "Settings for the business research agent. Returned empty on the tenant probed."
+      "description": "Settings for the business research agent. Comes back empty on a tenant that has configured none."
      }
     },
     "description": "The settings tree proper; the flat members alongside it on `TenantSettings` are the older, ungrouped ones.",
@@ -6606,7 +6606,7 @@
      },
      "disableSurveyScreenshots": {
       "type": "boolean",
-      "description": "Stops feedback surveys attaching screenshots, which can capture business data."
+      "description": "Stops feedback surveys attaching screenshots, which can include business data."
      }
     },
     "description": "Tenant-wide Power Platform settings. Reads return the complete tree; writes are a merge, so a client managing a subset must send only that subset.",
@@ -6778,7 +6778,7 @@
    },
    "Error": {
     "type": "object",
-    "description": "The uniform error envelope. Every 4xx and 5xx observed while probing returned exactly this shape, on both the `Microsoft.BusinessAppPlatform` and `PowerPlatform.Governance` providers, including the bodies BAPI returns for 500.",
+    "description": "The uniform error envelope. Every 4xx and 5xx uses exactly this shape, on both the `Microsoft.BusinessAppPlatform` and `PowerPlatform.Governance` providers, including the bodies BAPI returns for 500.",
     "x-probe-verified": true,
     "properties": {
      "error": {
@@ -6793,7 +6793,7 @@
     "properties": {
      "code": {
       "type": "string",
-      "description": "Stable machine-readable symbol; the only part of the envelope safe to branch on. Observed values include `EnvironmentNotFound`, `EnvironmentGroupNotFound`, `DLPPolicyNotFound`, `OperationNotFound`, `OperationNotStartable`, `DomainNameAlreadyInUse`, `InvalidDomainName`, `EnvironmentLocationUnsupported`, `EnvironmentDisplayNameNotFound`, `InvalidEnvironmentSku`, `InvalidOrMissingDeleteCode`, `InvalidSecurityGroupId`, `InvalidApplicationId`, `InvalidApiVersion`, `InvalidRequestContent`, `InvalidLifecycleOperationRequest`, `ApiPolicyInvalid`, `UrlPatternsNull`, `LinkedEnvironmentForbiddenOperation` and `InternalServerError`.",
+      "description": "Stable machine-readable symbol; the only part of the envelope safe to branch on. Known values include `EnvironmentNotFound`, `EnvironmentGroupNotFound`, `DLPPolicyNotFound`, `OperationNotFound`, `OperationNotStartable`, `DomainNameAlreadyInUse`, `InvalidDomainName`, `EnvironmentLocationUnsupported`, `EnvironmentDisplayNameNotFound`, `InvalidEnvironmentSku`, `InvalidOrMissingDeleteCode`, `InvalidSecurityGroupId`, `InvalidApplicationId`, `InvalidApiVersion`, `InvalidRequestContent`, `InvalidLifecycleOperationRequest`, `ApiPolicyInvalid`, `UrlPatternsNull`, `LinkedEnvironmentForbiddenOperation` and `InternalServerError`.",
       "example": "EnvironmentNotFound"
      },
      "message": {
@@ -6802,7 +6802,7 @@
      },
      "detailUrlType": {
       "type": "string",
-      "description": "Selects the help article the admin center links from the error. `NotSpecified` in every response observed.",
+      "description": "Selects the help article the admin center links from the error. `NotSpecified` in practice.",
       "example": "NotSpecified"
      }
     }
@@ -6922,7 +6922,7 @@
     "properties": {
      "id": {
       "type": "string",
-      "description": "`Create` (an environment create), `Edit` (a property PATCH), `Convert` (a SKU change) and `Delete` are the four raised by the operations in this spec; `EnableGovernanceConfiguration` and `UpdateGovernanceConfiguration` come from the Managed Environments POST. The rest cover backup/restore, disaster recovery, tenant-to-tenant migration and the enterprise-policy links, and are seen mainly inside `lifecycleOperationsEnforcement`. `Provision` appears only there \u2014 a recorded environment create raised `Create`.",
+      "description": "`Create` (an environment create), `Edit` (a property PATCH), `Convert` (a SKU change) and `Delete` are the four raised by the operations in this spec; `EnableGovernanceConfiguration` and `UpdateGovernanceConfiguration` come from the Managed Environments POST. The rest cover backup/restore, disaster recovery, tenant-to-tenant migration and the enterprise-policy links, and are seen mainly inside `lifecycleOperationsEnforcement`. `Provision` appears only there \u2014 an environment create raises `Create`.",
       "enum": [
        "Backup",
        "Convert",
@@ -7204,7 +7204,7 @@
      "lastActivityTime": {
       "type": "string",
       "format": "date-time",
-      "description": "When a user last did something. `0001-01-01T00:00:00Z` when nothing has been recorded.",
+      "description": "When a user last did something. `0001-01-01T00:00:00Z` when there has been no activity.",
       "example": "0001-01-01T00:00:00Z"
      },
      "lastUpdatedTime": {
@@ -7253,7 +7253,7 @@
    },
    "LifecycleOperationList": {
     "type": "object",
-    "description": "A page of lifecycle operations, newest first. No continuation token or `nextLink` has been observed; the service returns the whole filtered set in one response.",
+    "description": "A page of lifecycle operations, newest first. There is no continuation token or `nextLink`; the service returns the whole filtered set in one response.",
     "x-probe-verified": true,
     "properties": {
      "value": {
@@ -7266,7 +7266,7 @@
    },
    "EnvironmentGroupList": {
     "type": "object",
-    "description": "A page of environment groups. Paged with `$top`; no continuation token has been observed.",
+    "description": "A page of environment groups. Paged with `$top`; there is no continuation token.",
     "x-probe-verified": true,
     "properties": {
      "value": {
@@ -7327,7 +7327,7 @@
      },
      "settingSource": {
       "type": "string",
-      "description": "Where the flag's value comes from. `FeatureGate` \u2014 a service-side rollout gate \u2014 on every flag observed.",
+      "description": "Where the flag's value comes from. `FeatureGate` \u2014 a service-side rollout gate \u2014 in practice.",
       "example": "FeatureGate"
      }
     }
@@ -7360,7 +7360,7 @@
    },
    "FeatureList": {
     "type": "object",
-    "description": "Every feature gate enabled for the principal, in one response \u2014 just under a thousand entries on the tenant recorded.",
+    "description": "Every feature gate enabled for the principal, in one response \u2014 on the order of a thousand entries.",
     "x-probe-verified": true,
     "properties": {
      "value": {

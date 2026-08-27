@@ -83,7 +83,7 @@
                         {
                             @if (resp.Description is { } rd)
                             {
-                                <p class="prop__desc" style="margin-bottom:var(--space-4)">@rd</p>
+                                <p class="prop__desc" style="margin-bottom:var(--space-4)">@((MarkupString)Markdown.ToHtml(rd))</p>
                             }
 
                             @if (resp.Headers.Count > 0)

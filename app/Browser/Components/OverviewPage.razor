@@ -13,7 +13,7 @@
 
     @if (Spec.Info.Description is { } d)
     {
-        <p class="page__lead">@d</p>
+        <p class="page__lead">@((MarkupString)Markdown.ToHtml(d))</p>
     }
 
     <div class="op-body">
@@ -34,7 +34,7 @@
                                 </span>
                                 @if (tag.Tag.Description is { } td)
                                 {
-                                    <span class="op-row__path" style="font-family:var(--font-sans);font-size:13px">@td</span>
+                                    <span class="op-row__path" style="font-family:var(--font-sans);font-size:13px">@((MarkupString)Inline(td))</span>
                                 }
                             </span>
                         </button>
@@ -97,5 +97,17 @@
                 .Select(t => new TagCount(t, counts[t.Name]))
                 .ToList();
         }
+    }
+}
+
+@code {
+    // Markdig always wraps in a block element; this row is inline, so unwrap the
+    // single paragraph it produces rather than nesting <p> inside a <span>.
+    private static string Inline(string markdown)
+    {
+        var html = Markdown.ToHtml(markdown).Trim();
+        return html.StartsWith("<p>") && html.EndsWith("</p>")
+            ? html[3..^4]
+            : html;
     }
 }

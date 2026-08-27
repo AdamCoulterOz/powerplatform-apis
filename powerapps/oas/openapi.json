@@ -1,0 +1,2456 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "PowerApps API",
+  "version": "2023-06-01",
+  "description": "Unofficial. The PowerApps API (`api.powerapps.com`) is the undocumented service behind the Power Apps maker portal and the app/connector pages of the Power Platform admin centre. It shares the `https://service.powerapps.com/.default` token audience with BAPI (`api.bap.microsoft.com`) but is a separate host with a separate surface: BAPI owns environment provisioning and tenant governance, this owns apps, connectors and connections.\n\nTwo of these operations are reverse-engineered from microsoft/terraform-provider-power-platform's client (`internal/clients/powerapps`): the per-environment app list and the connector catalogue. Everything else was found by probing the live service, and every operation in this document was confirmed with a real 200 against a production tenant \u2014 nothing is included on the strength of a plausible-looking URL.\n\nProbing corrected the provider-derived picture in several places, recorded here so the reader knows what is evidence and what is inference. The connector list returns 19 properties where the provider models 4, and does *not* return the `Unblockable` field the provider's DTO carries \u2014 the provider fills that in from BAPI's `unblockableConnectorsMetadata`. The three boolean flags on the connector list each change the result set measurably, and `showAllDlpEnforceableApis` additionally strips the runtime-URL properties from every item. `$filter` is mandatory on the connector paths and optional on the app paths, where it obeys a narrow app-specific grammar the service states in its own 400.\n\nThe one thing that could not be verified is the app object itself: the probe tenant held zero canvas apps across all 14 of its environments, so `App`, `AppProperties` and `AppEnvironmentRef` remain provider-derived and are marked `x-probe-verified: false`. Every other schema was built from live responses. `required` is empty everywhere because no write operation exists on this surface to test optionality against; field-presence counts from the live catalogue are stated in the schema descriptions instead.\n\nSovereign clouds serve the same paths on their own hosts (`.us`, `.cn`, `high.powerapps.us`, `api.apps.appsplatform.us`).",
+  "x-api-versions": [
+   "2015-02-01",
+   "2015-03-01",
+   "2015-08-01",
+   "2016-01-01",
+   "2016-02-01",
+   "2016-04-01",
+   "2016-05-01",
+   "2016-07-01",
+   "2016-11-01",
+   "2017-02-01",
+   "2017-04-01",
+   "2017-05-01",
+   "2017-06-01",
+   "2017-07-01",
+   "2017-08-01",
+   "2018-10-01",
+   "2019-05-01",
+   "2020-02-01",
+   "2020-06-01",
+   "2020-07-01",
+   "2021-02-01",
+   "2022-11-01",
+   "2023-06-01",
+   "2025-03-01",
+   "2025-04-01"
+  ],
+  "x-probe-tenant": "Probed 2026-08-27 against a production tenant with 14 environments, 21 connections, 1710 catalogue connectors and 0 canvas apps. All probes were read-only GETs; nothing was created or modified."
+ },
+ "servers": [
+  {
+   "url": "https://api.powerapps.com"
+  }
+ ],
+ "security": [
+  {
+   "azure_auth": [
+    "https://service.powerapps.com/.default"
+   ]
+  }
+ ],
+ "tags": [
+  {
+   "name": "Canvas App",
+   "description": "Canvas apps: the drag-and-drop apps makers build in Power Apps Studio. Model-driven apps are Dataverse solution components and are not served here."
+  },
+  {
+   "name": "Connector",
+   "description": "The connector catalogue \u2014 called 'apis' on the wire. What a maker in a given environment could connect to, with the licensing tier and capability metadata that DLP policies and licence checks are built on."
+  },
+  {
+   "name": "Connection",
+   "description": "Connection instances: a user's stored, authenticated binding to one connector in one environment. Where the connector catalogue says what could be used, these say what is."
+  },
+  {
+   "name": "Environment",
+   "description": "Environments in the PowerApps API's own projection, which differs from BAPI's: it carries the cluster, the per-service runtime endpoints and the caller's capability map, and omits BAPI's provisioning fields."
+  },
+  {
+   "name": "Gateway",
+   "description": "On-premises data gateways, which let cloud connectors reach data behind a corporate firewall."
+  }
+ ],
+ "paths": {
+  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps": {
+   "get": {
+    "operationId": "apps_listByEnvironment",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "List (By Environment)",
+    "description": "Lists the canvas apps of one environment through the tenant admin scope, which returns every app in the environment regardless of who owns or has shared it. This is the call the Terraform provider's `powerplatform_environment_powerapps` data source makes.\n\nThe response is a single flat `value` array: no continuation token, `nextLink` or `@odata.*` envelope was observed, and `$top` is accepted without changing the envelope. The `$filter` and `$expand` grammar is the narrow app-specific one described on those parameters, not general OData \u2014 an unsupported `$filter` key is silently ignored rather than rejected, so a typo yields the unfiltered list.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "description": "Environment id. This is the `name` of an environment resource, not its Dataverse organization id.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "description": "Only two forms are recognised: a `tagname`/`tagvalue` pair, or `Visibility` on its own. Any other key is ignored, and combining a filter with `$expand` is a 400 `InvalidAppFilterCombination` \u2014 the service supports one query type per request.",
+      "schema": {
+       "type": "string",
+       "example": "Visibility eq 'Teams'"
+      }
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "description": "Expands each app's sharing permissions. The single accepted form is `permissions($filter=maxAssignedTo('<objectId>'))`, which limits the expansion to grants held by that Entra object id. Cannot be combined with `$filter`.",
+      "schema": {
+       "type": "string",
+       "example": "permissions($filter=maxAssignedTo('00000000-0000-0000-0000-000000000000'))"
+      }
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "description": "Accepted; page size cap.",
+      "schema": {
+       "type": "integer",
+       "minimum": 1
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The apps in the environment. An environment with no canvas apps returns `{\"value\": []}` rather than a 404.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AppList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`InvalidApiVersion` for an unknown or empty `api-version`, or `InvalidAppFilterCombination` when `$filter` and `$expand` are sent together.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is authenticated but is not a Power Platform admin, so the admin scope is closed to it.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`BusinessAppPlatformRequestFailed`, wrapping an `EnvironmentNotFound` in `details`: no environment with that id exists in the caller's tenant. The wrapper carries a correlation id in its message.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps": {
+   "get": {
+    "operationId": "apps_list",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "List",
+    "description": "Lists the canvas apps the calling identity can see, rather than every app in the tenant. Without an `environment` filter the result spans environments; the admin-scope variant is the way to enumerate apps a caller does not personally have access to.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "description": "Same narrow grammar as the admin-scope list: a `tagname`/`tagvalue` pair, or `Visibility` alone, or `environment eq '<environmentId>'` to scope to one environment. Unrecognised keys are rejected with 400 `InvalidAppFilterCombination`, whose message states the supported grammar verbatim.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "description": "`permissions($filter=maxAssignedTo('<objectId>'))`; mutually exclusive with `$filter`.",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The apps visible to the caller.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AppList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`InvalidAppFilterCombination` \u2014 the `$filter` key is not one of the supported ones, or `$filter` and `$expand` were sent together.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/apis": {
+   "get": {
+    "operationId": "connectors_list",
+    "tags": [
+     "Connector"
+    ],
+    "summary": "List",
+    "description": "Lists the connector catalogue as it applies to one environment: the ~1700 first-party, certified-publisher and independent-publisher connectors a maker in that environment could use. This is the call behind the Terraform provider's `powerplatform_connectors` data source, which then merges BAPI's `unblockableConnectorsMetadata` and `virtualConnectorsMetadata` on top \u2014 those governance fields are *not* returned here.\n\nThe three boolean flags are additive filters over the catalogue and each meaningfully changes the result set; the provider sends all three as `true` to get the full DLP-classifiable view. `showAllDlpEnforceableApis` also *thins each item*: with it set, `runtimeUrls`, `primaryRuntimeUrl` and `doNotUseApiHubNetRuntimeUrl` are dropped from every entry, so the larger list is the smaller payload per connector.\n\nNo pagination was observed \u2014 the whole catalogue arrives in one ~3 MB `value` array.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": true,
+      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Omitting the parameter is a 400 `MissingEnvironmentFilter`.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     },
+     {
+      "name": "showApisWithToS",
+      "in": "query",
+      "required": false,
+      "description": "Includes connectors that carry publisher terms of use (the ones with a `termsOfUseUrl`), which are otherwise omitted. Measured effect on a production tenant: 319 additional connectors, exactly the set carrying `termsOfUseUrl`.",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     {
+      "name": "hideDlpExemptApis",
+      "in": "query",
+      "required": false,
+      "description": "Drops the connectors that DLP policy cannot classify because the platform depends on them. On a production tenant this removed exactly five: `shared_logicflows`, `shared_powerflows`, `shared_powervirtualagents`, `shared_conversionservice` and `shared_contentconversionservice`. Set it when building a DLP policy UI so exempt connectors are not offered for classification.",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     {
+      "name": "showAllDlpEnforceableApis",
+      "in": "query",
+      "required": false,
+      "description": "Includes every connector DLP *can* enforce against, not just those already surfaced to makers in the environment \u2014 110 additional connectors on a production tenant. It also strips the runtime-URL properties from each returned item, because a DLP-enforceable connector need not have a runtime endpoint provisioned in the environment.",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The connector catalogue for the environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ConnectorList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`MissingEnvironmentFilter` \u2014 the `$filter` query parameter is not optional on this path.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`ServiceToServiceEnvironmentNotFound` \u2014 the environment named in `$filter` does not exist in the caller's tenant. Note this is a different error code from the apps path's `EnvironmentNotFound`, and it is not wrapped in `details`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/apis/{apiName}": {
+   "get": {
+    "operationId": "connectors_get",
+    "tags": [
+     "Connector"
+    ],
+    "summary": "Read",
+    "description": "Reads one connector. Beyond the list representation this returns `swagger` \u2014 the connector's complete OpenAPI 2.0 document, including every operation, parameter and definition \u2014 plus the environment-specific `runtimeUrls`, `primaryRuntimeUrl` and `doNotUseApiHubNetRuntimeUrl`. For a large first-party connector the document dominates the payload: the SharePoint connector answers ~300 KB against ~4 KB for its list entry.\n\nThe `$filter` requirement is the same as on the list, because the runtime URLs are per environment.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "description": "The connector's `name`, which is the last segment of its `id`. First-party and marketplace connectors are prefixed `shared_`; custom connectors created in an environment are not.",
+      "schema": {
+       "type": "string",
+       "example": "shared_sharepointonline"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": true,
+      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Omitting the parameter is a 400 `MissingEnvironmentFilter`.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The connector, with its swagger document.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Connector"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`MissingEnvironmentFilter`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`ApiResourceNotFound` \u2014 no connector with that name is visible in the environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/apis/{apiName}/connections": {
+   "get": {
+    "operationId": "connectors_listConnections",
+    "tags": [
+     "Connector"
+    ],
+    "summary": "Connections List",
+    "description": "Lists the caller's own connection instances for one connector in one environment. It is the caller-scoped view: connections created by other users are not returned even to a tenant admin \u2014 use the admin-scope environment connection list for those.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "shared_sharepointonline"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": true,
+      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Omitting the parameter is a 400 `MissingEnvironmentFilter`.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The caller's connections for this connector. Empty when the caller has none, even if other users do.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ConnectionList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`MissingEnvironmentFilter`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/connections": {
+   "get": {
+    "operationId": "connections_list",
+    "tags": [
+     "Connection"
+    ],
+    "summary": "List",
+    "description": "Lists the caller's connection instances in one environment, across all connectors.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": true,
+      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Omitting the parameter is a 400 `MissingEnvironmentFilter`.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The caller's connections in the environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ConnectionList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`MissingEnvironmentFilter`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/connections": {
+   "get": {
+    "operationId": "connections_listByEnvironment",
+    "tags": [
+     "Connection"
+    ],
+    "summary": "List (By Environment)",
+    "description": "Lists every connection in an environment, whoever created it, through the tenant admin scope. This is the list an admin needs to audit which connectors are actually in use and by whom \u2014 the connector catalogue says what *could* be used, this says what is.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "description": "Environment id. This is the `name` of an environment resource, not its Dataverse organization id.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every connection in the environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ConnectionList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/environments": {
+   "get": {
+    "operationId": "environments_list",
+    "tags": [
+     "Environment"
+    ],
+    "summary": "List",
+    "description": "Lists the environments visible to the caller, in the PowerApps API's own projection. It overlaps but does not agree with BAPI's `/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments`: this shape carries `azureRegionHint`, `runtimeEndpoints` and `cluster`, and omits the BAPI admin fields. The list projection also differs slightly from the single read \u2014 the list reports `azureRegionHint` where the read reports `azureRegion`, and the read adds `clientUris`, `databaseType` and the expanded `governanceConfiguration.settings`.\n\nThe whole list is returned in one `value` array with no pagination.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "description": "`permissions` adds a `permissions` object to each environment naming every capability the caller holds in it \u2014 roughly doubling the payload. It is a capability map, not a role assignment list: keys such as `CreatePowerApp`, `DeleteAnyFlow`, `SetDLPPolicy` and `AdminReadEnvironment` are present when granted and absent when not.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "permissions"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environments visible to the caller.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/environments/{environmentId}": {
+   "get": {
+    "operationId": "environments_get",
+    "tags": [
+     "Environment"
+    ],
+    "summary": "Read",
+    "description": "Reads one environment. `~Default` may be used in place of the id to read the tenant's default environment without knowing it, and the response for it is noticeably smaller because the default environment has no `linkedEnvironmentMetadata`.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "description": "Environment id, or the literal `~Default` for the tenant's default environment.",
+      "schema": {
+       "type": "string",
+       "example": "00000000-0000-0000-0000-000000000000"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Environment"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No environment with that id exists in the caller's tenant, or the caller cannot see it.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/gateways": {
+   "get": {
+    "operationId": "gateways_list",
+    "tags": [
+     "Gateway"
+    ],
+    "summary": "List",
+    "description": "Lists the on-premises data gateways the caller can use. Probed against a tenant with no gateways installed, so the 200 and the `value` envelope are confirmed but the item shape is not.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The gateways visible to the caller.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GatewayList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "azure_auth": {
+    "type": "oauth2",
+    "description": "Microsoft Entra ID OAuth2. The PowerApps API accepts tokens for the PowerApps service audience, the same audience BAPI accepts.",
+    "flows": {
+     "authorizationCode": {
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+      "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      "scopes": {
+       "https://service.powerapps.com/.default": "Power Platform (PowerApps API + BAPI)"
+      }
+     }
+    }
+   }
+  },
+  "schemas": {
+   "ErrorResponse": {
+    "type": "object",
+    "description": "The error envelope every failing PowerApps API call returns. A 404 with an empty body means no such route exists; a 404 with this envelope means the route exists and the resource does not.",
+    "properties": {
+     "error": {
+      "$ref": "#/components/schemas/Error"
+     }
+    }
+   },
+   "Error": {
+    "type": "object",
+    "description": "A single error. Deeper failures nest: the outer error is a generic wrapper such as `BusinessAppPlatformRequestFailed` and the specific cause sits in `details`.",
+    "properties": {
+     "code": {
+      "type": "string",
+      "description": "A stable, non-localised symbol. Codes observed live include `InvalidApiVersion`, `InvalidAppFilterCombination`, `MissingEnvironmentFilter`, `ApiResourceNotFound`, `ApplicationNotFound`, `EnvironmentNotFound`, `ServiceToServiceEnvironmentNotFound`, `BusinessAppPlatformRequestFailed`, `MultipleErrorsOccurred`, `FullNonLocalizedError`, `InvalidAuthenticationToken` and `Forbidden`."
+     },
+     "message": {
+      "type": "string",
+      "description": "Human-readable and localised. Several codes put machine-usable content here anyway: `InvalidApiVersion` enumerates every accepted `api-version`, `InvalidAppFilterCombination` states the supported `$filter`/`$expand` grammar, and wrapper errors embed a correlation id."
+     },
+     "details": {
+      "type": "array",
+      "description": "Nested causes. A `FullNonLocalizedError` entry carries the unlocalised error object re-serialised as a JSON *string* in its `message`.",
+      "items": {
+       "$ref": "#/components/schemas/Error"
+      }
+     }
+    }
+   },
+   "Principal": {
+    "type": "object",
+    "description": "An Entra identity referenced by a Power Platform resource. Which fields are populated varies with the caller's directory visibility: `email`/`userPrincipalName` are frequently absent even when `id` and `displayName` are present.",
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Entra object id.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "displayName": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string",
+      "format": "email"
+     },
+     "userPrincipalName": {
+      "type": "string"
+     },
+     "tenantId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "type": {
+      "type": "string",
+      "description": "The resource type of the principal reference.",
+      "enum": [
+       "User",
+       "ServicePrincipal",
+       "Group"
+      ]
+     },
+     "userType": {
+      "type": "string",
+      "description": "Directory membership relative to the resource's tenant.",
+      "enum": [
+       "Member",
+       "Guest"
+      ]
+     }
+    }
+   },
+   "AppList": {
+    "type": "object",
+    "description": "A page of canvas apps. Flat and complete \u2014 no continuation token or `@odata.*` metadata is returned.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/App"
+      }
+     }
+    }
+   },
+   "App": {
+    "type": "object",
+    "description": "A canvas app. Model-driven apps are Dataverse solution components and do not appear here.",
+    "properties": {
+     "name": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The app id; unique per tenant.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "id": {
+      "type": "string",
+      "description": "Full resource path.",
+      "example": "/providers/Microsoft.PowerApps/apps/00000000-0000-0000-0000-000000000000"
+     },
+     "type": {
+      "type": "string",
+      "enum": [
+       "Microsoft.PowerApps/apps"
+      ]
+     },
+     "properties": {
+      "$ref": "#/components/schemas/AppProperties"
+     }
+    },
+    "x-probe-verified": false
+   },
+   "AppProperties": {
+    "type": "object",
+    "description": "The properties of a canvas app. Only the subset the Terraform provider consumes is modelled here: the probe tenant contained no canvas apps in any of its 14 environments, so no live app object was ever observed and the field set could not be widened or its optionality confirmed.",
+    "properties": {
+     "displayName": {
+      "type": "string"
+     },
+     "owner": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/Principal"
+       }
+      ],
+      "description": "The current owner. Distinct from `createdBy`: ownership can be reassigned by an admin."
+     },
+     "createdBy": {
+      "$ref": "#/components/schemas/Principal"
+     },
+     "lastModifiedBy": {
+      "$ref": "#/components/schemas/Principal"
+     },
+     "lastPublishedBy": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/Principal"
+       }
+      ],
+      "description": "Who last published the app. An app can be modified without being published, so this trails `lastModifiedBy`."
+     },
+     "createdTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "lastModifiedTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "lastPublishTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the app was last published. Absent or empty on an app that has only ever been saved as a draft \u2014 a published version is what players run, so this, not `lastModifiedTime`, is what end users see."
+     },
+     "environment": {
+      "$ref": "#/components/schemas/AppEnvironmentRef"
+     }
+    },
+    "x-probe-verified": false
+   },
+   "AppEnvironmentRef": {
+    "type": "object",
+    "description": "The environment an app belongs to, denormalised onto the app so a cross-environment list stays self-describing.",
+    "properties": {
+     "id": {
+      "type": "string",
+      "example": "/providers/Microsoft.PowerApps/environments/00000000-0000-0000-0000-000000000000"
+     },
+     "name": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "location": {
+      "type": "string",
+      "description": "Azure geography of the environment, lower-case and without spaces.",
+      "example": "unitedstates"
+     }
+    },
+    "x-probe-verified": false
+   },
+   "ConnectorList": {
+    "type": "object",
+    "description": "The connector catalogue for one environment. Returned whole \u2014 around 1700 entries and 3 MB on a normal tenant \u2014 with no pagination.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Connector"
+      }
+     }
+    }
+   },
+   "Connector": {
+    "type": "object",
+    "description": "A connector, called an 'API' throughout this surface. Covers first-party Microsoft connectors, certified marketplace connectors, independent-publisher connectors and an environment's own custom connectors.",
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "The catalogue name. First-party and marketplace connectors are prefixed `shared_`; custom connectors are not. This is the value DLP policies use to name a connector.",
+      "example": "shared_sharepointonline"
+     },
+     "id": {
+      "type": "string",
+      "example": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+     },
+     "type": {
+      "type": "string",
+      "enum": [
+       "Microsoft.PowerApps/apis"
+      ]
+     },
+     "properties": {
+      "$ref": "#/components/schemas/ConnectorProperties"
+     }
+    },
+    "x-probe-verified": true
+   },
+   "ConnectorProperties": {
+    "type": "object",
+    "description": "Connector metadata. Nothing here is marked required: the field counts in the descriptions come from a full catalogue read of a production tenant, and the fields present on every one of ~1700 connectors are `displayName`, `iconUri`, `iconBrandColor`, `apiEnvironment`, `isCustomApi`, `blobUrisAreProxied`, `connectionParameters`, `metadata`, `capabilities`, `createdTime`, `changedTime`, `tier`, `publisher`, `rateLimit` and `apiVersion`.",
+    "properties": {
+     "displayName": {
+      "type": "string"
+     },
+     "description": {
+      "type": "string",
+      "description": "Marketing prose; absent on a handful of connectors."
+     },
+     "iconUri": {
+      "type": "string",
+      "format": "uri",
+      "description": "Publicly reachable PNG on `static.powerapps.com`, versioned by connector release."
+     },
+     "iconBrandColor": {
+      "type": "string",
+      "description": "Hex colour the maker portal tiles the icon against. Casing is inconsistent across the catalogue (`#da3b01`, `#0078D4`) and it is sometimes the empty string.",
+      "example": "#da3b01"
+     },
+     "tier": {
+      "type": "string",
+      "description": "Licensing tier, and the single most consequential field here: `Premium` connectors require a per-user or per-app Power Apps / Power Automate licence, `Standard` ones are covered by seeded Microsoft 365 licences. On a current catalogue the great majority are Premium (1487 of 1710 observed).",
+      "enum": [
+       "Standard",
+       "Premium"
+      ]
+     },
+     "publisher": {
+      "type": "string",
+      "description": "Free text, not an identifier \u2014 the same publisher appears as both `Microsoft` and `Microsoft Corporation`, and independent publishers appear under personal names. Use `metadata.source` to tell first-party from community connectors, not this.",
+      "example": "Microsoft"
+     },
+     "releaseTag": {
+      "type": "string",
+      "description": "Release channel. `Preview` connectors may change or be withdrawn and are the majority of the catalogue. One catalogue entry carries the lower-case `preview`, so match case-insensitively.",
+      "enum": [
+       "Production",
+       "Preview",
+       "preview"
+      ]
+     },
+     "capabilities": {
+      "type": "array",
+      "description": "What the connector can do, and therefore where it can be used. `actions` and `triggers` are the Power Automate verbs; `tabular` means it exposes CDP tabular data sources usable as a Power Apps data source; `blob` the CDP blob equivalent; `cloud` and `gateway` are the reachability modes (a `gateway` connector can reach on-premises data through an installed data gateway, `vnetgateway` through a virtual-network gateway); `federatedKnowledgeSource` marks it usable as a Copilot knowledge source; `graphconnector` as a Microsoft Graph connector. Singular `action`/`trigger` spellings occur on a few entries and mean the same as the plural forms.",
+      "items": {
+       "type": "string",
+       "enum": [
+        "actions",
+        "triggers",
+        "action",
+        "trigger",
+        "tabular",
+        "blob",
+        "cloud",
+        "gateway",
+        "vnetgateway",
+        "federatedKnowledgeSource",
+        "graphconnector",
+        "composite"
+       ]
+      }
+     },
+     "isCustomApi": {
+      "type": "boolean",
+      "description": "True for a custom connector created inside an environment, false for anything from the shared catalogue. Usable as a `$filter` key on this path: `isCustomApi eq 'true'`."
+     },
+     "apiEnvironment": {
+      "type": "string",
+      "description": "Where the connector's runtime lives. Every catalogue connector observed is `Shared`.",
+      "enum": [
+       "Shared"
+      ]
+     },
+     "termsOfUseUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Present on the 319 connectors whose publisher imposes terms of use. These are excluded from the list unless `showApisWithToS=true` is sent."
+     },
+     "documentationUrl": {
+      "type": "string",
+      "format": "uri"
+     },
+     "createdTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "changedTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last catalogue update \u2014 bumped by connector releases, not by anything in the caller's tenant."
+     },
+     "rateLimit": {
+      "type": "integer",
+      "description": "Zero on every catalogue connector observed; real throttling is expressed in the connector's own swagger, not here."
+     },
+     "apiVersion": {
+      "type": "string",
+      "description": "The literal string `None` on every catalogue connector observed, not a version number and not null."
+     },
+     "blobUrisAreProxied": {
+      "type": "boolean"
+     },
+     "scopes": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ConnectorScopes"
+       }
+      ],
+      "description": "The consent text shown to a user creating a connection. Present on 397 of ~1700 connectors."
+     },
+     "connectionParameters": {
+      "type": "object",
+      "description": "The inputs required to create a connection, keyed by parameter name. Compound keys use a colon (`token:TenantId`) to denote a value derived from another parameter.",
+      "additionalProperties": {
+       "$ref": "#/components/schemas/ConnectionParameter"
+      }
+     },
+     "connectionParameterSets": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ConnectionParameterSets"
+       }
+      ],
+      "description": "Present on the 115 connectors that offer a choice of authentication method. When present it supersedes `connectionParameters` for connection creation."
+     },
+     "metadata": {
+      "$ref": "#/components/schemas/ConnectorMetadata"
+     },
+     "interfaces": {
+      "type": "object",
+      "description": "The Connected Data Platform contracts the connector implements, keyed by interface name \u2014 `CDPTabular1` for tabular data sources, `CDPBlob0`/`CDPBlob1` for blob ones. Only the ~60 connectors usable as Power Apps data sources carry a non-empty value.",
+      "additionalProperties": {
+       "$ref": "#/components/schemas/ConnectorInterface"
+      }
+     },
+     "swagger": {
+      "type": "object",
+      "description": "The connector's full OpenAPI 2.0 document: `paths`, `definitions`, `x-ms-capabilities` and `x-ms-connector-metadata`. Returned only by the single-connector read, never by the list.",
+      "additionalProperties": true
+     },
+     "runtimeUrls": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "format": "uri"
+      },
+      "description": "Per-environment API Hub endpoints the connection actually calls, of the form `https://<environmentId>.<n>.common.<geo>.azure-apihub.net/apim/<connector>`. Returned by the single read, and by the list only when `showAllDlpEnforceableApis` is *not* set."
+     },
+     "primaryRuntimeUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "The first entry of `runtimeUrls`; same visibility rule."
+     },
+     "doNotUseApiHubNetRuntimeUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "A deprecated alias of `primaryRuntimeUrl`, named for the `azure-apihub.net` host callers are told not to depend on. Same visibility rule."
+     }
+    },
+    "x-probe-verified": true
+   },
+   "ConnectorScopes": {
+    "type": "object",
+    "description": "The plain-language consent summary a user sees when creating a connection.",
+    "properties": {
+     "will": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "What the connector will do with the user's data."
+     },
+     "wont": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "What it explicitly will not do; usually empty."
+     }
+    }
+   },
+   "ConnectorMetadata": {
+    "type": "object",
+    "description": "Publishing and lifecycle metadata about the connector itself, as opposed to what it connects to.",
+    "properties": {
+     "source": {
+      "type": "string",
+      "description": "How the connector reached the catalogue, and the reliable way to distinguish community content from certified content: `marketplace` is a Microsoft-certified connector, `independentpublisher` is a community-submitted one, and `manual` is hand-registered.",
+      "enum": [
+       "marketplace",
+       "independentpublisher",
+       "manual"
+      ]
+     },
+     "brandColor": {
+      "type": "string",
+      "description": "Duplicate of `properties.iconBrandColor`; often empty."
+     },
+     "version": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ConnectorVersion"
+       }
+      ],
+      "description": "Current and previous connector build."
+     },
+     "useNewApimVersion": {
+      "type": "string",
+      "description": "Whether the connector runs on the newer API Management runtime. A *string*, not a boolean, and only ever the value `true` when present.",
+      "enum": [
+       "true"
+      ]
+     },
+     "stackOwner": {
+      "type": "string",
+      "description": "The team or company that owns the backing service, which can differ from `publisher` when a partner publishes a connector for someone else's product."
+     },
+     "allowSharing": {
+      "type": "boolean",
+      "description": "Whether a connection made with this connector may be shared with other users. Absent on most connectors; when absent the platform default applies."
+     },
+     "hideKey": {
+      "type": "string",
+      "description": "A gate string. A connector carrying one is hidden from the maker experience unless the tenant or request supplies the matching key, which is how private previews, deprecated connectors (`Deprecated`) and internal-only connectors are kept out of the catalogue. Casing varies (`hideKey`, `HideKey`, `hidekey`)."
+     },
+     "publicSourceSite": {
+      "type": "string",
+      "description": "For independent-publisher connectors, where the source lives."
+     },
+     "lastUpdated": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "connectionLimits": {
+      "type": "object",
+      "description": "Caps on how many connections may exist, keyed by scope; the only key observed is `*`, meaning all scopes.",
+      "additionalProperties": true
+     },
+     "isSponsoredConnector": {
+      "type": "boolean"
+     },
+     "isNative": {
+      "type": "boolean"
+     },
+     "documentationUrl": {
+      "type": "string",
+      "format": "uri"
+     },
+     "fileMediaTypes": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "OperationIcons": {
+      "type": "object",
+      "additionalProperties": true
+     },
+     "regionSettings": {
+      "type": "object",
+      "additionalProperties": true
+     }
+    }
+   },
+   "ConnectorVersion": {
+    "type": "object",
+    "description": "Connector build identifiers, of the form `releases/v<major>.<minor>.<build>\\<full build number>`.",
+    "properties": {
+     "current": {
+      "type": "string",
+      "example": "releases/v1.0.1813\\1.0.1813.4769"
+     },
+     "previous": {
+      "type": "string"
+     }
+    }
+   },
+   "ConnectionParameter": {
+    "type": "object",
+    "description": "One input needed to create a connection.",
+    "properties": {
+     "type": {
+      "type": "string",
+      "description": "How the value is collected and stored. `securestring` is masked and write-only; `oauthSetting` means the platform runs an OAuth flow instead of prompting; `gatewaySetting` binds the connection to an on-premises data gateway; `connection` chains to another connection.",
+      "enum": [
+       "string",
+       "securestring",
+       "bool",
+       "int",
+       "oauthSetting",
+       "gatewaySetting",
+       "connection"
+      ]
+     },
+     "uiDefinition": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Label, description, tooltip and `constraints` for the prompt. `constraints.required` is the *string* `\"true\"`, and `constraints.capability` restricts the parameter to particular `capabilities` values such as `cloud` or `gateway`."
+     },
+     "oAuthSettings": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Present when `type` is `oauthSetting`: `identityProvider`, `clientId`, `scopes`, `redirectMode`, `redirectUrl` and per-provider `customParameters`."
+     },
+     "gatewaySettings": {
+      "type": "object",
+      "additionalProperties": true
+     },
+     "allowedValues": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": true
+      },
+      "description": "Closed value list for the prompt."
+     },
+     "defaultValue": {},
+     "metadata": {
+      "type": "object",
+      "additionalProperties": true
+     }
+    }
+   },
+   "ConnectionParameterSets": {
+    "type": "object",
+    "description": "A choice between alternative authentication methods. The user picks one named set and supplies only that set's parameters.",
+    "properties": {
+     "uiDefinition": {
+      "type": "object",
+      "additionalProperties": true
+     },
+     "values": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": true
+      },
+      "description": "Each entry has a `name` (e.g. `oauth`, `BasicAuthentication`), a `uiDefinition` and its own `parameters` map of `ConnectionParameter`."
+     }
+    }
+   },
+   "ConnectorInterface": {
+    "type": "object",
+    "description": "One Connected Data Platform interface implementation.",
+    "properties": {
+     "revisions": {
+      "type": "object",
+      "description": "Keyed by revision number as a string.",
+      "additionalProperties": {
+       "type": "object",
+       "properties": {
+        "baseUrl": {
+         "type": "string",
+         "example": "/"
+        },
+        "status": {
+         "type": "string",
+         "enum": [
+          "Production",
+          "Preview"
+         ]
+        }
+       }
+      }
+     }
+    }
+   },
+   "ConnectionList": {
+    "type": "object",
+    "description": "Connection instances. A connection is a user's stored, authenticated binding to one connector in one environment.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Connection"
+      }
+     }
+    }
+   },
+   "Connection": {
+    "type": "object",
+    "description": "One connection instance.",
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "The connection id: a 32-character lower-case hex string, not a hyphenated GUID.",
+      "pattern": "^[0-9a-f]{32}$",
+      "example": "0123456789abcdef0123456789abcdef"
+     },
+     "id": {
+      "type": "string",
+      "example": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline/connections/0123456789abcdef0123456789abcdef"
+     },
+     "type": {
+      "type": "string",
+      "enum": [
+       "Microsoft.PowerApps/scopes/apis/connections"
+      ]
+     },
+     "properties": {
+      "$ref": "#/components/schemas/ConnectionProperties"
+     }
+    },
+    "x-probe-verified": true
+   },
+   "ConnectionProperties": {
+    "type": "object",
+    "description": "The state of a connection. `apiId`, `displayName`, `iconUri`, `statuses`, `keywordsRemaining`, `isSsoConnection`, `createdBy`, `createdTime`, `lastModifiedTime`, `environment` and `allowSharing` were present on every connection observed; the rest vary by connector and authentication mode.",
+    "properties": {
+     "apiId": {
+      "type": "string",
+      "description": "Resource path of the connector this connection is for.",
+      "example": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+     },
+     "displayName": {
+      "type": "string",
+      "description": "Usually the account the connection authenticates as, not a name the user chose."
+     },
+     "iconUri": {
+      "type": "string",
+      "format": "uri",
+      "description": "Copied from the connector."
+     },
+     "statuses": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ConnectionStatus"
+      },
+      "description": "Current health. A connection needing re-authentication reports something other than `Connected` here, which is what makes this the field to audit."
+     },
+     "accountName": {
+      "type": "string",
+      "description": "The upstream account identifier, when the connector reports one."
+     },
+     "expirationTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the stored credential lapses and the connection must be re-authorised. Present only for connections whose credential expires \u2014 12 of 21 observed."
+     },
+     "keywordsRemaining": {
+      "type": "integer",
+      "description": "Remaining search-keyword budget for connectors that meter it."
+     },
+     "isSsoConnection": {
+      "type": "boolean",
+      "description": "True when the connection reuses the signed-in user's identity rather than a separately consented credential."
+     },
+     "allowSharing": {
+      "type": "boolean",
+      "description": "Whether this connection may be shared with other users."
+     },
+     "connectionParameters": {
+      "type": "object",
+      "description": "The non-secret parameter values the connection was created with; secrets are never returned. Present on about half the connections observed, most often just `sku`.",
+      "additionalProperties": true
+     },
+     "connectionParametersSet": {
+      "type": "object",
+      "description": "Which `connectionParameterSets` entry was chosen, for connectors offering a choice of authentication method. Note the singular `Set` here against the plural on the connector.",
+      "additionalProperties": true
+     },
+     "testLinks": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TestLink"
+      },
+      "description": "Ready-made requests that verify the connection is still usable."
+     },
+     "createdBy": {
+      "$ref": "#/components/schemas/Principal"
+     },
+     "createdTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "lastModifiedTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "environment": {
+      "$ref": "#/components/schemas/EnvironmentRef"
+     }
+    },
+    "x-probe-verified": true
+   },
+   "ConnectionStatus": {
+    "type": "object",
+    "description": "One health entry for a connection. Every connection observed on a working tenant carried exactly one entry, so the unhealthy shape is unverified.",
+    "properties": {
+     "status": {
+      "type": "string",
+      "description": "`Connected` is the healthy state and the only value observed.",
+      "example": "Connected"
+     }
+    },
+    "additionalProperties": true
+   },
+   "TestLink": {
+    "type": "object",
+    "description": "A pre-built request that exercises a connection.",
+    "properties": {
+     "requestUri": {
+      "type": "string",
+      "format": "uri",
+      "description": "An API Hub URL ending in `/testconnection`; it embeds the environment id and the connection id."
+     },
+     "method": {
+      "type": "string",
+      "description": "Lower-case.",
+      "enum": [
+       "get",
+       "post"
+      ]
+     }
+    }
+   },
+   "EnvironmentRef": {
+    "type": "object",
+    "description": "A short reference to an environment.",
+    "properties": {
+     "id": {
+      "type": "string",
+      "example": "/providers/Microsoft.PowerApps/environments/00000000-0000-0000-0000-000000000000"
+     },
+     "name": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     }
+    }
+   },
+   "EnvironmentList": {
+    "type": "object",
+    "description": "The environments visible to the caller, returned whole.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Environment"
+      }
+     }
+    }
+   },
+   "Environment": {
+    "type": "object",
+    "description": "An environment as the PowerApps API projects it.",
+    "properties": {
+     "id": {
+      "type": "string",
+      "example": "/providers/Microsoft.PowerApps/environments/00000000-0000-0000-0000-000000000000"
+     },
+     "name": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The environment id.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "type": {
+      "type": "string",
+      "enum": [
+       "Microsoft.PowerApps/environments"
+      ]
+     },
+     "location": {
+      "type": "string",
+      "description": "Azure geography.",
+      "example": "unitedstates"
+     },
+     "properties": {
+      "$ref": "#/components/schemas/EnvironmentProperties"
+     },
+     "permissions": {
+      "type": "object",
+      "description": "Only present when `$expand=permissions` was requested. A capability map: each key is a capability the caller holds in this environment and its value is `{\"displayName\": ...}`. Keys observed include `ReadEnvironment`, `UpdateEnvironment`, `DeleteEnvironment`, `CreatePowerApp`, `CreateFlow`, `CreateBot`, `CreateCustomApi`, `CreateGateway`, `CreateFunction`, `CreateSharePointCustomFormCanvasApp`, `GenerateResourceStorage`, `ExportEnvironmentPackage`, `ImportEnvironmentPackage`, `AdminReadEnvironment`, `SetDLPPolicy`, `ListAnyPowerApp`, `ListAnyFlow`, `DeleteAnyPowerApp`, `DeleteAnyFlow`, `AddEnvironmentRoleAssignment`, `RemoveEnvironmentRoleAssignment`, `ReadEnvironmentRoleInformation` and `ModifyDatabaseRoleAssignments`. A capability the caller lacks is absent rather than false.",
+      "additionalProperties": {
+       "type": "object",
+       "properties": {
+        "displayName": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   },
+   "EnvironmentProperties": {
+    "type": "object",
+    "description": "Environment properties. The list and the single read differ: the list returns `azureRegionHint`, the read returns `azureRegion` and adds `clientUris`, `databaseType` and the nested `governanceConfiguration.settings`.",
+    "properties": {
+     "displayName": {
+      "type": "string"
+     },
+     "description": {
+      "type": "string"
+     },
+     "azureRegionHint": {
+      "type": "string",
+      "description": "Concrete Azure region backing the environment, finer-grained than `location`. List projection only.",
+      "example": "eastus"
+     },
+     "azureRegion": {
+      "type": "string",
+      "description": "The same value under the name the single read uses."
+     },
+     "environmentSku": {
+      "type": "string",
+      "description": "Capacity and lifecycle class. `Default` is the tenant's single auto-created environment, which cannot be deleted; `Developer` is a free per-maker environment; `Trial` expires; `Sandbox` can be reset and copied; `Production` cannot be reset.",
+      "enum": [
+       "Default",
+       "Developer",
+       "Trial",
+       "Sandbox",
+       "Production"
+      ]
+     },
+     "environmentType": {
+      "type": "string",
+      "description": "The service ring, not the SKU \u2014 a `Sandbox` environment is still `Production` here.",
+      "enum": [
+       "Production",
+       "NotSpecified"
+      ]
+     },
+     "provisioningState": {
+      "type": "string",
+      "description": "Lifecycle state. Only `Succeeded` environments are usable.",
+      "enum": [
+       "Succeeded",
+       "Failed",
+       "Provisioning",
+       "Deleting"
+      ]
+     },
+     "creationType": {
+      "type": "string",
+      "description": "`DefaultTenant` marks the environment the platform created with the tenant; `User` marks one someone provisioned.",
+      "enum": [
+       "DefaultTenant",
+       "User"
+      ]
+     },
+     "isDefault": {
+      "type": "boolean",
+      "description": "True for exactly one environment per tenant \u2014 the one `~Default` resolves to."
+     },
+     "lifecycleAuthority": {
+      "type": "string",
+      "description": "Which system owns the environment's lifecycle. `Environment` means Power Platform itself, as opposed to an environment whose lifecycle is driven by a linked external resource.",
+      "enum": [
+       "Environment"
+      ]
+     },
+     "retentionPeriod": {
+      "type": "string",
+      "description": "ISO 8601 duration a soft-deleted environment stays recoverable before it is purged.",
+      "example": "P7D"
+     },
+     "trialScenarioType": {
+      "type": "string",
+      "enum": [
+       "None"
+      ]
+     },
+     "databaseType": {
+      "type": "string",
+      "description": "`CommonDataService` once Dataverse is provisioned; `None` before. Single read only.",
+      "enum": [
+       "None",
+       "CommonDataService"
+      ]
+     },
+     "createdTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "createdBy": {
+      "$ref": "#/components/schemas/Principal"
+     },
+     "lastModifiedTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "lastModifiedBy": {
+      "$ref": "#/components/schemas/Principal"
+     },
+     "usedBy": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/Principal"
+       }
+      ],
+      "description": "The single maker a `Developer` environment belongs to. Absent on shared environments."
+     },
+     "parentEnvironmentGroup": {
+      "type": "object",
+      "description": "The environment group this environment is a member of, if any; group membership is how rule-based governance policies are applied in bulk.",
+      "properties": {
+       "id": {
+        "type": "string",
+        "format": "uuid",
+        "example": "00000000-0000-0000-0000-000000000000"
+       }
+      }
+     },
+     "connectedGroups": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": true
+      },
+      "description": "Empty on every environment observed."
+     },
+     "clientUris": {
+      "type": "object",
+      "description": "Deep links into the portals for this environment. Single read only.",
+      "properties": {
+       "admin": {
+        "type": "string",
+        "format": "uri",
+        "description": "Power Platform admin centre.",
+        "example": "https://admin.powerplatform.microsoft.com/environments/environment/00000000-0000-0000-0000-000000000000/hub"
+       },
+       "maker": {
+        "type": "string",
+        "format": "uri",
+        "description": "Maker portal.",
+        "example": "https://make.powerapps.com/environments/00000000-0000-0000-0000-000000000000/home"
+       }
+      }
+     },
+     "runtimeEndpoints": {
+      "$ref": "#/components/schemas/RuntimeEndpoints"
+     },
+     "linkedEnvironmentMetadata": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/LinkedEnvironmentMetadata"
+       }
+      ],
+      "description": "The Dataverse organization backing the environment. Absent entirely when no database has been provisioned \u2014 that absence, rather than a null, is how you detect a Dataverse-less environment."
+     },
+     "states": {
+      "$ref": "#/components/schemas/EnvironmentStates"
+     },
+     "updateCadence": {
+      "type": "object",
+      "description": "Which servicing wave the environment rides. `Frequent` is first release, `Moderate` the standard schedule \u2014 this is how early an environment receives platform updates.",
+      "properties": {
+       "id": {
+        "type": "string",
+        "enum": [
+         "Frequent",
+         "Moderate"
+        ]
+       }
+      }
+     },
+     "cluster": {
+      "$ref": "#/components/schemas/EnvironmentCluster"
+     },
+     "protectionStatus": {
+      "type": "object",
+      "description": "Encryption-key custody for the environment's data.",
+      "properties": {
+       "keyManagedBy": {
+        "type": "string",
+        "description": "`Microsoft` for service-managed keys; a customer-managed key set through an enterprise policy reports otherwise.",
+        "enum": [
+         "Microsoft",
+         "Customer"
+        ]
+       }
+      }
+     },
+     "governanceConfiguration": {
+      "$ref": "#/components/schemas/GovernanceConfiguration"
+     },
+     "notificationMetadata": {
+      "type": "object",
+      "nullable": true,
+      "description": "State of the environment's in-product notification banner. Observed as an explicit `null` on one environment, so read it defensively.",
+      "properties": {
+       "state": {
+        "type": "string",
+        "enum": [
+         "NotSpecified"
+        ]
+       },
+       "branding": {
+        "type": "string",
+        "enum": [
+         "NotSpecific"
+        ]
+       }
+      }
+     },
+     "appDraftingCopilotEnabled": {
+      "type": "boolean",
+      "description": "Whether makers may use Copilot to draft apps in this environment."
+     },
+     "enableAnalyticsForMakers": {
+      "type": "boolean",
+      "description": "Whether makers, not just admins, can see app usage analytics here."
+     }
+    },
+    "x-probe-verified": true
+   },
+   "RuntimeEndpoints": {
+    "type": "object",
+    "description": "Per-service base URLs for the environment, keyed by service name. Every environment-scoped call to Dataverse, Power Automate or Copilot Studio should be addressed through the endpoint given here rather than a constructed hostname, because they are cluster- and geography-specific.",
+    "properties": {
+     "microsoft.BusinessAppPlatform": {
+      "type": "string",
+      "format": "uri",
+      "example": "https://unitedstates.api.bap.microsoft.com"
+     },
+     "microsoft.CommonDataModel": {
+      "type": "string",
+      "format": "uri",
+      "description": "Dataverse."
+     },
+     "microsoft.PowerApps": {
+      "type": "string",
+      "format": "uri"
+     },
+     "microsoft.PowerAppsAdvisor": {
+      "type": "string",
+      "format": "uri"
+     },
+     "microsoft.PowerVirtualAgents": {
+      "type": "string",
+      "format": "uri",
+      "description": "Copilot Studio."
+     },
+     "microsoft.ApiManagement": {
+      "type": "string",
+      "format": "uri",
+      "description": "Connector runtime."
+     },
+     "microsoft.Flow": {
+      "type": "string",
+      "format": "uri",
+      "description": "Power Automate."
+     }
+    }
+   },
+   "LinkedEnvironmentMetadata": {
+    "type": "object",
+    "description": "The Dataverse organization linked to the environment. The single environment read returns a narrower projection than the list: `type`, `hostNameSuffix`, `webApiVersion`, `bapSolutionId`, `creationTemplates` and `modifiedTime` appear only in the list.",
+    "properties": {
+     "type": {
+      "type": "string",
+      "enum": [
+       "Dynamics365Instance"
+      ]
+     },
+     "resourceId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The Dataverse organization id. Distinct from the environment id, and the value Dataverse's own APIs key on.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "friendlyName": {
+      "type": "string"
+     },
+     "uniqueName": {
+      "type": "string",
+      "description": "The organization's unique name; the first label of `domainName`."
+     },
+     "domainName": {
+      "type": "string",
+      "description": "The organization host label, not a full hostname. The Dataverse host is `<domainName>.<hostNameSuffix>`.",
+      "example": "contoso"
+     },
+     "hostNameSuffix": {
+      "type": "string",
+      "description": "Geography-specific Dataverse domain; the numeric suffix identifies the CRM scale group serving the region.",
+      "example": "crm.dynamics.com"
+     },
+     "instanceUrl": {
+      "type": "string",
+      "format": "uri",
+      "example": "https://contoso.crm.dynamics.com/"
+     },
+     "instanceApiUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Base for the Dataverse Web API. Note the different host from `instanceUrl` \u2014 `<domain>.api.<suffix>` rather than `<domain>.<suffix>`.",
+      "example": "https://contoso.api.crm.dynamics.com/"
+     },
+     "version": {
+      "type": "string",
+      "description": "Dataverse platform build; changes with every service update wave.",
+      "example": "9.2.26000.100"
+     },
+     "webApiVersion": {
+      "type": "string",
+      "description": "OData version segment to address the Web API with, e.g. `https://<instanceApiUrl>/api/data/v9.0/`.",
+      "example": "v9.0"
+     },
+     "baseLanguage": {
+      "type": "integer",
+      "description": "LCID of the organization's base language, fixed at provisioning and not changeable afterwards. 1033 is en-US.",
+      "example": 1033
+     },
+     "instanceState": {
+      "type": "string",
+      "enum": [
+       "Ready",
+       "Provisioning",
+       "Disabled"
+      ]
+     },
+     "platformSku": {
+      "type": "string",
+      "enum": [
+       "Standard",
+       "Premium"
+      ]
+     },
+     "bapSolutionId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "creationTemplates": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "The first-party templates applied at provisioning. `D365_CDS` is a plain Dataverse database with no Dynamics 365 app installed.",
+      "example": [
+       "D365_CDS"
+      ]
+     },
+     "securityGroupId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Entra security group gating access to the Dataverse organization. The all-zeros GUID, or the field's absence, means no group restriction \u2014 every licensed user in the tenant can be added.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "createdTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "modifiedTime": {
+      "type": "string",
+      "format": "date-time"
+     }
+    }
+   },
+   "EnvironmentStates": {
+    "type": "object",
+    "description": "The environment's two independent state machines: whether it is provisioned, and whether it is running.",
+    "properties": {
+     "management": {
+      "type": "object",
+      "description": "Provisioning state.",
+      "properties": {
+       "id": {
+        "type": "string",
+        "enum": [
+         "Ready",
+         "NotSpecified"
+        ]
+       }
+      }
+     },
+     "runtime": {
+      "type": "object",
+      "description": "Whether apps and flows in the environment execute. An administratively disabled environment still exists and is still listed.",
+      "properties": {
+       "id": {
+        "type": "string",
+        "enum": [
+         "Enabled",
+         "Disabled",
+         "AdminMode",
+         "NotSpecified"
+        ]
+       },
+       "runtimeReasonCode": {
+        "type": "string",
+        "description": "Why the runtime is in that state; `NotSpecified` when simply enabled."
+       },
+       "requestedBy": {
+        "$ref": "#/components/schemas/Principal"
+       }
+      }
+     }
+    }
+   },
+   "EnvironmentCluster": {
+    "type": "object",
+    "description": "The service cluster hosting the environment. Determines which physical endpoints serve it and which servicing wave it belongs to; two environments in the same `location` can sit on different clusters.",
+    "properties": {
+     "category": {
+      "type": "string",
+      "description": "Servicing ring. `FirstRelease` clusters receive platform updates before `Prod` ones.",
+      "enum": [
+       "Prod",
+       "FirstRelease"
+      ]
+     },
+     "number": {
+      "type": "string",
+      "description": "Cluster ordinal, as a string.",
+      "example": "101"
+     },
+     "uriSuffix": {
+      "type": "string",
+      "description": "The suffix that composes environment-specific service hostnames.",
+      "example": "us-il101.gateway.prod.island"
+     },
+     "geoShortName": {
+      "type": "string",
+      "example": "US"
+     },
+     "environment": {
+      "type": "string",
+      "example": "Prod"
+     }
+    }
+   },
+   "GovernanceConfiguration": {
+    "type": "object",
+    "description": "Managed Environments configuration: the governance controls an admin can turn on for an environment.",
+    "properties": {
+     "protectionLevel": {
+      "type": "string",
+      "description": "Whether Managed Environments is on. `Basic` is an unmanaged environment; `Standard` is a Managed Environment, which unlocks sharing limits, maker welcome content, solution checker enforcement and usage insights \u2014 and requires premium licensing for every user of the environment.",
+      "enum": [
+       "Basic",
+       "Standard"
+      ]
+     },
+     "settings": {
+      "type": "object",
+      "description": "Present on the single read only.",
+      "properties": {
+       "extendedSettings": {
+        "$ref": "#/components/schemas/ExtendedGovernanceSettings"
+       }
+      }
+     }
+    }
+   },
+   "ExtendedGovernanceSettings": {
+    "type": "object",
+    "description": "Managed Environments controls. Every value is a *string*, including the booleans (`\"true\"`/`\"false\"`, lower case) and the numbers. Only the settings an admin has actually configured are returned, so an absent key means the platform default applies rather than false. The five settings observed live are marked as such; `suppressValidationEmails` and `solutionCheckerMode` come from the Terraform provider's DTO for the identical BAPI object and were not seen on this surface.",
+    "properties": {
+     "limitSharingMode": {
+      "type": "string",
+      "description": "How far a canvas app in this environment may be shared. `noLimit` places no restriction; `excludeSharingToSecurityGroups` forbids sharing to security groups, forcing makers to name individual users.",
+      "enum": [
+       "noLimit",
+       "excludeSharingToSecurityGroups"
+      ]
+     },
+     "maxLimitUserSharing": {
+      "type": "string",
+      "description": "Ceiling on how many individual users one canvas app may be shared with, as a decimal string. `-1` means no ceiling. Only meaningful while `limitSharingMode` restricts sharing.",
+      "example": "-1"
+     },
+     "isGroupSharingDisabled": {
+      "type": "string",
+      "description": "`true` blocks sharing apps with security groups outright.",
+      "enum": [
+       "true",
+       "false"
+      ]
+     },
+     "disableAiGeneratedDescriptions": {
+      "type": "string",
+      "description": "`true` stops the platform generating app and flow descriptions with AI.",
+      "enum": [
+       "true",
+       "false"
+      ]
+     },
+     "excludeEnvironmentFromAnalysis": {
+      "type": "string",
+      "description": "`true` keeps this environment out of tenant-level analytics and advisor recommendations \u2014 set it on environments whose usage would distort tenant reporting.",
+      "enum": [
+       "true",
+       "false"
+      ]
+     },
+     "suppressValidationEmails": {
+      "type": "string",
+      "description": "`true` stops the platform emailing makers about validation failures. Provider-sourced; not observed live.",
+      "enum": [
+       "true",
+       "false"
+      ]
+     },
+     "solutionCheckerMode": {
+      "type": "string",
+      "description": "Solution checker enforcement on solution import: `none` does not run it, `warn` runs it and lets the import proceed, `block` fails the import on a violation. Provider-sourced; not observed live.",
+      "enum": [
+       "none",
+       "warn",
+       "block"
+      ]
+     }
+    }
+   },
+   "GatewayList": {
+    "type": "object",
+    "description": "On-premises data gateways. Confirmed to return a `value` envelope; the probe tenant had no gateways installed, so the item shape is not verified and is left open.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": true
+      }
+     }
+    },
+    "x-probe-verified": false
+   }
+  }
+ }
+}

@@ -92,7 +92,7 @@
       "name": "api-version",
       "in": "query",
       "required": true,
-      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
       "schema": {
        "type": "string",
        "default": "2023-06-01",
@@ -129,7 +129,7 @@
       "name": "$filter",
       "in": "query",
       "required": false,
-      "description": "Only two forms are recognised: a `tagname`/`tagvalue` pair, or `Visibility` on its own. Any other key is ignored, and combining a filter with `$expand` is a 400 `InvalidAppFilterCombination` \u2014 the service supports one query type per request.",
+      "description": "Only two forms are recognised: a `tagname`/`tagvalue` pair, or `Visibility` on its own. Any other key is silently ignored rather than rejected, so a typo yields the unfiltered list. Cannot be combined with `$expand` \u2014 the service supports one query type per request and rejects the pair with `InvalidAppFilterCombination`.",
       "schema": {
        "type": "string",
        "example": "Visibility eq 'Teams'"
@@ -224,7 +224,7 @@
       "name": "api-version",
       "in": "query",
       "required": true,
-      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
       "schema": {
        "type": "string",
        "default": "2016-11-01",
@@ -261,7 +261,7 @@
       "name": "$filter",
       "in": "query",
       "required": false,
-      "description": "Same narrow grammar as the admin-scope list: a `tagname`/`tagvalue` pair, or `Visibility` alone, or `environment eq '<environmentId>'` to scope to one environment. Unrecognised keys are rejected with 400 `InvalidAppFilterCombination`, whose message states the supported grammar verbatim.",
+      "description": "Same narrow grammar as the admin-scope list: a `tagname`/`tagvalue` pair, or `Visibility` alone, or `environment eq '<environmentId>'` to scope to one environment. An unrecognised key is rejected with `InvalidAppFilterCombination`, whose message states the supported grammar verbatim.",
       "schema": {
        "type": "string",
        "example": "environment eq '00000000-0000-0000-0000-000000000000'"
@@ -325,7 +325,7 @@
       "name": "api-version",
       "in": "query",
       "required": true,
-      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
       "schema": {
        "type": "string",
        "default": "2019-05-01",
@@ -362,7 +362,7 @@
       "name": "$filter",
       "in": "query",
       "required": true,
-      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Omitting the parameter is a 400 `MissingEnvironmentFilter`.",
+      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Not optional here: omitting it is a `MissingEnvironmentFilter` error rather than an unfiltered list.",
       "schema": {
        "type": "string",
        "example": "environment eq '00000000-0000-0000-0000-000000000000'"
@@ -467,7 +467,7 @@
       "name": "api-version",
       "in": "query",
       "required": true,
-      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
       "schema": {
        "type": "string",
        "default": "2019-05-01",
@@ -504,7 +504,7 @@
       "name": "$filter",
       "in": "query",
       "required": true,
-      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Omitting the parameter is a 400 `MissingEnvironmentFilter`.",
+      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Not optional here: omitting it is a `MissingEnvironmentFilter` error rather than an unfiltered list.",
       "schema": {
        "type": "string",
        "example": "environment eq '00000000-0000-0000-0000-000000000000'"
@@ -578,7 +578,7 @@
       "name": "api-version",
       "in": "query",
       "required": true,
-      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
       "schema": {
        "type": "string",
        "default": "2016-11-01",
@@ -615,7 +615,7 @@
       "name": "$filter",
       "in": "query",
       "required": true,
-      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Omitting the parameter is a 400 `MissingEnvironmentFilter`.",
+      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Not optional here: omitting it is a `MissingEnvironmentFilter` error rather than an unfiltered list.",
       "schema": {
        "type": "string",
        "example": "environment eq '00000000-0000-0000-0000-000000000000'"
@@ -670,7 +670,7 @@
       "name": "api-version",
       "in": "query",
       "required": true,
-      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
       "schema": {
        "type": "string",
        "default": "2016-11-01",
@@ -707,7 +707,7 @@
       "name": "$filter",
       "in": "query",
       "required": true,
-      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Omitting the parameter is a 400 `MissingEnvironmentFilter`.",
+      "description": "Scopes the request to one environment. The only recognised form is `environment eq '<environmentId>'`. `~Default` may be used in place of the id to mean the tenant's default environment. Not optional here: omitting it is a `MissingEnvironmentFilter` error rather than an unfiltered list.",
       "schema": {
        "type": "string",
        "example": "environment eq '00000000-0000-0000-0000-000000000000'"
@@ -773,7 +773,7 @@
       "name": "api-version",
       "in": "query",
       "required": true,
-      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
       "schema": {
        "type": "string",
        "default": "2016-11-01",
@@ -855,7 +855,7 @@
       "name": "api-version",
       "in": "query",
       "required": true,
-      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
       "schema": {
        "type": "string",
        "default": "2016-11-01",
@@ -949,7 +949,7 @@
       "name": "api-version",
       "in": "query",
       "required": true,
-      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
       "schema": {
        "type": "string",
        "default": "2016-11-01",
@@ -1025,13 +1025,13 @@
      "Gateway"
     ],
     "summary": "List",
-    "description": "Lists the on-premises data gateways the caller can use. Probed against a tenant with no gateways installed, so the 200 and the `value` envelope are confirmed but the item shape is not.",
+    "description": "Lists the on-premises data gateways the caller can use, which is how a connector with the `gateway` capability reaches data behind a corporate firewall. Probed against a tenant with no gateways installed, so the envelope is confirmed but the item shape is not.",
     "parameters": [
      {
       "name": "api-version",
       "in": "query",
       "required": true,
-      "description": "The service rejects an unknown or empty value with 400 `InvalidApiVersion` and echoes the full list of versions it accepts for provider `Microsoft.PowerApps`; the enum here is that list. Older versions are still routable \u2014 the apps list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
       "schema": {
        "type": "string",
        "default": "2016-11-01",
@@ -1429,7 +1429,8 @@
       "description": "The literal string `None` on every catalogue connector observed, not a version number and not null."
      },
      "blobUrisAreProxied": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Whether blob URIs the connector returns are rewritten to go back through the API Hub proxy rather than pointing at the backing store directly. False on every catalogue connector observed."
      },
      "scopes": {
       "allOf": [
@@ -1568,10 +1569,12 @@
       "additionalProperties": true
      },
      "isSponsoredConnector": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Marks a connector whose publisher sponsors its inclusion. Present on two catalogue entries."
      },
      "isNative": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Marks a connector built into the platform rather than published to it. Present on one catalogue entry."
      },
      "documentationUrl": {
       "type": "string",
@@ -1581,15 +1584,18 @@
       "type": "array",
       "items": {
        "type": "string"
-      }
+      },
+      "description": "MIME types the connector handles as file content."
      },
      "OperationIcons": {
       "type": "object",
-      "additionalProperties": true
+      "additionalProperties": true,
+      "description": "Per-operation icon overrides, keyed by operation id. Note the capitalised key."
      },
      "regionSettings": {
       "type": "object",
-      "additionalProperties": true
+      "additionalProperties": true,
+      "description": "Region-specific overrides for the connector's availability or endpoints."
      }
     }
    },
@@ -1645,7 +1651,9 @@
       },
       "description": "Closed value list for the prompt."
      },
-     "defaultValue": {},
+     "defaultValue": {
+      "description": "Pre-filled value for the prompt; type follows `type`."
+     },
      "metadata": {
       "type": "object",
       "additionalProperties": true
@@ -2157,7 +2165,8 @@
      },
      "microsoft.PowerAppsAdvisor": {
       "type": "string",
-      "format": "uri"
+      "format": "uri",
+      "description": "App checker / advisor recommendations for this environment."
      },
      "microsoft.PowerVirtualAgents": {
       "type": "string",
@@ -2253,6 +2262,7 @@
      "bapSolutionId": {
       "type": "string",
       "format": "uuid",
+      "description": "Identifies the platform solution package installed into the Dataverse organization when the environment was linked.",
       "example": "00000000-0000-0000-0000-000000000000"
      },
      "creationTemplates": {
@@ -2346,10 +2356,12 @@
      },
      "geoShortName": {
       "type": "string",
+      "description": "Two-letter geography code.",
       "example": "US"
      },
      "environment": {
       "type": "string",
+      "description": "Deployment ring of the cluster's own service instance, as opposed to `category`, which is its update wave.",
       "example": "Prod"
      }
     }

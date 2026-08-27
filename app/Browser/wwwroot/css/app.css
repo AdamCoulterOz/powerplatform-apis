@@ -395,10 +395,17 @@ html, body {
 
 /* --------------------------------------------------------------- method -- */
 
-/* KEEL GAP: reported. keel has no marker for an HTTP verb, so the verb is
-   painted here. Every colour is a keel token rather than a literal, so this
-   at least follows the theme, but the shape and the two densities below are
-   decisions keel should be making. Delete this block when keel grows one. */
+/* KEEL GAP: reported and settled. keel will not learn what an HTTP verb is,
+   which is right: the verb-to-colour mapping is this app's domain knowledge,
+   not a design-system concern. What keel is growing is the general marker at
+   the two densities below, filled for a listing and colour-only for a dense
+   row, with the tone left open.
+
+   So when that lands, the shape here goes and this block keeps only the map
+   from verb to keel tone. The verbs are a closed set with conventional colours
+   people already read, which is why they are their own scale rather than being
+   bent onto the semantic tones: PUT is amber because PUT is amber, not because
+   a PUT is a warning. Every value is a keel token, so it follows the theme. */
 
 .method {
   display: inline-flex;
@@ -464,12 +471,8 @@ html, body {
 
 /* ------------------------------------------------------- resource pages -- */
 
-/* A badge that is a link. keel's badge renders a span, so the badge class is
-   used directly on an anchor here, which is the static-consumer path keel
-   supports. Only the link behaviour is styled; the badge itself is keel's. */
-.badge-link { text-decoration: none; }
-.badge-link:hover { background: var(--surface-subtle); color: var(--text-primary); }
-
+/* The Microsoft mark inside the Learn badge. Microsoft's own brand colours, so
+   these four are literals on purpose and are not keel's to theme. */
 .badge__ms { width: 12px; height: 12px; flex: none; display: block; }
 
 /* one operation in a resource listing */

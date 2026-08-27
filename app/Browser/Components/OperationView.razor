@@ -24,8 +24,8 @@
             }
             @if (Operation.DocsUrl is { } docs)
             {
-                <a class="keel-badge keel-badge--neutral badge-link" href="@docs" target="_blank" rel="noopener"
-                   title="Read this operation on Microsoft Learn">
+                <KeelBadge Href="@docs" target="_blank" rel="noopener"
+                           title="Read this operation on Microsoft Learn">
                     <svg class="badge__ms" viewBox="0 0 23 23" aria-hidden="true">
                         <rect x="1" y="1" width="10" height="10" fill="#F25022" />
                         <rect x="12" y="1" width="10" height="10" fill="#7FBA00" />
@@ -33,7 +33,7 @@
                         <rect x="12" y="12" width="10" height="10" fill="#FFB900" />
                     </svg>
                     Learn
-                </a>
+                </KeelBadge>
             }
         </div>
     }
@@ -152,13 +152,15 @@
 
     protected override void OnParametersSet() => _selected = null;
 
-    // KEEL GAP: reported. KeelSegmented has no per-option tone, so a 2xx and a
-    // 4xx read the same here. The code itself still carries the meaning, which
-    // is why this is a plain segmented control rather than a hand-rolled one.
+    // The tone is on every option rather than only the selected one, so the
+    // whole set reads as successes and failures before anything is picked.
     private IReadOnlyList<KeelSegmented<string>.Option> ResponseOptions =>
         Operation.Responses
-            .Select(r => new KeelSegmented<string>.Option(r.Code, r.Code))
+            .Select(r => new KeelSegmented<string>.Option(r.Code, r.Code, Tone: ToneFor(r)))
             .ToList();
+
+    private static BadgeTone ToneFor(Response r) =>
+        r.IsSuccess ? BadgeTone.Success : r.IsError ? BadgeTone.Danger : BadgeTone.Neutral;
 
     // Request and response as HTTP files: the request line, the headers, then a
     // body rendered for its own content type. That is the shape the API speaks,

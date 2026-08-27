@@ -1,6 +1,6 @@
 # admin
 
-The Power Platform admin centre API (`api.admin.powerplatform.microsoft.com`, known internally as **Athena**): the service the admin centre itself calls. This spec covers its release-wave surface — the per-environment opt-in to a Dataverse release wave.
+The Power Platform admin centre API (`api.admin.powerplatform.microsoft.com`): the service the admin centre itself calls. This spec covers its release-wave surface — the per-environment opt-in to a Dataverse release wave.
 
 ## Why this one is different
 

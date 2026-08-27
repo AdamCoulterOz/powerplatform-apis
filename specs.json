@@ -19,7 +19,7 @@
   },
   {
     "id": "admin",
-    "title": "Power Platform Admin Centre API (Athena)",
+    "title": "Power Platform Admin Centre API",
     "url": "admin/oas/openapi.json",
     "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/admin"
   },

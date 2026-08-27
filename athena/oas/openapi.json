@@ -1,0 +1,437 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "Dataverse Synapse Link Orchestration API (athena)",
+  "version": "unversioned",
+  "description": "Unofficial. The orchestration service behind Dataverse **Link to Microsoft Fabric** and Azure Synapse Link -- known internally as *athena*, and formally as the first-party application \"Azure Synapse Link for Dataverse\". It is the service the maker portal's Link to Fabric wizard drives; it provisions the mirror lakehouse in a target Fabric workspace, writes the synapselinkprofile and datalakefolder rows into Dataverse server-side, and tears the link down again.\n\nThis is not the Power Platform admin centre API. That is a separate service on a separate host with a separate scope, specified in [admin](../admin).\n\nThree things make this boundary awkward and all three are load-bearing. There is **no global host**: the hostname is composed from the environment's gateway cluster, read from BAPI. There are **no read operations**: every operation creates or destroys a real Fabric integration, so nothing here can be exercised safely. And the service **answers a bare, bodiless 404 to every method it does not route**, with no Allow header and no error body, so route existence cannot be established the way it can elsewhere in this repo.\n\nConsequently every operation below carries x-probe-verified: false. The request shapes come from the Terraform provider's unmerged fabric_link feature branch, which itself derives them from a maker-portal HAR capture. What live probing did establish -- the host construction, the token audience, the identity model, and the fact that none of the rest is observable without mutating -- is recorded in the README and in the server and security descriptions here.",
+  "x-source": "Derived from an unmerged feature branch of a fork of microsoft/terraform-provider-power-platform (internal/services/fabric_link). The surface may change before that feature ships. This is the least-verified spec in this repository."
+ },
+ "servers": [
+  {
+   "url": "https://athenawebservice.{azureRegionPrefix}{clusterUriSuffix}.powerapps.com",
+   "description": "Per-environment host, composed rather than published: no environment or tenant endpoint advertises it. Read the environment from BAPI (GET /providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}) and join two of its fields -- properties.cluster.uriSuffix supplies clusterUriSuffix, and the compass-direction prefix of properties.azureRegion supplies azureRegionPrefix. The two concatenate with no separator, which is why the result reads as though a stray letter had been prepended to the cluster suffix.\n\nWorked example: an environment reporting cluster.uriSuffix us-il101.gateway.prod.island and azureRegion eastus resolves to athenawebservice.eus-il101.gateway.prod.island.powerapps.com.\n\nVerified live. Every hostname built this way is a registered upstream on the island gateway: it answers with x-ms-webservice, x-servicefabric and an upstream server-timing entry, whereas an invented sibling hostname on the same island is rejected by the gateway itself with a bare 404 carrying none of those headers. Note that DNS alone proves nothing -- *.{azureRegionPrefix}{clusterUriSuffix}.powerapps.com is a wildcard onto the island's ingress gateway, so arbitrary hostnames resolve. The gateway routes on the Host header, and only the response headers distinguish a real service from a made-up one.",
+   "x-probe-verified": true,
+   "variables": {
+    "azureRegionPrefix": {
+     "default": "e",
+     "description": "The compass-direction component of the environment's Azure region, lowercased, with the geography dropped: australiaeast and eastus both give e, australiasoutheast gives se, westus and westeurope give w, northeurope gives n. The geography itself is already carried by clusterUriSuffix, so this prefix supplies only the direction. A region with no direction component has no confirmed form.\n\nThe Terraform provider hardcodes e and carries a TODO about it; that is correct only for environments in an east-something region and silently wrong elsewhere.",
+     "x-observed-values": [
+      "e",
+      "n",
+      "se",
+      "w"
+     ],
+     "x-observed-values-note": "Confirmed by DNS against real island scale units: eau-, seau-, eus-, wus-, neu-, weu-. The set is plainly larger than this -- every Azure region hosting a Power Platform island contributes one -- so no enum is asserted."
+    },
+    "clusterUriSuffix": {
+     "default": "us-il101.gateway.prod.island",
+     "description": "The environment's gateway cluster, taken verbatim from properties.cluster.uriSuffix on the BAPI environment. It names the island scale unit that serves the environment and is stable for the life of the environment. Every BAPI api-version from 2020-10-01 onward returns it."
+    }
+   }
+  }
+ ],
+ "security": [
+  {
+   "azure_auth": [
+    "7f15f9d9-cad0-44f1-bbba-d36650e07765/.default"
+   ]
+  }
+ ],
+ "tags": [
+  {
+   "name": "Lakehouse Artifacts",
+   "description": "The set of Fabric artifacts that back one environment's Link to Fabric: a mirror lakehouse created inside a caller-supplied Fabric workspace, the SQL analytics endpoint over it, and the binding to the Fabric-to-Dataverse connection that keeps it fed. Creating them also writes the Dataverse-side rows -- the synapselinkprofile and its datalakefolder -- which the caller never creates directly.\n\nIt is an environment singleton: one Dataverse environment mirrors into one Fabric workspace. There is no list, no read and no update; the resource is observable only through its Dataverse shadow (synapselinkprofiles, datalakefolders) and through the Fabric workspace itself."
+  },
+  {
+   "name": "Organization Registration",
+   "description": "The Dataverse organization's record with the athena island that serves it. An organization that has never been linked is unknown to its island, and every environment-scoped call for it fails until the record is written. It is a one-time bootstrap per organization rather than a resource with a lifecycle: there is no read, no delete, and re-writing it is harmless."
+  }
+ ],
+ "paths": {
+  "/environment/{environmentId}/lakehouseArtifacts": {
+   "post": {
+    "operationId": "lakehouseArtifacts_create",
+    "tags": [
+     "Lakehouse Artifacts"
+    ],
+    "summary": "Create",
+    "description": "Provisions the Link to Fabric: creates the mirror lakehouse in the Fabric workspace named by WorkspaceId, binds it to the connection named by ConnectionId, and writes the corresponding synapselinkprofile and datalakefolder rows into Dataverse. Nothing about the Dataverse side is the caller's to create.\n\nThe two ids in the body are composed, not created here. WorkspaceId is a Fabric workspace that should hold a system-assigned workspace identity; ConnectionId is the DatasourceId of a Fabric-to-Dataverse cloud connection authenticated by that identity, whose service principal must already be a Dataverse application user holding the Synapse Link Service Access role. Getting that composition wrong is the usual failure and it surfaces here, not at connection creation time.\n\nEvery table named in Entities must have change tracking enabled in Dataverse. EntityDescriptions duplicates Entities in a richer form and the portal sends both; the provider derives one from the other rather than letting them diverge.\n\nThe response body is a JSON string containing base64-encoded JSON, not a JSON object -- decode before parsing. It also omits the datalakefolder id that the delete operation needs, so a caller that intends to tear the link down must resolve that id separately from Dataverse and persist it.\n\nThe call is synchronous from the caller's point of view -- it returns the mirror ids rather than an operation to poll -- but the mirror itself continues to initialise afterwards, so the lakehouse is addressable before it holds data.",
+    "x-probe-verified": false,
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "description": "The Power Platform environment id -- the BAPI environment id, not the Dataverse organization id. Both appear on this surface and they are never equal: the organization id travels in the x-ms-organization-id header. This id also selects the host, because the environment's cluster is what the athena hostname is built from.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
+      },
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "dxt",
+      "in": "query",
+      "required": false,
+      "description": "Sent as false by the maker portal on every captured call, and hardcoded to false by the Terraform provider. What it selects when true was not established, and omitting it was never tried against the live service. Treat false as the only known-good value.",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     {
+      "name": "x-ms-organization-id",
+      "in": "header",
+      "required": true,
+      "description": "The Dataverse organization id (BAPI's properties.linkedEnvironmentMetadata.resourceId). athena establishes the organization context from this header and not from the environment id in the path, nor from the OrganizationId in the request body -- the body's copy is bound to the payload it writes, not to the caller's identity. Omitting it makes the create fail with a DatalakefolderNotFoundException naming the missing organization context, so send it on every environment-scoped call including the delete, which has no body to carry it.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
+      },
+      "example": "00000000-0000-0000-0000-000000000000"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/LakehouseArtifactsRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The link was provisioned. The body is the base64 form of a LakehouseArtifactsResponse; it carries the stable mirror ids and nothing else.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "string",
+         "format": "byte",
+         "description": "Base64-encoded JSON, delivered as a JSON string rather than as an object. Decode, then parse as LakehouseArtifactsResponse. The Terraform provider falls back to parsing the body as plain JSON if the base64 decode fails, in case the service stops wrapping it.",
+         "x-decoded-schema": {
+          "$ref": "#/components/schemas/LakehouseArtifactsResponse"
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The organization is not yet registered with the athena island that serves it -- the expected answer on an organization that has never been linked, rather than a permission problem. The body is empty, so it carries nothing to distinguish it from a genuine authorization failure. The maker portal wizard treats it as recoverable: register the organization (POST .../updateorganizationdetails), then retry this call unchanged. The Terraform provider replicates that self-heal and retries once."
+     },
+     "404": {
+      "description": "No organization context. Returned as a DatalakefolderNotFoundException whose message states that the organization context has no OrganizationId -- in practice, the x-ms-organization-id header was missing or did not name a Dataverse organization on this island. A bare bodiless 404 with no Allow header means something else: the gateway or the service did not route the request at all, which is also what every unrouted method and unknown path on this host returns."
+     }
+    }
+   }
+  },
+  "/environment/{environmentId}/lakehouseArtifacts/{datalakeFolderId}": {
+   "delete": {
+    "operationId": "lakehouseArtifacts_delete",
+    "tags": [
+     "Lakehouse Artifacts"
+    ],
+    "summary": "Delete",
+    "description": "Unlinks the Link to Fabric by removing the datalakefolder that anchors it, tearing down the Dataverse-side profile with it. The mirror lakehouse in the Fabric workspace is not the caller's to clean up here.\n\nThe id in the path is the Dataverse **datalakefolderid**, not the LakehouseId the create returned and not the synapselinkprofileid. The create response does not contain it, so it must be read from Dataverse (GET /api/data/v9.1/datalakefolders) and persisted at create time -- a link whose datalakefolder id was lost cannot be removed through this API.\n\nChoosing which datalakefolder to name is the subtle part. A Dataverse organization carries roughly ten stock datalakefolder rows before it has ever been linked to anything, cds3_workspace and cds2_workspace among them; they are not created by the link. The captured portal unlink named cds3_workspace. Do not fall back to \"the first row in the table\" -- on an unlinked organization that picks an unrelated system folder such as msdyn_analytics.\n\nThe request has no body, so x-ms-organization-id is the only thing establishing the organization context; the environment id in the path does not.",
+    "x-probe-verified": false,
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "description": "The Power Platform environment id -- the BAPI environment id, not the Dataverse organization id. Both appear on this surface and they are never equal: the organization id travels in the x-ms-organization-id header. This id also selects the host, because the environment's cluster is what the athena hostname is built from.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
+      },
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "datalakeFolderId",
+      "in": "path",
+      "required": true,
+      "description": "The Dataverse datalakefolderid of the folder anchoring the link, as returned by GET /api/data/v9.1/datalakefolders?$select=datalakefolderid,datalakefolder_uniquename on the environment's organization.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
+      },
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "dxt",
+      "in": "query",
+      "required": false,
+      "description": "Sent as false by the maker portal on every captured call, and hardcoded to false by the Terraform provider. What it selects when true was not established, and omitting it was never tried against the live service. Treat false as the only known-good value.",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     {
+      "name": "x-ms-organization-id",
+      "in": "header",
+      "required": true,
+      "description": "The Dataverse organization id (BAPI's properties.linkedEnvironmentMetadata.resourceId). athena establishes the organization context from this header and not from the environment id in the path, nor from the OrganizationId in the request body -- the body's copy is bound to the payload it writes, not to the caller's identity. Omitting it makes the create fail with a DatalakefolderNotFoundException naming the missing organization context, so send it on every environment-scoped call including the delete, which has no body to carry it.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
+      },
+      "example": "00000000-0000-0000-0000-000000000000"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The link was removed."
+     },
+     "204": {
+      "description": "The link was removed and the service returned no body. The Terraform provider accepts 200 and 204 interchangeably; which one a given deployment returns was not established."
+     },
+     "404": {
+      "description": "The datalakefolder does not exist, which for an unlink means the link is already gone -- treat it as success and converge, rather than as an error. The provider does exactly this."
+     },
+     "503": {
+      "description": "The service is temporarily unavailable. The unlink is safe to retry; the Terraform provider retries within a two-minute bound and then gives up rather than holding the resource's whole delete timeout."
+     }
+    }
+   }
+  },
+  "/environment/{environmentId}/updateorganizationdetails": {
+   "post": {
+    "operationId": "organizationRegistration_update",
+    "tags": [
+     "Organization Registration"
+    ],
+    "summary": "Update",
+    "description": "Registers the Dataverse organization with the athena island that serves its environment, or refreshes the registration if it already exists. Required once per organization before its first link; without it the create answers 403 with an empty body.\n\nThe maker portal wizard does not call this speculatively. It attempts the create, and calls this only on the 403, then retries -- so the natural client shape is a self-heal on failure rather than a precondition.\n\nThe organization is identified three times over in a single request: as query parameters, in the x-ms-organization-id header, and again inside a body that does nothing but echo that header. The duplication is what the portal sends and there is no evidence any part of it is optional, so send all of it. Unusually for this surface, the identifying values are query parameters rather than body fields.",
+    "x-probe-verified": false,
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "description": "The Power Platform environment id -- the BAPI environment id, not the Dataverse organization id. Both appear on this surface and they are never equal: the organization id travels in the x-ms-organization-id header. This id also selects the host, because the environment's cluster is what the athena hostname is built from.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
+      },
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "organizationUrl",
+      "in": "query",
+      "required": true,
+      "description": "The Dataverse organization's instance URL, from BAPI's properties.linkedEnvironmentMetadata.instanceUrl. Sent with its trailing slash, as BAPI returns it.",
+      "schema": {
+       "type": "string",
+       "format": "uri"
+      },
+      "example": "https://contoso.crm.dynamics.com/"
+     },
+     {
+      "name": "organizationId",
+      "in": "query",
+      "required": true,
+      "description": "The Dataverse organization id, from BAPI's properties.linkedEnvironmentMetadata.resourceId. The same value as the x-ms-organization-id header on this request.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
+      },
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "x-ms-organization-id",
+      "in": "header",
+      "required": true,
+      "description": "The Dataverse organization id (BAPI's properties.linkedEnvironmentMetadata.resourceId). athena establishes the organization context from this header and not from the environment id in the path, nor from the OrganizationId in the request body -- the body's copy is bound to the payload it writes, not to the caller's identity. Omitting it makes the create fail with a DatalakefolderNotFoundException naming the missing organization context, so send it on every environment-scoped call including the delete, which has no body to carry it.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
+      },
+      "example": "00000000-0000-0000-0000-000000000000"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/OrganizationRegistrationRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The organization is registered with the island. Retry the create."
+     },
+     "204": {
+      "description": "The organization is registered and the service returned no body. The Terraform provider accepts 200 and 204 interchangeably; which one a given deployment returns was not established."
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "azure_auth": {
+    "type": "oauth2",
+    "description": "Microsoft Entra ID OAuth2 against the first-party application \"Azure Synapse Link for Dataverse\" (7f15f9d9-cad0-44f1-bbba-d36650e07765), owned by the Microsoft first-party tenant. The audience is that application, not the PowerApps service, and the generic Power Platform scopes are not accepted -- a client that guesses the scope from the hostname will guess service.powerapps.com and be wrong.\n\nThe application publishes exactly one delegated permission, user_impersonation, whose admin-consent text reads \"Have access to Dynamics 365 Athena - CDS to Azure data lake API\" -- the surviving trace of the service's internal name and of its origin as Export to Data Lake. It publishes **no application roles at all**, so an app-only client-credentials token carries no roles claim and cannot be authorized for anything here. A delegated token is required; the Terraform provider's fabric_link resource is driven through a username/password provider alias for exactly this reason, while every other resource in that provider uses the default app-only identity.\n\nBoth listed scopes are issuable and differ only in the aud claim they produce (the bare application id against the GUID form, https://exporttodatalake.com against the URI form). Which forms the service itself accepts was not established, because no request to it can be made without provisioning something; the provider uses the GUID form and that is the form the captured portal traffic used.\n\nNothing on this host issues a WWW-Authenticate challenge. An unauthenticated call, a wrong-audience token and a syntactically invalid bearer token all produce the same bodiless 404 as an unrouted path, because routing fails before authentication runs. The audience cannot be discovered from the service; it is only knowable from the token or from traffic capture.",
+    "flows": {
+     "authorizationCode": {
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+      "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      "scopes": {
+       "7f15f9d9-cad0-44f1-bbba-d36650e07765/.default": "Azure Synapse Link for Dataverse (athena). The form the maker portal and the Terraform provider use.",
+       "https://exporttodatalake.com/.default": "The same application addressed by its identifier URI. Issuable, and a useful reminder of what the service is, but unproven against the service."
+      }
+     }
+    }
+   }
+  },
+  "schemas": {
+   "LakehouseArtifactsRequest": {
+    "type": "object",
+    "description": "Everything athena needs to provision a mirror: which Dataverse organization is being mirrored, which tables, and which Fabric workspace and connection to mirror them into. Note the PascalCase property names -- this surface does not follow the camelCase convention of the rest of the Power Platform APIs. Transcribed from the maker-portal capture by way of the Terraform provider; never exercised here, so no property is asserted as required.",
+    "x-probe-verified": false,
+    "properties": {
+     "OrganizationId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+      "description": "The Dataverse organization being mirrored, from BAPI's properties.linkedEnvironmentMetadata.resourceId. This is the value written into the link's own record; it does not establish the caller's organization context, which comes from the x-ms-organization-id header and must be sent even though this field duplicates it.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "OrganizationUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "The organization's instance URL, from BAPI's properties.linkedEnvironmentMetadata.instanceUrl, trailing slash included. This is what the mirror reads from, so it must be the instance URL rather than the API URL.",
+      "example": "https://contoso.crm.dynamics.com/"
+     },
+     "EnvironmentFriendlyName": {
+      "type": "string",
+      "description": "The environment's display name, from BAPI's properties.linkedEnvironmentMetadata.friendlyName. Cosmetic: it labels the link in the maker portal and has no effect on what is provisioned."
+     },
+     "EnvironmentUniqueName": {
+      "type": "string",
+      "pattern": "^unq[0-9a-f]{29}$",
+      "description": "The Dataverse unique name, from BAPI's properties.linkedEnvironmentMetadata.uniqueName -- 'unq' followed by the organization id with its hyphens removed, truncated to 32 characters overall. It is not a display name and not free-form: it is interpolated into the generated lakehouse name, which is why that name is unstable and must never be used as an identifier.",
+      "example": "unq00000000000000000000000000000"
+     },
+     "Entities": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "Logical names of the Dataverse tables to mirror. Each must have change tracking enabled -- Synapse Link replicates by consuming the change-tracking feed, so a table without it cannot be included.",
+      "example": [
+       "account",
+       "contact"
+      ]
+     },
+     "EntityDescriptions": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/EntityDescription"
+      },
+      "description": "The same tables again, each tagged with the system it comes from. The maker portal sends both this and Entities and they agree element for element; whether the service reads one, the other, or both is unknown. The Terraform provider derives this list from Entities so the two cannot diverge."
+     },
+     "IsManagedLake": {
+      "type": "boolean",
+      "description": "Whether Dataverse owns and manages the destination storage. True selects Link to Fabric, where the mirror lands in a Fabric-managed OneLake lakehouse; false is the older Azure Synapse Link shape, where the destination is a customer-owned ADLS Gen2 account. Only true was observed, and the Terraform provider hardcodes it -- the fields a false request would additionally need were never captured.",
+      "example": true
+     },
+     "WorkspaceId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+      "description": "The target Fabric workspace that will hold the mirror lakehouse. Point this at a workspace dedicated to mirroring rather than at a Git-managed report workspace: the lakehouse appears inside it as a Dataverse-managed item.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "ConnectionId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+      "description": "The Fabric-to-Dataverse cloud connection the mirror reads through -- its **DatasourceId**, which is not the same value as the connection's own id in every Fabric API. The direction is the part that trips people: this connection lets Fabric read Dataverse, not the other way round, and in the captured flow it authenticates as the target workspace's system-assigned identity. That identity must already exist as a Dataverse application user holding the Synapse Link Service Access role.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     }
+    }
+   },
+   "EntityDescription": {
+    "type": "object",
+    "description": "One table in the mirror, qualified by the system it is sourced from. The qualifier exists because Synapse Link can in principle mirror more than Dataverse; in the captured traffic it never did.",
+    "x-probe-verified": false,
+    "properties": {
+     "Type": {
+      "type": "string",
+      "description": "The table's logical name -- the same string that appears in Entities.",
+      "example": "account"
+     },
+     "EntitySource": {
+      "type": "string",
+      "enum": [
+       "Dataverse"
+      ],
+      "description": "Which system the table lives in. Dataverse is the only value in the captured traffic and the only one the Terraform provider emits; the enum records what is known rather than what is possible."
+     }
+    }
+   },
+   "LakehouseArtifactsResponse": {
+    "type": "object",
+    "description": "The stable identifiers of what was provisioned. This is the decoded form -- the operation returns it base64-encoded inside a JSON string.\n\nThese three ids are the whole of it. In particular there is no datalakefolder id, no synapselinkprofile id and no operation id to poll, which is why a caller that wants to delete the link later must go to Dataverse for the folder id itself.",
+    "x-probe-verified": false,
+    "properties": {
+     "WorkspaceId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+      "description": "The Fabric workspace holding the mirror lakehouse. Echoes the WorkspaceId that was sent.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "LakehouseId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+      "description": "The created mirror lakehouse. This is the stable handle for it and the only one worth persisting: the lakehouse's *name* is generated in the dataverse_{environment}_cds2_workspace_{uniqueName} form and is not stable, so downstream Fabric items should shortcut to this id rather than resolve by name.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "ConnectionId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+      "description": "The connection now bound to the mirror. Echoes the ConnectionId that was sent.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     }
+    }
+   },
+   "OrganizationRegistrationRequest": {
+    "type": "object",
+    "description": "The registration body, which carries no information of its own: it restates the x-ms-organization-id header inside a nested 'headers' object, alongside query parameters that restate it again. Reproduced verbatim from the portal capture because nothing establishes which copy the service actually reads.",
+    "x-probe-verified": false,
+    "properties": {
+     "headers": {
+      "type": "object",
+      "description": "An echo of the request headers that matter -- in practice, exactly one.",
+      "properties": {
+       "x-ms-organization-id": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",
+        "description": "The same organization id as the header and the organizationId query parameter.",
+        "example": "00000000-0000-0000-0000-000000000000"
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

@@ -447,7 +447,7 @@ def check(start: pathlib.Path) -> int:
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if not args:
-        sys.exit(__doc__.strip().splitlines()[-6].strip())
+        sys.exit("usage: pac_extract.py <decompiled-pac-cli-root> [--check|--schemas]")
     target = pathlib.Path(args[0])
     if "--check" in sys.argv:
         sys.exit(check(target))

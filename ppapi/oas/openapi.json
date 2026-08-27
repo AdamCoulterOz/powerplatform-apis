@@ -3,7 +3,7 @@
  "info": {
   "title": "Power Platform API",
   "version": "2024-10-01",
-  "description": "Unofficial. Reverse-engineered from the public Microsoft Learn documentation (learn.microsoft.com), then corrected and extended against recorded first-party traffic: operations and schemas carrying x-probe-verified were observed on the wire, everything else is docs-derived and unverified. Tags group operations by logical resource; x-ms-namespace records the namespace Microsoft files each under. Note the three servers: many operations are served only from the tenant- or environment-scoped host, whose name is derived from the tenant or environment id.",
+  "description": "Unofficial. Reverse-engineered from the public Microsoft Learn documentation (learn.microsoft.com), then corrected and extended against two further sources. Recorded first-party traffic is the strongest: operations and schemas carrying x-probe-verified were observed on the wire, and where anything else contradicts them they lose. Microsoft.PowerPlatform.Management — the Kiota-generated client shipped inside the Power Platform CLI, and so a second machine projection of the same internal OpenAPI the Learn pages come from — supplies structure the prose lost: operations and models carrying x-source: pac-cli come from it and have not been seen on the wire. Everything else is docs-derived and unverified, and that is still most of the file. Tags group operations by logical resource; x-ms-namespace records the namespace Microsoft files each under. Note the three servers: many operations are served only from the tenant- or environment-scoped host, whose name is derived from the tenant or environment id. The api-version defaults are observations, not requirements: the service accepts several, the admin centre pins an older one per namespace, and the CLI forces 2024-10-01 on everything.",
   "x-api-versions": [
    "1",
    "2021-10-01-preview",
@@ -5908,9 +5908,23 @@
         }
        }
       }
+     },
+     "409": {
+      "description": "Settings already exist for this environment. Update them instead of creating them.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CreateEnvironmentManagementSettingResponse"
+        }
+       }
+      }
      }
     },
     "x-ms-namespace": "environmentmanagement/environment-management-settings",
+    "x-notes": [
+     "409 is mapped by Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) but is not documented in the Learn reference."
+    ],
+    "description": "> **From Microsoft's own client, not observed live**\n>\n> - 409 is mapped by Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) but is not documented in the Learn reference.",
     "requestBody": {
      "required": true,
      "content": {
@@ -6018,10 +6032,11 @@
     "x-notes": [
      "Property names on the wire are PascalCase (`Id`, `PowerApps_AllowCodeApps`, `PowerApps_EnableGenerativePages`); the docs lowercase the leading letter of every one of them. `$select` matches case-sensitively, so the docs spelling returns nothing.",
      "A setting that has never been set comes back explicitly `null` rather than being omitted, so an entry in `objectResult` is not evidence that the setting has a value.",
-     "Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host."
+     "Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host.",
+     "The documented value is accepted here after all: Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) forces `api-version=2024-10-01` onto every request it makes, overwriting whatever the caller set, and it calls this operation. So `1` is what the admin centre happens to send, not what the service requires — read the recorded defaults throughout this spec as observations of one client, not as a contract."
     ],
     "x-probe-verified": true,
-    "description": "> **Verified against the live API**\n>\n> - Property names on the wire are PascalCase (`Id`, `PowerApps_AllowCodeApps`, `PowerApps_EnableGenerativePages`); the docs lowercase the leading letter of every one of them. `$select` matches case-sensitively, so the docs spelling returns nothing.\n> - A setting that has never been set comes back explicitly `null` rather than being omitted, so an entry in `objectResult` is not evidence that the setting has a value.\n> - Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host.",
+    "description": "> **Verified against the live API**\n>\n> - Property names on the wire are PascalCase (`Id`, `PowerApps_AllowCodeApps`, `PowerApps_EnableGenerativePages`); the docs lowercase the leading letter of every one of them. `$select` matches case-sensitively, so the docs spelling returns nothing.\n> - A setting that has never been set comes back explicitly `null` rather than being omitted, so an entry in `objectResult` is not evidence that the setting has a value.\n> - Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host.\n\n> **From Microsoft's own client, not observed live**\n>\n> - The documented value is accepted here after all: Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) forces `api-version=2024-10-01` onto every request it makes, overwriting whatever the caller set, and it calls this operation. So `1` is what the admin centre happens to send, not what the service requires — read the recorded defaults throughout this spec as observations of one client, not as a contract.",
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/environmentmanagement/environment-management-settings/list-environment-management-settings"
     }
@@ -6073,9 +6088,33 @@
         }
        }
       }
+     },
+     "409": {
+      "description": "Another change to this environment's settings is in flight, so this one was not applied. Re-read the settings and reapply the change; `errors` carries the detail.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OperationResponse"
+        }
+       }
+      }
+     },
+     "412": {
+      "description": "A precondition failed — the settings moved on from the state the request was built against. Re-read and retry rather than forcing.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OperationResponse"
+        }
+       }
+      }
      }
     },
     "x-ms-namespace": "environmentmanagement/environment-management-settings",
+    "x-notes": [
+     "The write is optimistic. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) maps 409 and 412 to an error body on this operation, which the Learn reference does not document at all, so a caller that ignores them will silently lose an update."
+    ],
+    "description": "> **From Microsoft's own client, not observed live**\n>\n> - The write is optimistic. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) maps 409 and 412 to an error body on this operation, which the Learn reference does not document at all, so a caller that ignores them will silently lose an update.",
     "requestBody": {
      "required": true,
      "content": {
@@ -7988,7 +8027,7 @@
        "type": "string",
        "default": "2021-10-01-preview"
       },
-      "description": "The API version. The docs show `2024-10-01`; the admin centre sends `2021-10-01-preview` on every recorded call to this operation. Whether the documented value is also accepted here was not tested."
+      "description": "The API version. The docs show `2024-10-01`; the admin centre sends `2021-10-01-preview` on every recorded call to this operation. Both work: Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) forces `2024-10-01` onto every request and calls this route, so the recorded value is one client's habit rather than a requirement."
      },
      {
       "name": "includeRuleSetCounts",
@@ -7998,7 +8037,7 @@
        "type": "boolean",
        "default": false
       },
-      "description": "When true, each assignment also carries how many rule sets the assigned policy contains. Undocumented."
+      "description": "When true, each assignment also carries how many rule sets the assigned policy contains. Undocumented. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) declares it required on this route and on the three scoped variants; the recorded calls omit it and still succeed, so it is optional here."
      },
      {
       "name": "resourceType",
@@ -8040,10 +8079,11 @@
     },
     "x-ms-namespace": "governance/rule-based-policies",
     "x-notes": [
-     "A tenant with no assignments returns 200 and `{\"value\":[]}`."
+     "A tenant with no assignments returns 200 and `{\"value\":[]}`.",
+     "The client declares `includeRuleSetCounts` required on all four assignment-list routes. The recorded traffic omits it on this one without error, so it is documented as optional; the three scoped variants keep the documented required flag, which the client agrees with."
     ],
     "x-probe-verified": true,
-    "description": "> **Verified against the live API**\n>\n> - A tenant with no assignments returns 200 and `{\"value\":[]}`.",
+    "description": "> **Verified against the live API**\n>\n> - A tenant with no assignments returns 200 and `{\"value\":[]}`.\n\n> **From Microsoft's own client, not observed live**\n>\n> - The client declares `includeRuleSetCounts` required on all four assignment-list routes. The recorded traffic omits it on this one without error, so it is documented as optional; the three scoped variants keep the documented required flag, which the client agrees with.",
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/governance/rule-based-policies/list-rule-assignments"
     }
@@ -15611,9 +15651,23 @@
         }
        }
       }
+     },
+     "409": {
+      "description": "The firewall is already present or is mid-provisioning. Read the WAF status and act on what it reports rather than retrying blindly.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
      }
     },
     "x-ms-namespace": "powerpages/websites",
+    "x-notes": [
+     "409 is mapped by Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) but is not documented in the Learn reference."
+    ],
+    "description": "> **From Microsoft's own client, not observed live**\n>\n> - 409 is mapped by Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) but is not documented in the Learn reference.",
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/powerpages/websites/enable-waf"
     }
@@ -21584,7 +21638,7 @@
     "type": "object"
    },
    "CreateEnvironmentRequestLinkedMetadata": {
-    "description": "Metadata for the linked Dataverse environment.",
+    "description": "Metadata for the linked Dataverse environment.\n\n> **Verified against the live API**\n>\n> - `baseLanguage` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).",
     "properties": {
      "baseLanguageCode": {
       "description": "The base language code (for example, 1033 for English).",
@@ -21617,9 +21671,18 @@
        "type": "string"
       },
       "type": "array"
+     },
+     "baseLanguage": {
+      "type": "integer",
+      "format": "int32",
+      "description": "The LCID of the Dataverse base language, for example 1033 for English. Fixed at creation and not changeable afterwards.",
+      "example": 1033
      }
     },
-    "type": "object"
+    "type": "object",
+    "x-notes": [
+     "`baseLanguage` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2)."
+    ]
    },
    "CreateEnvironmentRequestParentGroup": {
     "description": "Parent environment group.",
@@ -22891,7 +22954,10 @@
     },
     "type": "object",
     "x-probe-verified": true,
-    "description": "One environment's management settings, one property per setting. Every property name is PascalCase on the wire — `Id`, `PowerApps_AllowCodeApps` — and `$select` matches it case-sensitively. The docs render each name with a lowercased leading letter; the names below are the wire spelling where recorded traffic established it. A setting that has never been set is returned as an explicit `null`."
+    "description": "One environment's management settings, one property per setting. Every property name is PascalCase on the wire — `Id`, `PowerApps_AllowCodeApps` — and `$select` matches it case-sensitively. The docs render each name with a lowercased leading letter; the names below are the wire spelling where recorded traffic established it. A setting that has never been set is returned as an explicit `null`.\n\n> **From Microsoft's own client, not observed live**\n>\n> - The casing split is not a documentation bug. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) independently spells these properties camelCase (`powerApps_AllowCodeApps`, `id`) exactly as the docs do, and Kiota preserves wire casing elsewhere in the same assembly — so Microsoft's internal OpenAPI really does declare them camelCase, and the running service really does return PascalCase. The wire spelling is the one kept here, because it is the one `$select` matches.",
+    "x-notes": [
+     "The casing split is not a documentation bug. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) independently spells these properties camelCase (`powerApps_AllowCodeApps`, `id`) exactly as the docs do, and Kiota preserves wire casing elsewhere in the same assembly — so Microsoft's internal OpenAPI really does declare them camelCase, and the running service really does return PascalCase. The wire spelling is the one kept here, because it is the one `$select` matches."
+    ]
    },
    "EnvironmentPagedCollection": {
     "properties": {
@@ -23147,8 +23213,9 @@
     "type": "object"
    },
    "EnvironmentSku": {
-    "description": "The environment SKU.",
+    "description": "The environment SKU. `NotSpecified` is the unset default and carries no meaning of its own; it is not a SKU you would ask for.\n\n> **From Microsoft's own client, not observed live**\n>\n> - `NotSpecified` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).",
     "enum": [
+     "NotSpecified",
      "Standard",
      "Premium",
      "Developer",
@@ -23162,7 +23229,11 @@
      "Teams",
      "Platform"
     ],
-    "type": "string"
+    "type": "string",
+    "x-source": "pac-cli",
+    "x-notes": [
+     "`NotSpecified` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2)."
+    ]
    },
    "EnvironmentTemplate": {
     "description": "Represents a template available for environment provisioning.",
@@ -23308,13 +23379,16 @@
     "type": "object"
    },
    "ErrorResponse": {
-    "description": "The error response object.",
+    "description": "The error response object.\n\n> **Verified against the live API**\n>\n> - The Learn reference models this as an envelope, `{error: {code, message}}`. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) models the same type flat, as `{code, message, details}` with `details` an array of `{code, message, target, value}`. Neither has been checked against the wire on the Power Automate operations that return it, so the documented envelope is kept and the client's flat shape is recorded here.",
     "properties": {
      "error": {
       "$ref": "#/components/schemas/Error_powerautomate"
      }
     },
-    "type": "object"
+    "type": "object",
+    "x-notes": [
+     "The Learn reference models this as an envelope, `{error: {code, message}}`. Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2) models the same type flat, as `{code, message, details}` with `details` an array of `{code, message, target, value}`. Neither has been checked against the wire on the Power Automate operations that return it, so the documented envelope is kept and the client's flat shape is recorded here."
+    ]
    },
    "Error_powerautomate": {
     "properties": {
@@ -24127,7 +24201,7 @@
     "type": "object"
    },
    "IpAddressEntity": {
-    "description": "Represents an IP address entry in the allow list.",
+    "description": "One entry in a Power Pages website's IP allow list, with the audit fields the service maintains for it.\n\n> **From Microsoft's own client, not observed live**\n>\n> - CreatedOn, LastModifiedOn and TenantId are absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).\n> - The two sources disagree on one field name: the Learn reference calls the address kind `IpAddressType`, the client calls it `IpType`. Neither has been checked against the wire, so `IpAddressType` is kept and `IpType` is recorded here rather than added as a second property.",
     "properties": {
      "IpAddress": {
       "description": "The IP address or CIDR range (e.g., \"208.130.0.0/16\")",
@@ -24140,9 +24214,30 @@
        }
       ],
       "description": "The type of the IP address."
+     },
+     "CreatedOn": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the entry was added to the allow list."
+     },
+     "LastModifiedOn": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the entry was last changed."
+     },
+     "TenantId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The tenant the entry belongs to.",
+      "example": "00000000-0000-0000-0000-000000000000"
      }
     },
-    "type": "object"
+    "type": "object",
+    "x-source": "pac-cli",
+    "x-notes": [
+     "CreatedOn, LastModifiedOn and TenantId are absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).",
+     "The two sources disagree on one field name: the Learn reference calls the address kind `IpAddressType`, the client calls it `IpType`. Neither has been checked against the wire, so `IpAddressType` is kept and `IpType` is recorded here rather than added as a second property."
+    ]
    },
    "IpAddressType": {
     "description": "The type of the IP address.",
@@ -26577,12 +26672,17 @@
     "type": "object"
    },
    "ProtectionLevel": {
-    "description": "The environment governance protection level.",
+    "description": "The environment governance protection level. `NotSpecified` is the unset default rather than a level in its own right.\n\n> **From Microsoft's own client, not observed live**\n>\n> - `NotSpecified` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2).",
     "enum": [
+     "NotSpecified",
      "Basic",
      "Standard"
     ],
-    "type": "string"
+    "type": "string",
+    "x-source": "pac-cli",
+    "x-notes": [
+     "`NotSpecified` is absent from the Learn reference but present in Microsoft's own Kiota-generated client (Microsoft.PowerPlatform.Management, pac CLI 2.11.2)."
+    ]
    },
    "ProvisioningLocations": {
     "description": "Response envelope for the list-provisioning-locations endpoint. Surfaces the list of locations at the top level alongside tenant-scoped provisioning metadata.",
@@ -27109,7 +27209,7 @@
     "x-notes": [
      "The docs define one Value model reused for both the role-definition list and the role-assignment list. Verified live, role-assignment items are different and richer (roleAssignmentId, scope, principal fields, createdBy fields, createdOn, expiresOn); this shape reflects the role-definition list, not assignments."
     ],
-    "description": "Note (verified against the live API): The docs define one Value model reused for both the role-definition list and the role-assignment list. Verified live, role-assignment items are different and richer (roleAssignmentId, scope, principal fields, createdBy fields, createdOn, expiresOn); this shape reflects the role-definition list, not assignments."
+    "description": "> **Verified against the live API**\n>\n> - The docs define one Value model reused for both the role-definition list and the role-assignment list. Verified live, role-assignment items are different and richer (roleAssignmentId, scope, principal fields, createdBy fields, createdOn, expiresOn); this shape reflects the role-definition list, not assignments."
    },
    "RoleDefinitionResponse": {
     "description": "The available role definitions for assignment.",
@@ -29236,9 +29336,17 @@
     "type": "object"
    },
    "WebApplicationFirewallStatus": {
-    "type": "object",
-    "x-stub": true,
-    "description": "Referenced by the docs but not defined on any page."
+    "type": "string",
+    "description": "How far a Power Pages website's web application firewall has got in being provisioned. `None` means no firewall; `Created` is the only state in which it is actually filtering. The two failure states are terminal — retry the enable or disable rather than waiting.",
+    "enum": [
+     "None",
+     "Creating",
+     "Deleting",
+     "Created",
+     "CreationFailed",
+     "DeletionFailed"
+    ],
+    "x-source": "pac-cli"
    },
    "WebsiteDto": {
     "properties": {

@@ -273,16 +273,35 @@ NOTE_HEADINGS = {
     # never render under the same heading as something seen on the wire
     "pac-cli": "From Microsoft's own client, not observed live",
 }
+NOTE_ORDER = [None, "pac-cli"]
+
+
+def note_text(note):
+    """A note is a string, or {"note": ..., "source": ...} when it is graded
+    differently from the entry that carries it."""
+    return note["note"] if isinstance(note, dict) else note
 
 
 def fold_notes(description, notes, source=None):
-    """Doc-vs-reality findings render as one blockquote callout so a spec browser
-    shows a single note box rather than several. The heading states the evidence
-    grade, which is what `source` selects."""
+    """Doc-vs-reality findings render as blockquote callouts so a spec browser
+    shows note boxes rather than loose sentences. One box per evidence grade,
+    never one box mixing them: an entry verified on the wire can still carry a
+    finding that only Microsoft's client attests to, and the two must not read
+    as equally solid."""
     if not notes:
         return description
-    heading = NOTE_HEADINGS.get(source, NOTE_HEADINGS[None])
-    block = "\n".join([f"> **{heading}**", ">"] + [f"> - {n}" for n in notes])
+    grouped = {}
+    for n in notes:
+        grade = n.get("source", source) if isinstance(n, dict) else source
+        grouped.setdefault(grade, []).append(note_text(n))
+    blocks = []
+    for grade in NOTE_ORDER + [g for g in grouped if g not in NOTE_ORDER]:
+        if grade not in grouped:
+            continue
+        heading = NOTE_HEADINGS.get(grade, NOTE_HEADINGS[None])
+        blocks.append("\n".join([f"> **{heading}**", ">"]
+                                + [f"> - {n}" for n in grouped[grade]]))
+    block = "\n\n".join(blocks)
     return (description + "\n\n" + block).strip() if description else block
 
 
@@ -460,7 +479,7 @@ def parse_operation(f, paths, schemas, seen):
         "x-ms-namespace": f"{ns}/{group}",
     }
     if notes:
-        op["x-notes"] = notes
+        op["x-notes"] = [note_text(n) for n in notes]
         description = fold_notes(description, notes, (enrich or {}).get("x-source"))
     for k, v in (enrich or {}).items():
         if k.startswith("x-"):
@@ -600,12 +619,14 @@ def main():
         for k, v in cfg.items():
             if k.startswith("x-"):
                 target[k] = v
-        if cfg.get("notes"):
-            target["x-notes"] = cfg["notes"]
-            block = " ".join(cfg["notes"])
-            target["description"] = (target.get("description", "") + " Note (verified against the live API): " + block).strip()
+        if cfg.get("enum") is not None:
+            target["enum"] = cfg["enum"]
         if cfg.get("description"):
             target["description"] = cfg["description"]
+        if cfg.get("notes"):
+            target["x-notes"] = [note_text(n) for n in cfg["notes"]]
+            target["description"] = fold_notes(target.get("description", ""), cfg["notes"],
+                                               cfg.get("x-source"))
         global_schemas[new] = target
         if new != old:
             applied[old] = new
@@ -644,7 +665,7 @@ def main():
             del op["servers"]
         notes = op.pop("notes", [])
         if notes:
-            op["x-notes"] = notes
+            op["x-notes"] = [note_text(n) for n in notes]
             op["description"] = fold_notes(op.get("description", ""), notes,
                                            op.get("x-source"))
         op.setdefault("parameters", [])

@@ -55,6 +55,47 @@
       elements-api .sl-elements-api > .sl-flex:first-child { background: #12141a; }
     }
 
+    /* Elements keeps the base intent colors dark (fine as badge backgrounds, but
+       .sl-text-* uses them for text too): brighten the text uses for contrast.
+       required, status codes and the sidebar verb labels all read off these. */
+    [data-theme="dark"] .sl-text-primary { color: #58a6ff !important; }
+    [data-theme="dark"] .sl-text-success { color: #3fb950 !important; }
+    [data-theme="dark"] .sl-text-warning { color: #e3b341 !important; }
+    [data-theme="dark"] .sl-text-danger  { color: #ff7b72 !important; }
+
+    /* Elements ships a light-mode Prism palette (dark tokens on a dark code panel
+       are unreadable) and injects it at runtime, so override with !important. */
+    [data-theme="dark"] .token.plain,
+    [data-theme="dark"] .token.punctuation,
+    [data-theme="dark"] .token.operator,
+    [data-theme="dark"] .token.entity,
+    [data-theme="dark"] .token.url,
+    [data-theme="dark"] .token.variable { color: #c9d1d9 !important; }
+    [data-theme="dark"] .token.comment,
+    [data-theme="dark"] .token.prolog,
+    [data-theme="dark"] .token.doctype,
+    [data-theme="dark"] .token.cdata { color: #8b949e !important; font-style: italic; }
+    [data-theme="dark"] .token.property,
+    [data-theme="dark"] .token.tag,
+    [data-theme="dark"] .token.boolean,
+    [data-theme="dark"] .token.number,
+    [data-theme="dark"] .token.constant,
+    [data-theme="dark"] .token.symbol,
+    [data-theme="dark"] .token.deleted { color: #79c0ff !important; }
+    [data-theme="dark"] .token.selector,
+    [data-theme="dark"] .token.attr-name,
+    [data-theme="dark"] .token.string,
+    [data-theme="dark"] .token.char,
+    [data-theme="dark"] .token.builtin,
+    [data-theme="dark"] .token.inserted { color: #a5d6ff !important; }
+    [data-theme="dark"] .token.atrule,
+    [data-theme="dark"] .token.attr-value,
+    [data-theme="dark"] .token.function,
+    [data-theme="dark"] .token.class-name { color: #d2a8ff !important; }
+    [data-theme="dark"] .token.keyword { color: #ff7b72 !important; }
+    [data-theme="dark"] .token.regex,
+    [data-theme="dark"] .token.important { color: #ffa657 !important; }
+
     /* Hide the response-code strip's overlay scrollbar (see earlier fix). */
     elements-api .sl-stack--horizontal.sl-overflow-x-auto { flex-wrap: wrap; scrollbar-width: none; }
     elements-api .sl-stack--horizontal.sl-overflow-x-auto::-webkit-scrollbar { display: none; }

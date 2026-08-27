@@ -1,0 +1,452 @@
+/* Layout for the API browser.
+   Responsive-first: the base styles are the narrow-screen layout and every
+   wider arrangement is added on top. The operation body splits on a CONTAINER
+   query, not a viewport query, so the detail and sample panes respond to the
+   space they actually have (with the nav open or closed, on any screen) rather
+   than to the window. Every grid track is minmax(0, ...) so a long code line
+   can never force a column to overflow its share. */
+
+:root {
+  /* spacing scale */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+
+  --nav-w: 300px;
+  --header-h: 56px;
+  --content-max: 1120px;
+
+  --mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------- shell -- */
+
+.shell {
+  display: grid;
+  grid-template-areas: "header" "main";
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.shell__header { grid-area: header; }
+.shell__main   { grid-area: main; min-width: 0; }
+
+/* ---------------------------------------------------------------- header - */
+
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  height: var(--header-h);
+  padding: 0 var(--s-4);
+  background: var(--surface-overlay);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.appbar__brand {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+/* the brand shortens rather than wrapping the bar onto two lines */
+.appbar__brand-long { display: none; }
+@media (min-width: 560px) {
+  .appbar__brand-short { display: none; }
+  .appbar__brand-long { display: inline; }
+}
+
+.appbar__spacer { flex: 1 1 auto; }
+
+.appbar__select {
+  font: inherit;
+  font-size: 13px;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--border-default);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  max-width: 46vw;
+}
+
+.appbar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--dur-fast, .14s) var(--ease-out), background var(--dur-fast, .14s) var(--ease-out);
+}
+.appbar__icon:hover { color: var(--text-primary); background: var(--surface-sunken); }
+.appbar__icon svg { width: 20px; height: 20px; }
+
+/* the nav toggle only exists while the nav is a drawer */
+@media (min-width: 1000px) { .appbar__nav-toggle { display: none; } }
+
+/* ------------------------------------------------------------------ nav -- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+}
+
+.nav {
+  position: fixed;
+  inset: var(--header-h) auto 0 0;
+  width: min(var(--nav-w), 86vw);
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-subtle);
+  border-right: 1px solid var(--border-subtle);
+  transform: translateX(-100%);
+  transition: transform .2s var(--ease-out, ease);
+  overscroll-behavior: contain;
+}
+.nav[data-open="true"] { transform: translateX(0); }
+
+.nav__scrim {
+  position: fixed;
+  inset: var(--header-h) 0 0 0;
+  z-index: 34;
+  background: rgba(10, 20, 48, .38);
+  border: 0;
+  padding: 0;
+}
+
+.nav__body { flex: 1 1 auto; overflow-y: auto; padding: var(--s-3) 0 var(--s-6); }
+
+/* wide: the drawer becomes a column in the grid and the scrim disappears */
+@media (min-width: 1000px) {
+  .layout { grid-template-columns: var(--nav-w) minmax(0, 1fr); }
+  .nav {
+    position: sticky;
+    top: var(--header-h);
+    height: calc(100dvh - var(--header-h));
+    width: auto;
+    transform: none;
+    transition: none;
+  }
+  .nav__scrim { display: none; }
+}
+
+.nav__search {
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.nav__search input {
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--border-default);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+.nav__search input:focus { outline: none; box-shadow: var(--ring); border-color: var(--accent); }
+
+.nav__group { border: 0; }
+.nav__group-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-2) var(--s-4);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.nav__group-btn:hover { background: var(--surface-sunken); }
+.nav__chev {
+  flex: 0 0 auto;
+  width: 14px; height: 14px;
+  color: var(--text-tertiary);
+  transition: transform var(--dur-fast, .14s) var(--ease-out);
+}
+.nav__group-btn[aria-expanded="true"] .nav__chev { transform: rotate(90deg); }
+.nav__count { margin-left: auto; font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+.nav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-2) var(--s-4) var(--s-2) var(--s-6);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  color: var(--text-secondary);
+  background: none;
+  border: 0;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+.nav__item:hover { background: var(--surface-sunken); color: var(--text-primary); }
+.nav__item[aria-current="true"] {
+  background: var(--accent-subtle);
+  border-left-color: var(--accent);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.nav__item-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav__item-method { margin-left: auto; flex: 0 0 auto; }
+
+.nav__section-label {
+  padding: var(--s-5) var(--s-4) var(--s-2);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* ----------------------------------------------------------------- main -- */
+
+.main { min-width: 0; }
+
+.page {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--s-5) var(--s-4) var(--s-8);
+}
+@media (min-width: 700px) { .page { padding: var(--s-6) var(--s-6) var(--s-8); } }
+
+.page__title {
+  margin: 0 0 var(--s-2);
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.page__lead { margin: 0 0 var(--s-5); color: var(--text-secondary); max-width: 68ch; }
+
+/* the request line: method + path, wraps rather than scrolling on small screens */
+.endpoint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  margin-bottom: var(--s-5);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+}
+.endpoint__path {
+  font-family: var(--mono);
+  font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+}
+.endpoint__host { color: var(--text-tertiary); }
+
+/* ------------------------------------------------- operation body split -- */
+
+/* The split is driven by the width of THIS element, not the window, so it is
+   correct at every combination of screen size and nav state. */
+.op-body { container-type: inline-size; }
+
+.op-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-6);
+  align-items: start;
+}
+
+@container (min-width: 880px) {
+  .op-split {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 26rem);
+  }
+  /* the samples follow the reader down the page on wide layouts */
+  .op-split__aside {
+    position: sticky;
+    top: calc(var(--header-h) + var(--s-4));
+  }
+}
+
+.section { margin-bottom: var(--s-6); }
+.section__title {
+  margin: 0 0 var(--s-3);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* ------------------------------------------------------------ properties - */
+
+.prop {
+  padding: var(--s-3) 0;
+  border-top: 1px solid var(--border-subtle);
+  min-width: 0;
+}
+.prop:first-child { border-top: 0; }
+
+.prop__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+}
+.prop__name {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.prop__type { font-size: 12px; color: var(--text-secondary); font-family: var(--mono); }
+.prop__req { font-size: 11px; font-weight: 700; color: var(--warning, #C0863B); letter-spacing: .04em; }
+.prop__desc { margin: var(--s-1) 0 0; font-size: 13px; color: var(--text-secondary); max-width: 72ch; }
+
+.prop__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 0;
+  margin-top: var(--s-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* nesting uses a hairline rather than indentation alone, so deep trees stay
+   legible on narrow screens where indentation would eat the width */
+.prop__children {
+  margin-top: var(--s-3);
+  margin-left: var(--s-2);
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--border-subtle);
+}
+@media (min-width: 700px) { .prop__children { margin-left: var(--s-3); padding-left: var(--s-4); } }
+
+.chips { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-top: var(--s-2); }
+.chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 1px var(--s-2);
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.chip--enum { background: var(--accent-subtle); border-color: transparent; color: var(--accent); }
+
+/* --------------------------------------------------------------- method -- */
+
+.method {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: 2px var(--s-2);
+  border-radius: 6px;
+  color: #fff;
+  white-space: nowrap;
+}
+.method--get    { background: #1FA855; }
+.method--post   { background: #0B5FFF; }
+.method--put    { background: #C0863B; }
+.method--patch  { background: #8B5CF6; }
+.method--delete { background: #D14343; }
+.method--head, .method--options, .method--trace { background: var(--text-tertiary); }
+
+/* in the nav the method is a label, not a filled badge, to keep the list calm */
+.nav__item-method .method {
+  background: none;
+  color: var(--text-tertiary);
+  padding: 0;
+  font-size: 10px;
+}
+.nav__item[aria-current="true"] .nav__item-method .method { color: var(--accent); }
+
+.status {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px var(--s-2);
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.status--ok    { color: var(--success, #1FA855); background: var(--success-subtle, rgba(31,168,85,.12)); }
+.status--err   { color: #D14343; background: rgba(209,67,67,.12); }
+.status--other { color: var(--text-secondary); background: var(--surface-sunken); }
+
+.status-row { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-4); }
+.status-tab {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  border-radius: 8px;
+  padding: var(--s-1) var(--s-2);
+}
+.status-tab[aria-selected="true"] { border-color: var(--accent); box-shadow: var(--ring); }
+
+/* --------------------------------------------------------------- states -- */
+
+.state {
+  padding: var(--s-8) var(--s-4);
+  text-align: center;
+  color: var(--text-secondary);
+}
+.state__spinner {
+  width: 22px; height: 22px;
+  margin: 0 auto var(--s-3);
+  border: 2px solid var(--border-default);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* the Blazor boot error bar, restyled to match */
+#blazor-error-ui {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: var(--s-3) var(--s-4);
+  background: #D14343;
+  color: #fff;
+  font-size: 13px;
+}
+#blazor-error-ui .dismiss { cursor: pointer; float: right; }

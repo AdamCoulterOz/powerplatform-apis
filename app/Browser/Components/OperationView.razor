@@ -1,0 +1,195 @@
+@* One operation. The detail and the samples sit in a container-query split,
+   so they sit side by side whenever this region is wide enough and stack when
+   it is not, independently of the window size or whether the nav is open. *@
+
+<div class="page">
+    <h1 class="page__title">@Operation.Summary</h1>
+
+    @if (Operation.Prose is { } prose)
+    {
+        <p class="page__lead">@((MarkupString)Markdown.ToHtml(prose))</p>
+    }
+
+    <div class="endpoint">
+        <span class="method method--@Operation.Method.ToLowerInvariant()">@Operation.Method</span>
+        <span class="endpoint__path"><span class="endpoint__host">@Server</span>@Operation.Path</span>
+    </div>
+
+    @if (Operation.IsPreview)
+    {
+        <div class="keel-badge keel-badge--signal" style="margin-bottom:var(--s-4)">
+            <span class="keel-badge__dot"></span> Preview
+        </div>
+    }
+
+    <div class="op-body">
+        <div class="op-split">
+            <div>
+                @if (Operation.Notes.Count > 0)
+                {
+                    <div class="keel-callout keel-callout--info section">
+                        <div class="keel-callout__title">Verified against the live API</div>
+                        <div class="keel-callout__body">
+                            <ul style="margin:var(--s-2) 0 0;padding-left:1.15em">
+                                @foreach (var note in Operation.Notes)
+                                {
+                                    <li style="margin:var(--s-2) 0">@((MarkupString)Markdown.ToHtml(note))</li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                }
+
+                @foreach (var group in ParameterGroups)
+                {
+                    <section class="section">
+                        <h2 class="section__title">@group.Key parameters</h2>
+                        @foreach (var p in group)
+                        {
+                            <div class="prop">
+                                <div class="prop__head">
+                                    <span class="prop__name">@p.Name</span>
+                                    <span class="prop__type">@(p.Schema?.TypeLabel ?? "string")</span>
+                                    @if (p.Required)
+                                    {
+                                        <span class="prop__req">required</span>
+                                    }
+                                </div>
+                                @if (p.Description is { } d)
+                                {
+                                    <p class="prop__desc">@d</p>
+                                }
+                                @{
+                                    var chips = p.Schema?.Constraints.ToList() ?? new List<string>();
+                                }
+                                @if (chips.Count > 0)
+                                {
+                                    <div class="chips">
+                                        @foreach (var c in chips)
+                                        {
+                                            <span class="chip">@c</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </section>
+                }
+
+                @if (Operation.RequestBody is { Schema: { } bodySchema })
+                {
+                    <section class="section">
+                        <h2 class="section__title">Request body</h2>
+                        @if (Operation.RequestBody.Description is { } bd)
+                        {
+                            <p class="prop__desc" style="margin-bottom:var(--s-3)">@bd</p>
+                        }
+                        <SchemaTree Schema="bodySchema" OnNavigate="OnNavigate" />
+                    </section>
+                }
+
+                @if (Operation.Responses.Count > 0)
+                {
+                    <section class="section">
+                        <h2 class="section__title">Responses</h2>
+                        <div class="status-row" role="tablist">
+                            @foreach (var r in Operation.Responses)
+                            {
+                                <button class="status-tab" role="tab" aria-selected="@(r.Code == SelectedResponse?.Code)"
+                                        @onclick="() => _selected = r.Code">
+                                    <span class="status @StatusClass(r)">@r.Code</span>
+                                </button>
+                            }
+                        </div>
+
+                        @if (SelectedResponse is { } resp)
+                        {
+                            @if (resp.Description is { } rd)
+                            {
+                                <p class="prop__desc" style="margin-bottom:var(--s-3)">@rd</p>
+                            }
+
+                            @if (resp.Headers.Count > 0)
+                            {
+                                <h3 class="section__title" style="margin-top:var(--s-4)">Headers</h3>
+                                @foreach (var h in resp.Headers)
+                                {
+                                    <div class="prop">
+                                        <div class="prop__head">
+                                            <span class="prop__name">@h.Name</span>
+                                            <span class="prop__type">@(h.Schema?.TypeLabel ?? "string")</span>
+                                        </div>
+                                        @if (h.Description is { } hd)
+                                        {
+                                            <p class="prop__desc">@hd</p>
+                                        }
+                                    </div>
+                                }
+                            }
+
+                            @if (resp.Schema is { } rs)
+                            {
+                                <h3 class="section__title" style="margin-top:var(--s-4)">Body</h3>
+                                <SchemaTree Schema="rs" OnNavigate="OnNavigate" />
+                            }
+                        }
+                    </section>
+                }
+
+                @if (Operation.DocsUrl is { } docs)
+                {
+                    <a class="keel-btn keel-btn--outline keel-btn--pill" href="@docs" target="_blank" rel="noopener">
+                        Microsoft's documentation
+                    </a>
+                }
+            </div>
+
+            <aside class="op-split__aside">
+                <CodeBlock Tabs="SampleTabs" />
+            </aside>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public OpenApiSpec Spec { get; set; } = default!;
+    [Parameter, EditorRequired] public Operation Operation { get; set; } = default!;
+    [Parameter] public EventCallback<Route> OnNavigate { get; set; }
+
+    private string? _selected;
+
+    private string Server => Spec.Servers.FirstOrDefault() ?? "";
+
+    private IEnumerable<IGrouping<string, Parameter>> ParameterGroups =>
+        Operation.Parameters
+            .GroupBy(p => p.In)
+            .OrderBy(g => g.Key switch { "path" => 0, "query" => 1, "header" => 2, _ => 3 });
+
+    private Response? SelectedResponse =>
+        Operation.Responses.FirstOrDefault(r => r.Code == _selected)
+        ?? Operation.Responses.FirstOrDefault(r => r.IsSuccess)
+        ?? Operation.Responses.FirstOrDefault();
+
+    protected override void OnParametersSet() => _selected = null;
+
+    private static string StatusClass(Response r) =>
+        r.IsSuccess ? "status--ok" : r.IsError ? "status--err" : "status--other";
+
+    private IReadOnlyList<CodeBlock.Tab> SampleTabs
+    {
+        get
+        {
+            var tabs = new List<CodeBlock.Tab>
+            {
+                new("Request", SampleBuilder.Curl(Operation, Server), CodeLanguage.Shell)
+            };
+
+            var resp = SelectedResponse;
+            if (resp?.Schema is { } schema)
+            {
+                tabs.Add(new CodeBlock.Tab($"Response {resp.Code}", SampleBuilder.Json(schema), CodeLanguage.Json));
+            }
+            return tabs;
+        }
+    }
+}

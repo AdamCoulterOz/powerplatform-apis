@@ -1,0 +1,78 @@
+@inject IJSRuntime Js
+
+@* keel's code block, optionally with tabs. Highlighting is produced in C#
+   (Rendering/Highlighter) and coloured by the design system's own tokens. *@
+
+<div class="keel-cb keel-cb--auto">
+    <div class="keel-cb__bar">
+        @if (Tabs.Count > 1)
+        {
+            <span class="keel-cb__tabs">
+                @foreach (var tab in Tabs)
+                {
+                    <button class="keel-cb__tab @(tab.Label == Active.Label ? "keel-cb__tab--active" : "")"
+                            @onclick="() => Select(tab)">@tab.Label</button>
+                }
+            </span>
+        }
+        else
+        {
+            <span class="keel-cb__title">@Active.Label</span>
+        }
+        <span style="flex:1 1 auto"></span>
+        <button class="appbar__icon" style="width:26px;height:26px" @onclick="CopyAsync"
+                aria-label="Copy" title="@(_copied ? "Copied" : "Copy")">
+            @if (_copied)
+            {
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px">
+                    <path d="M4 10.5l4 4 8-8" />
+                </svg>
+            }
+            else
+            {
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" style="width:15px;height:15px">
+                    <rect x="7" y="7" width="9" height="9" rx="2" />
+                    <path d="M13 5.5A1.5 1.5 0 0 0 11.5 4h-6A1.5 1.5 0 0 0 4 5.5v6A1.5 1.5 0 0 0 5.5 13" />
+                </svg>
+            }
+        </button>
+    </div>
+    <div class="keel-cb__scroll">
+        <pre class="keel-cb__pre"><code>@((MarkupString)Highlighted)</code></pre>
+    </div>
+</div>
+
+@code {
+    public sealed record Tab(string Label, string Code, CodeLanguage Language);
+
+    [Parameter] public IReadOnlyList<Tab> Tabs { get; set; } = Array.Empty<Tab>();
+
+    private Tab? _selected;
+    private bool _copied;
+
+    private Tab Active => _selected ?? Tabs.FirstOrDefault() ?? new Tab("code", "", CodeLanguage.Json);
+
+    private string Highlighted => Active.Language switch
+    {
+        CodeLanguage.Shell => Highlighter.Shell(Active.Code),
+        _ => Highlighter.Json(Active.Code)
+    };
+
+    protected override void OnParametersSet()
+    {
+        if (_selected is not null && Tabs.All(t => t.Label != _selected.Label)) _selected = null;
+    }
+
+    private void Select(Tab tab)
+    {
+        _selected = tab;
+        _copied = false;
+    }
+
+    private async Task CopyAsync()
+    {
+        try { await Js.InvokeVoidAsync("ppapi.copy", Active.Code); } catch { /* clipboard unavailable */ }
+        _copied = true;
+        StateHasChanged();
+    }
+}

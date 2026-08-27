@@ -22,6 +22,11 @@
     #app { flex: 1 1 auto; min-height: 0; }
     elements-api { display: block; height: 100%; }
     #note { padding: 24px; font-size: 14px; }
+    /* Elements' horizontal tab strips (e.g. the response-code selector) show an
+       overlay scrollbar that covers the content; let them wrap instead and hide
+       the bar. The code-sample panels use .sl-code-viewer__scroller and keep theirs. */
+    elements-api .sl-stack--horizontal.sl-overflow-x-auto { flex-wrap: wrap; scrollbar-width: none; -ms-overflow-style: none; }
+    elements-api .sl-stack--horizontal.sl-overflow-x-auto::-webkit-scrollbar { display: none; }
   </style>
 </head>
 <body>

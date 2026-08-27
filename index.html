@@ -33,10 +33,20 @@
     elements-api .sl-stack--horizontal.sl-overflow-x-auto { flex-wrap: wrap; scrollbar-width: none; }
     elements-api .sl-stack--horizontal.sl-overflow-x-auto::-webkit-scrollbar { display: none; }
 
+    /* Verified-note callouts: Elements hides list bullets and lets long URLs
+       overflow. Restore real dot points and wrap long tokens. */
+    elements-api blockquote { overflow-wrap: anywhere; }
+    elements-api .sl-w-2\/5 blockquote { margin-top: 1.5rem; }
+    elements-api blockquote ul { padding-left: 1.25em; margin: .3rem 0; }
+    elements-api blockquote li { list-style-type: disc !important; margin: .6rem 0; line-height: 1.45; }
+
     /* --- Responsive layer that Elements' sidebar layout lacks --- */
     /* Stack the operation's two-column (detail | example) on narrow screens. */
     @media (max-width: 760px) {
       elements-api .sl-flex:has(> .sl-w-2\/5) { flex-direction: column; }
+      /* the left (detail) column carries Elements' width:0, which only fills in a
+         row; force it full-width once stacked so it stops squashing. */
+      elements-api .sl-flex:has(> .sl-w-2\/5) > .sl-flex-1 { width: 100% !important; min-width: 0; }
       elements-api .sl-w-2\/5 { width: 100% !important; margin-left: 0 !important; margin-top: 16px; }
     }
     /* Collapse the sidebar into a slide-in drawer with a hamburger toggle. */

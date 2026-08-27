@@ -1,4 +1,157 @@
 {
+ "info": {
+  "description": "Unofficial. Reverse-engineered from the public Microsoft Learn documentation (learn.microsoft.com), then corrected and extended against recorded first-party traffic: operations and schemas carrying x-probe-verified were observed on the wire, everything else is docs-derived and unverified. Tags group operations by logical resource; x-ms-namespace records the namespace Microsoft files each under. Note the three servers: many operations are served only from the tenant- or environment-scoped host, whose name is derived from the tenant or environment id."
+ },
+ "servers": [
+  {
+   "url": "https://api.powerplatform.com",
+   "description": "Global endpoint. Every documented operation is reachable here; the gateway routes the request to the tenant's own cluster. First-party clients use it for operations that are not already scoped to one tenant or environment by the caller's context."
+  },
+  {
+   "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+   "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+   "variables": {
+    "tenantIdHead": {
+     "default": "000000000000000000000000000000",
+     "description": "The first 30 characters of the tenant id with its hyphens removed."
+    },
+    "tenantIdTail": {
+     "default": "ab",
+     "description": "The last 2 characters of the tenant id with its hyphens removed."
+    }
+   }
+  },
+  {
+   "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+   "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+   "variables": {
+    "environmentIdHead": {
+     "default": "000000000000000000000000000000",
+     "description": "The first 30 characters of the environment id with its hyphens removed."
+    },
+    "environmentIdTail": {
+     "default": "ab",
+     "description": "The last 2 characters of the environment id with its hyphens removed."
+    }
+   }
+  }
+ ],
+ "securityScheme": {
+  "description": "Microsoft Entra ID OAuth2. The audience is `https://api.powerplatform.com` for all three hosts — the tenant- and environment-scoped hosts take the same token as the global one, so there is nothing per-host to acquire. Requesting `.default` yields whatever delegated permissions the client application has been granted; `x-delegated-scopes` lists the granular permissions observed in real first-party tokens. Which scope each operation actually requires was not established — the tokens show what was granted, not what was needed.",
+  "x-delegated-scopes": [
+   "AiFlows.Ai.Execute",
+   "AiFlows.Ai.Write",
+   "AiFlows.Runs.Execute",
+   "AiFlows.Runs.Read",
+   "AiFlows.Runs.Write",
+   "Analytics.AdvisorActions.Execute",
+   "Analytics.AdvisorRecommendations.Read",
+   "AppManagement.ApplicationPackages.Install",
+   "AppManagement.ApplicationPackages.Read",
+   "Connectivity.ConnectionPermissions.Read",
+   "Connectivity.ConnectionPermissions.Write",
+   "Connectivity.Connections.Read",
+   "Connectivity.Connections.Write",
+   "Connectivity.ConnectorPermissions.Read",
+   "Connectivity.ConnectorPermissions.Write",
+   "Connectivity.Connectors.Read",
+   "Connectivity.Connectors.Write",
+   "Connectivity.GatewayPermissions.Read",
+   "Connectivity.GatewayPermissions.Write",
+   "Connectivity.Gateways.Read",
+   "Connectivity.Gateways.Write",
+   "Connectivity.GuestConnections.Write",
+   "CopilotFlows.ChatAssistant.Execute",
+   "CopilotFlows.CloudFlows.ChatAssistant",
+   "CopilotFlows.Workflows.Generate",
+   "CopilotGovernance.Features.Execute",
+   "CopilotGovernance.Features.Read",
+   "CopilotGovernance.Settings.Read",
+   "CopilotGovernance.Settings.Write",
+   "CopilotStudio.AdminActions.Invoke",
+   "EnvironmentManagement.Environments.Read",
+   "EnvironmentManagement.Settings.Read",
+   "EnvironmentManagement.Settings.ReadWrite",
+   "Flows.Manage.All",
+   "Governance.LockboxPolicies.Create",
+   "Governance.LockboxPolicies.Read",
+   "Governance.LockboxPolicies.Update",
+   "Governance.LockboxRequests.Approve",
+   "Governance.LockboxRequests.Deny",
+   "Governance.LockboxRequests.Read",
+   "PowerApps.AppConnectionUsages.Create",
+   "PowerApps.AppConnectionUsages.Read",
+   "PowerApps.AppPermissions.Create",
+   "PowerApps.AppPermissions.Read",
+   "PowerApps.Apps.Create",
+   "PowerApps.Apps.Delete",
+   "PowerApps.Apps.Launch",
+   "PowerApps.Apps.Read",
+   "PowerApps.Apps.Update",
+   "PowerApps.Channels.Subscribe",
+   "PowerApps.Environments.Create",
+   "PowerApps.Environments.GenerateResourceStorage",
+   "PowerApps.Environments.Read",
+   "PowerApps.Environments.Update",
+   "PowerApps.ExpertMakers.Create",
+   "PowerApps.ExpertMakers.Delete",
+   "PowerApps.ExpertMakers.Read",
+   "PowerApps.ExpertMakers.Update",
+   "PowerApps.Features.Read",
+   "PowerApps.HelpContentReferences.Read",
+   "PowerApps.HelpContentReferences.Write",
+   "PowerApps.Notifications.Read",
+   "PowerApps.Notifications.Write",
+   "PowerApps.Plans.Read",
+   "PowerApps.TeamsPackages.Install",
+   "PowerApps.UserSettings.Read",
+   "PowerApps.UserSettings.Write",
+   "PowerApps.Users.Enroll",
+   "PowerAutomate.DesktopFlows.Read",
+   "PowerAutomate.DesktopFlows.Update",
+   "PowerPages.Websites.Write",
+   "PowerVirtualAgents.AdminActions.Invoke",
+   "PowerVirtualAgents.Conversations.Read",
+   "PowerVirtualAgents.FirstPartyBots.Invoke",
+   "PowerVirtualAgents.Tokens.Read",
+   "ProcessMining.Copilot.Invoke",
+   "ProcessMining.Query.Invoke",
+   "ProcessMining.Recommendations.Invoke",
+   "ProcessMining.TaskCoach.Invoke",
+   "ProcessMining.WebCopilot.Invoke",
+   "Security.Recommendations.Read",
+   "Support.Settings.Read",
+   "Support.Tickets.Create",
+   "Support.Tickets.Read",
+   "Support.Tickets.Update",
+   "UserManagement.Plugins.Read",
+   "UserManagement.Users.Apply"
+  ],
+  "x-probe-verified": true
+ },
+ "tags": {
+  "Cluster": {
+   "description": "The regional service cluster that serves a tenant or an environment. Its name appears in the `x-ms-gateway-clusters` response header on every call and identifies which stamp, geography and release ring the caller is talking to."
+  },
+  "Copilot Governance Setting": {
+   "description": "A single tenant- or environment-level consent switch for a generative AI capability — typically whether a named model provider may be used as a subprocessor. Each setting carries its own admin-centre presentation, the rule that backs it and the effective value."
+  },
+  "Feature Gate": {
+   "description": "A named feature flag as evaluated for the caller or the environment. Read-only: the platform decides the value and reports where it came from."
+  },
+  "Governance Configuration": {
+   "description": "Tenant-authored governance content surfaced to makers in the maker portal, addressed by configuration name."
+  },
+  "Notification": {
+   "description": "In-product notifications for the calling maker, and the Web PubSub channel that pushes them live."
+  },
+  "Service Plan": {
+   "description": "The Power Platform service plans (licences) assigned to the calling user, and the policy limits each plan grants."
+  },
+  "User Setting": {
+   "description": "A per-user preference blob stored against the caller's Entra object id and addressed by setting name. The maker portal uses them to persist UI state; each setting name has its own free-form shape."
+  }
+ },
  "operations": {
   "analytics/recommendations/execute-recommendation-action": {
    "summary": "Recommendation Action Execute"
@@ -104,13 +257,23 @@
    ]
   },
   "connectivity/connections/list-connections": {
-   "summary": "List"
+   "summary": "List",
+   "notes": [
+    "The environment-scoped host serves the same list at `/connectivity/connections` with no `/environments/{environmentId}` segment; that is the form the maker portal uses. Undocumented `$filter` (`environment eq '<environmentId>'`) and `$expand=api` (inline the connector definition on each connection) were both accepted there."
+   ]
   },
   "connectivity/connectors/get-connector-by-id": {
-   "summary": "Read"
+   "summary": "Read",
+   "notes": [
+    "The environment-scoped host serves the same connector at `/connectivity/connectors/{connectorName}`, where the name is the shared-connector id such as `shared_microsoftspatialservices` rather than a GUID."
+   ]
   },
   "connectivity/connectors/list-connectors": {
-   "summary": "List"
+   "summary": "List",
+   "notes": [
+    "The environment-scoped host serves the same list at `/connectivity/connectors`. Undocumented query options observed there: `$filter` on `environment` and `apiCurationName` (e.g. `PowerAppsClients`), `$expand=api`, and `showApisWithToS` to include connectors that require accepting terms of service.",
+    "The full catalogue is large — 1,563 connectors in one recorded response — and arrives in a single body with no `nextLink`."
+   ]
   },
   "copilotstudio/agent-channels/download-agent-channel-manifest": {
    "summary": "Agent Channel Manifest Download"
@@ -195,7 +358,8 @@
    "notes": [
     "Adds a single environment (the path environmentId) to the group; there is no whole-list replace. The environment must already be a Managed Environment. The REST endpoint does not auto-upgrade it (the admin center does), and an unmanaged environment returns 400 InputValidationError.",
     "The success response is 202 Accepted with an undocumented Location header (shown below) pointing at the group operation to poll; see [Read Operation](#/operations/environmentmanagement_getEnvironmentGroupOperation). No Operation-Location or azure-asyncoperation header is sent.",
-    "Membership is recorded on the environment record (its environmentGroupId), not as a members collection on the group. The 400 body is {error:{code:InputValidationError}}, not the documented ProblemDetails. Both api-version 1 and 2024-10-01 are accepted."
+    "Membership is recorded on the environment record (its environmentGroupId), not as a members collection on the group. The 400 body is {error:{code:InputValidationError}}, not the documented ProblemDetails. Both api-version 1 and 2024-10-01 are accepted.",
+    "The admin centre sends `{\"properties\":{\"parentEnvironmentGroup\":{\"id\":\"<groupId>\"}}}` — the group id repeated from the path. The path is authoritative; the body is redundant."
    ],
    "responses": {
     "202": {
@@ -209,16 +373,63 @@
       }
      }
     }
+   },
+   "x-probe-verified": true,
+   "parameters": {
+    "api-version": {
+     "schema": {
+      "default": "1",
+      "enum": [
+       "1",
+       "2024-10-01"
+      ]
+     },
+     "description": "The API version. The docs show `2024-10-01`; the admin centre sends `1`. Both are accepted."
+    }
    }
   },
   "environmentmanagement/environment-groups/create-environment-group": {
-   "summary": "Create"
+   "summary": "Create",
+   "x-probe-verified": true,
+   "parameters": {
+    "api-version": {
+     "schema": {
+      "default": "1",
+      "enum": [
+       "1",
+       "2024-10-01"
+      ]
+     },
+     "description": "The API version. The docs show `2024-10-01`; the admin centre sends `1`. Both are accepted."
+    }
+   },
+   "notes": [
+    "Creation succeeds with `{\"displayName\": \"...\", \"description\": \"...\"}` and returns 200 with the created group, not 201 and not a Location header.",
+    "The response is the same body [Read](#/operations/environmentmanagement_getEnvironmentGroup) returns, so no follow-up read is needed."
+   ]
   },
   "environmentmanagement/environment-groups/delete-environment-group": {
    "summary": "Delete"
   },
   "environmentmanagement/environment-groups/get-environment-group": {
-   "summary": "Read"
+   "summary": "Read",
+   "x-probe-verified": true,
+   "parameters": {
+    "api-version": {
+     "schema": {
+      "default": "1",
+      "enum": [
+       "1",
+       "2024-10-01"
+      ]
+     },
+     "description": "The API version. The docs show `2024-10-01`; the admin centre sends `1`. Both are accepted."
+    }
+   },
+   "notes": [
+    "A freshly created group returns only `id`, `displayName`, `description`, `createdTime` and `createdBy`; `parentGroupId`, `childrenGroupIds`, `lastModifiedBy` and `lastModifiedTime` are omitted rather than null until they apply.",
+    "`createdBy` is the trimmed principal — `id` and `type` only — not the full principal the docs model."
+   ]
   },
   "environmentmanagement/environment-groups/get-environment-group-operation": {
    "summary": "Operation Read",
@@ -238,14 +449,31 @@
    }
   },
   "environmentmanagement/environment-groups/list-environment-groups": {
-   "summary": "List"
+   "summary": "List",
+   "x-probe-verified": true,
+   "parameters": {
+    "api-version": {
+     "schema": {
+      "default": "1",
+      "enum": [
+       "1",
+       "2024-10-01"
+      ]
+     },
+     "description": "The API version. The docs show `2024-10-01`; the admin centre sends `1`. Both are accepted."
+    }
+   },
+   "notes": [
+    "The list envelope is a bare OData `{ \"value\": [ ... ] }`; a tenant with no groups returns `{\"value\":[]}` with 200, not 404."
+   ]
   },
   "environmentmanagement/environment-groups/remove-environment-from-group": {
    "summary": "Environment Remove",
    "notes": [
     "Removes a single environment (the path environmentId) from the group; there is no whole-list replace.",
     "Same 202 plus Location async transport as add; poll the returned Location header, see [Read Operation](#/operations/environmentmanagement_getEnvironmentGroupOperation).",
-    "Membership is validated synchronously, so removing an environment that is not currently a member returns 400 InputValidationError. A remove issued before an async add has settled will fail this way."
+    "Membership is validated synchronously, so removing an environment that is not currently a member returns 400 InputValidationError. A remove issued before an async add has settled will fail this way.",
+    "The admin centre sends an empty JSON object `{}` as the body. There is nothing to say: both ids are in the path."
    ],
    "responses": {
     "202": {
@@ -258,6 +486,19 @@
        }
       }
      }
+    }
+   },
+   "x-probe-verified": true,
+   "parameters": {
+    "api-version": {
+     "schema": {
+      "default": "1",
+      "enum": [
+       "1",
+       "2024-10-01"
+      ]
+     },
+     "description": "The API version. The docs show `2024-10-01`; the admin centre sends `1`. Both are accepted."
     }
    }
   },
@@ -280,7 +521,30 @@
    }
   },
   "environmentmanagement/environment-management-settings/list-environment-management-settings": {
-   "summary": "Management Settings List"
+   "summary": "Management Settings List",
+   "x-probe-verified": true,
+   "parameters": {
+    "api-version": {
+     "schema": {
+      "default": "1"
+     },
+     "description": "The API version. The docs show `2024-10-01`; every recorded first-party call to this operation sends `1`. Whether the documented value is also accepted here was not tested."
+    },
+    "$select": {
+     "description": "Comma-separated list of setting names to return. Names are case-sensitive and PascalCase, e.g. `PowerApps_AllowCodeApps`. `Id` is always returned alongside whatever is selected.",
+     "example": "PowerApps_AllowCodeApps"
+    }
+   },
+   "notes": [
+    "Property names on the wire are PascalCase (`Id`, `PowerApps_AllowCodeApps`, `PowerApps_EnableGenerativePages`); the docs lowercase the leading letter of every one of them. `$select` matches case-sensitively, so the docs spelling returns nothing.",
+    "A setting that has never been set comes back explicitly `null` rather than being omitted, so an entry in `objectResult` is not evidence that the setting has a value.",
+    "Recorded on the global host `api.powerplatform.com` with `api-version=1`, not the environment-scoped host."
+   ],
+   "responses": {
+    "200": {
+     "description": "The selected settings for the environment, one entry in `objectResult` per environment queried. Unset settings are returned as `null`."
+    }
+   }
   },
   "environmentmanagement/environment-management-settings/update-environment-management-settings": {
    "summary": "Management Settings Update",
@@ -376,7 +640,40 @@
    "summary": "Rule Based Policy Read (By ID)"
   },
   "governance/rule-based-policies/list-rule-assignments": {
-   "summary": "Rule Assignments List"
+   "summary": "Rule Assignments List",
+   "x-probe-verified": true,
+   "parameters": {
+    "api-version": {
+     "schema": {
+      "default": "2021-10-01-preview"
+     },
+     "description": "The API version. The docs show `2024-10-01`; the admin centre sends `2021-10-01-preview` on every recorded call to this operation. Whether the documented value is also accepted here was not tested."
+    },
+    "resourceType": {
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string",
+      "enum": [
+       "Environment",
+       "EnvironmentGroup"
+      ]
+     },
+     "description": "Restrict the result to assignments made at one scope. Undocumented; observed with `EnvironmentGroup`."
+    },
+    "includeRuleSetCounts": {
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "boolean",
+      "default": false
+     },
+     "description": "When true, each assignment also carries how many rule sets the assigned policy contains. Undocumented."
+    }
+   },
+   "notes": [
+    "A tenant with no assignments returns 200 and `{\"value\":[]}`."
+   ]
   },
   "governance/rule-based-policies/list-rule-assignments-by-environment-group-id": {
    "summary": "Rule Assignments List (By Environment Group Id)"
@@ -406,10 +703,39 @@
    "summary": "Delete"
   },
   "governance/rule-sets/get-rule-set": {
-   "summary": "Read"
+   "summary": "Read",
+   "x-probe-verified": true,
+   "parameters": {
+    "api-version": {
+     "schema": {
+      "default": "2021-10-01-preview"
+     },
+     "description": "The API version. The docs show `2024-10-01`; the admin centre sends `2021-10-01-preview` on every recorded call to this operation. Whether the documented value is also accepted here was not tested."
+    }
+   },
+   "notes": [
+    "A group with no rule set returns 204 with no body, as documented — the common case for a newly created group. Do not treat it as an error."
+   ],
+   "responses": {
+    "204": {
+     "description": "The group has no rule set. This is the normal answer for a group that has never had one configured, not an error."
+    }
+   }
   },
   "governance/rule-sets/get-rule-set-list-for-tenant": {
-   "summary": "List Read (For Tenant)"
+   "summary": "List Read (For Tenant)",
+   "x-probe-verified": true,
+   "parameters": {
+    "api-version": {
+     "schema": {
+      "default": "2021-10-01-preview"
+     },
+     "description": "The API version. The docs show `2024-10-01`; the admin centre sends `2021-10-01-preview` on every recorded call to this operation. Whether the documented value is also accepted here was not tested."
+    }
+   },
+   "notes": [
+    "With no tenant rule sets configured the body is an empty object `{}` — not `{\"value\":[]}`. Callers must treat a missing `value` as the empty list."
+   ]
   },
   "governance/rule-sets/update-rule-set": {
    "summary": "Update"
@@ -559,7 +885,10 @@
    "summary": "AdminApp Read"
   },
   "powerapps/apps/get-admin-apps": {
-   "summary": "AdminApps Read"
+   "summary": "AdminApps Read",
+   "notes": [
+    "The environment-scoped host serves the maker view of the same collection at `/powerapps/apps`, with `$filter` over `classification`, `appType`, `environment` and `isAppComponentLibrary`, and `$expand` of `properties.permissions` and `environment.DisplayName`."
+   ]
   },
   "powerautomate/cloud-flows/list-cloud-flows": {
    "summary": "List"
@@ -733,13 +1062,1686 @@
    "summary": "Run History Data Non Singleton Read"
   }
  },
- "tags": {},
+ "addOperations": {
+  "GET /powerapps/userSettings/{settingName}": {
+   "operationId": "powerapps_getUserSetting",
+   "tags": [
+    "User Setting"
+   ],
+   "summary": "Read",
+   "description": "Reads one of the calling user's stored preferences. The user is taken from the token, never from the path, so there is no way to read another user's settings here. Names are matched case-insensitively but echoed back with the service's own casing.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "settingName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "The setting to read. Recorded names: `powerApps_makerSettings` (locale and date/time format for the maker portal), `modernLeftNavToolbox_prod` (pinned left-navigation items), `preferredSolutionCard_prod`, `userProfile` (visit counters), `paOrgApps` and `frx` (dismissible first-run callouts).",
+     "example": "powerApps_makerSettings"
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The stored preference.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "PowerAppsUserSetting"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/user-settings",
+   "x-probe-verified": true,
+   "notes": [
+    "The maker portal polls `modernLeftNavToolbox_prod` continuously — 104 reads in a single recorded session — so treat it as hot and cache it client-side."
+   ]
+  },
+  "GET /powerapps/environments": {
+   "operationId": "powerapps_listEnvironments",
+   "tags": [
+    "Environment"
+   ],
+   "summary": "List (Maker)",
+   "description": "Lists the environments the calling user can work in, as the maker portal sees them. This is the maker-facing counterpart of [List For User](#/operations/environmentmanagement_listEnvironmentsForUser) and returns the Business Application Platform environment record, which carries `runtimeEndpoints`, `cluster` and `permissions` that the environmentmanagement projection does not.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "OData filter. `minimumAppPermission` is a pseudo-property that keeps only environments where the caller holds at least that app permission; `properties.environmentSku ne 'Teams'` is how the portal hides Dataverse for Teams environments.",
+     "example": "minimumAppPermission eq 'CanEdit' and properties.environmentSku ne 'Teams'"
+    },
+    {
+     "name": "$expand",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Inline related data. `properties.permissions` fills in what the caller may do in each environment; it is omitted otherwise.",
+     "example": "properties.permissions"
+    },
+    {
+     "name": "$top",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "integer"
+     },
+     "description": "Maximum environments to return.",
+     "example": 200
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The environments the caller may use.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "PowerAppsEnvironmentList"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/environments",
+   "x-probe-verified": true
+  },
+  "GET /powerapps/environment": {
+   "operationId": "powerapps_getEnvironment",
+   "tags": [
+    "Environment"
+   ],
+   "summary": "Read (Environment Host)",
+   "description": "Reads the environment the host itself names. Singular, and with no id in the path: the environment-scoped host already identifies it, which is what makes this the cheapest way for a client that already resolved the host to fetch the environment record.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    },
+    {
+     "name": "$expand",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Inline related data; `properties.permissions` is what the maker portal asks for.",
+     "example": "properties.permissions"
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Applied as a precondition on the single environment: if it does not match, the environment is not returned.",
+     "example": "minimumAppPermission eq 'CanEdit'"
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The environment this host serves.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "PowerAppsEnvironmentResource"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/environments",
+   "x-probe-verified": true
+  },
+  "GET /powerapps/features": {
+   "operationId": "powerapps_listFeatures",
+   "tags": [
+    "Feature Gate"
+   ],
+   "summary": "List",
+   "description": "Lists the feature gates that evaluate to enabled for the requested scope. The tenant-scoped host answers for the calling user (ids under `objectIds/{objectId}/features`, `settingSource: FeatureGate`); the environment-scoped host answers for the environment (ids under `features`, `settingSource: NotSpecified`). Gates that are off are omitted.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    },
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "Every gate currently on for this scope.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "PowerAppsFeatureList"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/features",
+   "x-probe-verified": true
+  },
+  "GET /powerapps/apps": {
+   "operationId": "powerapps_listAppsOnEnvironmentHost",
+   "tags": [
+    "Canvas App"
+   ],
+   "summary": "List (Environment Host)",
+   "description": "Lists apps in the environment the host names — the maker-facing form of [AdminApps Read](#/operations/powerapps_getAdminApps). The environment is implied by the host but the portal still repeats it in `$filter`; both were sent on every recorded call.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "OData filter. `classification` selects a portal surface (`EditableApps`, `OrgGalleryApps`); `appType` selects the app kind (`ClassicCanvasApp`, `CustomCanvasPage`); `isAppComponentLibrary eq 'true'` returns component libraries instead of apps. Note the booleans are quoted strings.",
+     "example": "classification eq 'OrgGalleryApps' and environment eq '00000000-0000-0000-0000-000000000000'"
+    },
+    {
+     "name": "$expand",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Inline related data. `environment.DisplayName` avoids a second call per app; `permissions($filter=maxAssignedTo('{objectId}'))` returns the caller's own share level and nothing else.",
+     "example": "environment.DisplayName"
+    },
+    {
+     "name": "$top",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "integer"
+     },
+     "description": "Maximum apps to return."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The matching apps.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "ResourceArrayPowerApp"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/apps",
+   "x-probe-verified": true
+  },
+  "GET /powerapps/apps/{appName}": {
+   "operationId": "powerapps_getAppOnEnvironmentHost",
+   "tags": [
+    "Canvas App"
+   ],
+   "summary": "Read (Environment Host)",
+   "description": "Reads one app from the environment the host names. The response carries live SAS URLs under `properties.appUris` for the app document and its assets; they are short-lived, so fetch them on demand rather than storing them.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "appName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "description": "The app id."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    },
+    {
+     "name": "$expand",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Inline related data; `environment` returns the whole environment record nested under `properties.environment`.",
+     "example": "environment"
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Applied as a precondition on the single app."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The app.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "PowerApp"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/apps",
+   "x-probe-verified": true
+  },
+  "POST /powerapps/apps/{appName}/locate": {
+   "operationId": "powerapps_locateApp",
+   "tags": [
+    "Canvas App"
+   ],
+   "summary": "Location Read",
+   "description": "Resolves an app id to the tenant, environment and geography that hold it. This is the bootstrap call: with only an app id in hand, a client posts here on the global host and uses the returned `environmentName` to build the environment-scoped host for everything after. The body is an empty JSON object.",
+   "servers": [
+    {
+     "url": "https://api.powerplatform.com",
+     "description": "Global endpoint. Every documented operation is reachable here; the gateway routes the request to the tenant's own cluster. First-party clients use it for operations that are not already scoped to one tenant or environment by the caller's context."
+    }
+   ],
+   "parameters": [
+    {
+     "name": "appName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "description": "The app id."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "Where the app lives.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "AppLocation"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/apps",
+   "x-probe-verified": true,
+   "requestBody": {
+    "required": true,
+    "description": "Empty. Recorded calls send `{}`.",
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object"
+      }
+     }
+    }
+   }
+  },
+  "POST /powerapps/apps/{appName}/startSession": {
+   "operationId": "powerapps_startAppSession",
+   "tags": [
+    "Canvas App"
+   ],
+   "summary": "Session Start",
+   "description": "Opens an editing session on the app and returns every session currently open on it. The studio calls this when an app is opened for edit; the response is what drives co-presence and the warning that someone else already holds the writer session. Sessions expire ten minutes after their last update, so a client that means to keep the app open must call this again.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "appName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "description": "The app id."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The new session, and every other session on the app.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "AppSessionResponse"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/apps",
+   "x-probe-verified": true,
+   "requestBody": {
+    "required": true,
+    "description": "The session to open.",
+    "content": {
+     "application/json": {
+      "schema": {
+       "$ref": "AppSessionRequest"
+      }
+     }
+    }
+   }
+  },
+  "POST /powerapps/evaluateDlpPoliciesForApp": {
+   "operationId": "powerapps_evaluateDlpPoliciesForApp",
+   "tags": [
+    "Canvas App"
+   ],
+   "summary": "DLP Policies Evaluate",
+   "description": "Evaluates an app document against the environment's data loss prevention policies without saving it. The app is sent whole rather than by id, which is what makes this usable on an unsaved draft — the studio calls it on every save attempt to decide whether to block. A non-compliant verdict comes back as 200 with `status: NonCompliant`, not as an error status.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The verdict. Check `evaluationResult.status`, not the HTTP status.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "AppDlpEvaluationResponse"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/apps",
+   "x-probe-verified": true,
+   "requestBody": {
+    "required": true,
+    "description": "The app document to evaluate.",
+    "content": {
+     "application/json": {
+      "schema": {
+       "$ref": "AppDlpEvaluationRequest"
+      }
+     }
+    }
+   },
+   "notes": [
+    "Every recorded evaluation returned `Compliant`, so the `violations` and `violationsByPolicy` item shapes are not established here."
+   ]
+  },
+  "GET /powerapps/globalApps": {
+   "operationId": "powerapps_listGlobalApps",
+   "tags": [
+    "Canvas App"
+   ],
+   "summary": "Global Apps List",
+   "description": "Lists the Microsoft-published sample apps offered to every tenant. They are ordinary app records owned by a Microsoft tenant, so `properties.owner.tenantId` is Microsoft's, not the caller's, and they are not in any of the caller's environments.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The sample apps.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "ResourceArrayPowerApp"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/apps",
+   "x-probe-verified": true
+  },
+  "GET /powerapps/notifications": {
+   "operationId": "powerapps_listNotifications",
+   "tags": [
+    "Notification"
+   ],
+   "summary": "List",
+   "description": "Lists in-product notifications for the calling maker. Note the api-version: this operation and its subscribe counterpart are on `3` while the rest of the namespace is on `1`.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "3"
+     },
+     "description": "The API version. The notifications endpoints are versioned separately from the rest of the namespace; recorded calls send `3`."
+    },
+    {
+     "name": "$top",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "integer"
+     },
+     "description": "Maximum notifications to return.",
+     "example": 1000
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The caller's notifications. Empty in every recorded response.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "NotificationList"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/notifications",
+   "x-probe-verified": true
+  },
+  "POST /powerapps/channels/notifications/subscribe": {
+   "operationId": "powerapps_subscribeToNotificationChannel",
+   "tags": [
+    "Notification"
+   ],
+   "summary": "Channel Subscribe",
+   "description": "Mints a short-lived Azure Web PubSub client credential so the caller can receive notifications over a WebSocket instead of polling. The returned URL already carries the access token, so it is bearer material: do not log it or hand it on. Re-subscribe before it expires — roughly twelve hours in the recorded response — to stay connected.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "3"
+     },
+     "description": "The API version. The notifications endpoints are versioned separately from the rest of the namespace; recorded calls send `3`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The channel URL and its expiry.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "NotificationChannelSubscription"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/notifications",
+   "x-probe-verified": true,
+   "notes": [
+    "The recorded request declares `Content-Type: application/x-www-form-urlencoded` and sends no body at all; nothing in the request identifies the subscriber beyond the token."
+   ]
+  },
+  "GET /powerapps/plans": {
+   "operationId": "powerapps_listPlans",
+   "tags": [
+    "Service Plan"
+   ],
+   "summary": "List",
+   "description": "Lists the service plans assigned to the calling user, each with the policy limits it grants. Effective entitlement is the union across plans, not the first match — `licensePriority` only decides which plan usage is attributed to.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The caller's plans.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "ServicePlanList"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/plans",
+   "x-probe-verified": true
+  },
+  "POST /powerapps/enroll": {
+   "operationId": "powerapps_enroll",
+   "tags": [
+    "Service Plan"
+   ],
+   "summary": "Enrolment Create",
+   "description": "Enrols the calling user in Power Apps and returns their first-run state: the tenant's default environment, the directory domains, and the plans that do and no longer entitle them. It has side effects — by default it will provision the caller a developer environment — so pass `action=skipDevEnvironment` when you only want to read the state. The body is an empty JSON object.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    },
+    {
+     "name": "action",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string",
+      "enum": [
+       "skipDevEnvironment"
+      ]
+     },
+     "description": "`skipDevEnvironment` enrols without provisioning a developer environment. This is what the maker portal sends; no other value was observed."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The caller's enrolment state.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "MakerEnrollment"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "powerapps/enroll",
+   "x-probe-verified": true
+  },
+  "GET /connectivity/connections": {
+   "operationId": "connectivity_listConnectionsOnEnvironmentHost",
+   "tags": [
+    "Connection"
+   ],
+   "summary": "List (Environment Host)",
+   "description": "Lists connections in the environment the host names — the same resource as [List](#/operations/connectivity_listConnections), without the `/environments/{environmentId}` segment.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "OData filter. The portal repeats the environment id here even though the host already implies it.",
+     "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+    },
+    {
+     "name": "$expand",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "`api` inlines the whole connector definition on each connection, which is large — prefer a separate connector read if you only need its display name.",
+     "example": "api"
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The connections in this environment.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "ListConnectionsResponse"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "connectivity/connections",
+   "x-probe-verified": true
+  },
+  "GET /connectivity/connectors": {
+   "operationId": "connectivity_listConnectorsOnEnvironmentHost",
+   "tags": [
+    "Connector"
+   ],
+   "summary": "List (Environment Host)",
+   "description": "Lists connectors available in the environment the host names. The full catalogue is large — 1,563 entries in one recorded response, several megabytes — and arrives in a single body with no `nextLink`, so filter rather than paging.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "OData filter. `apiCurationName` narrows to a curated set — `PowerAppsClients` is the set the maker portal offers.",
+     "example": "environment eq '00000000-0000-0000-0000-000000000000' and apiCurationName eq 'PowerAppsClients'"
+    },
+    {
+     "name": "$expand",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "example": "api"
+    },
+    {
+     "name": "showApisWithToS",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "boolean"
+     },
+     "description": "Include connectors whose use requires accepting terms of service. They are omitted otherwise."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The connector catalogue for this environment.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "ListConnectorsResponse"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "connectivity/connectors",
+   "x-probe-verified": true
+  },
+  "GET /connectivity/connectors/{connectorName}": {
+   "operationId": "connectivity_getConnectorOnEnvironmentHost",
+   "tags": [
+    "Connector"
+   ],
+   "summary": "Read (Environment Host)",
+   "description": "Reads one connector definition from the environment the host names. Note the identifier: it is the connector name, such as `shared_microsoftspatialservices`, not a GUID.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "connectorName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "The connector name.",
+     "example": "shared_microsoftspatialservices"
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    },
+    {
+     "name": "$filter",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The connector, including its `swagger` document and `connectionParameters`.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "GetConnectorByIdResponse"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "connectivity/connectors",
+   "x-probe-verified": true
+  },
+  "GET /gateway/cluster": {
+   "operationId": "gateway_getCluster",
+   "tags": [
+    "Cluster"
+   ],
+   "summary": "Read",
+   "description": "Reports which service stamp is serving this host. Useful for two things: confirming a client resolved the right tenant or environment host, and capturing `clusterName` for a support case. Answers on both the tenant- and environment-scoped hosts, with different `clusterType` and often a different release ring.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    },
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The stamp serving this host.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "GatewayCluster"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "gateway/cluster",
+   "x-probe-verified": true
+  },
+  "GET /copilotgovernance/settings/{settingName}": {
+   "operationId": "copilotgovernance_getSetting",
+   "tags": [
+    "Copilot Governance Setting"
+   ],
+   "summary": "Read",
+   "description": "Reads one generative AI consent switch for the environment the host names, with everything needed to render and interpret it: the effective `value`, the `defaultValue` that applies when nothing is set, whether the toggle is locked (`isDisabled`) and why, and the rule whose inputs actually write it. To change a setting, write the rule inputs named in `rule.ruleInputs` — this resource is read-only.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "settingName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "The setting to read. Recorded names are per model provider: `PowerPlatform_Anthropic`, `PowerPlatform_Mistral`.",
+     "example": "PowerPlatform_Anthropic"
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `1`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The setting and its effective value.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "CopilotGovernanceSetting"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "copilotgovernance/settings",
+   "x-probe-verified": true,
+   "notes": [
+    "`defaultValue` is not the effective value: a recorded setting had `defaultValue: true`, `value: false` and `isDisabled: true` at once, because the tenant had blocked the capability in the Microsoft 365 admin centre. Read `value`, and read `statusMessage` to explain a locked toggle."
+   ]
+  },
+  "GET /governance/configurations/{configurationName}": {
+   "operationId": "governance_getConfiguration",
+   "tags": [
+    "Governance Configuration"
+   ],
+   "summary": "Read",
+   "description": "Reads tenant-authored governance content for the environment the host names, addressed by configuration name. `MakerOnboardingContent` is the message an admin writes for makers entering a managed environment.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "description": "Environment-scoped endpoint. Built from the environment id by the same rule as the tenant host: strip the hyphens to get 32 hex characters, take the first 30 as the first DNS label and the last 2 as the second. Environment `00000000-0000-0000-0000-0000000000ab` resolves to `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. The environment is implied by the host, so these paths carry no `/environments/{environmentId}` segment — `/connectivity/connections` here is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host.",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the environment id with its hyphens removed."
+      },
+      "environmentIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the environment id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "configurationName",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "The configuration to read.",
+     "example": "MakerOnboardingContent"
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2022-03-01-preview"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `2022-03-01-preview`."
+    }
+   ],
+   "responses": {
+    "204": {
+     "description": "No content has been authored for this configuration. This is the normal answer when the tenant has never set it, not an error."
+    }
+   },
+   "x-ms-namespace": "governance/configurations",
+   "x-probe-verified": true,
+   "notes": [
+    "Only the 204 case was recorded, so the body of a configured response is not established here."
+   ]
+  },
+  "GET /governance/tenantRuleBasedPolicies": {
+   "operationId": "governance_listTenantRuleBasedPolicies",
+   "tags": [
+    "Rule-Based Policy"
+   ],
+   "summary": "List (Tenant)",
+   "description": "Lists the rule-based policies defined at tenant scope. Distinct from [Rule Based Policies List](#/operations/governance_listRuleBasedPolicies), which returns policies at every scope.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2021-10-01-preview"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `2021-10-01-preview`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The tenant-scope policies. A tenant with none returns `{\"value\":[]}`.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "ListPolicyResponse"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "governance/rule-based-policies",
+   "x-probe-verified": true
+  },
+  "GET /governance/environments/{environmentId}/effectiveRuleBasedPolicies": {
+   "operationId": "governance_listEffectiveRuleBasedPoliciesByEnvironment",
+   "tags": [
+    "Rule-Based Policy"
+   ],
+   "summary": "List (Effective, By Environment)",
+   "description": "Lists the policies actually in force on one environment, after inheritance from its environment group and the tenant has been resolved. This is the answer to 'why is this environment behaving this way', which the per-scope assignment lists cannot give.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "environmentId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "description": "The environment id."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "1"
+     },
+     "description": "The API version. Recorded calls send `1` here, unlike the sibling governance operations on this host, which send `2021-10-01-preview`."
+    },
+    {
+     "name": "$select",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Properties to return; `*` for all.",
+     "example": "*"
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The effective policies for the environment.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "ListPolicyResponse"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "governance/rule-based-policies",
+   "x-probe-verified": true
+  },
+  "GET /governance/environmentGroups/{environmentGroupId}/ruleBasedPolicies": {
+   "operationId": "governance_listRuleBasedPoliciesByEnvironmentGroup",
+   "tags": [
+    "Rule-Based Policy"
+   ],
+   "summary": "List (By Environment Group)",
+   "description": "Lists the rule-based policies attached to one environment group.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "environmentGroupId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "description": "The environment group id."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2021-10-01-preview"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `2021-10-01-preview`."
+    },
+    {
+     "name": "includeCustomerContent",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "boolean",
+      "default": false
+     },
+     "description": "Include the tenant-authored content carried by the policies — the maker onboarding message and similar — rather than just their structure."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The group's policies.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "ListPolicyResponse"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "governance/rule-based-policies",
+   "x-probe-verified": true
+  },
+  "GET /governance/ruleSetUIConfigurations": {
+   "operationId": "governance_listRuleSetUiConfigurations",
+   "tags": [
+    "Rule Set"
+   ],
+   "summary": "UI Configurations List",
+   "description": "Lists every rule set the tenant may configure, with the settings each one writes and how the admin centre renders them. Reading this is the practical way to discover a rule set's input names, their types and their defaults — none of which the rule set resource itself exposes.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2021-10-01-preview"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `2021-10-01-preview`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The configurable rule sets.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "RuleSetUiConfigurationList"
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "governance/rule-sets",
+   "x-probe-verified": true,
+   "notes": [
+    "The recorded response described six rule sets — `CodeAppsFeature`, `CopilotStudioCodeInterpreter`, `DynamicsProjectIntegration`, `CopilotComputerUse`, `CopilotComputerUseAccessControl` and `CopilotStudioExternalModels` — and their property names are the PascalCase spellings the environment management settings entity uses on the wire."
+   ]
+  },
+  "GET /usermanagement/environments/{environmentId}/plugins": {
+   "operationId": "usermanagement_listEnvironmentPlugins",
+   "tags": [
+    "User"
+   ],
+   "summary": "Plugins List",
+   "description": "Lists the plugins registered for one environment. The admin centre calls it while rendering an environment's user administration.",
+   "servers": [
+    {
+     "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "description": "Tenant-scoped endpoint. The host is derived from the tenant id alone — there is no region or scale-unit in it. Remove the hyphens from the tenant id to get 32 hex characters, then split: the first 30 are the first DNS label and the remaining 2 are the second. Tenant `00000000-0000-0000-0000-0000000000ab` therefore resolves to `https://000000000000000000000000000000.ab.tenant.api.powerplatform.com`. Operations served only here act on the calling user or the tenant as a whole and take no tenant id in the path.",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000",
+       "description": "The first 30 characters of the tenant id with its hyphens removed."
+      },
+      "tenantIdTail": {
+       "default": "ab",
+       "description": "The last 2 characters of the tenant id with its hyphens removed."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "environmentId",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "description": "The environment id."
+    },
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2022-03-01-preview"
+     },
+     "description": "The API version. Every recorded first-party call to this operation sends `2022-03-01-preview`."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The environment's plugins.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "array",
+        "items": {
+         "type": "object"
+        },
+        "description": "The registered plugins. A bare JSON array, not an OData `value` envelope."
+       }
+      }
+     }
+    }
+   },
+   "x-ms-namespace": "usermanagement/plugins",
+   "x-probe-verified": true,
+   "notes": [
+    "Every recorded response was the empty array `[]`, so the item shape is not established here. What is established is the envelope: a bare array, unlike the OData envelope the rest of the API uses."
+   ]
+  }
+ },
  "schemas": {
   "Value": {
    "rename": "RoleDefinition",
    "notes": [
     "The docs define one Value model reused for both the role-definition list and the role-assignment list. Verified live, role-assignment items are different and richer (roleAssignmentId, scope, principal fields, createdBy fields, createdOn, expiresOn); this shape reflects the role-definition list, not assignments."
    ]
+  },
+  "EnvironmentManagementSetting": {
+   "description": "One environment's management settings, one property per setting. Every property name is PascalCase on the wire — `Id`, `PowerApps_AllowCodeApps` — and `$select` matches it case-sensitively. The docs render each name with a lowercased leading letter; the names below are the wire spelling where recorded traffic established it. A setting that has never been set is returned as an explicit `null`.",
+   "x-probe-verified": true,
+   "renameProperties": {
+    "id": "Id",
+    "powerApps_AllowCodeApps": "PowerApps_AllowCodeApps",
+    "copilotStudio_CodeInterpreter": "CopilotStudio_CodeInterpreter",
+    "copilotStudio_ComputerUseAppAllowlist": "CopilotStudio_ComputerUseAppAllowlist",
+    "copilotStudio_ComputerUseWebAllowlist": "CopilotStudio_ComputerUseWebAllowlist",
+    "copilotStudio_ComputerUseSharedMachines": "CopilotStudio_ComputerUseSharedMachines"
+   },
+   "properties": {
+    "Id": {
+     "type": "string",
+     "format": "uuid",
+     "description": "The environment id. Always returned, whatever `$select` asks for.",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "PowerApps_AllowCodeApps": {
+     "type": "boolean",
+     "nullable": true,
+     "description": "Whether makers may run code apps — apps authored outside Power Apps and brought in to run on the platform. Turning it off stops existing code apps running. `null` until the setting has ever been set."
+    },
+    "PowerApps_EnableGenerativePages": {
+     "type": "boolean",
+     "nullable": true,
+     "description": "Whether generative pages may be created in this environment. Not in the docs; observed on the wire and accepted by `$select`."
+    },
+    "CopilotStudio_ComputerUseEnabled": {
+     "type": "boolean",
+     "nullable": true,
+     "description": "Whether Copilot Studio agents may use computer use — driving another system's graphical interface with a vision model. Named as a rule input by the rule-set UI configuration; absent from the docs."
+    },
+    "CopilotStudio_ComputerUseDedicatedMachines": {
+     "type": "boolean",
+     "nullable": true,
+     "description": "Whether computer use may run on machines dedicated to this tenant. Named as a rule input by the rule-set UI configuration; absent from the docs."
+    },
+    "CopilotStudio_ComputerUseByoMachines": {
+     "type": "boolean",
+     "nullable": true,
+     "description": "Whether computer use may run on machines the customer brings. Named as a rule input by the rule-set UI configuration; absent from the docs."
+    },
+    "CopilotStudio_ExternalModels": {
+     "type": "boolean",
+     "nullable": true,
+     "description": "Whether makers may build on non-Microsoft models in Copilot Studio. Backs the per-provider consent switches under [Copilot Governance Setting](#/operations/copilotgovernance_getSetting); absent from the docs."
+    }
+   }
   }
  },
  "addSchemas": {
@@ -948,6 +2950,1431 @@
      }
     }
    }
+  },
+  "PowerAppsUserSetting": {
+   "type": "object",
+   "description": "One named preference blob for the calling user. The resource id is scoped to the caller's Entra object id, so the same setting name reads back differently for different users.",
+   "properties": {
+    "id": {
+     "type": "string",
+     "description": "Resource id of the form `/providers/Microsoft.PowerApps/objectIds/{objectId}/userSettings/{settingName}`.",
+     "example": "/providers/Microsoft.PowerApps/objectIds/00000000-0000-0000-0000-000000000000/userSettings/powerApps_makerSettings"
+    },
+    "name": {
+     "type": "string",
+     "description": "The setting name as the service stores it. The path segment is matched case-insensitively but the stored name is echoed back with its own casing, so a request for `paOrgApps` answers with `PAOrgApps`."
+    },
+    "type": {
+     "type": "string",
+     "example": "Microsoft.PowerApps/objectIds/userSettings"
+    },
+    "properties": {
+     "type": "object",
+     "description": "Wrapper carrying the stored value.",
+     "properties": {
+      "settings": {
+       "type": "object",
+       "additionalProperties": true,
+       "description": "The stored preference, free-form and specific to the setting name. Recorded examples: `powerApps_makerSettings` holds `language`, `dateFormat`, `timeFormat`, `country` and `optIn`; `modernLeftNavToolbox_prod` holds a `value` array of pinned navigation item ids; `userProfile` holds visit counters; dismissible teaching callouts such as `frx` and `PAOrgApps` hold `dismissed` and `finished` booleans; `preferredsolutioncard_prod` holds `isVisible`."
+      }
+     }
+    }
+   },
+   "x-probe-verified": true
+  },
+  "PowerAppsFeature": {
+   "type": "object",
+   "description": "One feature gate as evaluated for the caller or the environment.",
+   "properties": {
+    "id": {
+     "type": "string",
+     "description": "Resource id. Tenant-scoped reads return `/providers/Microsoft.PowerApps/objectIds/{objectId}/features/{name}`; environment-scoped reads return `/providers/Microsoft.PowerApps/features/{name}`."
+    },
+    "name": {
+     "type": "string",
+     "description": "The feature gate name.",
+     "example": "CanUseAppQuarantineState"
+    },
+    "type": {
+     "type": "string"
+    },
+    "properties": {
+     "type": "object",
+     "description": "Evaluated state of the gate.",
+     "properties": {
+      "featureDescription": {
+       "type": "string",
+       "description": "What the gate controls, in Microsoft's own words."
+      },
+      "settingSource": {
+       "type": "string",
+       "description": "Where the value came from. `FeatureGate` means an explicit flight or override applies; `NotSpecified` means the platform default is in force.",
+       "enum": [
+        "FeatureGate",
+        "NotSpecified"
+       ]
+      }
+     },
+     "x-probe-verified": true
+    }
+   },
+   "x-probe-verified": true
+  },
+  "PowerAppsFeatureList": {
+   "type": "object",
+   "description": "Every feature gate that currently evaluates to enabled for the requested scope. Gates that are off are omitted rather than returned as false, so absence is the negative answer. Recorded responses ran to 765 entries; there is no paging envelope.",
+   "properties": {
+    "value": {
+     "type": "array",
+     "items": {
+      "$ref": "PowerAppsFeature"
+     }
+    }
+   },
+   "x-probe-verified": true
+  },
+  "PowerAppsEnvironmentPermission": {
+   "type": "object",
+   "description": "One operation the caller may perform on the environment.",
+   "properties": {
+    "displayName": {
+     "type": "string",
+     "description": "Human-readable name of the permission."
+    }
+   },
+   "x-probe-verified": true
+  },
+  "PowerAppsEnvironmentProperties": {
+   "type": "object",
+   "description": "Environment properties as the maker portal sees them. This is the Business Application Platform environment record, not the environmentmanagement projection: it uses `azureRegionHint`/`azureRegion` rather than `location`, and nests lifecycle state under `states`.",
+   "properties": {
+    "displayName": {
+     "type": "string",
+     "example": "Contoso Production"
+    },
+    "description": {
+     "type": "string"
+    },
+    "azureRegionHint": {
+     "type": "string",
+     "description": "The Azure region the environment was asked for.",
+     "example": "westus"
+    },
+    "azureRegion": {
+     "type": "string",
+     "description": "The Azure region the environment actually runs in.",
+     "example": "westus"
+    },
+    "createdTime": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastModifiedTime": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdBy": {
+     "$ref": "Principal"
+    },
+    "provisioningState": {
+     "type": "string",
+     "enum": [
+      "Succeeded",
+      "Failed",
+      "Provisioning",
+      "Deleting"
+     ]
+    },
+    "creationType": {
+     "type": "string",
+     "description": "How the environment came to exist.",
+     "enum": [
+      "User",
+      "DefaultTenant",
+      "Developer",
+      "Trial"
+     ]
+    },
+    "environmentSku": {
+     "type": "string",
+     "description": "The environment type.",
+     "enum": [
+      "Default",
+      "Sandbox",
+      "Production",
+      "Trial",
+      "Developer",
+      "Teams",
+      "SubscriptionBasedTrial"
+     ]
+    },
+    "isDefault": {
+     "type": "boolean",
+     "description": "Whether this is the tenant's default environment."
+    },
+    "databaseType": {
+     "type": "string",
+     "description": "Present only once Dataverse is provisioned.",
+     "example": "CommonDataService"
+    },
+    "retentionPeriod": {
+     "type": "string",
+     "description": "Backup retention as an ISO 8601 duration.",
+     "example": "P7D"
+    },
+    "lifecycleAuthority": {
+     "type": "string",
+     "description": "Which system owns lifecycle operations on the environment.",
+     "example": "Environment"
+    },
+    "trialScenarioType": {
+     "type": "string",
+     "example": "None"
+    },
+    "enableAnalyticsForMakers": {
+     "type": "boolean",
+     "description": "Whether makers may see analytics for their own apps."
+    },
+    "appDraftingCopilotEnabled": {
+     "type": "boolean"
+    },
+    "governanceConfiguration": {
+     "type": "object",
+     "description": "Managed Environment state.",
+     "properties": {
+      "protectionLevel": {
+       "type": "string",
+       "description": "`Basic` means the environment is not managed; `Standard` means Managed Environment governance applies.",
+       "enum": [
+        "Basic",
+        "Standard"
+       ]
+      }
+     },
+     "x-probe-verified": true
+    },
+    "parentEnvironmentGroup": {
+     "type": "object",
+     "description": "The environment group the environment belongs to. The all-zeros GUID is the sentinel for 'no group' — the field is present even when the environment is ungrouped.",
+     "properties": {
+      "id": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000",
+       "description": "Environment group id, or the all-zeros GUID when ungrouped."
+      }
+     },
+     "x-probe-verified": true
+    },
+    "protectionStatus": {
+     "type": "object",
+     "description": "Customer-managed key state.",
+     "properties": {
+      "keyManagedBy": {
+       "type": "string",
+       "enum": [
+        "Microsoft",
+        "Customer"
+       ]
+      }
+     },
+     "x-probe-verified": true
+    },
+    "states": {
+     "type": "object",
+     "description": "Lifecycle state, split by concern.",
+     "properties": {
+      "management": {
+       "type": "object",
+       "description": "Provisioning state.",
+       "properties": {
+        "id": {
+         "type": "string",
+         "example": "Ready"
+        }
+       }
+      },
+      "runtime": {
+       "type": "object",
+       "description": "Runtime state — this is where an admin-disabled environment shows up.",
+       "properties": {
+        "id": {
+         "type": "string"
+        },
+        "runtimeReasonCode": {
+         "type": "string"
+        },
+        "requestedBy": {
+         "$ref": "Principal"
+        }
+       }
+      }
+     },
+     "x-probe-verified": true
+    },
+    "updateCadence": {
+     "type": "object",
+     "description": "Release ring the environment follows.",
+     "properties": {
+      "id": {
+       "type": "string",
+       "enum": [
+        "Frequent",
+        "Moderate"
+       ]
+      }
+     },
+     "x-probe-verified": true
+    },
+    "cluster": {
+     "type": "object",
+     "description": "The stamp serving this environment. `uriSuffix` is the host fragment that appears in per-environment runtime endpoints such as the Copilot Studio one.",
+     "properties": {
+      "category": {
+       "type": "string"
+      },
+      "number": {
+       "type": "string"
+      },
+      "uriSuffix": {
+       "type": "string"
+      },
+      "geoShortName": {
+       "type": "string"
+      },
+      "environment": {
+       "type": "string"
+      }
+     }
+    },
+    "clientUris": {
+     "type": "object",
+     "description": "Deep links into the first-party portals for this environment.",
+     "properties": {
+      "admin": {
+       "type": "string",
+       "format": "uri"
+      },
+      "maker": {
+       "type": "string",
+       "format": "uri"
+      }
+     },
+     "x-probe-verified": true
+    },
+    "runtimeEndpoints": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string",
+      "format": "uri"
+     },
+     "description": "Per-service regional base URLs, keyed by service name (`microsoft.BusinessAppPlatform`, `microsoft.PowerApps`, `microsoft.Flow`, `microsoft.CommonDataModel`, `microsoft.PowerVirtualAgents`, `microsoft.ApiManagement`, `microsoft.PowerAppsAdvisor`). A client that hardcodes a global host instead of reading these will talk to the wrong geography."
+    },
+    "linkedEnvironmentMetadata": {
+     "type": "object",
+     "description": "The Dataverse organization backing this environment, when there is one.",
+     "properties": {
+      "resourceId": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "friendlyName": {
+       "type": "string",
+       "example": "Contoso Production"
+      },
+      "uniqueName": {
+       "type": "string",
+       "example": "unq00000000000000000000000000000"
+      },
+      "domainName": {
+       "type": "string",
+       "example": "contoso"
+      },
+      "version": {
+       "type": "string",
+       "example": "9.2.0.0"
+      },
+      "instanceUrl": {
+       "type": "string",
+       "format": "uri",
+       "example": "https://contoso.crm.dynamics.com/"
+      },
+      "instanceApiUrl": {
+       "type": "string",
+       "format": "uri",
+       "example": "https://contoso.api.crm.dynamics.com"
+      },
+      "baseLanguage": {
+       "type": "integer",
+       "description": "LCID of the organization's base language.",
+       "example": 1033
+      },
+      "instanceState": {
+       "type": "string",
+       "example": "Ready"
+      },
+      "createdTime": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "platformSku": {
+       "type": "string",
+       "example": "Standard"
+      }
+     },
+     "x-probe-verified": true
+    },
+    "notificationMetadata": {
+     "type": "object",
+     "description": "Portal banner state.",
+     "properties": {
+      "state": {
+       "type": "string"
+      },
+      "branding": {
+       "type": "string"
+      }
+     }
+    },
+    "connectedGroups": {
+     "type": "array",
+     "items": {
+      "type": "object"
+     },
+     "description": "Populated only when `$expand` asks for it."
+    },
+    "permissions": {
+     "type": "object",
+     "additionalProperties": {
+      "$ref": "PowerAppsEnvironmentPermission"
+     },
+     "description": "What the caller may do here, keyed by permission name (`CreatePowerApp`, `ReadEnvironment`, `DeleteEnvironment`, `SetDLPPolicy`, …). Returned only when the request asks for `$expand=properties.permissions`; a permission the caller lacks is absent rather than false."
+    }
+   },
+   "x-probe-verified": true
+  },
+  "PowerAppsEnvironmentResource": {
+   "type": "object",
+   "description": "An environment as the maker-facing Power Apps surface returns it.",
+   "properties": {
+    "id": {
+     "type": "string",
+     "example": "/providers/Microsoft.PowerApps/environments/00000000-0000-0000-0000-000000000000"
+    },
+    "name": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000",
+     "description": "The environment id. For a tenant's default environment this is `Default-{tenantId}` rather than a bare GUID, so it is not always parseable as a UUID."
+    },
+    "type": {
+     "type": "string",
+     "example": "Microsoft.PowerApps/environments"
+    },
+    "location": {
+     "type": "string",
+     "description": "Present on some reads only.",
+     "example": "unitedstates"
+    },
+    "properties": {
+     "$ref": "PowerAppsEnvironmentProperties"
+    }
+   },
+   "x-probe-verified": true
+  },
+  "PowerAppsEnvironmentList": {
+   "type": "object",
+   "description": "A page of environments.",
+   "properties": {
+    "value": {
+     "type": "array",
+     "items": {
+      "$ref": "PowerAppsEnvironmentResource"
+     }
+    },
+    "nextLink": {
+     "type": "string",
+     "description": "Present only when more environments remain.",
+     "format": "uri"
+    }
+   },
+   "x-probe-verified": true
+  },
+  "ServicePlanPolicies": {
+   "type": "object",
+   "description": "What the plan lets its holder do. Limits of `0` generally mean 'none granted by this plan' rather than 'unlimited'; entitlement is the union across the caller's plans.",
+   "properties": {
+    "accessPremiumApis": {
+     "type": "boolean",
+     "description": "Whether premium connectors may be used."
+    },
+    "accessOnPremGateway": {
+     "type": "boolean",
+     "description": "Whether on-premises data gateways may be used."
+    },
+    "accessAdminRoutes": {
+     "type": "boolean",
+     "description": "Whether the holder may call admin endpoints."
+    },
+    "canAccessMakerPortal": {
+     "type": "boolean"
+    },
+    "canAccessNonDefaultEnvironments": {
+     "type": "boolean"
+    },
+    "canAccessPremiumAnalyticsReports": {
+     "type": "boolean"
+    },
+    "canCreateStandardEnvironment": {
+     "type": "boolean"
+    },
+    "canProvisionEnvironments": {
+     "type": "boolean"
+    },
+    "canUseCustomApis": {
+     "type": "boolean",
+     "description": "Whether custom connectors may be *used*; `customApiLimit` caps how many may be created."
+    },
+    "customApiLimit": {
+     "type": "integer",
+     "description": "Maximum custom connectors."
+    },
+    "databaseLimit": {
+     "type": "integer"
+    },
+    "environmentLimit": {
+     "type": "integer"
+    },
+    "productionEnvironmentLimit": {
+     "type": "integer"
+    },
+    "trialEnvironmentLimit": {
+     "type": "integer"
+    },
+    "connectionsPerApiLimit": {
+     "type": "integer"
+    },
+    "totalConnectionLimit": {
+     "type": "integer"
+    },
+    "calendarMonthFlowRunLimit": {
+     "type": "integer",
+     "description": "Cloud flow runs per calendar month."
+    },
+    "maximumRecurrenceFrequency": {
+     "type": "integer",
+     "description": "Fastest recurrence trigger the plan permits."
+    },
+    "flowPlanEnforcementScope": {
+     "type": "string",
+     "description": "Whether flow limits are counted per user or per tenant.",
+     "enum": [
+      "User",
+      "Tenant"
+     ]
+    },
+    "asePolicyId": {
+     "type": "string",
+     "example": "Enterprise"
+    },
+    "allowPackaging": {
+     "type": "boolean"
+    },
+    "manageEntities": {
+     "type": "boolean"
+    },
+    "onlyAllowAppUsage": {
+     "type": "boolean",
+     "description": "A run-only plan: the holder may play apps but not author them."
+    },
+    "onlyAllowGlobalApps": {
+     "type": "boolean"
+    },
+    "onlyAllowD365CanvasApps": {
+     "type": "boolean"
+    },
+    "powerAppsTeamsOnly": {
+     "type": "boolean",
+     "description": "The plan is the Power Apps for Teams entitlement."
+    },
+    "rpaAttendedAllowed": {
+     "type": "boolean",
+     "description": "Whether attended desktop flows may run."
+    },
+    "pcfExternalServiceUsageAllowed": {
+     "type": "boolean",
+     "description": "Whether PCF code components may call external services."
+    },
+    "supportEntitlement": {
+     "type": "boolean"
+    },
+    "hasLegacyLicenseExtension": {
+     "type": "boolean"
+    }
+   },
+   "x-probe-verified": true
+  },
+  "ServicePlan": {
+   "type": "object",
+   "description": "One service plan assigned to the calling user.",
+   "properties": {
+    "id": {
+     "type": "string",
+     "example": "/providers/Microsoft.BusinessAppPlatform/scopes/service/serviceplans/00000000-0000-0000-0000-000000000000"
+    },
+    "name": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "type": {
+     "type": "string",
+     "example": "Microsoft.BusinessAppPlatform/scopes/serviceplans"
+    },
+    "properties": {
+     "type": "object",
+     "description": "The plan and what it grants.",
+     "properties": {
+      "licenseId": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "licenseName": {
+       "type": "string",
+       "description": "The SKU part number.",
+       "example": "POWERAPPS_O365_P1"
+      },
+      "licenseDisplayName": {
+       "type": "string",
+       "example": "Power Apps for Office 365"
+      },
+      "correlationGroup": {
+       "type": "object",
+       "description": "Groups plans that are variants of the same product, so a client can collapse them in a licence summary.",
+       "properties": {
+        "id": {
+         "type": "string",
+         "format": "uuid",
+         "example": "00000000-0000-0000-0000-000000000000"
+        },
+        "displayName": {
+         "type": "string"
+        }
+       },
+       "x-probe-verified": true
+      },
+      "serviceType": {
+       "type": "string",
+       "example": "PowerAppsService"
+      },
+      "licenseType": {
+       "type": "string"
+      },
+      "licenseLevel": {
+       "type": "string"
+      },
+      "licenseSku": {
+       "type": "string",
+       "description": "Broad class of the plan.",
+       "example": "SeededO365"
+      },
+      "licensePriority": {
+       "type": "integer",
+       "description": "Ordering hint — the lowest number wins when the platform picks one plan to attribute usage to."
+      },
+      "assignedTime": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "capabilityStatus": {
+       "type": "string",
+       "enum": [
+        "Enabled",
+        "Warning",
+        "Suspended",
+        "Deleted"
+       ]
+      },
+      "isTrial": {
+       "type": "boolean"
+      },
+      "isGuestPlan": {
+       "type": "boolean",
+       "description": "Whether the plan comes from a tenant the caller is a guest in."
+      },
+      "policies": {
+       "$ref": "ServicePlanPolicies"
+      }
+     },
+     "x-probe-verified": true
+    }
+   },
+   "x-probe-verified": true
+  },
+  "ServicePlanList": {
+   "type": "object",
+   "description": "The calling user's service plans.",
+   "properties": {
+    "value": {
+     "type": "array",
+     "items": {
+      "$ref": "ServicePlan"
+     }
+    }
+   },
+   "x-probe-verified": true
+  },
+  "MakerEnrollment": {
+   "type": "object",
+   "description": "The calling user's first-run state in this tenant: which tenant they landed in, which environment is the default, and what they are licensed for.",
+   "properties": {
+    "tenant": {
+     "type": "object",
+     "description": "Tenant-level enrolment facts.",
+     "properties": {
+      "isTenantWhitelisted": {
+       "type": "boolean",
+       "description": "Whether the tenant may use Power Apps at all."
+      },
+      "isDisallowedForInternalPlans": {
+       "type": "boolean"
+      },
+      "isGccTenant": {
+       "type": "boolean",
+       "description": "Whether the tenant is in a US Government cloud."
+      },
+      "defaultEnvironmentName": {
+       "type": "string",
+       "description": "Name of the tenant's default environment, of the form `Default-{tenantId}`."
+      },
+      "backfillEnvironmentName": {
+       "type": "string",
+       "description": "Environment the platform will place resources in when the caller has not chosen one. Normally the same as `defaultEnvironmentName`."
+      },
+      "defaultLocation": {
+       "type": "string",
+       "example": "unitedstates"
+      },
+      "aadTenantLocation": {
+       "type": "string",
+       "description": "Geography Entra ID reports for the tenant. A mismatch with `defaultLocation` means the default environment sits outside the directory's home geography.",
+       "example": "unitedstates"
+      }
+     },
+     "x-probe-verified": true
+    },
+    "graphTenantDetails": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "description": "Directory facts mirrored from Microsoft Graph.",
+      "properties": {
+       "id": {
+        "type": "string",
+        "format": "uuid",
+        "example": "00000000-0000-0000-0000-000000000000"
+       },
+       "objectId": {
+        "type": "string",
+        "format": "uuid",
+        "example": "00000000-0000-0000-0000-000000000000"
+       },
+       "preferredLanguage": {
+        "type": "string",
+        "example": "en"
+       },
+       "companyLastDirSyncTime": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "verifiedDomains": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "description": "A verified domain on the tenant.",
+         "properties": {
+          "name": {
+           "type": "string",
+           "example": "contoso.onmicrosoft.com"
+          },
+          "type": {
+           "type": "string",
+           "enum": [
+            "Managed",
+            "Federated"
+           ]
+          },
+          "capabilities": {
+           "type": "string",
+           "description": "Comma-separated workloads the domain serves.",
+           "example": "Email, OfficeCommunicationsOnline"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "activeUserPlans": {
+     "type": "array",
+     "items": {
+      "$ref": "ServicePlan"
+     },
+     "description": "Plans currently entitling the caller."
+    },
+    "expiredUserPlans": {
+     "type": "array",
+     "items": {
+      "$ref": "ServicePlan"
+     },
+     "description": "Plans that have lapsed."
+    },
+    "enrollmentOptions": {
+     "type": "object",
+     "description": "Choices the caller has already made during onboarding.",
+     "properties": {
+      "powerApps": {
+       "type": "object",
+       "description": "Power Apps onboarding choices.",
+       "properties": {
+        "promotionalEmailOption": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   },
+   "x-probe-verified": true
+  },
+  "NotificationList": {
+   "type": "object",
+   "description": "In-product notifications for the calling maker, newest first. Only empty responses were recorded, so the item shape is not established here.",
+   "properties": {
+    "value": {
+     "type": "array",
+     "items": {
+      "type": "object"
+     }
+    }
+   },
+   "x-probe-verified": true
+  },
+  "NotificationChannelSubscription": {
+   "type": "object",
+   "description": "A short-lived Azure Web PubSub client credential. Connect the returned URL as a WebSocket to receive notifications live; re-subscribe before `expirationTime` to stay connected.",
+   "properties": {
+    "url": {
+     "type": "string",
+     "description": "WebSocket URL with the access token already embedded in the query string. Treat it as a secret — it authenticates the bearer.",
+     "format": "uri",
+     "example": "wss://contoso.webpubsub.azure.com/client/hubs/Notifications?access_token=…"
+    },
+    "expirationTime": {
+     "type": "string",
+     "format": "date-time",
+     "description": "When the embedded token stops working. Recorded lifetime was roughly 12 hours."
+    }
+   },
+   "x-probe-verified": true
+  },
+  "GatewayCluster": {
+   "type": "object",
+   "description": "Identifies the stamp serving the host the request was made against. The same value appears in the `x-ms-gateway-clusters` response header on every call, and `clusterName` is the string support asks for when diagnosing a regional problem.",
+   "properties": {
+    "clusterName": {
+     "type": "string",
+     "description": "Full stamp name, composed of the other fields: category prefix, number, and geography.",
+     "example": "prdcm002wus"
+    },
+    "clusterNumber": {
+     "type": "string",
+     "description": "Stamp number within the geography. Zero-padded, and a string, not a number.",
+     "example": "002"
+    },
+    "clusterType": {
+     "type": "string",
+     "description": "`CustomerManagement` serves the tenant-scoped host; `IslandCluster` serves the environment-scoped host.",
+     "enum": [
+      "CustomerManagement",
+      "IslandCluster"
+     ]
+    },
+    "clusterCategory": {
+     "type": "string",
+     "description": "Release ring. `FirstRelease` stamps take service updates ahead of `Prod`.",
+     "enum": [
+      "Prod",
+      "FirstRelease"
+     ]
+    },
+    "environment": {
+     "type": "string",
+     "description": "Service environment the stamp belongs to.",
+     "example": "Prod"
+    },
+    "geoName": {
+     "type": "string",
+     "description": "Short geography code.",
+     "example": "us"
+    },
+    "geoLongName": {
+     "type": "string",
+     "description": "Geography name as used in runtime endpoint hostnames.",
+     "example": "unitedstates"
+    }
+   },
+   "x-probe-verified": true
+  },
+  "CopilotGovernanceRuleInput": {
+   "type": "object",
+   "description": "Binds one rule input to the setting it drives.",
+   "properties": {
+    "inputName": {
+     "type": "string",
+     "description": "Rule input name, matching a property in the environment's management settings."
+    },
+    "settingName": {
+     "type": "string",
+     "description": "The governance setting the input sets."
+    }
+   },
+   "x-probe-verified": true
+  },
+  "CopilotGovernanceSettingRule": {
+   "type": "object",
+   "description": "The rule that backs the setting. Turning the setting on or off is done by writing the rule's inputs, not by writing this resource.",
+   "properties": {
+    "ruleId": {
+     "type": "string",
+     "example": "CopilotStudioExternalModels"
+    },
+    "ruleInputs": {
+     "type": "array",
+     "items": {
+      "$ref": "CopilotGovernanceRuleInput"
+     }
+    },
+    "isLegacyRule": {
+     "type": "boolean",
+     "description": "True for settings still carried by the pre-rule-set governance model."
+    },
+    "featureFlag": {
+     "type": "string",
+     "description": "Feature gate that must be on for the rule to exist at all.",
+     "example": "EnableCopilotStudioExternalModels"
+    }
+   },
+   "x-probe-verified": true
+  },
+  "CopilotGovernanceStatusMessage": {
+   "type": "object",
+   "description": "Admin-centre copy for each state the setting can be in, including where to send an admin whose tenant has blocked the capability outright.",
+   "properties": {
+    "enabledText": {
+     "type": "string"
+    },
+    "disabledText": {
+     "type": "string"
+    },
+    "someText": {
+     "type": "string"
+    },
+    "disabledTooltip": {
+     "type": "string"
+    },
+    "disabledLearnMoreLink": {
+     "type": "string",
+     "format": "uri"
+    }
+   }
+  },
+  "CopilotGovernanceSetting": {
+   "type": "object",
+   "description": "A single generative AI consent switch, with its effective value and everything the admin centre needs to render it.",
+   "properties": {
+    "settingName": {
+     "type": "string",
+     "description": "The setting's stable name.",
+     "example": "PowerPlatform_Anthropic"
+    },
+    "resourceId": {
+     "type": "string",
+     "description": "Where the value is stored, of the form `copilotgovernance/tenants/{tenantId}/environments/{environmentId}/settings/{settingName}`."
+    },
+    "value": {
+     "type": "boolean",
+     "description": "The effective value for this environment."
+    },
+    "defaultValue": {
+     "type": "boolean",
+     "description": "What applies when nothing has been set. Note this can be `true` while `value` is `false`, and while `isDisabled` is `true`."
+    },
+    "displayName": {
+     "type": "string",
+     "example": "Anthropic"
+    },
+    "description": {
+     "type": "string",
+     "description": "What allowing this actually permits."
+    },
+    "checkboxLabel": {
+     "type": "string",
+     "description": "Label for the toggle in the admin centre; present only for settings that render as a checkbox."
+    },
+    "tenantId": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "environmentId": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "platformProduct": {
+     "type": "string",
+     "example": "PowerPlatform"
+    },
+    "settingState": {
+     "type": "string",
+     "description": "Release stage of the capability the setting governs.",
+     "enum": [
+      "GenerallyAvailable",
+      "PublicPreview"
+     ]
+    },
+    "valueType": {
+     "type": "string",
+     "enum": [
+      "BooleanValue"
+     ]
+    },
+    "isManagedEnvironmentProperty": {
+     "type": "boolean",
+     "description": "Whether changing it requires a Managed Environment."
+    },
+    "invertValue": {
+     "type": "boolean",
+     "description": "When true the stored value is the negation of what the admin centre shows — the switch reads as 'block' rather than 'allow'."
+    },
+    "storeResource": {
+     "type": "string",
+     "description": "Which store holds the value.",
+     "example": "OMSEnvironment"
+    },
+    "isDisabled": {
+     "type": "boolean",
+     "description": "Whether the toggle is greyed out. It is set when a higher-level control — typically the Microsoft 365 admin centre — has already decided, and the reason is in `statusMessage`."
+    },
+    "enabledStatus": {
+     "type": "string",
+     "description": "How widely the capability is switched on above this environment.",
+     "enum": [
+      "EnabledForAll",
+      "EnabledForNone",
+      "EnabledForSome"
+     ]
+    },
+    "rule": {
+     "$ref": "CopilotGovernanceSettingRule"
+    },
+    "statusMessage": {
+     "$ref": "CopilotGovernanceStatusMessage"
+    }
+   },
+   "x-probe-verified": true
+  },
+  "RuleSetUiProperty": {
+   "type": "object",
+   "description": "The setting a component writes.",
+   "properties": {
+    "name": {
+     "type": "string",
+     "description": "Property name as written to the environment's management settings.",
+     "example": "PowerApps_AllowCodeApps"
+    },
+    "type": {
+     "type": "string",
+     "enum": [
+      "Boolean",
+      "String"
+     ]
+    },
+    "defaultValue": {
+     "type": "string",
+     "description": "Always a string, whatever `type` says — `\"True\"`/`\"False\"` for booleans, `\"\"` for an unset string."
+    }
+   },
+   "x-probe-verified": true
+  },
+  "RuleSetUiComponent": {
+   "type": "object",
+   "description": "One control in the rule set's editor.",
+   "properties": {
+    "componentId": {
+     "type": "string",
+     "description": "Ordinal within the rule set, as a string."
+    },
+    "componentType": {
+     "type": "string",
+     "description": "How to render it.",
+     "enum": [
+      "Checkbox",
+      "Text",
+      "Textarea"
+     ]
+    },
+    "property": {
+     "$ref": "RuleSetUiProperty"
+    },
+    "text": {
+     "type": "string",
+     "description": "Label shown next to the control. May contain literal `\\n` escapes that the client is expected to render as line breaks."
+    },
+    "altText": {
+     "type": "string",
+     "description": "Accessible description of the control."
+    },
+    "learnMoreText": {
+     "type": "string"
+    },
+    "learnMoreLink": {
+     "type": "string",
+     "format": "uri"
+    }
+   },
+   "x-probe-verified": true
+  },
+  "RuleSetUiConfiguration": {
+   "type": "object",
+   "description": "The presentation contract for one rule set: which settings it writes, how the admin centre renders them, and which feature gate has to be on for it to appear at all. Reading it is the only way to discover a rule set's input names without guessing.",
+   "properties": {
+    "ruleSetId": {
+     "type": "string",
+     "example": "CodeAppsFeature"
+    },
+    "featureFlag": {
+     "type": "string",
+     "description": "Gate controlling whether this rule set is offered.",
+     "example": "EnableCodeAppsFeatureRule"
+    },
+    "version": {
+     "type": "string",
+     "example": "1.0"
+    },
+    "name": {
+     "type": "string",
+     "description": "Title shown in the admin centre."
+    },
+    "description": {
+     "type": "string"
+    },
+    "learnMoreText": {
+     "type": "string"
+    },
+    "learnMoreLink": {
+     "type": "string",
+     "format": "uri"
+    },
+    "isPreview": {
+     "type": "boolean",
+     "description": "Whether the capability is still in preview."
+    },
+    "components": {
+     "type": "array",
+     "items": {
+      "$ref": "RuleSetUiComponent"
+     }
+    },
+    "enableConfigBasedRuleRender": {
+     "type": "boolean",
+     "description": "Whether the client should render from this configuration rather than from its own built-in layout for the rule set."
+    }
+   },
+   "x-probe-verified": true
+  },
+  "RuleSetUiConfigurationList": {
+   "type": "object",
+   "description": "Every rule set the tenant may configure.",
+   "properties": {
+    "value": {
+     "type": "array",
+     "items": {
+      "$ref": "RuleSetUiConfiguration"
+     }
+    }
+   },
+   "x-probe-verified": true
+  },
+  "AppDlpEvaluationRequest": {
+   "type": "object",
+   "description": "The app to evaluate, sent as the app document rather than by id — the point is to evaluate a draft before it is saved. Only the connector-bearing parts matter: `databaseReferences` and the app's connection references drive the verdict. Which fields are genuinely required was not established: every recorded call sent the whole document.",
+   "properties": {
+    "appType": {
+     "type": "string",
+     "enum": [
+      "ClassicCanvasApp",
+      "CustomCanvasPage"
+     ]
+    },
+    "tags": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "The app's tag bag, as it would be saved."
+    },
+    "properties": {
+     "type": "object",
+     "description": "The app document. Recorded requests carried `appUris`, `environment` (`id` and `name`), `displayName`, `description`, `commitMessage`, `backgroundColor`, `minClientVersion`, `createdByClientVersion`, `lifeCycleId`, `enableModernRuntimeMode`, `appCopilotReference` and `databaseReferences`.",
+     "properties": {
+      "environment": {
+       "type": "object",
+       "description": "Which environment to evaluate against.",
+       "properties": {
+        "id": {
+         "type": "string"
+        },
+        "name": {
+         "type": "string",
+         "format": "uuid",
+         "example": "00000000-0000-0000-0000-000000000000"
+        }
+       },
+       "x-probe-verified": true
+      },
+      "lifeCycleId": {
+       "type": "string",
+       "enum": [
+        "Draft",
+        "Published"
+       ]
+      },
+      "databaseReferences": {
+       "type": "object",
+       "additionalProperties": true,
+       "description": "Dataverse references keyed by database name (`default.cds`), each with `databaseDetails` and `dataSources`."
+      }
+     },
+     "additionalProperties": true
+    }
+   },
+   "x-probe-verified": true
+  },
+  "AppDlpEvaluationResult": {
+   "type": "object",
+   "description": "The verdict.",
+   "properties": {
+    "status": {
+     "type": "string",
+     "description": "`Compliant` means nothing blocks publishing.",
+     "enum": [
+      "Compliant",
+      "NonCompliant"
+     ]
+    },
+    "lastEvaluationDate": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "violations": {
+     "type": "array",
+     "items": {
+      "type": "object"
+     },
+     "description": "One entry per breached rule. Empty in every recorded response, so the item shape is not established here."
+    },
+    "violationsByPolicy": {
+     "type": "array",
+     "items": {
+      "type": "object"
+     },
+     "description": "The same violations grouped by the policy that raised them."
+    },
+    "violationErrorMessage": {
+     "type": "string",
+     "description": "Prose summary. Present and populated even when the app is compliant — it lists the connectors that were considered, and is `\"The app uses the following connectors: .\"` for an app with none. Do not read it as an error."
+    }
+   },
+   "x-probe-verified": true
+  },
+  "AppDlpEvaluationResponse": {
+   "type": "object",
+   "description": "Result of evaluating an unsaved app against the environment's data loss prevention policies.",
+   "properties": {
+    "evaluationResult": {
+     "$ref": "AppDlpEvaluationResult"
+    },
+    "errors": {
+     "type": "array",
+     "items": {
+      "type": "object"
+     },
+     "description": "Evaluation failures, as distinct from policy violations. Empty in every recorded response."
+    }
+   },
+   "x-probe-verified": true
+  },
+  "AppSessionUser": {
+   "type": "object",
+   "description": "Who holds the session.",
+   "properties": {
+    "objectId": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "tenantId": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "userIdentityType": {
+     "type": "string"
+    }
+   },
+   "x-probe-verified": true
+  },
+  "AppSession": {
+   "type": "object",
+   "description": "One editing session on the app.",
+   "properties": {
+    "sessionId": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "user": {
+     "$ref": "AppSessionUser"
+    },
+    "userClientContext": {
+     "type": "string",
+     "description": "Opaque client context, echoed back verbatim. The studio puts a JSON string here carrying its own `clientSessionId`."
+    },
+    "activeSessionType": {
+     "type": "string",
+     "enum": [
+      "Writer",
+      "Reader"
+     ]
+    },
+    "startTime": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastUpdatedTime": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expiry": {
+     "type": "string",
+     "format": "date-time",
+     "description": "When the session lapses if not renewed. Recorded lifetime was 10 minutes from `lastUpdatedTime`."
+    }
+   },
+   "x-probe-verified": true
+  },
+  "AppSessionRequest": {
+   "type": "object",
+   "description": "Which kind of session to open. Both fields were sent on every recorded call; neither was proved required.",
+   "properties": {
+    "sessionType": {
+     "type": "string",
+     "description": "`Writer` claims the edit lock; `Reader` joins without claiming it.",
+     "enum": [
+      "Writer",
+      "Reader"
+     ]
+    },
+    "userClientContext": {
+     "type": "string",
+     "description": "Opaque string echoed back on every session in the response, so a client can recognise its own tabs."
+    }
+   },
+   "x-probe-verified": true
+  },
+  "AppSessionResponse": {
+   "type": "object",
+   "description": "The caller's new session, plus every other session currently open on the app — this is what drives the co-authoring presence indicator and the 'someone else is editing' warning.",
+   "properties": {
+    "currentSession": {
+     "$ref": "AppSession"
+    },
+    "copresenceDetails": {
+     "type": "object",
+     "description": "All sessions on the resource.",
+     "properties": {
+      "resourceName": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "resourceType": {
+       "type": "string",
+       "enum": [
+        "App"
+       ]
+      },
+      "environmentName": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "tenantId": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "lastUpdatedTime": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "sessions": {
+       "type": "object",
+       "additionalProperties": {
+        "$ref": "AppSession"
+       },
+       "description": "Open sessions keyed by session id, the caller's own included."
+      }
+     },
+     "x-probe-verified": true
+    }
+   },
+   "x-probe-verified": true
+  },
+  "AppLocation": {
+   "type": "object",
+   "description": "Where an app lives. Answering this is the whole point of the operation: given only an app id, it returns the tenant, environment and geography needed to build the environment-scoped host for every subsequent call.",
+   "properties": {
+    "tenantId": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "environmentName": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "appName": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "geo": {
+     "type": "string",
+     "description": "Geography short name, matching `geoLongName` on the gateway cluster.",
+     "example": "unitedstates"
+    },
+    "isGlobalApp": {
+     "type": "boolean",
+     "description": "Whether the app is one of the Microsoft-published sample apps rather than a tenant's own."
+    }
+   },
+   "x-probe-verified": true
   }
  }
 }

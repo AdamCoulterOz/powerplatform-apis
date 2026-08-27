@@ -1,0 +1,3935 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "Business Application Platform API (BAPI)",
+  "version": "2023-06-01",
+  "description": "Unofficial. BAPI (api.bap.microsoft.com) is the undocumented legacy Power Platform admin API behind the admin center. This spec is reverse-engineered from the wire behavior encoded in microsoft/terraform-provider-power-platform's client (internal/clients/bapi) \u2014 itself derived from admin-center traffic recordings \u2014 and is a map, not a contract. api-version defaults vary per operation (2019-10-01 through 2023-06-01) and the PowerPlatform.Governance operations take none at all; response shapes list only fields the provider consumes, and nothing is marked required because the service's own optionality is unverified. Mutations are largely asynchronous: a 202 hands back a Location URL that renders a LifecycleOperation. Sovereign-cloud hosts (.us, .cn, eaglex, microsoft.scloud) serve the same paths.",
+  "x-api-versions": [
+   "2019-10-01",
+   "2020-08-01",
+   "2020-10-01",
+   "2021-04-01",
+   "2023-06-01"
+  ]
+ },
+ "servers": [
+  {
+   "url": "https://api.bap.microsoft.com"
+  }
+ ],
+ "security": [
+  {
+   "azure_auth": [
+    "https://service.powerapps.com/.default"
+   ]
+  }
+ ],
+ "tags": [
+  {
+   "name": "Environments",
+   "description": "Environment lifecycle on the admin scope: list, read, create, update, delete, SKU changes, Dataverse provisioning and pre-flight validation."
+  },
+  {
+   "name": "Managed Environments",
+   "description": "The governance configuration that turns Managed Environments on or off for an environment."
+  },
+  {
+   "name": "Enterprise Policies",
+   "description": "Linking Azure-side enterprise policies (VNet injection, customer-managed keys, identity) to environments."
+  },
+  {
+   "name": "Environment Groups",
+   "description": "Grouping environments for bulk governance."
+  },
+  {
+   "name": "Environment Role Assignments",
+   "description": "Admin-scope user and application-user membership and security-role assignment inside an environment."
+  },
+  {
+   "name": "Tenant",
+   "description": "Tenant metadata and tenant-wide settings."
+  },
+  {
+   "name": "Tenant Isolation",
+   "description": "The tenant isolation policy controlling cross-tenant connections."
+  },
+  {
+   "name": "DLP Policies",
+   "description": "Data-loss-prevention (connector classification) policies, governance v2 surface."
+  },
+  {
+   "name": "Connector Metadata",
+   "description": "Static governance metadata about connectors: which cannot be blocked and which are virtual."
+  },
+  {
+   "name": "Locations",
+   "description": "Geographic locations and the currencies, languages and environment templates available in each."
+  },
+  {
+   "name": "Admin Applications",
+   "description": "Registration of service principals as Power Platform admin management applications."
+  },
+  {
+   "name": "Lifecycle Operations",
+   "description": "Polling of asynchronous operations via the Location/Operation-Location URL that 202 responses hand back."
+  }
+ ],
+ "paths": {
+  "/providers/Microsoft.BusinessAppPlatform/adminApplications/{clientId}": {
+   "get": {
+    "operationId": "adminApplications_get",
+    "tags": [
+     "Admin Applications"
+    ],
+    "summary": "Get an admin application registration",
+    "parameters": [
+     {
+      "name": "clientId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-10-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The registration.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AdminManagementApplication"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   },
+   "put": {
+    "operationId": "adminApplications_register",
+    "tags": [
+     "Admin Applications"
+    ],
+    "summary": "Register an admin application",
+    "description": "Registers a service principal (by its application/client id) as a Power Platform admin management application, granting it tenant-wide admin API access. No request body.",
+    "parameters": [
+     {
+      "name": "clientId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-10-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The registration.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AdminManagementApplication"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   },
+   "delete": {
+    "operationId": "adminApplications_unregister",
+    "tags": [
+     "Admin Applications"
+    ],
+    "summary": "Unregister an admin application",
+    "parameters": [
+     {
+      "name": "clientId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-10-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Unregistered."
+     },
+     "204": {
+      "description": "Unregistered."
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environmentGroups": {
+   "post": {
+    "operationId": "environmentGroups_create",
+    "tags": [
+     "Environment Groups"
+    ],
+    "summary": "Create an environment group",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EnvironmentGroup"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "The created group.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentGroup"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environmentGroups/{environmentGroupId}": {
+   "get": {
+    "operationId": "environmentGroups_get",
+    "tags": [
+     "Environment Groups"
+    ],
+    "summary": "Get an environment group",
+    "parameters": [
+     {
+      "name": "environmentGroupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The group.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentGroup"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "404": {
+      "description": "No group with this id."
+     }
+    }
+   },
+   "put": {
+    "operationId": "environmentGroups_update",
+    "tags": [
+     "Environment Groups"
+    ],
+    "summary": "Update an environment group",
+    "parameters": [
+     {
+      "name": "environmentGroupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EnvironmentGroup"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The updated group.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentGroup"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   },
+   "delete": {
+    "operationId": "environmentGroups_delete",
+    "tags": [
+     "Environment Groups"
+    ],
+    "summary": "Delete an environment group",
+    "description": "Deletes an environment group. Caution, verified against the live service: deleting a group that still contains environments (or has a rule-set policy assigned) returns 409 \u2014 but 200 has also been observed to silently succeed while members remain; do not rely on the 409.",
+    "parameters": [
+     {
+      "name": "environmentGroupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Deleted."
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "409": {
+      "description": "The group still has member environments or an assigned policy."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments": {
+   "post": {
+    "operationId": "environments_create",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Create an environment",
+    "description": "Provisions an environment, optionally with a linked Dataverse organization. Responds 201 with the created environment when provisioning completes synchronously, or 202 with a lifecycle operation whose final `links.environment.path` ends in the new environment id. 409 with `OperationNotStartable` means another lifecycle operation is in flight and the request can be replayed once it finishes; 409 with `InsufficientCapacity_StorageDriven` means the tenant is out of database capacity. 500 responses carry a JSON error body worth surfacing verbatim.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EnvironmentCreate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Created synchronously.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LifecycleCreated"
+        }
+       }
+      }
+     },
+     "202": {
+      "description": "Accepted. The operation continues asynchronously; poll the URL in the Location (or Operation-Location) header, which renders a LifecycleOperation.",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Absolute URL to poll for the lifecycle operation."
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Suggested poll interval. Delta seconds, an HTTP date, or (non-standard, observed) a Go duration string."
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "409": {
+      "description": "Conflict: `OperationNotStartable` (another lifecycle operation is running) or a capacity error such as `InsufficientCapacity_StorageDriven`."
+     },
+     "500": {
+      "description": "Provisioning failed; the JSON body carries the reason."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentId}/enterprisePolicies/{environmentType}/{action}": {
+   "post": {
+    "operationId": "enterprisePolicies_linkUnlink",
+    "tags": [
+     "Enterprise Policies"
+    ],
+    "summary": "Link or unlink an enterprise policy",
+    "description": "Links (`action=link`) or unlinks (`action=unlink`) an Azure enterprise policy to the environment. `environmentType` names the policy kind. The body carries the Azure policy's `systemId`. Asynchronous; a lifecycle operation ending in `Failed` is retried wholesale by the known client.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "environmentType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "NetworkInjection",
+        "Encryption",
+        "Identity"
+       ]
+      },
+      "description": "The policy kind being linked."
+     },
+     {
+      "name": "action",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "link",
+        "unlink"
+       ]
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-10-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/LinkEnterprisePolicy"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Accepted. The operation continues asynchronously; poll the URL in the Location (or Operation-Location) header, which renders a LifecycleOperation.",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Absolute URL to poll for the lifecycle operation."
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Suggested poll interval. Delta seconds, an HTTP date, or (non-standard, observed) a Go duration string."
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "409": {
+      "description": "Another operation is in flight."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentId}/governanceConfiguration": {
+   "post": {
+    "operationId": "managedEnvironments_setGovernanceConfiguration",
+    "tags": [
+     "Managed Environments"
+    ],
+    "summary": "Enable or disable Managed Environments",
+    "description": "Sets the environment's governance configuration. `protectionLevel: \"Standard\"` (with `settings.extendedSettings`) enables Managed Environments; `protectionLevel: \"Basic\"` disables it. 202 hands back a lifecycle operation; enabling an already-managed environment yields 409, and a 204 has been observed when there is nothing to change.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GovernanceConfiguration"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Accepted. The operation continues asynchronously; poll the URL in the Location (or Operation-Location) header, which renders a LifecycleOperation.",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Absolute URL to poll for the lifecycle operation."
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Suggested poll interval. Delta seconds, an HTTP date, or (non-standard, observed) a Go duration string."
+       }
+      }
+     },
+     "204": {
+      "description": "Nothing to change."
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "409": {
+      "description": "Already in the requested state, or another operation is in flight."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentId}/provisionInstance": {
+   "post": {
+    "operationId": "environments_provisionDataverse",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Add Dataverse to an environment",
+    "description": "Provisions a Dataverse organization into an environment that was created without one. Always asynchronous; the poll URL renders the environment itself, whose `properties.provisioningState` moves through `LinkedDatabaseProvisioning` to `Succeeded`.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CreateLinkEnvironmentMetadata"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Accepted. The operation continues asynchronously; poll the URL in the Location (or Operation-Location) header, which renders a LifecycleOperation.",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Absolute URL to poll for the lifecycle operation."
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Suggested poll interval. Delta seconds, an HTTP date, or (non-standard, observed) a Go duration string."
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/lifecycleOperations/{operationId}": {
+   "get": {
+    "operationId": "lifecycleOperations_get",
+    "tags": [
+     "Lifecycle Operations"
+    ],
+    "summary": "Get a lifecycle operation",
+    "description": "Polls an asynchronous operation. Clients must treat the 202 response's Location (or Operation-Location) header as the authoritative poll URL \u2014 this path documents its observed shape, and some operations hand back differently-shaped URLs on the same host. Terminal states are `Succeeded` and `Failed`; 409 means the operation cannot be reported yet and the poll should continue; a 404 after a delete means the resource (and its operation record) is already gone.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "operationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The operation. Poll until `state.id` is `Succeeded` or `Failed`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LifecycleOperation"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "404": {
+      "description": "After deletions: the resource and its operation record are gone; treat as success."
+     },
+     "409": {
+      "description": "Not reportable yet; continue polling."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/listTenantSettings": {
+   "post": {
+    "operationId": "tenantSettings_list",
+    "tags": [
+     "Tenant"
+    ],
+    "summary": "List tenant settings",
+    "description": "Returns the tenant-wide settings tree. A POST despite being a read \u2014 the admin center calls it the same way. The response includes every setting; clients that only manage a subset must filter it themselves before diffing.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The full settings tree.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TenantSettings"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/locations": {
+   "get": {
+    "operationId": "locations_list",
+    "tags": [
+     "Locations"
+    ],
+    "summary": "List locations",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The locations.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LocationList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/locations/{location}/environmentCurrencies": {
+   "get": {
+    "operationId": "locations_listCurrencies",
+    "tags": [
+     "Locations"
+    ],
+    "summary": "List a location's environment currencies",
+    "parameters": [
+     {
+      "name": "location",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The currencies available for new environments in this location.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CurrenciesList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/locations/{location}/environmentLanguages": {
+   "get": {
+    "operationId": "locations_listLanguages",
+    "tags": [
+     "Locations"
+    ],
+    "summary": "List a location's environment languages",
+    "parameters": [
+     {
+      "name": "location",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The languages available for new environments in this location.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LanguagesList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/locations/{location}/templates": {
+   "get": {
+    "operationId": "locations_listTemplates",
+    "tags": [
+     "Locations"
+    ],
+    "summary": "List a location's environment templates",
+    "parameters": [
+     {
+      "name": "location",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Standard and premium templates usable at environment creation in this location.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentTemplate"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments": {
+   "get": {
+    "operationId": "environments_list",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "List environments",
+    "description": "Lists every environment in the tenant on the admin scope. `$expand` pulls optional projections into `properties`; `$filter` supports the documented-by-usage `properties/parentEnvironmentGroup/id eq {groupId}` form to list one environment group's members.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      },
+      "description": "Versions in active use: 2023-06-01, 2021-04-01."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Comma-separated projections. The provider requests `properties/billingPolicy,properties/copilotPolicies` on list and additionally `permissions,properties.capacity` on read.",
+      "example": "properties/billingPolicy,properties/copilotPolicies"
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Only observed form: `properties/parentEnvironmentGroup/id eq {environmentGroupId}`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environments.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}": {
+   "get": {
+    "operationId": "environments_get",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Get an environment",
+    "description": "Reads one environment on the admin scope. An empty id degrades into the list endpoint, so clients must guard it. With Dataverse linked, `properties.linkedEnvironmentMetadata` carries the organization URL and metadata; it can lag environment creation by several minutes.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      }
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Comma-separated projections; the provider always requests `permissions,properties.capacity,properties/billingPolicy,properties/copilotPolicies`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Environment"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "404": {
+      "description": "No environment with this id."
+     }
+    }
+   },
+   "patch": {
+    "operationId": "environments_update",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Update an environment",
+    "description": "Patches environment properties. Three request shapes are in active use: a general `Environment` patch (display name, description, cadence, linked-metadata fields \u2014 sent with `$expand` and, deliberately, api-version 2021-04-01 because newer versions turn on Managed Environments as a side effect of description-only updates), a `GenerativeAiFeatures` patch (Copilot/Bing chat and cross-geo data-movement toggles; 204 when nothing changes), and a `DisasterRecoveryPatch` (flips `properties.states.disasterRecovery`). Regional read-after-write lag applies: a succeeded lifecycle operation does not guarantee the next GET reflects the change.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Sent by the general update variant only: `permissions,properties.capacity,properties/billingPolicy`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "oneOf": [
+         {
+          "$ref": "#/components/schemas/Environment"
+         },
+         {
+          "$ref": "#/components/schemas/GenerativeAiFeatures"
+         },
+         {
+          "$ref": "#/components/schemas/DisasterRecoveryPatch"
+         }
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Accepted. The operation continues asynchronously; poll the URL in the Location (or Operation-Location) header, which renders a LifecycleOperation.",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Absolute URL to poll for the lifecycle operation."
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Suggested poll interval. Delta seconds, an HTTP date, or (non-standard, observed) a Go duration string."
+       }
+      }
+     },
+     "204": {
+      "description": "Nothing to change (observed for generative-AI feature patches that match current state)."
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "409": {
+      "description": "`OperationNotStartable`: another lifecycle operation is running; retry after it completes."
+     }
+    }
+   },
+   "delete": {
+    "operationId": "environments_delete",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Delete an environment",
+    "description": "Deletes an environment. The body states a deletion reason; the admin center sends code 7 (application-initiated). 202 hands back a lifecycle operation; 204 completes synchronously; 404 means it is already gone; 409 with an empty body or `OperationNotStartable` means another lifecycle operation is in flight.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EnvironmentDelete"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Accepted. The operation continues asynchronously; poll the URL in the Location (or Operation-Location) header, which renders a LifecycleOperation.",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Absolute URL to poll for the lifecycle operation."
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Suggested poll interval. Delta seconds, an HTTP date, or (non-standard, observed) a Go duration string."
+       }
+      }
+     },
+     "204": {
+      "description": "Deleted synchronously."
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "404": {
+      "description": "Already deleted."
+     },
+     "409": {
+      "description": "Another lifecycle operation is in flight."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}/addAppUser": {
+   "post": {
+    "operationId": "environmentRoleAssignments_addApplicationUser",
+    "tags": [
+     "Environment Role Assignments"
+    ],
+    "summary": "Add an application user to an environment",
+    "description": "Registers a service principal as an application user in the environment's Dataverse organization. The body is `{\"servicePrincipalAppId\": \"<app-id>\"}`; role assignment happens separately through Dataverse.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-10-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "servicePrincipalAppId": {
+          "type": "string",
+          "format": "uuid"
+         }
+        },
+        "required": [
+         "servicePrincipalAppId"
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The application user is registered."
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}/addUser": {
+   "post": {
+    "operationId": "environmentRoleAssignments_addUser",
+    "tags": [
+     "Environment Role Assignments"
+    ],
+    "summary": "Add a user to an environment",
+    "description": "Forces synchronization of an Entra user into the environment (and its Dataverse organization) so roles can be assigned. The body is `{\"ObjectId\": \"<entra-object-id>\"}`. A `userNotLicensed` error is transient while license state propagates; the known client retries it.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "ObjectId": {
+          "type": "string",
+          "format": "uuid"
+         }
+        },
+        "required": [
+         "ObjectId"
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The user is synchronized."
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}/modifyRoleAssignments": {
+   "post": {
+    "operationId": "environmentRoleAssignments_modify",
+    "tags": [
+     "Environment Role Assignments"
+    ],
+    "summary": "Add or remove environment role assignments",
+    "description": "Grants (`add`) and revokes (`remove`) EnvironmentAdmin/EnvironmentMaker role assignments for a principal in one call. A 500 during removal has been observed as tolerated by the known client (the assignment is re-read to confirm).",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EnvironmentUserRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The modified assignments.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentUserResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "500": {
+      "description": "Observed during removals even when the removal took effect; confirm by re-reading the list."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}/modifySku": {
+   "post": {
+    "operationId": "environments_modifySku",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Change an environment's type (SKU)",
+    "description": "Converts an environment between types (for example Sandbox to Production). Asynchronous via the standard lifecycle operation.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ModifySku"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Converted synchronously."
+     },
+     "202": {
+      "description": "Accepted. The operation continues asynchronously; poll the URL in the Location (or Operation-Location) header, which renders a LifecycleOperation.",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Absolute URL to poll for the lifecycle operation."
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Suggested poll interval. Delta seconds, an HTTP date, or (non-standard, observed) a Go duration string."
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "409": {
+      "description": "Another lifecycle operation is in flight."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}/roleAssignments": {
+   "get": {
+    "operationId": "environmentRoleAssignments_list",
+    "tags": [
+     "Environment Role Assignments"
+    ],
+    "summary": "List environment role assignments",
+    "description": "Lists the admin-scope role assignments of an environment. Each item's `properties.principal` identifies the user or application and `properties.roleDefinition` the granted role (EnvironmentAdmin or EnvironmentMaker). Newly added users can take time to materialize; clients poll this list.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The role assignments.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentUserGetResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/updateTenantSettings": {
+   "post": {
+    "operationId": "tenantSettings_update",
+    "tags": [
+     "Tenant"
+    ],
+    "summary": "Update tenant settings",
+    "description": "Patches the tenant-wide settings tree; omitted fields are left untouched. Returns the resulting tree.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TenantSettings"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The settings after the update.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TenantSettings"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/tenant": {
+   "get": {
+    "operationId": "tenant_get",
+    "tags": [
+     "Tenant"
+    ],
+    "summary": "Get the tenant",
+    "description": "Reads metadata for the tenant behind the bearer token: geo placements, data boundary and FedRAMP flag. Both api-versions 2021-04-01 and 2020-08-01 are in active use and return this shape.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      },
+      "description": "Versions in active use: 2021-04-01, 2020-08-01."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The tenant.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Tenant"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/validateEnvironmentDetails": {
+   "post": {
+    "operationId": "environments_validateDetails",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Validate environment details",
+    "description": "Pre-flight check used before create (domain name + location) and before update (domain name + environment name). Failure is a non-200 with the reason; success returns 200 with no meaningful body.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "oneOf": [
+         {
+          "$ref": "#/components/schemas/ValidateCreateEnvironmentDetails"
+         },
+         {
+          "$ref": "#/components/schemas/ValidateUpdateEnvironmentDetails"
+         }
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The details are acceptable."
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/connectors/metadata/unblockable": {
+   "get": {
+    "operationId": "connectorMetadata_listUnblockable",
+    "tags": [
+     "Connector Metadata"
+    ],
+    "summary": "List unblockable connectors",
+    "description": "Connectors that DLP policies cannot block (core platform connectors).",
+    "responses": {
+     "200": {
+      "description": "Connector ids with their unblockable flag.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/UnblockableConnector"
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/connectors/metadata/virtual": {
+   "get": {
+    "operationId": "connectorMetadata_listVirtual",
+    "tags": [
+     "Connector Metadata"
+    ],
+    "summary": "List virtual connectors",
+    "description": "Virtual connectors (platform capabilities modeled as connectors for DLP classification, without a runtime connector behind them).",
+    "responses": {
+     "200": {
+      "description": "The virtual connectors.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/VirtualConnector"
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/tenants/{tenantId}/tenantIsolationPolicy": {
+   "get": {
+    "operationId": "tenantIsolation_get",
+    "tags": [
+     "Tenant Isolation"
+    ],
+    "summary": "Get the tenant isolation policy",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The policy.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TenantIsolationPolicy"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "404": {
+      "description": "No isolation policy is configured."
+     }
+    }
+   },
+   "put": {
+    "operationId": "tenantIsolation_createOrUpdate",
+    "tags": [
+     "Tenant Isolation"
+    ],
+    "summary": "Create or update the tenant isolation policy",
+    "description": "Replaces the tenant isolation policy. `properties.allowedTenants[].direction` opts specific tenants into inbound and/or outbound connections while isolation is on. 202 hands back a lifecycle operation.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TenantIsolationPolicy"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Applied synchronously.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TenantIsolationPolicy"
+        }
+       }
+      }
+     },
+     "202": {
+      "description": "Accepted. The operation continues asynchronously; poll the URL in the Location (or Operation-Location) header, which renders a LifecycleOperation.",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Absolute URL to poll for the lifecycle operation."
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        },
+        "description": "Suggested poll interval. Delta seconds, an HTTP date, or (non-standard, observed) a Go duration string."
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/PowerPlatform.Governance/v2/policies": {
+   "get": {
+    "operationId": "dlpPolicies_list",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "List DLP policies",
+    "description": "Lists policy headers. The list items omit the full connector configuration; read each policy individually for the complete definition.",
+    "responses": {
+     "200": {
+      "description": "The policies.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DlpPolicyDefinitionList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   },
+   "post": {
+    "operationId": "dlpPolicies_create",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Create a DLP policy",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DlpPolicy"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "The created policy.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DlpPolicy"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  },
+  "/providers/PowerPlatform.Governance/v2/policies/{name}": {
+   "get": {
+    "operationId": "dlpPolicies_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Get a DLP policy",
+    "parameters": [
+     {
+      "name": "name",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy id (a GUID, called `name` on the wire)."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The policy.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DlpPolicy"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     },
+     "404": {
+      "description": "No policy with this name."
+     }
+    }
+   },
+   "patch": {
+    "operationId": "dlpPolicies_update",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Update a DLP policy",
+    "parameters": [
+     {
+      "name": "name",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy id (a GUID, called `name` on the wire)."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DlpPolicy"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The updated policy.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DlpPolicy"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   },
+   "delete": {
+    "operationId": "dlpPolicies_delete",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Delete a DLP policy",
+    "parameters": [
+     {
+      "name": "name",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy id (a GUID, called `name` on the wire)."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Deleted."
+     },
+     "400": {
+      "description": "Bad request."
+     },
+     "401": {
+      "description": "Unauthorized. The bearer token is missing, expired or not accepted by BAPI."
+     },
+     "403": {
+      "description": "Forbidden. The caller lacks Power Platform admin rights, or a registered admin management application lacks permission for the path."
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "azure_auth": {
+    "type": "oauth2",
+    "description": "Microsoft Entra ID OAuth2. BAPI accepts tokens for the PowerApps service audience.",
+    "flows": {
+     "authorizationCode": {
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+      "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      "scopes": {
+       "https://service.powerapps.com/.default": "Power Platform (BAPI + PowerApps API)"
+      }
+     }
+    }
+   }
+  },
+  "schemas": {
+   "AddItemRequest": {
+    "type": "object",
+    "properties": {
+     "properties": {
+      "$ref": "#/components/schemas/Properties"
+     }
+    }
+   },
+   "AdminManagementApplication": {
+    "type": "object",
+    "properties": {
+     "applicationId": {
+      "type": "string"
+     }
+    }
+   },
+   "AllowedTenant": {
+    "type": "object",
+    "properties": {
+     "tenantId": {
+      "type": "string"
+     },
+     "direction": {
+      "$ref": "#/components/schemas/Direction",
+      "description": "Which connection directions this tenant exception permits."
+     }
+    }
+   },
+   "BillingPolicy": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     }
+    }
+   },
+   "CatalogSettings": {
+    "type": "object",
+    "properties": {
+     "powerCatalogAudienceSetting": {
+      "type": "string"
+     }
+    }
+   },
+   "ChampionSettings": {
+    "type": "object",
+    "properties": {
+     "disableChampionsInvitationReachout": {
+      "type": "boolean"
+     },
+     "disableSkillsMatchInvitationReachout": {
+      "type": "boolean"
+     }
+    }
+   },
+   "Cluster": {
+    "type": "object",
+    "properties": {
+     "category": {
+      "type": "string"
+     }
+    }
+   },
+   "CopilotPolicies": {
+    "type": "object",
+    "properties": {
+     "crossGeoCopilotDataMovementEnabled": {
+      "type": "boolean",
+      "description": "Allows Copilot requests to move data across geos where the model is hosted elsewhere."
+     },
+     "crossBoundaryCopilotDataMovementEnabled": {
+      "type": "boolean",
+      "description": "The EU Data Boundary variant of the cross-geo consent."
+     }
+    }
+   },
+   "CreateCurrency": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string"
+     }
+    }
+   },
+   "CreateLinkEnvironmentMetadata": {
+    "type": "object",
+    "properties": {
+     "baseLanguage": {
+      "type": "integer"
+     },
+     "domainName": {
+      "type": "string"
+     },
+     "currency": {
+      "$ref": "#/components/schemas/CreateCurrency"
+     },
+     "securityGroupId": {
+      "type": "string"
+     },
+     "templates": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "templateMetadata": {
+      "$ref": "#/components/schemas/CreateTemplateMetadata"
+     }
+    }
+   },
+   "CreatePostProvisioningPackages": {
+    "type": "object",
+    "properties": {
+     "applicationUniqueName": {
+      "type": "string"
+     },
+     "parameters": {
+      "type": "string"
+     }
+    }
+   },
+   "CreateTemplateMetadata": {
+    "type": "object",
+    "properties": {
+     "PostProvisioningPackages": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/CreatePostProvisioningPackages"
+      }
+     }
+    }
+   },
+   "CurrenciesList": {
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Currency"
+      }
+     }
+    }
+   },
+   "Currency": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "properties": {
+      "$ref": "#/components/schemas/CurrencyProperties"
+     }
+    }
+   },
+   "CurrencyProperties": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string"
+     },
+     "symbol": {
+      "type": "string"
+     },
+     "isTenantDefault": {
+      "type": "boolean"
+     }
+    }
+   },
+   "Direction": {
+    "type": "object",
+    "properties": {
+     "inbound": {
+      "type": "boolean"
+     },
+     "outbound": {
+      "type": "boolean"
+     }
+    }
+   },
+   "DisasterRecoveryPatch": {
+    "type": "object",
+    "properties": {
+     "properties": {
+      "$ref": "#/components/schemas/DisasterRecoveryPatchProperties"
+     }
+    }
+   },
+   "DisasterRecoveryPatchProperties": {
+    "type": "object",
+    "properties": {
+     "states": {
+      "$ref": "#/components/schemas/DisasterRecoveryPatchStates"
+     }
+    }
+   },
+   "DisasterRecoveryPatchStates": {
+    "type": "object",
+    "properties": {
+     "disasterRecovery": {
+      "$ref": "#/components/schemas/DisasterRecoveryState"
+     }
+    }
+   },
+   "DisasterRecoveryState": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     }
+    }
+   },
+   "DlpActionRule": {
+    "type": "object",
+    "properties": {
+     "actionId": {
+      "type": "string"
+     },
+     "behavior": {
+      "type": "string"
+     }
+    }
+   },
+   "DlpConnector": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     }
+    }
+   },
+   "DlpConnectorActionConfigurations": {
+    "type": "object",
+    "properties": {
+     "connectorId": {
+      "type": "string"
+     },
+     "defaultConnectorActionRuleBehavior": {
+      "type": "string"
+     },
+     "actionRules": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DlpActionRule"
+      }
+     }
+    }
+   },
+   "DlpConnectorConfigurationsDefinition": {
+    "type": "object",
+    "properties": {
+     "connectorActionConfigurations": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DlpConnectorActionConfigurations"
+      }
+     },
+     "endpointConfigurations": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DlpEndpointConfigurations"
+      }
+     }
+    }
+   },
+   "DlpConnectorGroups": {
+    "type": "object",
+    "properties": {
+     "classification": {
+      "type": "string",
+      "description": "`General` (business), `Confidential` (non-business) or `Blocked`.",
+      "enum": [
+       "General",
+       "Confidential",
+       "Blocked"
+      ]
+     },
+     "connectors": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DlpConnector"
+      }
+     }
+    }
+   },
+   "DlpConnectorUrlPatternsDefinition": {
+    "type": "object",
+    "properties": {
+     "rules": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DlpConnectorUrlPatternsRule"
+      }
+     }
+    }
+   },
+   "DlpConnectorUrlPatternsRule": {
+    "type": "object",
+    "properties": {
+     "order": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "customConnectorRuleClassification": {
+      "type": "string"
+     },
+     "pattern": {
+      "type": "string"
+     }
+    }
+   },
+   "DlpEndpointConfigurations": {
+    "type": "object",
+    "properties": {
+     "connectorId": {
+      "type": "string"
+     },
+     "endpointRules": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DlpEndpointRule"
+      }
+     }
+    }
+   },
+   "DlpEndpointRule": {
+    "type": "object",
+    "properties": {
+     "order": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "behavior": {
+      "type": "string"
+     },
+     "endpoint": {
+      "type": "string"
+     }
+    }
+   },
+   "DlpEnvironment": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string",
+      "description": "`Microsoft.BusinessAppPlatform/scopes/environments` \u2014 resource-id form of the environment reference."
+     }
+    }
+   },
+   "DlpPolicy": {
+    "type": "object",
+    "properties": {
+     "policyDefinition": {
+      "$ref": "#/components/schemas/DlpPolicyDefinition"
+     },
+     "connectorConfigurationsDefinition": {
+      "$ref": "#/components/schemas/DlpConnectorConfigurationsDefinition"
+     },
+     "customConnectorUrlPatternsDefinition": {
+      "$ref": "#/components/schemas/DlpConnectorUrlPatternsDefinition"
+     }
+    }
+   },
+   "DlpPolicyDefinition": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "displayName": {
+      "type": "string"
+     },
+     "defaultConnectorsClassification": {
+      "type": "string"
+     },
+     "environmentType": {
+      "type": "string",
+      "description": "`AllEnvironments`, `OnlyEnvironments` or `ExceptEnvironments`; the environments list applies to the latter two.",
+      "enum": [
+       "AllEnvironments",
+       "OnlyEnvironments",
+       "ExceptEnvironments"
+      ]
+     },
+     "environments": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DlpEnvironment"
+      }
+     },
+     "connectorGroups": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DlpConnectorGroups"
+      }
+     },
+     "etag": {
+      "type": "string"
+     },
+     "createdBy": {
+      "$ref": "#/components/schemas/DlpPolicyLastAction"
+     },
+     "createdTime": {
+      "type": "string"
+     },
+     "lastModifiedBy": {
+      "$ref": "#/components/schemas/DlpPolicyLastAction"
+     },
+     "lastModifiedTime": {
+      "type": "string"
+     }
+    }
+   },
+   "DlpPolicyDefinitionList": {
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DlpPolicy"
+      }
+     }
+    }
+   },
+   "DlpPolicyLastAction": {
+    "type": "object",
+    "properties": {
+     "displayName": {
+      "type": "string"
+     }
+    }
+   },
+   "EnterprisePolicy": {
+    "type": "object",
+    "properties": {
+     "policyId": {
+      "type": "string"
+     },
+     "location": {
+      "type": "string"
+     },
+     "id": {
+      "type": "string"
+     },
+     "systemId": {
+      "type": "string"
+     },
+     "linkStatus": {
+      "type": "string"
+     }
+    }
+   },
+   "Environment": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "location": {
+      "type": "string",
+      "description": "The BAP location name (for example `unitedstates`, `europe`), not an Azure region."
+     },
+     "name": {
+      "type": "string",
+      "description": "The environment id (a GUID). BAPI calls it `name`."
+     },
+     "properties": {
+      "$ref": "#/components/schemas/EnvironmentProperties"
+     }
+    }
+   },
+   "EnvironmentCreate": {
+    "type": "object",
+    "properties": {
+     "location": {
+      "type": "string"
+     },
+     "properties": {
+      "$ref": "#/components/schemas/EnvironmentCreateProperties"
+     }
+    }
+   },
+   "EnvironmentCreateProperties": {
+    "type": "object",
+    "properties": {
+     "azureRegion": {
+      "type": "string"
+     },
+     "billingPolicy": {
+      "$ref": "#/components/schemas/BillingPolicy"
+     },
+     "databaseType": {
+      "type": "string"
+     },
+     "displayName": {
+      "type": "string"
+     },
+     "description": {
+      "type": "string"
+     },
+     "updateCadence": {
+      "$ref": "#/components/schemas/UpdateCadence"
+     },
+     "environmentSku": {
+      "type": "string"
+     },
+     "linkedEnvironmentMetadata": {
+      "$ref": "#/components/schemas/CreateLinkEnvironmentMetadata"
+     },
+     "parentEnvironmentGroup": {
+      "$ref": "#/components/schemas/ParentEnvironmentGroup"
+     },
+     "bingChatEnabled": {
+      "type": "boolean"
+     },
+     "m365Enabled": {
+      "type": "boolean"
+     },
+     "copilotPolicies": {
+      "$ref": "#/components/schemas/CopilotPolicies"
+     },
+     "usedBy": {
+      "$ref": "#/components/schemas/UsedBy"
+     },
+     "cluster": {
+      "$ref": "#/components/schemas/Cluster"
+     }
+    }
+   },
+   "EnvironmentDelete": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string",
+      "description": "Numeric deletion-reason code as a string; the admin center sends `7` (application-initiated)."
+     },
+     "message": {
+      "type": "string",
+      "description": "Free-text audit note stored with the deletion."
+     }
+    }
+   },
+   "EnvironmentEnterprisePolicies": {
+    "type": "object",
+    "properties": {
+     "vnets": {
+      "$ref": "#/components/schemas/EnterprisePolicy"
+     },
+     "customerManagedKeys": {
+      "$ref": "#/components/schemas/EnterprisePolicy"
+     },
+     "identity": {
+      "$ref": "#/components/schemas/EnterprisePolicy"
+     }
+    }
+   },
+   "EnvironmentGroup": {
+    "type": "object",
+    "properties": {
+     "displayName": {
+      "type": "string"
+     },
+     "description": {
+      "type": "string"
+     },
+     "id": {
+      "type": "string"
+     },
+     "createdTime": {
+      "type": "string"
+     },
+     "createdBy": {
+      "$ref": "#/components/schemas/EnvironmentGroupPrincipal"
+     }
+    }
+   },
+   "EnvironmentGroupPrincipal": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     }
+    }
+   },
+   "EnvironmentList": {
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Environment"
+      }
+     }
+    }
+   },
+   "EnvironmentProperties": {
+    "type": "object",
+    "properties": {
+     "azureRegion": {
+      "type": "string",
+      "description": "Concrete Azure region inside the location; assignable at create only where the location lists it."
+     },
+     "databaseType": {
+      "type": "string"
+     },
+     "displayName": {
+      "type": "string"
+     },
+     "environmentSku": {
+      "type": "string",
+      "description": "The environment type: Sandbox, Production, Trial, Developer or Default.",
+      "enum": [
+       "Sandbox",
+       "Production",
+       "Trial",
+       "Developer",
+       "Default"
+      ]
+     },
+     "linkedAppMetadata": {
+      "$ref": "#/components/schemas/LinkedAppMetadata"
+     },
+     "runtimeEndpoints": {
+      "$ref": "#/components/schemas/RuntimeEndpoints"
+     },
+     "linkedEnvironmentMetadata": {
+      "$ref": "#/components/schemas/LinkedEnvironmentMetadata"
+     },
+     "states": {
+      "$ref": "#/components/schemas/StatesEnvironment"
+     },
+     "tenantId": {
+      "type": "string"
+     },
+     "governanceConfiguration": {
+      "$ref": "#/components/schemas/GovernanceConfiguration"
+     },
+     "billingPolicy": {
+      "$ref": "#/components/schemas/BillingPolicy"
+     },
+     "provisioningState": {
+      "type": "string",
+      "description": "Moves through `LinkedDatabaseProvisioning` while Dataverse is provisioning; terminal value `Succeeded`."
+     },
+     "description": {
+      "type": "string"
+     },
+     "updateCadence": {
+      "$ref": "#/components/schemas/UpdateCadence"
+     },
+     "parentEnvironmentGroup": {
+      "$ref": "#/components/schemas/ParentEnvironmentGroup"
+     },
+     "enterprisePolicies": {
+      "$ref": "#/components/schemas/EnvironmentEnterprisePolicies"
+     },
+     "cluster": {
+      "$ref": "#/components/schemas/Cluster"
+     },
+     "usedBy": {
+      "$ref": "#/components/schemas/UsedBy"
+     },
+     "bingChatEnabled": {
+      "type": "boolean",
+      "description": "Copilot answer grounding via Bing web search."
+     },
+     "m365Enabled": {
+      "type": "boolean",
+      "description": "Copilot grounding on Microsoft 365 service data."
+     },
+     "copilotPolicies": {
+      "$ref": "#/components/schemas/CopilotPolicies"
+     }
+    }
+   },
+   "EnvironmentSettings": {
+    "type": "object",
+    "properties": {
+     "disablePreferredDataLocationForTeamsEnvironment": {
+      "type": "boolean"
+     }
+    }
+   },
+   "EnvironmentTemplate": {
+    "type": "object",
+    "properties": {
+     "standard": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "premium": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "developer": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "basic": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "production": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "sandbox": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "trial": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "default": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "support": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "subscriptionBasedTrial": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "teams": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     },
+     "platform": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Item"
+      }
+     }
+    }
+   },
+   "EnvironmentUserGetResponse": {
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/RoleAssignment"
+      }
+     }
+    }
+   },
+   "EnvironmentUserRequest": {
+    "type": "object",
+    "properties": {
+     "add": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/AddItemRequest"
+      },
+      "description": "Role assignments to grant."
+     },
+     "remove": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/RoleDefinition"
+      },
+      "description": "Role assignments to revoke."
+     }
+    }
+   },
+   "EnvironmentUserResponse": {
+    "type": "object",
+    "properties": {
+     "add": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ItemResponse"
+      }
+     },
+     "remove": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/ItemResponse"
+      }
+     }
+    }
+   },
+   "ExtendedSettings": {
+    "type": "object",
+    "properties": {
+     "excludeEnvironmentFromAnalysis": {
+      "type": "string",
+      "description": "String booleans (\"true\"/\"false\"), not JSON booleans - as are the rest of these extended settings."
+     },
+     "isGroupSharingDisabled": {
+      "type": "string"
+     },
+     "maxLimitUserSharing": {
+      "type": "string"
+     },
+     "disableAiGeneratedDescriptions": {
+      "type": "string"
+     },
+     "includeOnHomepageInsights": {
+      "type": "string"
+     },
+     "limitSharingMode": {
+      "type": "string",
+      "description": "With `maxLimitUserSharing`, constrains canvas-app sharing (`excludeSharingToSecurityGroups` etc.)."
+     },
+     "solutionCheckerMode": {
+      "type": "string",
+      "description": "`none`, `warn` or `block`: solution-checker enforcement on solution import."
+     },
+     "suppressValidationEmails": {
+      "type": "string"
+     },
+     "solutionCheckerRuleOverrides": {
+      "type": "string"
+     },
+     "solutionCloudFlows-limitSharingMode": {
+      "type": "string"
+     },
+     "solutionCloudFlows-maxLimitUserSharing": {
+      "type": "string"
+     },
+     "bot-authoringSharingDisabled": {
+      "type": "string"
+     },
+     "bot-limitSharingMode": {
+      "type": "string"
+     },
+     "bot-maxLimitUserSharing": {
+      "type": "string"
+     }
+    }
+   },
+   "GenerativeAiFeatures": {
+    "type": "object",
+    "properties": {
+     "properties": {
+      "$ref": "#/components/schemas/GenerativeAiFeaturesProperties"
+     }
+    }
+   },
+   "GenerativeAiFeaturesProperties": {
+    "type": "object",
+    "properties": {
+     "copilotPolicies": {
+      "$ref": "#/components/schemas/CopilotPolicies"
+     },
+     "bingChatEnabled": {
+      "type": "boolean",
+      "description": "See EnvironmentProperties.bingChatEnabled; pointer semantics \u2014 omitted fields are left untouched."
+     },
+     "m365Enabled": {
+      "type": "boolean"
+     }
+    }
+   },
+   "GovernanceConfiguration": {
+    "type": "object",
+    "properties": {
+     "protectionLevel": {
+      "type": "string",
+      "description": "`Standard` = Managed Environments on; `Basic` = off.",
+      "enum": [
+       "Basic",
+       "Standard"
+      ]
+     },
+     "settings": {
+      "$ref": "#/components/schemas/Settings"
+     }
+    }
+   },
+   "GovernanceSettings": {
+    "type": "object",
+    "properties": {
+     "disableAdminDigest": {
+      "type": "boolean"
+     },
+     "disableDeveloperEnvironmentCreationByNonAdminUsers": {
+      "type": "boolean"
+     },
+     "enableDefaultEnvironmentRouting": {
+      "type": "boolean"
+     },
+     "environmentRoutingAllMakers": {
+      "type": "boolean"
+     },
+     "environmentRoutingTargetEnvironmentGroupId": {
+      "type": "string"
+     },
+     "environmentRoutingTargetSecurityGroupId": {
+      "type": "string"
+     },
+     "policy": {
+      "$ref": "#/components/schemas/PolicySettings"
+     }
+    }
+   },
+   "IntelligenceSettings": {
+    "type": "object",
+    "properties": {
+     "disableCopilot": {
+      "type": "boolean"
+     },
+     "enableOpenAiBotPublishing": {
+      "type": "boolean"
+     }
+    }
+   },
+   "Item": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "location": {
+      "type": "string"
+     },
+     "properties": {
+      "$ref": "#/components/schemas/PropertiesItem"
+     }
+    }
+   },
+   "ItemDisabledReason": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string"
+     }
+    }
+   },
+   "ItemResponse": {
+    "type": "object",
+    "properties": {
+     "roleAssignment": {
+      "$ref": "#/components/schemas/RoleAssignment"
+     },
+     "httpStatus": {
+      "type": "string"
+     }
+    }
+   },
+   "Language": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "properties": {
+      "$ref": "#/components/schemas/LanguageProperties"
+     }
+    }
+   },
+   "LanguageProperties": {
+    "type": "object",
+    "properties": {
+     "localeId": {
+      "type": "integer",
+      "format": "int64",
+      "description": "The LCID (for example 1033 for en-US) used as `baseLanguage` at environment creation."
+     },
+     "localizedName": {
+      "type": "string"
+     },
+     "displayName": {
+      "type": "string"
+     },
+     "isTenantDefault": {
+      "type": "boolean"
+     }
+    }
+   },
+   "LanguagesList": {
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Language"
+      }
+     }
+    }
+   },
+   "LicenseSettings": {
+    "type": "object",
+    "properties": {
+     "disableBillingPolicyCreationByNonAdminUsers": {
+      "type": "boolean"
+     },
+     "enableTenantCapacityReportForEnvironmentAdmins": {
+      "type": "boolean"
+     },
+     "storageCapacityConsumptionWarningThreshold": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "enableTenantLicensingReportForEnvironmentAdmins": {
+      "type": "boolean"
+     },
+     "disableUseOfUnassignedAIBuilderCredits": {
+      "type": "boolean"
+     }
+    }
+   },
+   "LifecycleCreated": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "properties": {
+      "$ref": "#/components/schemas/LifecycleCreatedProperties"
+     }
+    }
+   },
+   "LifecycleCreatedProperties": {
+    "type": "object",
+    "properties": {
+     "provisioningState": {
+      "type": "string"
+     }
+    }
+   },
+   "LifecycleLink": {
+    "type": "object",
+    "properties": {
+     "path": {
+      "type": "string"
+     }
+    }
+   },
+   "LifecycleOperation": {
+    "type": "object",
+    "description": "An asynchronous BAPI operation, polled via the URL a 202 response hands back in Location/Operation-Location.",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "links": {
+      "type": "object",
+      "properties": {
+       "self": {
+        "$ref": "#/components/schemas/LifecycleLink"
+       },
+       "environment": {
+        "$ref": "#/components/schemas/LifecycleLink"
+       }
+      }
+     },
+     "state": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string"
+       }
+      }
+     },
+     "type": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string"
+       }
+      }
+     },
+     "createdDateTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "lastActionDateTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "requestedBy": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string"
+       },
+       "displayName": {
+        "type": "string"
+       },
+       "type": {
+        "type": "string"
+       }
+      }
+     },
+     "stages": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/LifecycleStage"
+      }
+     }
+    }
+   },
+   "LifecycleStage": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "state": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string"
+       }
+      }
+     },
+     "firstActionDateTime": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "lastActionDateTime": {
+      "type": "string",
+      "format": "date-time"
+     }
+    }
+   },
+   "LinkEnterprisePolicy": {
+    "type": "object",
+    "properties": {
+     "systemId": {
+      "type": "string"
+     }
+    }
+   },
+   "LinkedAppMetadata": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "url": {
+      "type": "string"
+     }
+    }
+   },
+   "LinkedEnvironmentMetadata": {
+    "type": "object",
+    "properties": {
+     "backgroundOperationsState": {
+      "type": "string",
+      "description": "Whether background flows/jobs are running or administratively paused."
+     },
+     "domainName": {
+      "type": "string",
+      "description": "The chosen Dataverse subdomain; must be tenant-unique (validateEnvironmentDetails checks it)."
+     },
+     "instanceUrl": {
+      "type": "string",
+      "description": "Root URL of the Dataverse organization; its host is the Dataverse Web API host."
+     },
+     "baseLanguage": {
+      "type": "integer",
+      "description": "LCID from the location's environmentLanguages list."
+     },
+     "securityGroupId": {
+      "type": "string",
+      "description": "Entra group restricting Dataverse access. The service returns empty for 'unrestricted'; the all-zeros GUID means the same thing on writes."
+     },
+     "resourceId": {
+      "type": "string",
+      "description": "The Dataverse organization id."
+     },
+     "version": {
+      "type": "string"
+     },
+     "template": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "templateMetadata": {
+      "$ref": "#/components/schemas/CreateTemplateMetadata"
+     },
+     "uniqueName": {
+      "type": "string"
+     }
+    }
+   },
+   "Location": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "properties": {
+      "$ref": "#/components/schemas/LocationProperties"
+     }
+    }
+   },
+   "LocationList": {
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Location"
+      }
+     }
+    }
+   },
+   "LocationProperties": {
+    "type": "object",
+    "properties": {
+     "displayName": {
+      "type": "string"
+     },
+     "code": {
+      "type": "string"
+     },
+     "isDefault": {
+      "type": "boolean"
+     },
+     "isDisabled": {
+      "type": "boolean"
+     },
+     "canProvisionDatabase": {
+      "type": "boolean",
+      "description": "Whether environments here may include Dataverse."
+     },
+     "canProvisionCustomerEngagementDatabase": {
+      "type": "boolean"
+     },
+     "azureRegions": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "Azure regions selectable via `properties.azureRegion` when creating environments in this location."
+     }
+    }
+   },
+   "ModelExperimentationSettings": {
+    "type": "object",
+    "properties": {
+     "enableModelDataSharing": {
+      "type": "boolean"
+     },
+     "disableDataLogging": {
+      "type": "boolean"
+     }
+    }
+   },
+   "ModifySku": {
+    "type": "object",
+    "properties": {
+     "environmentSku": {
+      "type": "string"
+     }
+    }
+   },
+   "ParentEnvironmentGroup": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     }
+    }
+   },
+   "PolicySettings": {
+    "type": "object",
+    "properties": {
+     "enableDesktopFlowDataPolicyManagement": {
+      "type": "boolean"
+     }
+    }
+   },
+   "PowerAppsSettings": {
+    "type": "object",
+    "properties": {
+     "disableShareWithEveryone": {
+      "type": "boolean"
+     },
+     "enableGuestsToMake": {
+      "type": "boolean"
+     },
+     "disableMakerMatch": {
+      "type": "boolean"
+     },
+     "disableUnusedLicenseAssignment": {
+      "type": "boolean"
+     },
+     "disableCreateFromImage": {
+      "type": "boolean"
+     },
+     "disableCreateFromFigma": {
+      "type": "boolean"
+     },
+     "disableConnectionSharingWithEveryone": {
+      "type": "boolean"
+     }
+    }
+   },
+   "PowerAutomateSettings": {
+    "type": "object",
+    "properties": {
+     "disableCopilot": {
+      "type": "boolean"
+     }
+    }
+   },
+   "PowerPagesSettings": {
+    "type": "object"
+   },
+   "PowerPlatformSettings": {
+    "type": "object",
+    "properties": {
+     "search": {
+      "$ref": "#/components/schemas/SearchSettings"
+     },
+     "teamsIntegration": {
+      "$ref": "#/components/schemas/TeamsIntegrationSettings"
+     },
+     "powerApps": {
+      "$ref": "#/components/schemas/PowerAppsSettings"
+     },
+     "powerAutomate": {
+      "$ref": "#/components/schemas/PowerAutomateSettings"
+     },
+     "environments": {
+      "$ref": "#/components/schemas/EnvironmentSettings"
+     },
+     "governance": {
+      "$ref": "#/components/schemas/GovernanceSettings"
+     },
+     "licensing": {
+      "$ref": "#/components/schemas/LicenseSettings"
+     },
+     "powerPages": {
+      "$ref": "#/components/schemas/PowerPagesSettings"
+     },
+     "champions": {
+      "$ref": "#/components/schemas/ChampionSettings"
+     },
+     "intelligence": {
+      "$ref": "#/components/schemas/IntelligenceSettings"
+     },
+     "modelExperimentation": {
+      "$ref": "#/components/schemas/ModelExperimentationSettings"
+     },
+     "catalogSettings": {
+      "$ref": "#/components/schemas/CatalogSettings"
+     },
+     "userManagementSettings": {
+      "$ref": "#/components/schemas/UserManagementSettings"
+     }
+    }
+   },
+   "Principal": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string",
+      "description": "`User` or `ServicePrincipal`."
+     },
+     "tenantId": {
+      "type": "string"
+     },
+     "displayName": {
+      "type": "string"
+     }
+    }
+   },
+   "Properties": {
+    "type": "object",
+    "properties": {
+     "scope": {
+      "type": "string"
+     },
+     "roleDefinition": {
+      "$ref": "#/components/schemas/RoleDefinition"
+     },
+     "principal": {
+      "$ref": "#/components/schemas/Principal"
+     }
+    }
+   },
+   "PropertiesItem": {
+    "type": "object",
+    "properties": {
+     "displayName": {
+      "type": "string"
+     },
+     "isDisabled": {
+      "type": "boolean"
+     },
+     "disabledReason": {
+      "$ref": "#/components/schemas/ItemDisabledReason"
+     },
+     "isCustomerEngagement": {
+      "type": "boolean"
+     },
+     "isSupportedForResetOperation": {
+      "type": "boolean"
+     }
+    }
+   },
+   "RoleAssignment": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "properties": {
+      "$ref": "#/components/schemas/Properties"
+     }
+    }
+   },
+   "RoleDefinition": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "description": "`/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{id}/roleDefinitions/{role}` where role is `EnvironmentAdmin` or `EnvironmentMaker`."
+     },
+     "type": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     }
+    }
+   },
+   "RuntimeEndpoints": {
+    "type": "object",
+    "properties": {
+     "microsoft.BusinessAppPlatform": {
+      "type": "string"
+     },
+     "microsoft.CommonDataModel": {
+      "type": "string"
+     },
+     "microsoft.PowerApps": {
+      "type": "string"
+     },
+     "microsoft.PowerAppsAdvisor": {
+      "type": "string"
+     },
+     "microsoft.PowerVirtualAgents": {
+      "type": "string"
+     },
+     "microsoft.ApiManagement": {
+      "type": "string"
+     },
+     "microsoft.Flow": {
+      "type": "string"
+     }
+    }
+   },
+   "RuntimeEnvironment": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     }
+    }
+   },
+   "SearchSettings": {
+    "type": "object",
+    "properties": {
+     "disableDocsSearch": {
+      "type": "boolean"
+     },
+     "disableCommunitySearch": {
+      "type": "boolean"
+     },
+     "disableBingVideoSearch": {
+      "type": "boolean"
+     }
+    }
+   },
+   "Settings": {
+    "type": "object",
+    "properties": {
+     "extendedSettings": {
+      "$ref": "#/components/schemas/ExtendedSettings"
+     }
+    }
+   },
+   "StatesEnvironment": {
+    "type": "object",
+    "properties": {
+     "management": {
+      "$ref": "#/components/schemas/StatesManagementEnvironment"
+     },
+     "runtime": {
+      "$ref": "#/components/schemas/RuntimeEnvironment"
+     },
+     "disasterRecovery": {
+      "$ref": "#/components/schemas/DisasterRecoveryState"
+     }
+    }
+   },
+   "StatesManagementEnvironment": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     }
+    }
+   },
+   "TeamsIntegrationSettings": {
+    "type": "object",
+    "properties": {
+     "shareWithColleaguesUserLimit": {
+      "type": "integer",
+      "format": "int64"
+     }
+    }
+   },
+   "Tenant": {
+    "type": "object",
+    "properties": {
+     "tenantId": {
+      "type": "string"
+     },
+     "state": {
+      "type": "string"
+     },
+     "location": {
+      "type": "string"
+     },
+     "aadCountryGeo": {
+      "type": "string"
+     },
+     "dataStorageGeo": {
+      "type": "string"
+     },
+     "defaultEnvironmentGeo": {
+      "type": "string"
+     },
+     "aadDataBoundary": {
+      "type": "string",
+      "description": "The Entra data boundary (for example the EU Data Boundary) the tenant is pinned to."
+     },
+     "fedRAMPHighCertificationRequired": {
+      "type": "boolean",
+      "description": "Whether the tenant demands FedRAMP-High-certified service placement."
+     }
+    }
+   },
+   "TenantIsolationPolicy": {
+    "type": "object",
+    "properties": {
+     "properties": {
+      "$ref": "#/components/schemas/TenantIsolationPolicyProperties"
+     }
+    }
+   },
+   "TenantIsolationPolicyProperties": {
+    "type": "object",
+    "properties": {
+     "tenantId": {
+      "type": "string"
+     },
+     "isDisabled": {
+      "type": "boolean",
+      "description": "The policy object can exist while disabled; false means isolation is enforced."
+     },
+     "allowedTenants": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/AllowedTenant"
+      }
+     }
+    }
+   },
+   "TenantSettings": {
+    "type": "object",
+    "properties": {
+     "walkMeOptOut": {
+      "type": "boolean"
+     },
+     "disableNPSCommentsReachout": {
+      "type": "boolean"
+     },
+     "disableNewsletterSendout": {
+      "type": "boolean"
+     },
+     "disableEnvironmentCreationByNonAdminUsers": {
+      "type": "boolean"
+     },
+     "disablePortalsCreationByNonAdminUsers": {
+      "type": "boolean"
+     },
+     "disableSurveyFeedback": {
+      "type": "boolean"
+     },
+     "disableTrialEnvironmentCreationByNonAdminUsers": {
+      "type": "boolean"
+     },
+     "disableCapacityAllocationByEnvironmentAdmins": {
+      "type": "boolean"
+     },
+     "disableSupportTicketsVisibleByAllUsers": {
+      "type": "boolean"
+     },
+     "powerPlatform": {
+      "$ref": "#/components/schemas/PowerPlatformSettings"
+     }
+    }
+   },
+   "UnblockableConnector": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "description": "Connector id in `/providers/Microsoft.PowerApps/apis/{name}` form."
+     },
+     "metadata": {
+      "$ref": "#/components/schemas/UnblockableConnectorMetadata"
+     }
+    }
+   },
+   "UnblockableConnectorMetadata": {
+    "type": "object",
+    "properties": {
+     "unblockable": {
+      "type": "boolean"
+     }
+    }
+   },
+   "UpdateCadence": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     }
+    }
+   },
+   "UsedBy": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "tenantId": {
+      "type": "string"
+     }
+    }
+   },
+   "UserManagementSettings": {
+    "type": "object",
+    "properties": {
+     "enableDeleteDisabledUserinAllEnvironments": {
+      "type": "boolean"
+     }
+    }
+   },
+   "ValidateCreateEnvironmentDetails": {
+    "type": "object",
+    "properties": {
+     "domainName": {
+      "type": "string"
+     },
+     "environmentLocation": {
+      "type": "string"
+     }
+    }
+   },
+   "ValidateUpdateEnvironmentDetails": {
+    "type": "object",
+    "properties": {
+     "domainName": {
+      "type": "string"
+     },
+     "environmentName": {
+      "type": "string"
+     }
+    }
+   },
+   "VirtualConnector": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "metadata": {
+      "$ref": "#/components/schemas/VirtualConnectorMetadata"
+     }
+    }
+   },
+   "VirtualConnectorMetadata": {
+    "type": "object",
+    "properties": {
+     "virtualConnector": {
+      "type": "boolean"
+     },
+     "name": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "displayName": {
+      "type": "string"
+     }
+    }
+   }
+  }
+ }
+}

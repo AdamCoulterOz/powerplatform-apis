@@ -4,5 +4,11 @@
     "title": "Power Platform API (PPAPI)",
     "url": "ppapi/oas/openapi.json",
     "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/ppapi"
+  },
+  {
+    "id": "bapi",
+    "title": "Business Application Platform API (BAPI)",
+    "url": "bapi/oas/openapi.json",
+    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/bapi"
   }
 ]

@@ -83,6 +83,7 @@
     "responses": {
      "200": {
       "description": "The bot's Application Insights configuration. Shape is provider-derived, not probed, so treat unlisted properties as possible rather than absent.",
+      "x-probe-verified": false,
       "content": {
        "application/json": {
         "schema": {
@@ -141,6 +142,7 @@
     "responses": {
      "200": {
       "description": "The stored configuration - **or** a rejection. Inspect `errors`: non-empty means the update was refused and its text is the reason. Empty means it was applied, and the body is the configuration as stored.",
+      "x-probe-verified": false,
       "content": {
        "application/json": {
         "schema": {
@@ -172,7 +174,8 @@
       }
      },
      "500": {
-      "description": "The update was rejected. Terminal, not transient: the Terraform provider lists 500 among this operation's *accepted* statuses precisely to keep its retry layer away from it, then raises the raw body as the error. Do not retry; fix the request. The body is not guaranteed to be the standard error envelope, so treat it as opaque text."
+      "description": "The update was rejected. Terminal, not transient: the Terraform provider lists 500 among this operation's *accepted* statuses precisely to keep its retry layer away from it, then raises the raw body as the error. Do not retry; fix the request. The body is not guaranteed to be the standard error envelope, so treat it as opaque text.",
+      "x-probe-verified": false
      }
     }
    }

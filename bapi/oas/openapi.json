@@ -3,7 +3,7 @@
  "info": {
   "title": "Business Application Platform API (BAPI)",
   "version": "2023-06-01",
-  "description": "Unofficial. BAPI (`api.bap.microsoft.com`) is the undocumented legacy Power Platform admin API behind the admin center. This spec was reverse-engineered from the wire behavior encoded in microsoft/terraform-provider-power-platform's client (`internal/clients/bapi`) \u2014 itself derived from admin-center traffic recordings \u2014 and then **probed against a live tenant** to correct it. It is a map, not a contract.\n\nOperations and schemas carrying `x-probe-verified: true` were confirmed against the live service: response shapes diffed field by field against real bodies, request optionality established by provoking rejections, enum values collected from real data, and the asynchronous contract walked end to end on throwaway environments. Everything without that marker is provider-derived only. The tenant-wide write surfaces \u2014 tenant settings, the tenant isolation policy, admin application registration, enterprise policies \u2014 were deliberately read-only during probing and their write semantics remain unverified.\n\n`required` is listed only where a request was actually rejected without the field. Absence of `required` on a response property means nothing: BAPI omits members rather than nulling them, and which members appear varies with SKU, Dataverse linkage and `$expand`.\n\napi-version defaults are per operation; the `PowerPlatform.Governance` paths take none at all. Mutations are largely asynchronous: a 202 hands back an absolute poll URL in `Location` or `Operation-Location` that renders a `LifecycleOperation`. Sovereign-cloud hosts (`.us`, `.cn`, eaglex, microsoft.scloud) serve the same paths and were not probed.",
+  "description": "Unofficial. BAPI (`api.bap.microsoft.com`) is the undocumented legacy Power Platform admin API behind the admin center. This spec was reverse-engineered from the wire behavior encoded in microsoft/terraform-provider-power-platform's client (`internal/clients/bapi`) — itself derived from admin-center traffic recordings — and then **probed against a live tenant** to correct it. It is a map, not a contract.\n\nOperations and schemas carrying `x-probe-verified: true` were confirmed against the live service by one of two independent means: **probing** — response shapes diffed field by field against real bodies, request optionality established by provoking rejections, enum values collected from real data, and the asynchronous contract walked end to end on throwaway environments — and **recorded first-party UI traffic**, 459 real calls to `api.bap.microsoft.com` captured from the Power Platform admin center and the maker portal. The recordings are the stronger evidence where the two overlap: they show the request bodies the real client sends, and they reach paths no external caller would guess. Everything without that marker is provider-derived only. The tenant-wide write surfaces — tenant settings, the tenant isolation policy, admin application registration, enterprise policies — remain unverified: probing left them read-only deliberately, and no recording exercises any of them either.\n\nOne caveat about coverage: the admin center tunnels part of its traffic through `GET|POST /api/invoke`, a gateway envelope that carries the real path and query in an `x-ms-path-query` request header and proxies it verbatim. It is not a resource and is not documented as an operation — but it means traffic capture alone understates which endpoints a first-party client uses, because tunnelled calls all look like one endpoint on the wire.\n\n`required` is listed only where a request was actually rejected without the field. Absence of `required` on a response property means nothing: BAPI omits members rather than nulling them, and which members appear varies with SKU, Dataverse linkage and `$expand`.\n\napi-version defaults are per operation; the `PowerPlatform.Governance` paths take none at all. Mutations are largely asynchronous: a 202 hands back an absolute poll URL in `Location` or `Operation-Location` that renders a `LifecycleOperation`. Sovereign-cloud hosts (`.us`, `.cn`, eaglex, microsoft.scloud) serve the same paths and were not probed.",
   "x-api-versions": [
    "2016-02-01",
    "2016-11-01",
@@ -27,6 +27,11 @@
   ],
   "x-probed": {
    "tenant": "a single-geo commercial tenant, 14 environments",
+   "date": "2026-08"
+  },
+  "x-recorded": {
+   "source": "Power Platform admin center and maker portal HAR captures",
+   "calls": 459,
    "date": "2026-08"
   }
  },
@@ -90,6 +95,18 @@
   {
    "name": "Lifecycle Operations",
    "description": "Polling of asynchronous operations through the absolute URL a 202 hands back in `Location` or `Operation-Location`. BAPI runs at most one lifecycle operation per environment; every other mutation is refused with 409 until it finishes."
+  },
+  {
+   "name": "Tenant-to-Tenant Migrations",
+   "description": "Migration of an environment from one Entra tenant to another. Only the read endpoint has been observed, and only on its not-found path; the operations that start and drive a migration are not documented here."
+  },
+  {
+   "name": "Country Opt-In Defaults",
+   "description": "Static per-country defaults for the optional-data-collection consent prompt the first-party web clients show."
+  },
+  {
+   "name": "Feature Gates",
+   "description": "Microsoft's internal service-rollout flags, as they resolve for one directory principal. Diagnostic only: the names are undocumented, unstable, and not a contract."
   }
  ],
  "paths": {
@@ -135,7 +152,7 @@
       }
      },
      "400": {
-      "description": "`InvalidApplicationId` \u2014 the id is not a registered admin management application. Note the status: an unregistered application is a bad request here, not a 404.",
+      "description": "`InvalidApplicationId` — the id is not a registered admin management application. Note the status: an unregistered application is a bad request here, not a 404.",
       "content": {
        "application/json": {
         "schema": {
@@ -166,7 +183,7 @@
      }
     },
     "x-probe-verified": true,
-    "description": "Reads one admin management application registration by client id. Confirms a service principal is registered; it returns nothing beyond the id it was asked about, and cannot be used to discover registrations \u2014 list them instead."
+    "description": "Reads one admin management application registration by client id. Confirms a service principal is registered; it returns nothing beyond the id it was asked about, and cannot be used to discover registrations — list them instead."
    },
    "put": {
     "operationId": "adminApplications_register",
@@ -382,7 +399,70 @@
       }
      }
     },
-    "description": "Creates an environment group. The group is the unit governance rules target, so an environment inherits its rules by being moved into one \u2014 through the environment's own `properties.parentEnvironmentGroup`, not through this resource."
+    "description": "Creates an environment group. The group is the unit governance rules target, so an environment inherits its rules by being moved into one — through the environment's own `properties.parentEnvironmentGroup`, not through this resource."
+   },
+   "get": {
+    "operationId": "environmentGroups_list",
+    "tags": [
+     "Environment Groups"
+    ],
+    "summary": "List",
+    "description": "Lists the tenant's environment groups. Each entry carries only the group's own identity — membership is not here, and is read the other way round, from each environment's `properties.parentEnvironmentGroup`, or by filtering the environment list on `properties/parentEnvironmentGroup/id`.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 100
+      },
+      "description": "Maximum groups to return. The admin center sends 100."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The tenant's environment groups.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentGroupList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
    }
   },
   "/providers/Microsoft.BusinessAppPlatform/environmentGroups/{environmentGroupId}": {
@@ -555,7 +635,7 @@
      "Environment Groups"
     ],
     "summary": "Delete",
-    "description": "Deletes an environment group. Whether a populated group is protected is unreliable \u2014 see the responses \u2014 so check the group is empty before deleting it rather than depending on the service to refuse.",
+    "description": "Deletes an environment group. Whether a populated group is protected is unreliable — see the responses — so check the group is empty before deleting it rather than depending on the service to refuse.",
     "parameters": [
      {
       "name": "environmentGroupId",
@@ -579,7 +659,7 @@
     ],
     "responses": {
      "200": {
-      "description": "Reported as deleted. Observed on a group that still had member environments, which were left attached \u2014 so this status alone does not prove the group was empty. Read back to confirm."
+      "description": "Reported as deleted. Observed on a group that still had member environments, which were left attached — so this status alone does not prove the group was empty. Read back to confirm."
      },
      "400": {
       "description": "The request was rejected before anything happened; `error.code` names the specific rejection and `error.message` frequently enumerates the accepted values.",
@@ -631,7 +711,7 @@
      "Environments"
     ],
     "summary": "Create",
-    "description": "Provisions an environment. `properties.displayName` and `properties.environmentSku` are mandatory; everything else is optional, and the service validates them in that order.\n\nDataverse is opt-in through `properties.databaseType`. Setting it to `CommonDataService` provisions an organization from `properties.linkedEnvironmentMetadata`; **omitting it silently discards that whole block** and returns a successful, Dataverse-less environment with no error and no warning.\n\nAn environment without Dataverse is created synchronously in seconds; one with Dataverse is asynchronous. Either way the environment is readable before its `linkedEnvironmentMetadata` is, so clients that need the organization URL must keep re-reading after the operation succeeds.",
+    "description": "Provisions an environment. `properties.displayName` and `properties.environmentSku` are mandatory; everything else is optional, and the service validates them in that order.\n\nDataverse is opt-in through `properties.databaseType`. Setting it to `CommonDataService` provisions an organization from `properties.linkedEnvironmentMetadata`; **omitting it silently discards that whole block** and returns a successful, Dataverse-less environment with no error and no warning.\n\nAn environment without Dataverse is created synchronously in seconds; one with Dataverse is asynchronous. Either way the environment is readable before its `linkedEnvironmentMetadata` is, so clients that need the organization URL must keep re-reading after the operation succeeds.\n\nRecorded admin-center creates send `location`, `displayName`, `environmentSku`, `databaseType`, `linkedEnvironmentMetadata` (`baseLanguage`, `currency.code`, an empty `templates`), `billingPolicy`, `cluster.category`, and explicit `null` for `usedBy`, `parentEnvironmentGroup` and `governanceConfiguration` — an explicit `null` is accepted wherever the member is optional.",
     "parameters": [
      {
       "name": "api-version",
@@ -642,6 +722,25 @@
        "default": "2023-06-01"
       },
       "description": "Accepted values, from the service's own rejection message: 2016-02-01, 2016-11-01, 2018-01-01, 2018-10-01, 2019-05-01, 2019-10-01, 2020-04-01, 2020-05-01, 2020-06-01, 2020-08-01, 2020-09-01, 2020-10-01, 2021-03-01, 2021-04-01, 2021-07-01, 2022-05-01, 2023-06-01, 2024-05-01, 2026-06-01. The default is the version the known client sends for this operation."
+     },
+     {
+      "name": "retainOnProvisionFailure",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false
+      },
+      "description": "When true, a failed provision leaves the environment behind in a failed state for diagnosis instead of rolling it back. The admin center sends `false` explicitly."
+     },
+     {
+      "name": "overrideEnvironmentGroupAssigned",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Lets `properties.parentEnvironmentGroup` win over whatever group the tenant's environment-group routing rules would otherwise assign — including `null`, which is how the admin center creates an ungrouped environment in a tenant that has a default group. The admin center sends `true` on every create."
      }
     ],
     "requestBody": {
@@ -656,7 +755,7 @@
     },
     "responses": {
      "201": {
-      "description": "Created synchronously, which is what an environment without Dataverse does. The body is the full created environment \u2014 its `name` is the new environment id, and `properties.provisioningState` is already `Succeeded`. (The known client parses only those two members, so it reads this as a much smaller shape than it is.)",
+      "description": "Created synchronously, which is what an environment without Dataverse does. The body is the full created environment — its `name` is the new environment id, and `properties.provisioningState` is already `Succeeded`. (The known client parses only those two members, so it reads this as a much smaller shape than it is.)",
       "content": {
        "application/json": {
         "schema": {
@@ -686,7 +785,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds — always delta-seconds in practice, never an HTTP date. Observed as 3 and 5 for creates, 5 for edits and Managed Environments changes, and 30 for deletes, with the poll responses themselves suggesting 10."
        }
       }
      },
@@ -731,7 +830,51 @@
       }
      },
      "500": {
-      "description": "`InternalServerError` \u2014 returned for a structurally empty request body as well as for genuine provisioning failures. The body carries a tracking id worth quoting to support.",
+      "description": "`InternalServerError` — returned for a structurally empty request body as well as for genuine provisioning failures. The body carries a tracking id worth quoting to support.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   },
+   "get": {
+    "operationId": "environments_listMakerScope",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "List (Maker Scope)",
+    "description": "Lists the environments the *calling user* can reach, as the maker portal sees them, rather than every environment in the tenant. It needs no admin role, which is the whole point of the scope: the admin-scope list refuses a non-admin outright.\n\nThe entries are the same `Environment` shape under a different `id` and `type`, minus the admin-only projections — no `linkedEnvironmentMetadata`, no `clientUris`, no `parentEnvironmentGroup`, no `lastActivity`.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The version the maker portal sends for this operation. Later versions are accepted and return more members."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environments the caller can reach.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
       "content": {
        "application/json": {
         "schema": {
@@ -751,7 +894,7 @@
      "Enterprise Policies"
     ],
     "summary": "Link Or Unlink",
-    "description": "Links (`action=link`) or unlinks (`action=unlink`) an Azure enterprise policy \u2014 network injection, customer-managed key or managed identity \u2014 to the environment. `environmentType` names the policy kind and the body carries the Azure policy's `systemId`.\n\nThe link is a two-sided object: BAPI drives the environment side, Azure Resource Manager owns the policy itself. A failed lifecycle operation can leave `properties.enterprisePolicies[...].linkStatus` mid-transition, and the known client reacts by replaying the whole call rather than resuming.",
+    "description": "Links (`action=link`) or unlinks (`action=unlink`) an Azure enterprise policy — network injection, customer-managed key or managed identity — to the environment. `environmentType` names the policy kind and the body carries the Azure policy's `systemId`.\n\nThe link is a two-sided object: BAPI drives the environment side, Azure Resource Manager owns the policy itself. A failed lifecycle operation can leave `properties.enterprisePolicies[...].linkStatus` mid-transition, and the known client reacts by replaying the whole call rather than resuming.",
     "parameters": [
      {
       "name": "environmentId",
@@ -832,7 +975,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds — always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
        }
       }
      },
@@ -886,7 +1029,7 @@
      "Managed Environments"
     ],
     "summary": "Governance Configuration Set",
-    "description": "Sets the environment's governance configuration. `protectionLevel: \"Standard\"` with a `settings.extendedSettings` block enables Managed Environments; `protectionLevel: \"Basic\"` disables it and ignores any settings sent alongside.\n\nManaged Environments requires a linked Dataverse organization: on an environment without one the request is rejected outright rather than queued.\n\nEvery value inside `extendedSettings` is a string, including the booleans and the numbers.",
+    "description": "Sets the environment's governance configuration. `protectionLevel: \"Standard\"` with a `settings.extendedSettings` block enables Managed Environments; `protectionLevel: \"Basic\"` disables it and ignores any settings sent alongside.\n\nManaged Environments requires a linked Dataverse organization: on an environment without one the request is rejected outright rather than queued.\n\nEvery value inside `extendedSettings` is a string, including the booleans and the numbers.\n\nThe body is optional. Recorded admin-center calls that turn Managed Environments on send `Content-Length: 0` and no body at all, and the service answers 202 with an `EnableGovernanceConfiguration` lifecycle operation and `Retry-After: 5` — so the bodyless form means \"enable with defaults\". Send a body only to set `settings.extendedSettings` at the same time.",
     "parameters": [
      {
       "name": "environmentId",
@@ -910,7 +1053,7 @@
      }
     ],
     "requestBody": {
-     "required": true,
+     "required": false,
      "content": {
       "application/json": {
        "schema": {
@@ -941,7 +1084,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds — always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
        }
       }
      },
@@ -949,7 +1092,7 @@
       "description": "Nothing to change."
      },
      "400": {
-      "description": "`InvalidLifecycleOperationRequest` \u2014 most often because the environment has no linked Dataverse organization, which Managed Environments requires; the message names `EnableGovernanceConfiguration` as the operation it could not start.",
+      "description": "`InvalidLifecycleOperationRequest` — most often because the environment has no linked Dataverse organization, which Managed Environments requires; the message names `EnableGovernanceConfiguration` as the operation it could not start.",
       "content": {
        "application/json": {
         "schema": {
@@ -989,7 +1132,7 @@
       }
      }
     },
-    "x-probe-verified": false
+    "x-probe-verified": true
    }
   },
   "/providers/Microsoft.BusinessAppPlatform/environments/{environmentId}/provisionInstance": {
@@ -999,7 +1142,7 @@
      "Environments"
     ],
     "summary": "Dataverse Add",
-    "description": "Provisions a Dataverse organization into an environment created without one. Every member of the body is optional \u2014 the service generates a domain name when none is given \u2014 but `securityGroupId`, if sent, must be a well-formed GUID: unlike environment create, this operation rejects the empty string, and the all-zeros GUID is how 'unrestricted' is expressed.\n\nThe poll URL renders the environment itself rather than a `LifecycleOperation`, on the `scopes/service` projection: watch `properties.provisioningState` move from `LinkedDatabaseProvisioning` to `Succeeded`, not `state.id`.",
+    "description": "Provisions a Dataverse organization into an environment created without one. Every member of the body is optional — the service generates a domain name when none is given — but `securityGroupId`, if sent, must be a well-formed GUID: unlike environment create, this operation rejects the empty string, and the all-zeros GUID is how 'unrestricted' is expressed.\n\nThe poll URL renders the environment itself rather than a `LifecycleOperation`, on the `scopes/service` projection: watch `properties.provisioningState` move from `LinkedDatabaseProvisioning` to `Succeeded`, not `state.id`.",
     "parameters": [
      {
       "name": "environmentId",
@@ -1055,7 +1198,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds — always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
        }
       },
       "content": {
@@ -1067,7 +1210,7 @@
       }
      },
      "400": {
-      "description": "`InvalidSecurityGroupId` when `securityGroupId` is present but not a well-formed GUID \u2014 the empty string that environment create accepts is rejected here. `DomainNameAlreadyInUse` when the requested domain is taken.",
+      "description": "`InvalidSecurityGroupId` when `securityGroupId` is present but not a well-formed GUID — the empty string that environment create accepts is rejected here. `DomainNameAlreadyInUse` when the requested domain is taken.",
       "content": {
        "application/json": {
         "schema": {
@@ -1117,7 +1260,7 @@
      "Lifecycle Operations"
     ],
     "summary": "Read",
-    "description": "Polls an asynchronous operation. Clients should follow the absolute URL an asynchronous response hands back in `Location` or `Operation-Location` rather than rebuilding this path: that URL carries the originating request's api-version and `$expand`, and this path documents the shape it resolves to.\n\n`state.id` moves `NotStarted` \u2192 `Running` \u2192 `Succeeded`/`Failed`; a short operation can be `Succeeded` on the first poll. `stages` breaks the work into `Validate`, `Prepare`, `Run` and `Finalize`, which is where a failure localises. For a create, `links.environment.path` ends in the new environment's id \u2014 the only place an asynchronous create hands it back.\n\nThe operation record outlives its subject: a delete operation stays readable after the environment itself is gone.",
+    "description": "Polls an asynchronous operation. Recorded admin-center traffic addresses this path directly at `api-version=2021-04-01`, so it is a first-class path and not merely the target of a `Location` header. Following the absolute URL an asynchronous response hands back is still the safer default: it carries the originating request's api-version and `$expand`.\n\n`state.id` moves `NotStarted` → `Running` → `Succeeded`/`Failed`; a short operation can be `Succeeded` on the first poll. `stages` breaks the work into `Validate`, `Prepare`, `Run` and `Finalize`, which is where a failure localises. For a create, `links.environment.path` ends in the new environment's id — the only place an asynchronous create hands it back.\n\nThe operation record outlives its subject: a delete operation stays readable after the environment itself is gone.",
     "x-provider-unsourced": true,
     "parameters": [
      {
@@ -1136,9 +1279,9 @@
       "required": false,
       "schema": {
        "type": "string",
-       "default": "2023-06-01"
+       "default": "2021-04-01"
       },
-      "description": "Carried over from the request that started the operation when the poll URL is followed as given. Any accepted version works."
+      "description": "Carried over from the request that started the operation when the poll URL is followed as given. Any accepted version works; recorded traffic addressing the path directly uses 2021-04-01."
      }
     ],
     "responses": {
@@ -1183,7 +1326,7 @@
       }
      },
      "404": {
-      "description": "`OperationNotFound` \u2014 no operation with this id. Not the same as a completed operation, whose record survives its subject.",
+      "description": "`OperationNotFound` — no operation with this id. Not the same as a completed operation, whose record survives its subject.",
       "content": {
        "application/json": {
         "schema": {
@@ -1332,7 +1475,7 @@
       }
      }
     },
-    "description": "Lists the BAP locations \u2014 named geographies, not Azure regions. Includes locations the tenant may not use: check `properties.isDisabled` before offering one, and `properties.canProvisionDatabase` before pairing it with Dataverse.",
+    "description": "Lists the BAP locations — named geographies, not Azure regions. Includes locations the tenant may not use: check `properties.isDisabled` before offering one, and `properties.canProvisionDatabase` before pairing it with Dataverse.",
     "x-probe-verified": true
    }
   },
@@ -1574,7 +1717,7 @@
      "Environments"
     ],
     "summary": "List",
-    "description": "Lists every environment in the tenant on the admin scope, in one response \u2014 no continuation token or `nextLink` has been observed. `$expand` pulls optional projections into `properties`; `properties.capacity` is only available on the single-environment read, not here.",
+    "description": "Lists every environment in the tenant on the admin scope, in one response — no continuation token or `nextLink` has been observed. `$expand` pulls optional projections into `properties`; `properties.capacity` is only available on the single-environment read, not here.",
     "parameters": [
      {
       "name": "api-version",
@@ -1593,7 +1736,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Comma-separated projections merged into each environment's `properties`. `properties/billingPolicy` expands the attached billing policy from an id into the full policy; `properties/copilotPolicies` and `properties/enterprisePolicies` add blocks that are otherwise absent. `properties.capacity` \u2014 note the dot \u2014 is accepted only on the single-environment read.",
+      "description": "Comma-separated projections merged into each environment's `properties`. `properties/billingPolicy` expands the attached billing policy from an id into the full policy; `properties/copilotPolicies` and `properties/enterprisePolicies` add blocks that are otherwise absent. `properties.capacity` — note the dot — is accepted only on the single-environment read.",
       "example": "properties/billingPolicy,properties/copilotPolicies"
      },
      {
@@ -1733,7 +1876,7 @@
       }
      },
      "404": {
-      "description": "`EnvironmentNotFound` \u2014 no such environment, or it has been deleted. A deleted environment keeps returning 200 until its `Delete` operation finishes, then switches to this.",
+      "description": "`EnvironmentNotFound` — no such environment, or it has been deleted. A deleted environment keeps returning 200 until its `Delete` operation finishes, then switches to this.",
       "content": {
        "application/json": {
         "schema": {
@@ -1825,12 +1968,12 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds — always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
        }
       }
      },
      "204": {
-      "description": "Nothing changed, so no lifecycle operation was raised and there is no URL to poll. Returned whenever a `GenerativeAiFeatures` patch sends values the environment already holds \u2014 including on a first attempt, when the requested values happen to match the defaults. A client that always expects 202 will wait for a header that is not there."
+      "description": "Nothing changed, so no lifecycle operation was raised and there is no URL to poll. Returned whenever a `GenerativeAiFeatures` patch sends values the environment already holds — including on a first attempt, when the requested values happen to match the defaults. A client that always expects 202 will wait for a header that is not there."
      },
      "400": {
       "description": "The request was rejected before anything happened; `error.code` names the specific rejection and `error.message` frequently enumerates the accepted values.",
@@ -1863,7 +2006,7 @@
       }
      },
      "409": {
-      "description": "`OperationNotStartable`: another lifecycle operation is already running on this environment. BAPI serialises them strictly, so the fix is to wait \u2014 `properties.ongoingOperation` on a read names the operation to wait for \u2014 and replay.",
+      "description": "`OperationNotStartable`: another lifecycle operation is already running on this environment. BAPI serialises them strictly, so the fix is to wait — `properties.ongoingOperation` on a read names the operation to wait for — and replay.",
       "content": {
        "application/json": {
         "schema": {
@@ -1916,7 +2059,7 @@
     },
     "responses": {
      "202": {
-      "description": "Accepted. The `Delete` operation runs `NotStarted` \u2192 `Running` \u2192 `Succeeded`; until it finishes the environment still reads 200, with `provisioningState: \"Deleting\"`.",
+      "description": "Accepted. The `Delete` operation runs `NotStarted` → `Running` → `Succeeded`; until it finishes the environment still reads 200, with `provisioningState: \"Deleting\"`.",
       "headers": {
        "Location": {
         "schema": {
@@ -1936,7 +2079,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds — always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
        }
       }
      },
@@ -1944,7 +2087,7 @@
       "description": "Nothing to delete: returned when the environment is already gone. A delete replayed after a successful one answers 204, not 404."
      },
      "400": {
-      "description": "`InvalidOrMissingDeleteCode` \u2014 the body was absent or `code` was not a recognised reason. The message lists every accepted reason name.",
+      "description": "`InvalidOrMissingDeleteCode` — the body was absent or `code` was not a recognised reason. The message lists every accepted reason name.",
       "content": {
        "application/json": {
         "schema": {
@@ -1984,7 +2127,7 @@
       }
      },
      "409": {
-      "description": "Another lifecycle operation is in flight. **This 409 carries no body at all** \u2014 not even the error envelope every other failure uses \u2014 so a client that parses every 4xx as JSON will misread it. Wait for the running operation and replay."
+      "description": "Another lifecycle operation is in flight. **This 409 carries no body at all** — not even the error envelope every other failure uses — so a client that parses every 4xx as JSON will misread it. Wait for the running operation and replay."
      }
     },
     "x-probe-verified": true
@@ -2083,7 +2226,7 @@
      "Environment Role Assignments"
     ],
     "summary": "User Add",
-    "description": "Forces an Entra user to be synchronised into the environment (and its Dataverse organization) so roles can then be assigned. The body is `{\"ObjectId\": \"<entra-object-id>\"}` \u2014 note the capitalised property name.\n\nA `userNotLicensed` error is transient while licence state propagates and is worth retrying rather than surfacing.",
+    "description": "Forces an Entra user to be synchronised into the environment (and its Dataverse organization) so roles can then be assigned. The body is `{\"ObjectId\": \"<entra-object-id>\"}` — note the capitalised property name.\n\nA `userNotLicensed` error is transient while licence state propagates and is worth retrying rather than surfacing.",
     "parameters": [
      {
       "name": "environmentId",
@@ -2263,7 +2406,7 @@
      "Environments"
     ],
     "summary": "Type Update",
-    "description": "Converts an environment between types, in practice `Sandbox` \u2194 `Production`. Runs as a `Convert` lifecycle operation.\n\nUnusually for this API the poll URL arrives in `Operation-Location` rather than `Location`; clients should read whichever is present. The environment reports `states.management.id: \"Running\"` for the duration and rejects every other mutation.",
+    "description": "Converts an environment between types, in practice `Sandbox` ↔ `Production`. Runs as a `Convert` lifecycle operation.\n\nUnusually for this API the poll URL arrives in `Operation-Location` rather than `Location`; clients should read whichever is present. The environment reports `states.management.id: \"Running\"` for the duration and rejects every other mutation.",
     "parameters": [
      {
       "name": "environmentId",
@@ -2321,7 +2464,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds — always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
        }
       }
      },
@@ -2356,7 +2499,7 @@
       }
      },
      "409": {
-      "description": "`OperationNotStartable`: another lifecycle operation is already running on this environment. BAPI serialises them strictly, so the fix is to wait \u2014 `properties.ongoingOperation` on a read names the operation to wait for \u2014 and replay.",
+      "description": "`OperationNotStartable`: another lifecycle operation is already running on this environment. BAPI serialises them strictly, so the fix is to wait — `properties.ongoingOperation` on a read names the operation to wait for — and replay.",
       "content": {
        "application/json": {
         "schema": {
@@ -2441,7 +2584,7 @@
       }
      },
      "403": {
-      "description": "`LinkedEnvironmentForbiddenOperation` \u2014 the environment has a linked Dataverse organization, and the whole admin-scope role-assignment surface is refused for those. Use Dataverse security roles instead. Otherwise, the caller is not an admin.",
+      "description": "`LinkedEnvironmentForbiddenOperation` — the environment has a linked Dataverse organization, and the whole admin-scope role-assignment surface is refused for those. Use Dataverse security roles instead. Otherwise, the caller is not an admin.",
       "content": {
        "application/json": {
         "schema": {
@@ -2461,7 +2604,7 @@
      "Tenant"
     ],
     "summary": "Settings Update",
-    "description": "Merges the sent settings into the tenant-wide tree; omitted members keep their current values. Returns the resulting tree.\n\nTenant-wide and immediate \u2014 there is no lifecycle operation and no staging.",
+    "description": "Merges the sent settings into the tenant-wide tree; omitted members keep their current values. Returns the resulting tree.\n\nTenant-wide and immediate — there is no lifecycle operation and no staging.",
     "parameters": [
      {
       "name": "api-version",
@@ -2600,7 +2743,7 @@
      "Environments"
     ],
     "summary": "Details Validate",
-    "description": "Pre-flight check for a Dataverse domain name, in two variants selected by the body: send `environmentLocation` before a create, or `environmentName` before renaming an existing environment's domain. Both variants require `domainName`.\n\nWorth calling first \u2014 it distinguishes a malformed name from a taken one, which the create call itself does not.",
+    "description": "Pre-flight check for a Dataverse domain name, in two variants selected by the body: send `environmentLocation` before a create, or `environmentName` before renaming an existing environment's domain. Both variants require `domainName`.\n\nWorth calling first — it distinguishes a malformed name from a taken one, which the create call itself does not.",
     "parameters": [
      {
       "name": "api-version",
@@ -2632,10 +2775,10 @@
     },
     "responses": {
      "200": {
-      "description": "The details are usable: the domain name is well-formed and free, and the location or environment exists. The body carries nothing further."
+      "description": "The details are usable: the domain name is well-formed and free, and the location or environment exists. The body is empty — validity is signalled by the status alone, and recorded admin-center calls receive a zero-length 200."
      },
      "400": {
-      "description": "`InvalidValidateEnvironmentDomainName` when `domainName` is missing; `InvalidDomainName` when it breaks the pattern; `EnvironmentLocationUnsupported` when `environmentLocation` is missing or unknown \u2014 and that message lists every valid location.",
+      "description": "`InvalidValidateEnvironmentDomainName` when `domainName` is missing; `InvalidDomainName` when it breaks the pattern; `EnvironmentLocationUnsupported` when `environmentLocation` is missing or unknown — and that message lists every valid location.",
       "content": {
        "application/json": {
         "schema": {
@@ -2665,7 +2808,7 @@
       }
      },
      "404": {
-      "description": "`EnvironmentNotFound` \u2014 the update variant's `environmentName` names no environment.",
+      "description": "`EnvironmentNotFound` — the update variant's `environmentName` names no environment.",
       "content": {
        "application/json": {
         "schema": {
@@ -2751,7 +2894,7 @@
      "Connector Metadata"
     ],
     "summary": "Virtual List",
-    "description": "Lists virtual connectors \u2014 platform capabilities such as HTTP actions, modelled as connectors purely so DLP can classify them. They have no runtime connector behind them, and their ids are bare names rather than `/providers/...` resource ids.",
+    "description": "Lists virtual connectors — platform capabilities such as HTTP actions, modelled as connectors purely so DLP can classify them. They have no runtime connector behind them, and their ids are bare names rather than `/providers/...` resource ids.",
     "responses": {
      "200": {
       "description": "The virtual connectors. A bare JSON array, not the `{\"value\": [...]}` envelope the rest of the API uses.",
@@ -2820,7 +2963,7 @@
     ],
     "responses": {
      "200": {
-      "description": "The policy \u2014 or, on a tenant that has never configured isolation, an empty body with this status. Treat an empty 200 as 'no policy', not as a parse failure.",
+      "description": "The policy — or, on a tenant that has never configured isolation, an empty body with this status. Treat an empty 200 as 'no policy', not as a parse failure.",
       "content": {
        "application/json": {
         "schema": {
@@ -2879,7 +3022,7 @@
      "Tenant Isolation"
     ],
     "summary": "Create Or Update",
-    "description": "Replaces the tenant isolation policy wholesale \u2014 this is a PUT, not a merge, so omitting `properties.allowedTenants` clears every exception. Each entry opts one tenant into inbound and/or outbound connections while isolation is on; `tenantId: \"*\"` names all of them.",
+    "description": "Replaces the tenant isolation policy wholesale — this is a PUT, not a merge, so omitting `properties.allowedTenants` clears every exception. Each entry opts one tenant into inbound and/or outbound connections while isolation is on; `tenantId: \"*\"` names all of them.",
     "parameters": [
      {
       "name": "tenantId",
@@ -2933,7 +3076,7 @@
         "schema": {
          "type": "integer"
         },
-        "description": "Suggested poll interval in seconds \u2014 always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
+        "description": "Suggested poll interval in seconds — always delta-seconds in practice, never an HTTP date. Observed as 5 for creates, edits and conversions and 30 for deletes, with the poll responses themselves suggesting 10."
        }
       }
      },
@@ -2980,7 +3123,7 @@
     "description": "Lists the tenant's DLP policies. The projection is thin: each entry carries the policy header only, with `connectorGroups` and `customConnectorUrlPatternsDefinition` omitted entirely. Reading a full policy requires a per-policy GET, so enumerating every policy in detail costs one call per policy.",
     "responses": {
      "200": {
-      "description": "Policy headers only \u2014 `connectorGroups` and `customConnectorUrlPatternsDefinition` are omitted from every entry.",
+      "description": "Policy headers only — `connectorGroups` and `customConnectorUrlPatternsDefinition` are omitted from every entry.",
       "content": {
        "application/json": {
         "schema": {
@@ -3080,7 +3223,7 @@
       }
      }
     },
-    "description": "Creates a DLP policy. Two shapes trip clients up: the definition must be wrapped in `policyDefinition` \u2014 the service deserialises strictly and rejects unknown top-level members \u2014 and `customConnectorUrlPatternsDefinition.rules` must be non-empty even when the policy classifies no custom connectors, for which a single catch-all `Ignore` rule is the idiom.\n\nThe service assigns `policyDefinition.name`; it is the `{name}` path segment thereafter.",
+    "description": "Creates a DLP policy. Two shapes trip clients up: the definition must be wrapped in `policyDefinition` — the service deserialises strictly and rejects unknown top-level members — and `customConnectorUrlPatternsDefinition.rules` must be non-empty even when the policy classifies no custom connectors, for which a single catch-all `Ignore` rule is the idiom.\n\nThe service assigns `policyDefinition.name`; it is the `{name}` path segment thereafter.",
     "x-probe-verified": true
    }
   },
@@ -3198,7 +3341,7 @@
       }
      },
      "400": {
-      "description": "`ApiPolicyInvalid` for a partial or empty body \u2014 this PATCH requires the whole policy.",
+      "description": "`ApiPolicyInvalid` for a partial or empty body — this PATCH requires the whole policy.",
       "content": {
        "application/json": {
         "schema": {
@@ -3294,7 +3437,7 @@
       }
      },
      "404": {
-      "description": "`DLPPolicyNotFound` \u2014 already deleted, or never existed.",
+      "description": "`DLPPolicyNotFound` — already deleted, or never existed.",
       "content": {
        "application/json": {
         "schema": {
@@ -3304,7 +3447,7 @@
       }
      }
     },
-    "description": "Deletes a DLP policy. Immediate and unconditional \u2014 there is no lifecycle operation, no soft delete, and `etag` is not honoured as a precondition.",
+    "description": "Deletes a DLP policy. Immediate and unconditional — there is no lifecycle operation, no soft delete, and `etag` is not honoured as a precondition.",
     "x-probe-verified": true
    }
   },
@@ -3315,7 +3458,7 @@
      "Admin Applications"
     ],
     "summary": "List",
-    "description": "Lists every service principal registered as an admin management application in the tenant. Not called by the known client \u2014 found by probing \u2014 and the only way to enumerate registrations, since reading one requires knowing its client id already.",
+    "description": "Lists every service principal registered as an admin management application in the tenant. Not called by the known client — found by probing — and the only way to enumerate registrations, since reading one requires knowing its client id already.",
     "x-provider-unsourced": true,
     "x-probe-verified": true,
     "parameters": [
@@ -3371,6 +3514,433 @@
       }
      }
     }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/lifecycleOperations": {
+   "get": {
+    "operationId": "lifecycleOperations_list",
+    "tags": [
+     "Lifecycle Operations"
+    ],
+    "summary": "List",
+    "description": "Lists lifecycle operations, newest first. Filtering by environment is the only use observed and is effectively mandatory in practice — this is how the admin center renders an environment's history tab.\n\nUnlike the single-operation read, the list is the *record* of what has happened to an environment: completed operations stay here indefinitely, including operations raised by the platform itself rather than by a user, which appear with `requestedBy.type: Service`. It also surfaces operations no client ever polled — a Managed Environments enable, for instance, raises `EnableGovernanceConfiguration` and then a separate `UpdateGovernanceConfiguration` attributed to `SYSTEM`.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-05-01"
+      },
+      "description": "The version the admin center sends for this operation."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData filter. `environment eq '{environmentId}'` is the only form observed, and scopes the list to one environment's history.",
+      "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching operations, newest first, each rendered exactly as the single-operation read renders it — `stages` included.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LifecycleOperationList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "The request was rejected before anything happened; `error.code` names the specific rejection.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentId}": {
+   "get": {
+    "operationId": "environments_getMakerScope",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Read (Maker Scope)",
+    "description": "Reads one environment as the calling user, without requiring an admin role. `environmentId` also accepts the alias `~default`, which resolves to the tenant's default environment without the caller having to know its id — the maker portal's normal entry point.\n\nWhat comes back depends on `api-version` more than on anything else here, so pin it: the same environment answers 2020-08-01, 2020-10-01-alpha and 2021-04-01 with different property sets. `properties.permissions` is the one thing this scope has that the admin scope does not, and it arrives only under `$expand`.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Environment id, or the literal `~default` for the tenant's default environment.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      },
+      "description": "2020-08-01, 2020-10-01-alpha and 2021-04-01 were all observed in maker-portal traffic. `2020-10-01-alpha` is accepted despite not appearing in the service's own list of versions."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`properties.permissions` adds the caller's permission map; `properties/copilotPolicies` adds the Copilot data-movement consents. Neither is returned otherwise.",
+      "example": "properties.permissions"
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`minimumAppPermission eq 'CanEdit'` was the only form observed, paired with `$expand=properties.permissions`.",
+      "example": "minimumAppPermission eq 'CanEdit'"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environment, under the maker-scope `id` and `type`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Environment"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller has no access to this environment. The maker scope does not fall back to a 404, so a 403 here does not tell you whether the environment exists.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`EnvironmentNotFound` — no environment with this id is visible to the caller.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}/lastActivity": {
+   "get": {
+    "operationId": "environments_getLastActivity",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Last Activity Read",
+    "description": "Reads the environment's activity timestamps on their own, without pulling the whole environment down. The same object is available inline on an environment read under `properties.lastActivity`, so this endpoint is worth using only when activity is all you want — for an inactivity sweep across a large tenant, for instance.\n\nRead `lastActivityTime`, not `lastUpdatedTime`: the latter is when the platform last recomputed the figure and moves even on an environment nobody has touched in a year.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The rolled-up figure and the per-service breakdown behind it.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentLastActivity"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`EnvironmentNotFound` — no environment with this id.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/t2tmigrations/{migrationId}/get": {
+   "get": {
+    "operationId": "tenantToTenantMigrations_get",
+    "tags": [
+     "Tenant-to-Tenant Migrations"
+    ],
+    "summary": "Read",
+    "description": "Reads one tenant-to-tenant migration. The trailing `/get` is part of the path, not a mistake — the verb is spelled out as a path segment even though the method is already GET.\n\n**Only the not-found path has been observed.** Recorded admin-center traffic reaches this endpoint with the JavaScript value `undefined` interpolated into the path — the admin center probes for a migration on page load, has no id to send, and builds `/t2tmigrations/undefined/get` — so the recordings prove the route exists and that the segment is a migration identifier scoped to the calling tenant, but say nothing about the success body. There is no literal `undefined` segment: the service simply looked up a migration named `undefined` and did not find one. Migrations are started elsewhere; the matching `MigrateTenantToTenant` and `PrepareTenantToTenant` lifecycle operation types appear in every environment's `lifecycleOperationsEnforcement`.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "migrationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The migration's identifier, resolved within the calling tenant — the 400 names both the identifier and the tenant it was looked up in. Whether it is a GUID or another form is not established: no successful read was recorded.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The migration. Shape unknown — no successful read has been observed, so no schema is claimed here rather than inventing one."
+     },
+     "400": {
+      "description": "`BadRequest` — \"Tenant To Tenant Migration {migrationId} was not found in Tenant {tenantId}.\" Note that an unknown migration is a 400, not a 404, and that the message discloses the caller's own tenant id.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/countryDefaultOptIn": {
+   "get": {
+    "operationId": "countryDefaultOptIn_list",
+    "tags": [
+     "Country Opt-In Defaults"
+    ],
+    "summary": "List",
+    "description": "Returns the per-country default for the optional-data-collection consent prompt, for every country the platform knows. Static reference data: it depends on the country, not on the tenant or the caller, and the maker portal reads it to decide whether to show the prompt at all and how to pre-set it.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The version the maker portal sends. This surface has not changed shape across versions."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every country, with its default.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CountryDefaultOptInList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/objectIds/{objectId}/features": {
+   "get": {
+    "operationId": "features_list",
+    "tags": [
+     "Feature Gates"
+    ],
+    "summary": "List",
+    "description": "Lists the Power Platform feature gates currently enabled for a directory principal. Only enabled flags are returned, so membership in the list is the value — there is no flag to read false.\n\nThis is Microsoft's own rollout machinery, exposed rather than published: the flag names and descriptions are internal, change without notice, and are not a contract. It is useful for explaining why a tenant sees behaviour another tenant does not, and for nothing else. The response is large — just under a thousand entries on the tenant recorded — and the resource ids come back under the `Microsoft.PowerApps` provider even though the request goes to a `Microsoft.BusinessAppPlatform` path.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "objectId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "Entra object id of the principal whose gates to evaluate. The maker portal sends the signed-in user's own object id.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every gate enabled for the principal.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FeatureList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
    }
   }
  },
@@ -3560,7 +4130,7 @@
      "uriSuffix": {
       "type": "string",
       "description": "Host suffix of the environment's regional gateway; the same suffix appears inside `runtimeEndpoints`.",
-      "example": "au-il101.gateway.prod.island"
+      "example": "au-il102.gateway.prod.island"
      }
     },
     "description": "Which physical scale unit hosts the environment. Read-only, and useful mainly for correlating an environment with regional service incidents.",
@@ -3625,7 +4195,7 @@
       "$ref": "#/components/schemas/CreateTemplateMetadata"
      }
     },
-    "description": "The Dataverse organization to provision. Used both inside an environment create \u2014 where it is ignored unless `properties.databaseType` is `CommonDataService` \u2014 and as the whole body of `provisionInstance`, where every member is optional and the service generates a domain name if none is given.",
+    "description": "The Dataverse organization to provision. Used both inside an environment create — where it is ignored unless `properties.databaseType` is `CommonDataService` — and as the whole body of `provisionInstance`, where every member is optional and the service generates a domain name if none is given.",
     "x-probe-verified": true
    },
    "CreatePostProvisioningPackages": {
@@ -3969,7 +4539,7 @@
      },
      "type": {
       "type": "string",
-      "description": "`Microsoft.BusinessAppPlatform/scopes/environments` \u2014 resource-id form of the environment reference.",
+      "description": "`Microsoft.BusinessAppPlatform/scopes/environments` — resource-id form of the environment reference.",
       "enum": [
        "Microsoft.BusinessAppPlatform/scopes/environments"
       ]
@@ -3993,7 +4563,7 @@
       "description": "Required on create even when it classifies nothing: an empty rule list is rejected with `UrlPatternsNull`. Send a single catch-all `Ignore` rule to opt out."
      }
     },
-    "description": "A data-loss-prevention policy: which connectors may be used together, and where. The envelope is mandatory \u2014 the service deserialises it strictly and rejects a flattened body with `InvalidRequestContent`.",
+    "description": "A data-loss-prevention policy: which connectors may be used together, and where. The envelope is mandatory — the service deserialises it strictly and rejects a flattened body with `InvalidRequestContent`.",
     "x-probe-verified": true
    },
    "DlpPolicyDefinition": {
@@ -4010,7 +4580,7 @@
      },
      "defaultConnectorsClassification": {
       "type": "string",
-      "description": "Which group a connector falls into when it is named in none of `connectorGroups` \u2014 including connectors added to the platform after the policy was written.",
+      "description": "Which group a connector falls into when it is named in none of `connectorGroups` — including connectors added to the platform after the policy was written.",
       "enum": [
        "General",
        "Confidential",
@@ -4089,7 +4659,7 @@
       "type": "string"
      }
     },
-    "description": "Who created or last changed the policy. Only a display name is returned \u2014 no id, so the principal cannot be resolved from this alone.",
+    "description": "Who created or last changed the policy. Only a display name is returned — no id, so the principal cannot be resolved from this alone.",
     "x-probe-verified": true
    },
    "EnterprisePolicy": {
@@ -4107,7 +4677,7 @@
      },
      "systemId": {
       "type": "string",
-      "description": "The Azure resource id of the policy \u2014 the value sent to link it, and the one identifier the two sides share."
+      "description": "The Azure resource id of the policy — the value sent to link it, and the one identifier the two sides share."
      },
      "linkStatus": {
       "type": "string",
@@ -4135,9 +4705,11 @@
      "type": {
       "type": "string",
       "enum": [
-       "Microsoft.BusinessAppPlatform/scopes/environments"
+       "Microsoft.BusinessAppPlatform/scopes/environments",
+       "Microsoft.BusinessAppPlatform/environments"
       ],
-      "example": "Microsoft.BusinessAppPlatform/scopes/environments"
+      "example": "Microsoft.BusinessAppPlatform/scopes/environments",
+      "description": "`Microsoft.BusinessAppPlatform/scopes/environments` when read through the admin scope, `Microsoft.BusinessAppPlatform/environments` when read through the maker scope. `id` follows the same split — the two scopes return the same environment under two resource ids."
      },
      "location": {
       "type": "string",
@@ -4154,7 +4726,7 @@
       "$ref": "#/components/schemas/EnvironmentProperties"
      }
     },
-    "description": "A Power Platform environment as the admin scope renders it.",
+    "description": "A Power Platform environment. The admin scope and the maker scope return this same shape under different `id`/`type` values and with different property subsets.",
     "x-probe-verified": true
    },
    "EnvironmentCreate": {
@@ -4162,7 +4734,7 @@
     "properties": {
      "location": {
       "type": "string",
-      "description": "BAP location name from the locations list. Rejected with `EnvironmentLocationUnsupported` when unknown \u2014 and that rejection lists every accepted value.",
+      "description": "BAP location name from the locations list. Rejected with `EnvironmentLocationUnsupported` when unknown — and that rejection lists every accepted value.",
       "example": "unitedstates"
      },
      "properties": {
@@ -4218,7 +4790,8 @@
       "$ref": "#/components/schemas/CreateLinkEnvironmentMetadata"
      },
      "parentEnvironmentGroup": {
-      "$ref": "#/components/schemas/ParentEnvironmentGroup"
+      "$ref": "#/components/schemas/ParentEnvironmentGroup",
+      "description": "Environment group to place the new environment in. Send `null` together with `overrideEnvironmentGroupAssigned=true` to force an ungrouped environment past the tenant's routing rules."
      },
      "bingChatEnabled": {
       "type": "boolean",
@@ -4238,6 +4811,10 @@
      "cluster": {
       "$ref": "#/components/schemas/Cluster",
       "description": "Requests a specific cluster category, for example `FirstRelease` to opt the environment into early updates."
+     },
+     "governanceConfiguration": {
+      "$ref": "#/components/schemas/GovernanceConfiguration",
+      "description": "Requests Managed Environments at creation time. The admin center sends `null` and turns it on afterwards with the separate `governanceConfiguration` POST, which is the sequence to copy: the create raises a `Create` lifecycle operation and the enable raises its own `EnableGovernanceConfiguration` one."
      }
     },
     "description": "The environment to create. Probing established that `displayName` and `environmentSku` are both mandatory (the service validates them in that order); everything else is optional.",
@@ -4252,7 +4829,7 @@
     "properties": {
      "code": {
       "type": "string",
-      "description": "The deletion reason. The service accepts the reason's 1-based ordinal as a string \u2014 the admin center and the known client both send `\"7\"`, which is `Application` \u2014 and the rejection for a missing code enumerates the names: `User`, `Tenant`, `Expiration`, `LinkedResourceDeleted`, `Manual`, `CommonDataServiceMigration`, `Application`, `Service`, `TeamDeleted`, `ConnectedGroupDeleted`, `CreateFailed`, `InactivityThreshold`, `DeletedByTenantPolicyEvaluation`, `InconsistencyDetection`.",
+      "description": "The deletion reason. The service accepts the reason's 1-based ordinal as a string — the admin center and the known client both send `\"7\"`, which is `Application` — and the rejection for a missing code enumerates the names: `User`, `Tenant`, `Expiration`, `LinkedResourceDeleted`, `Manual`, `CommonDataServiceMigration`, `Application`, `Service`, `TeamDeleted`, `ConnectedGroupDeleted`, `CreateFailed`, `InactivityThreshold`, `DeletedByTenantPolicyEvaluation`, `InconsistencyDetection`.",
       "example": "7"
      },
      "message": {
@@ -4529,6 +5106,41 @@
       "type": "string",
       "description": "Which trial programme an environment was created under; `None` for environments that are not trials.",
       "example": "None"
+     },
+     "environmentType": {
+      "type": "string",
+      "description": "Coarse classification used by the maker portal, distinct from `environmentSku`: a `Sandbox` SKU environment still reports `Production` here. Absent from admin-scope reads.",
+      "example": "Production"
+     },
+     "azureRegionHint": {
+      "type": "string",
+      "description": "The Azure region the environment was *requested* in, kept alongside the region it actually landed in. Returned by the maker scope where the admin scope returns `azureRegion`; the two agree on every environment observed.",
+      "example": "australiasoutheast"
+     },
+     "scheduledLifecycleOperations": {
+      "type": "array",
+      "description": "Lifecycle operations the platform has already scheduled against this environment — how a trial or an inactive Developer environment announces its own disablement and deletion dates before they happen. Returned only under `$expand=properties/scheduledLifecycleOperations`.",
+      "items": {
+       "$ref": "#/components/schemas/ScheduledLifecycleOperation"
+      }
+     },
+     "lastActivity": {
+      "$ref": "#/components/schemas/EnvironmentLastActivity"
+     },
+     "permissions": {
+      "type": "object",
+      "description": "What the calling user may do in this environment, keyed by permission name. Returned only under `$expand=properties.permissions` on the maker scope; the key set is the grant, so a permission the caller lacks is absent rather than present-and-false.",
+      "additionalProperties": {
+       "$ref": "#/components/schemas/EnvironmentPermission"
+      },
+      "example": {
+       "ReadEnvironment": {
+        "displayName": "Read Environment"
+       },
+       "CreatePowerApp": {
+        "displayName": "Create PowerApps"
+       }
+      }
      }
     },
     "description": "Everything about an environment other than its identity. Several members are projections that only materialise when named in `$expand`.",
@@ -4540,6 +5152,10 @@
      "disablePreferredDataLocationForTeamsEnvironment": {
       "type": "boolean",
       "description": "Stops Teams-created environments honouring the user's Microsoft 365 preferred data location, placing them in the tenant's default geography instead."
+     },
+     "flexRoutingEnabled": {
+      "type": "boolean",
+      "description": "Lets the platform place a routed environment in whichever geo has capacity rather than pinning it to the tenant's default one. Not returned on every tenant."
      }
     },
     "description": "Tenant-wide defaults for new environments.",
@@ -4673,11 +5289,11 @@
       }
      }
     },
-    "description": "Per-item outcome for each requested grant and revocation. An overall 200 does not mean every item succeeded \u2014 check `httpStatus` on each."
+    "description": "Per-item outcome for each requested grant and revocation. An overall 200 does not mean every item succeeded — check `httpStatus` on each."
    },
    "ExtendedSettings": {
     "type": "object",
-    "description": "The Managed Environments settings. **Every value here is a string, including the booleans and the numbers** \u2014 `\"true\"`, `\"false\"`, `\"-1\"`. That is how the service returns them on every environment observed, and how the known client sends them.",
+    "description": "The Managed Environments settings. **Every value here is a string, including the booleans and the numbers** — `\"true\"`, `\"false\"`, `\"-1\"`. That is how the service returns them on every environment observed, and how the known client sends them.",
     "x-probe-verified": true,
     "properties": {
      "excludeEnvironmentFromAnalysis": {
@@ -4785,7 +5401,8 @@
       "type": "string",
       "format": "date-time",
       "description": "When these settings last changed. Service-populated; sending it has no effect.",
-      "readOnly": true
+      "readOnly": true,
+      "example": "2026-08-18T16:05:00.068Z"
      }
     }
    },
@@ -4807,7 +5424,7 @@
      },
      "bingChatEnabled": {
       "type": "boolean",
-      "description": "See EnvironmentProperties.bingChatEnabled; pointer semantics \u2014 omitted fields are left untouched."
+      "description": "See EnvironmentProperties.bingChatEnabled; pointer semantics — omitted fields are left untouched."
      },
      "m365Enabled": {
       "type": "boolean"
@@ -5040,6 +5657,10 @@
      "enableTenantSummaryReportForEnvironmentAdmins": {
       "type": "boolean",
       "description": "Exposes the tenant summary report to environment admins."
+     },
+     "applyAutoClaimToOnlyManagedEnvironments": {
+      "type": "boolean",
+      "description": "Restricts automatic premium-licence claim to Managed Environments, so unmanaged environments never consume tenant licences on a user's first premium action. Not returned on every tenant."
      }
     },
     "description": "What environment admins may see and do with tenant licensing and capacity.",
@@ -5050,7 +5671,7 @@
     "properties": {
      "path": {
       "type": "string",
-      "description": "Note the shape: `links.environment.path` points at `/providers/Microsoft.BusinessAppPlatform/environments/{id}` \u2014 the unscoped path, not the `scopes/admin` one reads use. Its last segment is the environment id, which is how a create recovers the id it just made.",
+      "description": "Note the shape: `links.environment.path` points at `/providers/Microsoft.BusinessAppPlatform/environments/{id}` — the unscoped path, not the `scopes/admin` one reads use. Its last segment is the environment id, which is how a create recovers the id it just made.",
       "example": "/providers/Microsoft.BusinessAppPlatform/environments/00000000-0000-0000-0000-000000000000"
      }
     },
@@ -5077,7 +5698,7 @@
      },
      "typeDisplayName": {
       "type": "string",
-      "description": "Localised label for `type.id`, as the admin center shows it."
+      "description": "Localised label for `type.id`, as the admin center shows it. Mostly the id verbatim (`Create`, `Edit`), but not always: `EnableGovernanceConfiguration` renders as `Enable Managed Environment` and `UpdateGovernanceConfiguration` as `Update Managed Environment`."
      },
      "createdDateTime": {
       "type": "string",
@@ -5248,14 +5869,49 @@
      "scaleGroup": {
       "type": "string",
       "description": "Dataverse scale group hosting the organization.",
-      "example": "OCECRMLIVESG609"
+      "example": "OCECRMLIVESG000"
      },
      "schemaType": {
       "type": "string",
       "example": "Standard"
+     },
+     "type": {
+      "type": "string",
+      "description": "Dataverse-side classification of the organization; tracks the environment's `environmentSku` but is a separate, Dataverse-owned value.",
+      "example": "Sandbox"
+     },
+     "hostNameSuffix": {
+      "type": "string",
+      "description": "The Dataverse host suffix `domainName` is prefixed onto to form `instanceUrl`. Varies by crmGeo and by the scale group serving the organization, so it must be read rather than assumed.",
+      "example": "crm.dynamics.com"
+     },
+     "webApiVersion": {
+      "type": "string",
+      "description": "Dataverse Web API version this organization serves at `instanceApiUrl/api/data/{webApiVersion}`.",
+      "example": "v9.0"
+     },
+     "bapSolutionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Id of the platform solution BAPI installed into the organization to wire it to Power Platform. Internal; not a customer solution."
+     },
+     "creationTemplates": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "The templates actually installed when the organization was provisioned — the historical record of the create request's `templates`, which is why an environment created with no templates still reports `D365_CDS` here.",
+      "example": [
+       "D365_CDS"
+      ]
+     },
+     "modifiedTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the Dataverse organization itself last changed, which moves independently of the environment's `lastModifiedTime`."
      }
     },
-    "description": "The Dataverse organization linked to the environment. Absent entirely when there is none, and absent for several minutes after a create that requested Dataverse \u2014 the environment lifecycle operation reports success before this block is readable.",
+    "description": "The Dataverse organization linked to the environment. Absent entirely when there is none, and absent for several minutes after a create that requested Dataverse — the environment lifecycle operation reports success before this block is readable.",
     "x-probe-verified": true
    },
    "Location": {
@@ -5312,7 +5968,7 @@
      },
      "isDisabled": {
       "type": "boolean",
-      "description": "True where the tenant may not provision at all \u2014 sovereign or capacity-restricted geographies show up in the list but cannot be used."
+      "description": "True where the tenant may not provision at all — sovereign or capacity-restricted geographies show up in the list but cannot be used."
      },
      "canProvisionDatabase": {
       "type": "boolean",
@@ -5353,7 +6009,7 @@
     "properties": {
      "environmentSku": {
       "type": "string",
-      "description": "The SKU to convert to. `Sandbox` \u2194 `Production` is the pair the admin center offers; conversions into `Default` or `Developer` are not supported.",
+      "description": "The SKU to convert to. `Sandbox` ↔ `Production` is the pair the admin center offers; conversions into `Default` or `Developer` are not supported.",
       "enum": [
        "Sandbox",
        "Production",
@@ -5440,11 +6096,13 @@
      },
      "enableManagedAppsCliPreview": {
       "type": "string",
-      "description": "Preview opt-in flag; a string, not a boolean."
+      "description": "Preview opt-in flag; a tri-state string, not a boolean. `DefaultOn` and `DefaultOff` give the platform default for tenants that have not chosen. Not returned on every tenant.",
+      "example": "DefaultOff"
      },
      "enableManagedAppsMcsPreview": {
       "type": "string",
-      "description": "Preview opt-in flag; a string, not a boolean."
+      "description": "Preview opt-in flag; a tri-state string, not a boolean. `DefaultOn` and `DefaultOff` give the platform default for tenants that have not chosen. Not returned on every tenant.",
+      "example": "DefaultOff"
      }
     },
     "description": "Tenant-wide Power Apps maker controls.",
@@ -5480,11 +6138,13 @@
     "properties": {
      "enableExternalAuthenticationProvidersInPowerPages": {
       "type": "string",
-      "description": "Whether sites may use non-Microsoft identity providers. A string, not a boolean."
+      "description": "Whether sites may use non-Microsoft identity providers. A string, not a boolean.",
+      "example": "All"
      },
      "enableGenerativeAIFeaturesForSiteUsers": {
       "type": "string",
-      "description": "Whether generative AI features are offered to site visitors, not only to makers. A string, not a boolean."
+      "description": "Whether generative AI features are offered to site visitors, not only to makers. A string, not a boolean.",
+      "example": "All"
      }
     }
    },
@@ -5554,7 +6214,8 @@
     "properties": {
      "id": {
       "type": "string",
-      "format": "uuid"
+      "description": "The directory object id, except for `type: Service`, where it is the literal string `SYSTEM`.",
+      "example": "00000000-0000-0000-0000-000000000000"
      },
      "email": {
       "type": "string",
@@ -5562,11 +6223,12 @@
      },
      "type": {
       "type": "string",
-      "description": "`NotSpecified` is returned for principals the service could not resolve, typically deleted directory objects.",
+      "description": "`Service` is the platform acting on its own behalf — its `id` and `displayName` are both the literal string `SYSTEM`, not a GUID, so callers must not parse `Principal.id` as a UUID unconditionally. `NotSpecified` is returned for principals the service could not resolve, typically deleted directory objects.",
       "enum": [
        "User",
        "ServicePrincipal",
        "Group",
+       "Service",
        "NotSpecified"
       ]
      },
@@ -5702,7 +6364,7 @@
      "microsoft.PowerVirtualAgents": {
       "type": "string",
       "format": "uri",
-      "example": "https://powervamg.au-il101.gateway.prod.island.powerapps.com"
+      "example": "https://powervamg.au-il102.gateway.prod.island.powerapps.com"
      },
      "microsoft.ApiManagement": {
       "type": "string",
@@ -5723,9 +6385,10 @@
     "properties": {
      "id": {
       "type": "string",
-      "description": "`Enabled` for a live environment; `Disabled` for one an admin has administratively stopped.",
+      "description": "`Enabled` for a live environment; `Disabled` for one an admin has administratively stopped. `Warning` is a degraded-but-running state — apps and flows still execute, and `runtimeReasonCode` says why the environment is flagged.",
       "enum": [
        "Enabled",
+       "Warning",
        "Disabled"
       ]
      },
@@ -6007,6 +6670,16 @@
      "tenantId": {
       "type": "string",
       "format": "uuid"
+     },
+     "displayName": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string",
+      "format": "email"
+     },
+     "userPrincipalName": {
+      "type": "string"
      }
     },
     "description": "The single user a Developer-SKU environment is provisioned for.",
@@ -6035,7 +6708,7 @@
       "example": "unitedstates"
      }
     },
-    "description": "Pre-flight check for a create: is this domain name well-formed, free, and is this location real? Both members are required \u2014 omitting `environmentLocation` fails the same way as sending a bogus one.",
+    "description": "Pre-flight check for a create: is this domain name well-formed, free, and is this location real? Both members are required — omitting `environmentLocation` fails the same way as sending a bogus one.",
     "x-probe-verified": true,
     "required": [
      "domainName",
@@ -6074,7 +6747,7 @@
       "$ref": "#/components/schemas/VirtualConnectorMetadata"
      }
     },
-    "description": "A platform capability modelled as a connector so DLP can classify it, with no runtime connector behind it \u2014 HTTP actions and the like.",
+    "description": "A platform capability modelled as a connector so DLP can classify it, with no runtime connector behind it — HTTP actions and the like.",
     "x-probe-verified": true
    },
    "VirtualConnectorMetadata": {
@@ -6228,7 +6901,7 @@
     "properties": {
      "type": {
       "type": "string",
-      "description": "`CdsLink` \u2014 blocked because a Dataverse organization is linked; `EnvironmentSkuType` \u2014 not available for this SKU; `EnvironmentDisabled` \u2014 the environment is administratively disabled; `EnvironmentCmkLinked` \u2014 blocked by a customer-managed key; `GovernanceConfig` \u2014 blocked by the Managed Environments configuration.",
+      "description": "`CdsLink` — blocked because a Dataverse organization is linked; `EnvironmentSkuType` — not available for this SKU; `EnvironmentDisabled` — the environment is administratively disabled; `EnvironmentCmkLinked` — blocked by a customer-managed key; `GovernanceConfig` — blocked by the Managed Environments configuration.",
       "enum": [
        "CdsLink",
        "EnvironmentCmkLinked",
@@ -6249,11 +6922,12 @@
     "properties": {
      "id": {
       "type": "string",
-      "description": "`Provision` (create), `Edit` (a property PATCH), `Convert` (a SKU change) and `Delete` are the four raised by the operations in this spec; the rest cover backup/restore, disaster recovery, tenant-to-tenant migration and the enterprise-policy links.",
+      "description": "`Create` (an environment create), `Edit` (a property PATCH), `Convert` (a SKU change) and `Delete` are the four raised by the operations in this spec; `EnableGovernanceConfiguration` and `UpdateGovernanceConfiguration` come from the Managed Environments POST. The rest cover backup/restore, disaster recovery, tenant-to-tenant migration and the enterprise-policy links, and are seen mainly inside `lifecycleOperationsEnforcement`. `Provision` appears only there — a recorded environment create raised `Create`.",
       "enum": [
        "Backup",
        "Convert",
        "Copy",
+       "Create",
        "Delete",
        "Disable",
        "DisableGovernanceConfiguration",
@@ -6264,6 +6938,7 @@
        "FailbackToNearCopy",
        "ForceFailover",
        "MigrateTenantToTenant",
+       "Move",
        "NewCustomerManagedKey",
        "NewIdentity",
        "NewNetworkInjection",
@@ -6431,7 +7106,7 @@
    },
    "LifecycleState": {
     "type": "object",
-    "description": "The operation's state. `NotStarted` \u2192 `Running` \u2192 `Succeeded`/`Failed`; a short-lived operation can be `Succeeded` on the first poll.",
+    "description": "The operation's state. `NotStarted` → `Running` → `Succeeded`/`Failed`; a short-lived operation can be `Succeeded` on the first poll.",
     "x-probe-verified": true,
     "properties": {
      "id": {
@@ -6482,6 +7157,216 @@
       "type": "array",
       "items": {
        "$ref": "#/components/schemas/Item"
+      }
+     }
+    }
+   },
+   "ScheduledLifecycleOperation": {
+    "type": "object",
+    "description": "A lifecycle operation the platform has already scheduled against the environment, with the date it will run. Trials and inactive Developer environments carry two: a `Disable` and, a fortnight later, a `Delete`.",
+    "x-probe-verified": true,
+    "properties": {
+     "type": {
+      "type": "string",
+      "description": "Which operation is scheduled. Unlike `LifecycleOperationType` this is a bare string, not an object with an `id`.",
+      "enum": [
+       "Disable",
+       "Delete"
+      ]
+     },
+     "scheduledDateTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the operation runs if nothing intervenes. Whole seconds, unlike the sub-millisecond timestamps elsewhere on the environment."
+     },
+     "canExtend": {
+      "type": "boolean",
+      "description": "Whether an admin may still push the date back — false once the environment has used up its allowed extensions."
+     }
+    }
+   },
+   "EnvironmentPermission": {
+    "type": "object",
+    "description": "One permission the calling user holds in the environment. The map key is the permission name; this object carries only its label.",
+    "x-probe-verified": true,
+    "properties": {
+     "displayName": {
+      "type": "string",
+      "description": "Human label. Frequently the key verbatim (`CreateBot`), sometimes spaced (`Read Environment`), and occasionally different from it — `CreateCustomApi` renders as `Create Custom Connector` and `SetDLPPolicy` as `Update DLP Policy`. Display only; branch on the key."
+     }
+    }
+   },
+   "LastActivityRecord": {
+    "type": "object",
+    "description": "One activity timestamp pair. The all-zeros date `0001-01-01T00:00:00Z` is the sentinel for \"never\" — treat it as no activity, not as a date in year 1.",
+    "x-probe-verified": true,
+    "properties": {
+     "lastActivityTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When a user last did something. `0001-01-01T00:00:00Z` when nothing has been recorded.",
+      "example": "0001-01-01T00:00:00Z"
+     },
+     "lastUpdatedTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the platform last refreshed this figure. Moves on its own schedule and is routinely far newer than `lastActivityTime`, so it says nothing about user activity."
+     }
+    }
+   },
+   "EnvironmentPartnerLastActivity": {
+    "type": "object",
+    "description": "Per-service breakdown behind the rolled-up figure. Each first-party service reports its own last activity independently, and a service with nothing to report still appears with the all-zeros sentinel.",
+    "x-probe-verified": true,
+    "properties": {
+     "eloLastActivity": {
+      "$ref": "#/components/schemas/LastActivityRecord",
+      "description": "Environment lifecycle operations — admin activity against the environment itself. Usually the newest of the five, because an environment nobody uses is still edited by admins."
+     },
+     "dataverseLastActivity": {
+      "$ref": "#/components/schemas/LastActivityRecord"
+     },
+     "powerAppsLastActivity": {
+      "$ref": "#/components/schemas/LastActivityRecord"
+     },
+     "powerAutomateLastActivity": {
+      "$ref": "#/components/schemas/LastActivityRecord"
+     },
+     "powerVirtualAgentsLastActivity": {
+      "$ref": "#/components/schemas/LastActivityRecord"
+     }
+    }
+   },
+   "EnvironmentLastActivity": {
+    "type": "object",
+    "description": "When the environment was last used, and by which service. This is what the inactivity policies act on: an environment whose `lastActivity.lastActivityTime` falls far enough behind acquires the `scheduledLifecycleOperations` that disable and then delete it.",
+    "x-probe-verified": true,
+    "properties": {
+     "lastActivity": {
+      "$ref": "#/components/schemas/LastActivityRecord",
+      "description": "The rolled-up figure across every service — the newest of the per-service entries."
+     },
+     "environmentPartnerLastActivity": {
+      "$ref": "#/components/schemas/EnvironmentPartnerLastActivity"
+     }
+    }
+   },
+   "LifecycleOperationList": {
+    "type": "object",
+    "description": "A page of lifecycle operations, newest first. No continuation token or `nextLink` has been observed; the service returns the whole filtered set in one response.",
+    "x-probe-verified": true,
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/LifecycleOperation"
+      }
+     }
+    }
+   },
+   "EnvironmentGroupList": {
+    "type": "object",
+    "description": "A page of environment groups. Paged with `$top`; no continuation token has been observed.",
+    "x-probe-verified": true,
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/EnvironmentGroup"
+      }
+     }
+    }
+   },
+   "CountryDefaultOptIn": {
+    "type": "object",
+    "description": "The default answer to the optional-data-collection consent prompt for one country.",
+    "x-probe-verified": true,
+    "properties": {
+     "countryCode": {
+      "type": "string",
+      "description": "ISO 3166-1 alpha-2 code.",
+      "example": "AU"
+     },
+     "countryDisplayName": {
+      "type": "string",
+      "description": "English country name.",
+      "example": "Australia"
+     },
+     "defaultOptIn": {
+      "type": "string",
+      "description": "`Yes` opts users in by default, `No` leaves them opted out until they choose, and `DoNotShow` suppresses the prompt entirely for that country. A string, not a boolean.",
+      "enum": [
+       "Yes",
+       "No",
+       "DoNotShow"
+      ]
+     }
+    }
+   },
+   "CountryDefaultOptInList": {
+    "type": "object",
+    "description": "The full per-country table, returned in one response.",
+    "x-probe-verified": true,
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/CountryDefaultOptIn"
+      }
+     }
+    }
+   },
+   "FeatureProperties": {
+    "type": "object",
+    "description": "What the flag controls and where its value came from.",
+    "x-probe-verified": true,
+    "properties": {
+     "featureDescription": {
+      "type": "string",
+      "description": "Free-text engineering description of the flag. Written for Microsoft's own engineers, not for tenants, and not a stable contract."
+     },
+     "settingSource": {
+      "type": "string",
+      "description": "Where the flag's value comes from. `FeatureGate` — a service-side rollout gate — on every flag observed.",
+      "example": "FeatureGate"
+     }
+    }
+   },
+   "Feature": {
+    "type": "object",
+    "description": "One feature gate enabled for the principal. Only enabled flags are listed, so presence in the list *is* the value; there is no boolean to read.",
+    "x-probe-verified": true,
+    "properties": {
+     "id": {
+      "type": "string",
+      "example": "/providers/Microsoft.PowerApps/objectIds/00000000-0000-0000-0000-000000000000/features/AllowD365eCommDeploymentsELO.australia"
+     },
+     "name": {
+      "type": "string",
+      "description": "The flag name. Geo-scoped flags carry the BAP location as a dotted suffix, so the same feature appears once per enabled geo.",
+      "example": "AllowD365eCommDeploymentsELO.australia"
+     },
+     "type": {
+      "type": "string",
+      "description": "Note the `Microsoft.PowerApps` provider: this BAPI path returns PowerApps-provider resource ids.",
+      "enum": [
+       "Microsoft.PowerApps/objectIds/features"
+      ]
+     },
+     "properties": {
+      "$ref": "#/components/schemas/FeatureProperties"
+     }
+    }
+   },
+   "FeatureList": {
+    "type": "object",
+    "description": "Every feature gate enabled for the principal, in one response — just under a thousand entries on the tenant recorded.",
+    "x-probe-verified": true,
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Feature"
       }
      }
     }

@@ -40,5 +40,11 @@
     "title": "PowerApps API",
     "url": "powerapps/oas/openapi.json",
     "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/powerapps"
+  },
+  {
+    "id": "dataverse",
+    "title": "Dataverse Web API (admin subset)",
+    "url": "dataverse/oas/openapi.json",
+    "repo": "https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/dataverse"
   }
 ]

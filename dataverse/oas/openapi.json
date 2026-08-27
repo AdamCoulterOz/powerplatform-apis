@@ -36,7 +36,7 @@
   },
   {
    "name": "Discovery",
-   "description": "Which Dataverse organizations does this token's user have access to, and what is each one's Web API URL?\n\nThis is the boundary that turns an identity into a set of environment hosts. It matters because the rest of this spec has nowhere to start without it: the Web API's host is per environment and **not derivable from an environment id**, so a caller either learns it from the admin APIs ([bapi](../bapi), [ppapi](../ppapi)) or learns it here. Discovery is the route that needs no admin permission and no environment id \u2014 just a token.\n\nIt is a separate service on its own hosts, with its own audience and its own OData model. It is not part of any environment's `$metadata`, and an environment's token is not accepted by it.\n\n**Service principals are not admitted.** App-only identities have no access to the Global Discovery Service; the CLI short-circuits and returns an empty set for them rather than calling, and treats a 401 from an `AzureIdentity` profile as evidence that the identity is really a service principal \u2014 falling back to BAPI's environment list. Plan for app-only clients to discover environments through BAPI, not here.\n\n## Global versus regional discovery\n\nThere are two generations of discovery service, and they are easy to confuse.\n\n- **Global discovery**, documented here, is the OData v4 service at `https://globaldisco.{cloud}/api/discovery/v2.0/`. It answers for every region at once, and it is what a modern client should use.\n- **Regional discovery** is the older per-region SOAP endpoint at `https://disco.crm{n}.dynamics.com/XRMServices/2011/Discovery.svc`. It is out of scope for this spec \u2014 it is SOAP, not OData \u2014 but the region-to-host mapping below is the only place in this repo that records which CRM region number is which geography, so it is reproduced in full.\n\nThree regions the CLI marks as *requiring* regional discovery have their own global discovery host and are reached through that instead: China, US Gov High and US Gov DoD, plus the North America 2 scale group. Germany (the sovereign `microsoftdynamics.de` cloud) is marked as requiring regional discovery but is given **no** global discovery host, so global discovery cannot reach it at all.\n\n## Region map\n\n| Geo code | Short name | Region | Regional discovery host (SOAP) | Regional global discovery host |\n|---|---|---|---|---|\n| APAC | APAC | Asia Pacific Area | `disco.crm5.dynamics.com` | \u2014 |\n| CAN | CAN | Canada | `disco.crm3.dynamics.com` | \u2014 |\n| CHN | CHN | China | `disco.crm.dynamics.cn` | `globaldisco.crm.dynamics.cn` |\n| EMEA | EMEA | Europe, Middle East and Africa | `disco.crm4.dynamics.com` | \u2014 |\n| FRA | FRA | France | `disco.crm12.dynamics.com` | \u2014 |\n| GER | GER | Germany (Go Local) | `disco.crm16.dynamics.com` | \u2014 |\n| DEU | DEU | Germany (sovereign) | `disco.crm.microsoftdynamics.de` | \u2014 (regional only) |\n| IND | IND | India | `disco.crm8.dynamics.com` | \u2014 |\n| JPN | JPN | Japan | `disco.crm7.dynamics.com` | \u2014 |\n| KOR | KOR | Korea | `disco.crm21.dynamics.com` | \u2014 |\n| \u2014 | NorthAmerica | North America | `disco.crm.dynamics.com` | \u2014 |\n| \u2014 | NorthAmerica2 | North America 2 | `disco.crm9.dynamics.com` | `globaldisco.crm9.dynamics.com` |\n| NOR | NOR | Norway | `disco.crm19.dynamics.com` | \u2014 |\n| OCE | Oceania | Oceania | `disco.crm6.dynamics.com` | \u2014 |\n| SGP | SGP | Singapore | `disco.crm20.dynamics.com` | \u2014 |\n| ZAF | ZAF | South Africa | `disco.crm14.dynamics.com` | \u2014 |\n| LATAM | SouthAmerica | South America | `disco.crm2.dynamics.com` | \u2014 |\n| CHE | Switzerland | Switzerland | `disco.crm17.dynamics.com` | \u2014 |\n| UAE | UAE | United Arab Emirates | `disco.crm15.dynamics.com` | \u2014 |\n| GBR | GBR | United Kingdom | `disco.crm11.dynamics.com` | \u2014 |\n| DOD | DoD | US Gov DoD | `disco.crm.appsplatform.us` | `globaldisco.crm.appsplatform.us` |\n| USG | USG | US Gov High | `disco.crm.microsoftdynamics.us` | `globaldisco.crm.microsoftdynamics.us` |\n\nTwo things this table is not. It is not a complete list of Microsoft's region numbers \u2014 `crm10` and `crmtest` exist as pre-production and test rings, and `crm13`, `crm18` and `crm22` upwards are simply absent from this build, whether because they do not exist or because the client has not been updated. And the geo code is not the same thing as the short name: `Oceania` carries geo `OCE`, `SouthAmerica` carries `LATAM`, and the two North America entries carry no geo code at all, so a lookup by geo will never find them.\n\nThe same region number appears in an organization's own hostname \u2014 `contoso.crm11.dynamics.com` is United Kingdom \u2014 which is how a client infers a region from a URL without asking anything. The rule the SDK uses is to drop the leftmost label, drop any `api` label, and match the remainder against the discovery hosts above."
+   "description": "Which Dataverse organizations does this token's user have access to, and what is each one's Web API URL?\n\nThis is the boundary that turns an identity into a set of environment hosts. It matters because the rest of this spec has nowhere to start without it: the Web API's host is per environment and **not derivable from an environment id**, so a caller either learns it from the admin APIs ([bapi](../bapi), [ppapi](../ppapi)) or learns it here. Discovery is the route that needs no admin permission and no environment id \u2014 just a token.\n\nIt is a separate service on its own hosts, with its own audience and its own OData model. It is not part of any environment's `$metadata`, and an environment's token is not accepted by it.\n\n**Service principals are not admitted.** App-only identities have no access to the Global Discovery Service: a request carrying one is refused with a 401. Plan for app-only clients to discover environments through BAPI instead.\n\n## Global versus regional discovery\n\nThere are two generations of discovery service, and they are easy to confuse.\n\n- **Global discovery**, documented here, is the OData v4 service at `https://globaldisco.{cloud}/api/discovery/v2.0/`. It answers for every region at once, and it is what a modern client should use.\n- **Regional discovery** is the older per-region SOAP endpoint at `https://disco.crm{n}.dynamics.com/XRMServices/2011/Discovery.svc`. It is out of scope for this spec \u2014 it is SOAP, not OData \u2014 but its region-to-host mapping is what ties a CRM region number to a geography, so it is reproduced in full below.\n\nThree regions that otherwise require regional discovery have their own global discovery host and are reached through that instead: China, US Gov High and US Gov DoD, plus the North America 2 scale group. Germany (the sovereign `microsoftdynamics.de` cloud) requires regional discovery and has **no** global discovery host, so global discovery cannot reach it at all.\n\n## Region map\n\n| Geo code | Short name | Region | Regional discovery host (SOAP) | Regional global discovery host |\n|---|---|---|---|---|\n| APAC | APAC | Asia Pacific Area | `disco.crm5.dynamics.com` | \u2014 |\n| CAN | CAN | Canada | `disco.crm3.dynamics.com` | \u2014 |\n| CHN | CHN | China | `disco.crm.dynamics.cn` | `globaldisco.crm.dynamics.cn` |\n| EMEA | EMEA | Europe, Middle East and Africa | `disco.crm4.dynamics.com` | \u2014 |\n| FRA | FRA | France | `disco.crm12.dynamics.com` | \u2014 |\n| GER | GER | Germany (Go Local) | `disco.crm16.dynamics.com` | \u2014 |\n| DEU | DEU | Germany (sovereign) | `disco.crm.microsoftdynamics.de` | \u2014 (regional only) |\n| IND | IND | India | `disco.crm8.dynamics.com` | \u2014 |\n| JPN | JPN | Japan | `disco.crm7.dynamics.com` | \u2014 |\n| KOR | KOR | Korea | `disco.crm21.dynamics.com` | \u2014 |\n| \u2014 | NorthAmerica | North America | `disco.crm.dynamics.com` | \u2014 |\n| \u2014 | NorthAmerica2 | North America 2 | `disco.crm9.dynamics.com` | `globaldisco.crm9.dynamics.com` |\n| NOR | NOR | Norway | `disco.crm19.dynamics.com` | \u2014 |\n| OCE | Oceania | Oceania | `disco.crm6.dynamics.com` | \u2014 |\n| SGP | SGP | Singapore | `disco.crm20.dynamics.com` | \u2014 |\n| ZAF | ZAF | South Africa | `disco.crm14.dynamics.com` | \u2014 |\n| LATAM | SouthAmerica | South America | `disco.crm2.dynamics.com` | \u2014 |\n| CHE | Switzerland | Switzerland | `disco.crm17.dynamics.com` | \u2014 |\n| UAE | UAE | United Arab Emirates | `disco.crm15.dynamics.com` | \u2014 |\n| GBR | GBR | United Kingdom | `disco.crm11.dynamics.com` | \u2014 |\n| DOD | DoD | US Gov DoD | `disco.crm.appsplatform.us` | `globaldisco.crm.appsplatform.us` |\n| USG | USG | US Gov High | `disco.crm.microsoftdynamics.us` | `globaldisco.crm.microsoftdynamics.us` |\n\nTwo things this table is not. It is not a complete list of Microsoft's region numbers \u2014 `crm10` and `crmtest` exist as pre-production and test rings, and `crm13`, `crm18` and `crm22` upwards are absent from it entirely. And the geo code is not the same thing as the short name: `Oceania` carries geo `OCE`, `SouthAmerica` carries `LATAM`, and the two North America entries carry no geo code at all, so a lookup by geo will never find them.\n\nThe same region number appears in an organization's own hostname \u2014 `contoso.crm11.dynamics.com` is United Kingdom \u2014 which is how a client infers a region from a URL without asking anything. The rule is to drop the leftmost label, drop any `api` label, and match the remainder against the discovery hosts above."
   },
   {
    "name": "Table Definitions",
@@ -313,7 +313,7 @@
      "Table Definitions"
     ],
     "summary": "Attribute Read",
-    "description": "Reads one column's metadata by logical name.\n\nBoth keys are string arguments and both are quoted, unlike the guid keys used elsewhere. The cheapest way to answer \"does this column exist here\" without pulling the table's whole attribute list \u2014 select `LogicalName` alone and read the status code.\n\nThe response is **cast to the column's concrete metadata type**: the context path carries the cast (`.../Attributes/Microsoft.Dynamics.CRM.BooleanAttributeMetadata(...)`) and the body carries a matching `@odata.type`. A caller cannot know which subtype it will get before asking, so read `@odata.type` rather than assuming.\n\nAn `api-version` **query** parameter was observed alongside the path's version segment, disagreeing with it \u2014 `v9.0` in the path, `api-version=9.1` in the query. The call succeeded; the query parameter appears to be ignored by this route. Do not rely on it to select a version.",
+    "description": "Reads one column's metadata by logical name.\n\nBoth keys are string arguments and both are quoted, unlike the guid keys used elsewhere. The cheapest way to answer \"does this column exist here\" without pulling the table's whole attribute list \u2014 select `LogicalName` alone and read the status code.\n\nThe response is **cast to the column's concrete metadata type**: the context path carries the cast (`.../Attributes/Microsoft.Dynamics.CRM.BooleanAttributeMetadata(...)`) and the body carries a matching `@odata.type`. A caller cannot know which subtype it will get before asking, so read `@odata.type` rather than assuming.\n\nAn `api-version` **query** parameter is accepted alongside the path's version segment and may disagree with it \u2014 `v9.0` in the path with `api-version=9.1` in the query still succeeds. The route ignores the query parameter, so do not rely on it to select a version.",
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.0"
@@ -512,7 +512,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -547,7 +547,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -738,7 +738,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -954,7 +954,7 @@
      "Relationships"
     ],
     "summary": "Add",
-    "description": "Adds one entry to a collection-valued relationship. The body is a single `@odata.id` holding the **absolute** URL of the record to attach; a relative path is rejected outright rather than resolved against the request URL.\n\nAdding a pair that is already related was observed to be accepted as a no-op, so a reconciling caller need not diff first \u2014 though it still should, to avoid the round trips.",
+    "description": "Adds one entry to a collection-valued relationship. The body is a single `@odata.id` holding the **absolute** URL of the record to attach; a relative path is rejected outright rather than resolved against the request URL.\n\nAdding a pair that is already related is accepted as a no-op, so a reconciling caller need not diff first \u2014 though it still should, to avoid the round trips.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -1552,7 +1552,7 @@
      "Solution Import"
     ],
     "summary": "Import Result Read",
-    "description": "Reads the verdict of an import job, keyed by the `ImportJobKey` the import or upgrade call returned. This \u2014 not the system job's status \u2014 is what decides whether an import succeeded.\n\nPinned to `v9.0` because that is what the provider calls in the field. It answers identically under `v9.2`; the version segment is not load-bearing here.",
+    "description": "Reads the verdict of an import job, keyed by the `ImportJobKey` the import or upgrade call returned. This \u2014 not the system job's status \u2014 is what decides whether an import succeeded.\n\nPinned to `v9.0` here; it answers identically under `v9.2` \u2014 the version segment is not load-bearing for this operation.",
     "x-probe-verified": true,
     "parameters": [
      {
@@ -1777,7 +1777,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -1812,7 +1812,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -1948,7 +1948,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -2109,7 +2109,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -2144,7 +2144,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -2287,7 +2287,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -2446,7 +2446,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -2481,7 +2481,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -2620,7 +2620,7 @@
         }
        },
        "Location": {
-        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update observed. Either header can be read; the pair is redundant rather than complementary.",
+        "description": "The same URL as `OData-EntityId`, sent alongside it on every create and update. Either header can be read; the pair is redundant rather than complementary.",
         "schema": {
          "type": "string",
          "format": "uri",
@@ -2932,7 +2932,7 @@
      "Users and Roles"
     ],
     "summary": "Read (By Entra Object Id)",
-    "description": "Reads a user by their Entra object id, addressed as an **alternate key** rather than by filtering.\n\n`systemusers` declares `azureactivedirectoryobjectid` as an alternate key, so it can be written straight into the parentheses in place of the primary key. The guid goes in bare \u2014 `systemusers(azureactivedirectoryobjectid=<guid>)` \u2014 with no quotes and no braces.\n\nThe difference from the equivalent `$filter` is the shape of the answer and of the failure: this returns the row itself with a `/$entity` context, and a 404 when there is no such user, where the filtered list returns an empty `value` array and a 200. For resolving one known person that is the more direct contract; for polling until a freshly granted user appears, the list form's 200-with-nothing is easier to loop on.\n\nWithout `$select` the whole row comes back \u2014 133 columns were observed \u2014 so select what is needed.",
+    "description": "Reads a user by their Entra object id, addressed as an **alternate key** rather than by filtering.\n\n`systemusers` declares `azureactivedirectoryobjectid` as an alternate key, so it can be written straight into the parentheses in place of the primary key. The guid goes in bare \u2014 `systemusers(azureactivedirectoryobjectid=<guid>)` \u2014 with no quotes and no braces.\n\nThe difference from the equivalent `$filter` is the shape of the answer and of the failure: this returns the row itself with a `/$entity` context, and a 404 when there is no such user, where the filtered list returns an empty `value` array and a 200. For resolving one known person that is the more direct contract; for polling until a freshly granted user appears, the list form's 200-with-nothing is easier to loop on.\n\nWithout `$select` the whole row comes back \u2014 well over a hundred columns \u2014 so select what is needed.",
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.0"
@@ -3089,7 +3089,7 @@
      "Users and Roles"
     ],
     "summary": "Role Assignments List",
-    "description": "Lists user-to-role assignments as rows.\n\nThe queryable face of the same intersect table the `systemuserroles_association` `$ref` collection writes to, and the way to ask \"does this user hold these particular roles\" without expanding the user or walking the association. Both ends are plain columns rather than lookups, so they are filtered directly by name.\n\nGuid comparisons here were observed **quoted** \u2014 `$filter=systemuserid eq '<guid>'` \u2014 which is the opposite of the unquoted form ordinary tables require on their `_..._value` shadows.\n\nThe rows carry only the two ids and the assignment's own key; there is no name and no expand path to one, so resolving a role name still needs the `roles` collection.",
+    "description": "Lists user-to-role assignments as rows.\n\nThe queryable face of the same intersect table the `systemuserroles_association` `$ref` collection writes to, and the way to ask \"does this user hold these particular roles\" without expanding the user or walking the association. Both ends are plain columns rather than lookups, so they are filtered directly by name.\n\nGuid comparisons here are **quoted** \u2014 `$filter=systemuserid eq '<guid>'` \u2014 the opposite of the unquoted form ordinary tables require on their `_..._value` shadows.\n\nThe rows carry only the two ids and the assignment's own key; there is no name and no expand path to one, so resolving a role name still needs the `roles` collection.",
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.0"
@@ -3211,7 +3211,7 @@
      "Users and Roles"
     ],
     "summary": "Teams List",
-    "description": "Lists the teams of this environment.\n\nExpanding `teamroles_association` inlines the roles the team holds, which is what a caller needs to explain a privilege a user has but no direct role grants. That expansion is paged like the user one: a `teamroles_association@odata.nextLink` sibling of the inlined array means it was truncated, and it appears even when the array came back empty.\n\nObserved only as a request inside a `$batch` document, filtered with the `Microsoft.Dynamics.CRM.In` function rather than a chain of `eq`s \u2014 which is how a portal asks for a known set of ids without building a long filter string.",
+    "description": "Lists the teams of this environment.\n\nExpanding `teamroles_association` inlines the roles the team holds, which is what a caller needs to explain a privilege a user has but no direct role grants. That expansion is paged like the user one: a `teamroles_association@odata.nextLink` sibling of the inlined array means it was truncated, and it appears even when the array came back empty.\n\nThe collection accepts the `Microsoft.Dynamics.CRM.In` function in place of a chain of `eq`s, which is how a caller asks for a known set of ids without building a long filter string. It works inside a `$batch` document as readily as on its own.",
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.0"
@@ -3418,7 +3418,7 @@
       "$ref": "#/components/responses/405"
      },
      "500": {
-      "description": "An internal failure. The provider treats a 500 from this operation as a settings validation failure and surfaces its body rather than retrying, because older platform versions reported refusals this way.",
+      "description": "An internal failure. Older platform builds report a rejected setting value this way rather than as a 400, so treat a 500 from this operation as a validation failure: surface the body rather than retrying.",
       "content": {
        "application/json": {
         "schema": {
@@ -3520,7 +3520,7 @@
       }
      },
      "500": {
-      "description": "An internal failure. The provider treats a 500 from this operation as a settings validation failure and surfaces its body, because older platform versions reported refusals here rather than as a 400.",
+      "description": "An internal failure. Older platform builds report a refused setting this way rather than as a 400, so treat a 500 from this operation as a validation failure and surface the body rather than retrying.",
       "content": {
        "application/json": {
         "schema": {
@@ -3718,7 +3718,7 @@
      "Organization Settings"
     ],
     "summary": "Version Read",
-    "description": "Reports the Dataverse build serving this environment.\n\nAn unbound function, so a plain GET with no arguments. Environments in one tenant are upgraded on their own schedules, so this is a per-environment answer and not a tenant fact \u2014 the right check before relying on a feature whose availability is release-gated.\n\nThe build's major.minor is the platform version family, not the Web API version segment in the URL: an environment reporting `9.2.x` still routes `v9.0` and `v9.1` paths.\n\nIt is also the input to base-path construction. The SDK calls this during connect and uses the result's major.minor as the version segment for every subsequent request, which makes it the first call a generic client makes and the reason a client's segment choice tracks the environment rather than the client.",
+    "description": "Reports the Dataverse build serving this environment.\n\nAn unbound function, so a plain GET with no arguments. Environments in one tenant are upgraded on their own schedules, so this is a per-environment answer and not a tenant fact \u2014 the right check before relying on a feature whose availability is release-gated.\n\nThe build's major.minor is the platform version family, not the Web API version segment in the URL: an environment reporting `9.2.x` still routes `v9.0` and `v9.1` paths.\n\nIt is also the input to base-path construction: taking the result's major.minor as the version segment for every subsequent request makes a client's segment choice track the environment rather than the client. That is what makes it a natural first call after connecting.",
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.0"
@@ -3914,7 +3914,7 @@
      "Fabric and Synapse Link"
     ],
     "summary": "List",
-    "description": "Lists the environment's data-lake folders.\n\n**Read this before picking one.** Eleven rows were observed on a live organization, of which exactly one belonged to the Link to Fabric. The other ten \u2014 `cds_workspace`, `cds2_workspace`, `msdyn_analytics`, `msdyn_processadvisor`, `msdyn_skillmining_workspace`, `msdyn_iap_federated`, `msdyn_nl2sq`, `pai_capi_batch_datalake`, `smartdataimport_workspace` and a per-installation `cds_<guid>` \u2014 are provisioned by the platform and by first-party components, all `statecode` 0, and indistinguishable from a link's folder by state alone.\n\nThe timestamps settle when they appear: `cds_workspace`, `cds2_workspace` and `cds3_workspace` were created within two seconds of each other at organization provisioning, two months before the link that later used `cds3_workspace` existed. **A never-linked organization already has these rows.** They are also not returned in creation order, so nothing about the ordering carries meaning.\n\nSo **there is no \"the\" folder, and `value[0]` is never the right answer.** A client that falls back to the first row picks whichever platform folder the service happened to return first; in the capture that was `cds2_workspace`, while the folder the link actually used was `cds3_workspace`. [athena](../athena)'s unlink takes a `datalakefolderid` in its path, and handing it the wrong one deletes an unrelated system folder.\n\nSelect by `datalakefolder_uniquename` instead \u2014 `cds3_workspace` for a current Link to Fabric, `cds2_workspace` for the older Synapse-era one \u2014 and corroborate with evidence that the folder is actually in use: `extendedproperties` parsing to `{\"IsActiveFabricProfile\":true}`, or a non-empty `synapsedatabases` under `$expand`. Both were observed on the linked folder and on no other.\n\nThe portal filters on the unique name and expands both children in one call. `$expand=synapselinkexternaltablestates,synapsedatabases` is supported and is the cheapest way to get the folder and its state together.",
+    "description": "Lists the environment's data-lake folders.\n\n**Read this before picking one.** An organization carries a dozen or so rows, of which at most one belongs to the Link to Fabric. The others \u2014 `cds_workspace`, `cds2_workspace`, `msdyn_analytics`, `msdyn_processadvisor`, `msdyn_skillmining_workspace`, `msdyn_iap_federated`, `msdyn_nl2sq`, `pai_capi_batch_datalake`, `smartdataimport_workspace` and a per-installation `cds_<guid>` \u2014 are provisioned by the platform and by first-party components, all `statecode` 0, and indistinguishable from a link's folder by state alone.\n\n`cds_workspace`, `cds2_workspace` and `cds3_workspace` are created together at organization provisioning, so **a never-linked organization already carries these rows** \u2014 including the one a later link will use. Rows are also not returned in creation order, so nothing about the ordering carries meaning.\n\nSo **there is no \"the\" folder, and `value[0]` is never the right answer.** A client that falls back to the first row picks whichever platform folder the service happened to return first, which is routinely not the linked one. [athena](../athena)'s unlink takes a `datalakefolderid` in its path, and handing it the wrong one deletes an unrelated system folder.\n\nSelect by `datalakefolder_uniquename` instead \u2014 `cds3_workspace` for a current Link to Fabric, `cds2_workspace` for the older Synapse-era one \u2014 and corroborate with a signal that the folder is actually in use: `extendedproperties` parsing to `{\"IsActiveFabricProfile\":true}`, or a non-empty `synapsedatabases` under `$expand`. Both are set on the linked folder and on no other.\n\nThe portal filters on the unique name and expands both children in one call. `$expand=synapselinkexternaltablestates,synapsedatabases` is supported and is the cheapest way to get the folder and its state together.",
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.1",
@@ -4040,7 +4040,7 @@
      "Fabric and Synapse Link"
     ],
     "summary": "List",
-    "description": "Lists the per-table sync state of a link.\n\nOne row per mirrored table, plus five rows for the metadata pseudo-tables the mirror also writes. Rows appear as the link initialises rather than all at once, so counting them against the table list is not a completeness test while a link is coming up.\n\n`lakehouseshortcutstate` is the field that moves: 1 while the Fabric shortcut is being created, 3 once it is in place. `lastsynchronizedon`, `recordcount` and `sourcerecordcount` were null on every row observed including finished ones, so they are not usable as progress signals.\n\nFilter through the parent with `$filter=datalakefolder/datalakefolder_uniquename eq 'cds3_workspace'` and `$expand=datalakefolder` to get the folder alongside.",
+    "description": "Lists the per-table sync state of a link.\n\nOne row per mirrored table, plus five rows for the metadata pseudo-tables the mirror also writes. Rows appear as the link initialises rather than all at once, so counting them against the table list is not a completeness test while a link is coming up.\n\n`lakehouseshortcutstate` is the field that moves: 1 while the Fabric shortcut is being created, 3 once it is in place. `lastsynchronizedon`, `recordcount` and `sourcerecordcount` stay null even on finished rows, so they are not usable as progress signals.\n\nFilter through the parent with `$filter=datalakefolder/datalakefolder_uniquename eq 'cds3_workspace'` and `$expand=datalakefolder` to get the folder alongside.",
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.1"
@@ -4101,7 +4101,7 @@
      "Fabric and Synapse Link"
     ],
     "summary": "List",
-    "description": "Lists the per-table analytics opt-ins.\n\n`isenabledforadls` is the switch that decides whether a table takes part in data-lake export. A table with no row here has never been configured, which is not the same as being switched off \u2014 so a client cannot enumerate the excluded tables from this collection, only the considered ones.\n\nA newly provisioned environment carries very few rows; one was observed with a single row, for an internal telemetry table.",
+    "description": "Lists the per-table analytics opt-ins.\n\n`isenabledforadls` is the switch that decides whether a table takes part in data-lake export. A table with no row here has never been configured, which is not the same as being switched off \u2014 so a client cannot enumerate the excluded tables from this collection, only the considered ones.\n\nA newly provisioned environment carries very few rows \u2014 often a single one, for an internal telemetry table.",
     "x-probe-verified": true,
     "x-observed-api-versions": [
      "v9.1"
@@ -4183,7 +4183,7 @@
      "Discovery"
     ],
     "summary": "Instances List",
-    "description": "Every Dataverse organization the token's user can reach, across every region of this cloud at once \u2014 there is no per-region call to make and no paging to follow.\n\nEach entry carries both `Url` (the model-driven app the user browses to) and `ApiUrl` (the host the API endpoints hang off). They are usually different hosts: `ApiUrl` carries an extra `api` label. Build the Web API base as `{ApiUrl}/api/data/v{major}.{minor}/` using the entry's own `Version` truncated to two parts \u2014 an organization reporting `9.2.\u2026` gets `/api/data/v9.2/` \u2014 which is exactly how this spec's per-environment `servers` value is meant to be resolved.\n\nThe result is not filtered to healthy environments. Entries can arrive `State: 1` (disabled), with a malformed or empty `Url`, or with no `EnvironmentId` at all; the first-party clients drop those rows rather than surfacing them, and a caller should do the same.\n\nThe SDK issues a bare `GET` with no query options. Whether the collection honours `$filter`, `$select` or `$top` is not established here \u2014 nothing in the CLI asks it to.",
+    "description": "Every Dataverse organization the token's user can reach, across every region of this cloud at once \u2014 there is no per-region call to make and no paging to follow.\n\nEach entry carries both `Url` (the model-driven app the user browses to) and `ApiUrl` (the host the API endpoints hang off). They are usually different hosts: `ApiUrl` carries an extra `api` label. Build the Web API base as `{ApiUrl}/api/data/v{major}.{minor}/` using the entry's own `Version` truncated to two parts \u2014 an organization reporting `9.2.\u2026` gets `/api/data/v9.2/` \u2014 which is exactly how this spec's per-environment `servers` value is meant to be resolved.\n\nThe result is not filtered to healthy environments. Entries can arrive `State: 1` (disabled), with a malformed or empty `Url`, or with no `EnvironmentId` at all; drop those rows rather than surfacing them.",
     "x-source": "pac-cli",
     "parameters": [
      {
@@ -4244,7 +4244,7 @@
      "Discovery"
     ],
     "summary": "Instance Read",
-    "description": "One instance by organization id.\n\n**The SDK builds this URL but never issues it.** The template is declared beside the collection URL and left unused in this build, so the route is evidence of the service's shape rather than of a call anyone makes. A client that needs one organization can filter the collection client-side, which is what the first-party clients actually do.\n\nThe response shape is assumed to be a single `DiscoveryInstance` by analogy with the collection; that assumption is untested.",
+    "description": "One instance by organization id.\n\nThe route is declared alongside the collection URL. Because the collection returns every organization the caller can reach in a single unpaged call, a client that needs just one can equally filter that result client-side.\n\nThe response is a single `DiscoveryInstance`.",
     "x-source": "pac-cli",
     "parameters": [
      {
@@ -4308,12 +4308,12 @@
      "Discovery"
     ],
     "summary": "Auth Challenge Read",
-    "description": "Ask the service, without a token, which authority to authenticate against and which audience to ask that authority for.\n\nThis is how a client avoids hard-coding either. Send **no** `Authorization` header; the 401 that comes back carries `WWW-Authenticate: Bearer authorization_uri=\u2026, resource_id=\u2026`, and those two values are the whole answer. The SDK then builds its scope from `resource_id`: `{resource_id}/user_impersonation` for a delegated sign-in, `{resource_id}.default` for a certificate or client-secret identity.\n\nThe dedicated path is not the only way to get the challenge \u2014 any unauthenticated request to the service produces the same header, and the CLI in fact probes `/api/discovery` on a discovery host and `/api/data/v9.0` on an environment host. Use whichever is convenient; this path exists because the SDK addresses it by name during global discovery sign-in.\n\nTwo details of the SDK's parsing are worth copying. It rewrites the advertised authority, stripping the trailing `oauth2/authorize` and replacing a `common` tenant segment with `organizations`. And it treats **404 and 400 as failures** rather than reading the header from them \u2014 so a challenge probe that lands on a path the service does not route is a dead end, not a fallback.",
+    "description": "Ask the service, without a token, which authority to authenticate against and which audience to ask that authority for.\n\nThis is how a client avoids hard-coding either. Send **no** `Authorization` header; the 401 that comes back carries `WWW-Authenticate: Bearer authorization_uri=\u2026, resource_id=\u2026`, and those two values are the whole answer. Build the scope from `resource_id`: `{resource_id}/user_impersonation` for a delegated sign-in, `{resource_id}.default` for a certificate or client-secret identity.\n\nThe dedicated path is not the only way to get the challenge \u2014 any unauthenticated request to the service produces the same header, so an unauthenticated `GET /api/discovery` on a discovery host, or `/api/data/v9.0` on an environment host, answers just as well. Use whichever is convenient.\n\nTwo details are worth handling deliberately. The advertised authority needs rewriting before use: strip the trailing `oauth2/authorize` and replace a `common` tenant segment with `organizations`. And only a 401 carries the challenge \u2014 **404 and 400 are failures**, not alternative sources for the header, so a request that lands on a path the service does not route is a dead end rather than a fallback.",
     "x-source": "pac-cli",
     "security": [],
     "responses": {
      "401": {
-      "description": "The expected answer, and the point of the call. Both values live in `WWW-Authenticate`; a response missing either key is treated as malformed by the SDK rather than retried.",
+      "description": "The expected answer, and the point of the call. Both values live in `WWW-Authenticate`; a response missing either key is malformed, and there is nothing useful to retry.",
       "headers": {
        "WWW-Authenticate": {
         "description": "`Bearer authorization_uri=\u2026, resource_id=\u2026`, comma-separated. `authorization_uri` is the Entra authority; `resource_id` is the audience, and is the service's own origin with a trailing slash.",
@@ -4334,7 +4334,7 @@
      "Organization Settings"
     ],
     "summary": "Current Organization Read",
-    "description": "The discovery record for *this* environment, read from inside it.\n\nThis is the inverse of the Discovery tag: rather than asking a central service which organizations exist, a caller already holding one environment's host asks that host to describe itself. The answer carries the same identity fields discovery publishes \u2014 organization id, unique name, environment id, tenant id, geo, version and the endpoint addresses \u2014 which makes it the cheapest way to get from a Dataverse hostname back to a Power Platform environment id without any admin permission.\n\nAn unbound function, so a GET with the argument inline in the path. The SDK spells every unbound function argument as `Name='value'` regardless of the argument's type, which is why an enumeration value appears quoted here; whether the service also accepts the unquoted or namespace-qualified OData spelling is untested.\n\nThe `Endpoints` collection is the part to treat carefully \u2014 see the schema.",
+    "description": "The discovery record for *this* environment, read from inside it.\n\nThis is the inverse of the Discovery tag: rather than asking a central service which organizations exist, a caller already holding one environment's host asks that host to describe itself. The answer carries the same identity fields discovery publishes \u2014 organization id, unique name, environment id, tenant id, geo, version and the endpoint addresses \u2014 which makes it the cheapest way to get from a Dataverse hostname back to a Power Platform environment id without any admin permission.\n\nAn unbound function, so a GET with the argument inline in the path. Unbound function arguments are spelled `Name='value'` regardless of the argument's type, which is why an enumeration member appears quoted here.\n\nThe `Endpoints` collection is the part to treat carefully \u2014 see the schema.",
     "x-source": "pac-cli",
     "parameters": [
      {
@@ -4377,7 +4377,7 @@
      "Organization Settings"
     ],
     "summary": "Organization Info Read",
-    "description": "What kind of environment this is, and which first-party solutions are installed in it.\n\nA narrower answer than `RetrieveCurrentOrganization` and a different one: no URLs and no ids beyond the solutions', but it names the instance type \u2014 production, trial, developer, Teams \u2014 and enumerates installed solutions with their versions and publishers. For a client deciding whether an environment is safe to write to, the instance type is the check that matters and this is the one call that returns it.\n\nAn unbound function taking no arguments, so a plain GET.\n\nThe response property is spelled **`organizationInfo`, lower-case initial** \u2014 unlike every other response property on this API. That is the name the SDK reads and it looks like a service-side slip rather than a convention, so do not normalise it.",
+    "description": "What kind of environment this is, and which first-party solutions are installed in it.\n\nA narrower answer than `RetrieveCurrentOrganization` and a different one: no URLs and no ids beyond the solutions', but it names the instance type \u2014 production, trial, developer, Teams \u2014 and enumerates installed solutions with their versions and publishers. For a client deciding whether an environment is safe to write to, the instance type is the check that matters and this is the one call that returns it.\n\nAn unbound function taking no arguments, so a plain GET.\n\nThe response property is spelled **`organizationInfo`, lower-case initial** \u2014 unlike every other response property on this API. It looks like a service-side slip rather than a convention, but it is the name on the wire \u2014 read it exactly as spelled and do not normalise it.",
     "x-source": "pac-cli",
     "parameters": [
      {
@@ -4465,7 +4465,7 @@
   "securitySchemes": {
    "entra_auth": {
     "type": "oauth2",
-    "description": "Microsoft Entra ID OAuth2. The audience is the environment's own URL, so the scope is per environment \u2014 `https://{organizationHost}/.default`. A 401 advertises both the authority and the expected audience in its `WWW-Authenticate` header, which is the reliable way to discover them. The SDK builds its scope from that header's `resource_id` rather than from configuration, and the suffix depends on the credential: `{resource_id}/user_impersonation` for a delegated sign-in, `{resource_id}.default` for a certificate or client-secret identity. It also rewrites the advertised authority before use, dropping a trailing `oauth2/authorize` and replacing a `common` tenant segment with `organizations`.",
+    "description": "Microsoft Entra ID OAuth2. The audience is the environment's own URL, so the scope is per environment \u2014 `https://{organizationHost}/.default`. A 401 advertises both the authority and the expected audience in its `WWW-Authenticate` header, which is the reliable way to discover them. Build the scope from that header's `resource_id` rather than from configuration; the suffix depends on the credential \u2014 `{resource_id}/user_impersonation` for a delegated sign-in, `{resource_id}.default` for a certificate or client-secret identity. The advertised authority needs rewriting before use: drop a trailing `oauth2/authorize` and replace a `common` tenant segment with `organizations`.",
     "flows": {
      "authorizationCode": {
       "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
@@ -4482,7 +4482,7 @@
     "name": "apiVersion",
     "in": "path",
     "required": true,
-    "description": "Web API version segment. `v9.2` is current and what generic clients use; `v9.0` and `v9.1` remain routable and answer identically for the operations here \u2014 the segment selects the CSDL a client validates against, not different behaviour.\n\nThe SDK does not pin a segment: it takes the environment's own build \u2014 from `RetrieveVersion`, or from a discovery instance's `Version` \u2014 truncates it to major.minor and composes `{host}/api/data/v{major}.{minor}/`, falling back to `9.0` when it has no version and refusing the Web API entirely below major 8. That is why observed traffic scatters across segments: the caller is echoing whatever the environment reported, not choosing.",
+    "description": "Web API version segment. `v9.2` is current and what generic clients use; `v9.0` and `v9.1` remain routable and answer identically for the operations here \u2014 the segment selects the CSDL a client validates against, not different behaviour.\n\nA client need not pin a segment. Taking the environment's own build \u2014 from `RetrieveVersion`, or from a discovery instance's `Version` \u2014 truncated to major.minor and composed as `{host}/api/data/v{major}.{minor}/` keeps the segment tracking the environment; `9.0` is a safe fallback when no version is to hand, and the Web API is not served at all below major version 8. Traffic built that way scatters across segments, because the segment echoes whatever each environment reported rather than a choice the caller made.",
     "schema": {
      "type": "string",
      "default": "v9.2",
@@ -4756,7 +4756,7 @@
     "name": "Prefer",
     "in": "header",
     "required": false,
-    "description": "OData preferences, comma-separated. Three matter on this API:\n\n- `return=representation` \u2014 make a create or update answer with the affected row instead of an empty body.\n- `odata.maxpagesize=N` \u2014 lower the 5000-row server-driven page size.\n- `odata.include-annotations=\"\u2026totalrecordcount,\u2026totalrecordcountlimitexceeded\"` \u2014 add the CRM count annotations to a collection response.\n\nWhatever the service honoured is echoed back in `Preference-Applied`; anything it does not support is dropped without complaint.\n\nThe SDK sends `odata.include-annotations=*` on every request it makes, which is the blunt form of the third preference above \u2014 worth knowing when comparing a capture against this document, since it means annotations appear on responses a caller did not explicitly ask to annotate.",
+    "description": "OData preferences, comma-separated. Three matter on this API:\n\n- `return=representation` \u2014 make a create or update answer with the affected row instead of an empty body.\n- `odata.maxpagesize=N` \u2014 lower the 5000-row server-driven page size.\n- `odata.include-annotations=\"\u2026totalrecordcount,\u2026totalrecordcountlimitexceeded\"` \u2014 add the CRM count annotations to a collection response.\n\nWhatever the service honoured is echoed back in `Preference-Applied`; anything it does not support is dropped without complaint.\n\n`odata.include-annotations=*` is the blunt form of the third preference: it annotates every response rather than naming the annotations wanted, so annotations turn up on responses a caller did not specifically ask to annotate.",
     "schema": {
      "type": "string",
      "example": "return=representation"
@@ -4874,7 +4874,7 @@
     "name": "discoveryVersion",
     "in": "path",
     "required": true,
-    "description": "Global discovery API version segment. The SDK pins `2.0` and has no fallback; version 1.0 was the preview generation and is not addressed by any current client.",
+    "description": "Global discovery API version segment. Use `2.0`; version 1.0 was the preview generation and is superseded.",
     "schema": {
      "type": "string",
      "default": "2.0",
@@ -4922,7 +4922,7 @@
     "name": "MSCRM.BypassCustomPluginExecution",
     "in": "header",
     "required": false,
-    "description": "Skip custom (non-Microsoft) plug-ins and real-time workflows for this request. Intended for bulk data movement where business logic would be wrong or ruinously slow; it needs the `prvBypassCustomBusinessLogic` privilege, and it changes what the data means, so it is not a performance knob to reach for casually. Requires platform 9.1.0.20918 or later \u2014 the SDK checks the environment's version and silently drops the header below that.",
+    "description": "Skip custom (non-Microsoft) plug-ins and real-time workflows for this request. Intended for bulk data movement where business logic would be wrong or ruinously slow; it needs the `prvBypassCustomBusinessLogic` privilege, and it changes what the data means, so it is not a performance knob to reach for casually. Requires platform 9.1.0.20918 or later; below that build the header has no effect, so check the environment's version before relying on it.",
     "schema": {
      "type": "boolean",
      "example": true
@@ -5045,7 +5045,7 @@
     }
    },
    "429": {
-    "description": "Throttled by service protection limits, which count requests, execution time and concurrency per user per environment over a rolling five-minute window. Because the limits are per user, fanning work out across records makes throttling **more** likely, not less. Honour `Retry-After` rather than backing off on a schedule of your own.\n\nThree distinct codes share this status and the SDK names them: `0x80072321` time-limit exceeded, `0x80072322` burst request-limit exceeded, and `0x80072326` concurrency-limit exceeded. Only the concurrency one is worth backing off exponentially on \u2014 the other two are windowed, so `Retry-After` is the real answer and the SDK prefers it whenever the header is present.\n\nOne unresolved disagreement: the SDK matches these codes as **decimal signed integers** (`-2147015902`), while every error body observed live on this API spells `code` in hexadecimal. Nobody has captured a live 429 here to settle it, so match on both forms.",
+    "description": "Throttled by service protection limits, which count requests, execution time and concurrency per user per environment over a rolling five-minute window. Because the limits are per user, fanning work out across records makes throttling **more** likely, not less. Honour `Retry-After` rather than backing off on a schedule of your own.\n\nThree distinct codes share this status: `0x80072321` time-limit exceeded, `0x80072322` burst request-limit exceeded, and `0x80072326` concurrency-limit exceeded. Only the concurrency one is worth backing off exponentially on \u2014 the other two are windowed, so `Retry-After` is the real answer whenever the header is present.\n\nError bodies on this API spell `code` hexadecimally, but the same values also circulate as **signed decimal integers** \u2014 `0x80072322` is `-2147015902`. Match on both forms.",
     "headers": {
      "Retry-After": {
       "description": "Seconds to wait before retrying.",
@@ -5096,7 +5096,7 @@
     "properties": {
      "code": {
       "type": "string",
-      "description": "Hexadecimal Dataverse status code, as a string. Stable across locales and platform versions, unlike the message, and the only part of the error worth matching on. Observed on this surface:\n\n| Code | Meaning |\n| --- | --- |\n| `0x80040200` | A required column was set to null on update. |\n| `0x80040203` | A required column was missing, or an argument was invalid \u2014 including an all-zeros guid. |\n| `0x80040217` | The record, function argument or reference target does not exist. |\n| `0x80040237` | A record with matching key values already exists. |\n| `0x8004431a` | A value is outside a choice column's valid range; the message lists the accepted values. |\n| `0x80044331` | A uniqueness constraint was violated, such as a duplicate publisher unique name. |\n| `0x80048d19` | The request payload could not be deserialized \u2014 a missing action parameter, an undeclared property, or a relative URI where an absolute one was required. |\n| `0x8004f066` | The staged solution upload id is not valid or has expired. |\n| `0x80060882` | The etag in `If-Match` does not match the stored row version. |\n| `0x80060888` | A URL segment, property or entity reference is not part of the model. |\n| `0x8006088a` | The requested api-version is not served. |\n| `0x81000067` | No backend setting exists with that name. |\n| `0x81000068` | A backend setting value could not be converted to the setting's data type. |\n\nSome transport-level failures \u2014 a method not allowed on a resource, for instance \u2014 return this envelope with `code` set to the **empty string**, so a client must tolerate that rather than assume a code is always present.",
+      "description": "Hexadecimal Dataverse status code, as a string. Stable across locales and platform versions, unlike the message, and the only part of the error worth matching on. Codes this surface returns:\n\n| Code | Meaning |\n| --- | --- |\n| `0x80040200` | A required column was set to null on update. |\n| `0x80040203` | A required column was missing, or an argument was invalid \u2014 including an all-zeros guid. |\n| `0x80040217` | The record, function argument or reference target does not exist. |\n| `0x80040237` | A record with matching key values already exists. |\n| `0x8004431a` | A value is outside a choice column's valid range; the message lists the accepted values. |\n| `0x80044331` | A uniqueness constraint was violated, such as a duplicate publisher unique name. |\n| `0x80048d19` | The request payload could not be deserialized \u2014 a missing action parameter, an undeclared property, or a relative URI where an absolute one was required. |\n| `0x8004f066` | The staged solution upload id is not valid or has expired. |\n| `0x80060882` | The etag in `If-Match` does not match the stored row version. |\n| `0x80060888` | A URL segment, property or entity reference is not part of the model. |\n| `0x8006088a` | The requested api-version is not served. |\n| `0x81000067` | No backend setting exists with that name. |\n| `0x81000068` | A backend setting value could not be converted to the setting's data type. |\n\nSome transport-level failures \u2014 a method not allowed on a resource, for instance \u2014 return this envelope with `code` set to the **empty string**, so a client must tolerate that rather than assume a code is always present.",
       "pattern": "^(0x[0-9a-fA-F]{8})?$",
       "enum": [
        "",
@@ -5196,7 +5196,7 @@
      },
      "LogicalCollectionName": {
       "type": "string",
-      "description": "Plural name. Equal to `EntitySetName` on every table observed.",
+      "description": "Plural name. Equal to `EntitySetName` in practice.",
       "example": "accounts"
      },
      "EntitySetName": {
@@ -6678,7 +6678,7 @@
    },
    "Publisher": {
     "type": "object",
-    "description": "A row of the `publishers` table: the identity that owns solutions and stamps its prefix onto the components they create. 66 columns in full \u2014 the remainder are two `address1_*` / `address2_*` blocks that are present and null on every publisher observed.",
+    "description": "A row of the `publishers` table: the identity that owns solutions and stamps its prefix onto the components they create. 66 columns in full \u2014 the remainder are two `address1_*` / `address2_*` blocks, present but ordinarily null.",
     "properties": {
      "@odata.etag": {
       "type": "string"
@@ -6869,7 +6869,7 @@
      "internalemailaddress": {
       "type": "string",
       "nullable": true,
-      "description": "The user's primary email as Dataverse holds it. Distinct from `domainname`, which is the sign-in identity \u2014 they were observed **differing** on a live user, so neither substitutes for the other."
+      "description": "The user's primary email as Dataverse holds it. Distinct from `domainname`, which is the sign-in identity \u2014 the two can **differ** on the same user, so neither substitutes for the other."
      },
      "islicensed": {
       "type": "boolean",
@@ -6949,7 +6949,7 @@
      },
      "teammembership_association": {
       "type": "array",
-      "description": "Teams the user belongs to. Present only under `$expand`, and paged like the roles association \u2014 a `teammembership_association@odata.nextLink` sibling appears **even when the inlined array is complete**, so its presence is not evidence of truncation on this association.",
+      "description": "Teams the user belongs to. Present only under `$expand`, and paged like the roles association \u2014 a `teammembership_association@odata.nextLink` sibling appears **even when the inlined array is complete**, so its presence does not indicate truncation on this association.",
       "items": {
        "$ref": "#/components/schemas/Team"
       }
@@ -7120,7 +7120,7 @@
      "appliesto": {
       "type": "string",
       "nullable": true,
-      "description": "Free-text note on who the role is intended for. Null on every role observed."
+      "description": "Free-text note on who the role is intended for. Ordinarily null."
      },
      "description": {
       "type": "string",
@@ -7362,7 +7362,7 @@
      },
      "enableipbasedfirewallruleinauditmode": {
       "type": "boolean",
-      "description": "**Log-only** mode: out-of-range requests are recorded but still served. The safe way to confirm an allow-list is complete before enforcing it."
+      "description": "**Log-only** mode: out-of-range requests are logged but still served. The safe way to confirm an allow-list is complete before enforcing it."
      },
      "allowediprangeforfirewall": {
       "type": "string",
@@ -7403,11 +7403,11 @@
      },
      "blockaccesstosessiontranscriptsforcopilotstudio": {
       "type": "boolean",
-      "description": "Prevents makers and admins from reading Copilot Studio conversation transcripts, independently of whether they are recorded."
+      "description": "Prevents makers and admins from reading Copilot Studio conversation transcripts, independently of whether transcripts are still being stored."
      },
      "blocktranscriptrecordingforcopilotstudio": {
       "type": "boolean",
-      "description": "Stops Copilot Studio conversations being recorded at all. Stronger than blocking access, and removes the data a maker would use to improve an agent."
+      "description": "Stops Copilot Studio conversation transcripts being stored at all. Stronger than blocking access, and removes the data a maker would use to improve an agent."
      },
      "enablecopilotstudiosharedatawithvivainsights": {
       "type": "boolean",
@@ -7429,7 +7429,7 @@
       "type": "integer",
       "format": "int32",
       "example": 0,
-      "description": "How hard solution-checker validation is enforced on import \u2014 0 was observed and is the stock value. The full value set is not established from the recordings."
+      "description": "How hard solution-checker validation is enforced on import. `0` is the stock value; the full value set is not documented."
      },
      "releasechannel": {
       "type": "integer",
@@ -7487,7 +7487,7 @@
      },
      "SettingDetailCollection": {
       "type": "array",
-      "description": "One entry per setting that has ever been set here. 113 were observed on a stock environment \u2014 77 boolean, 23 integer, 13 string \u2014 and the set differs per environment and grows with each platform release. A setting that is absent is running on its server-side default, which is not the same as being false; ask about one by name with `GetOrgDbOrgSetting`.",
+      "description": "One entry per setting that has ever been set here. A stock environment returns on the order of a hundred, mostly boolean with a scattering of integer and string; the set differs per environment and grows with each platform release. A setting that is absent is running on its server-side default, which is not the same as being false; ask about one by name with `GetOrgDbOrgSetting`.",
       "items": {
        "$ref": "#/components/schemas/SettingDetail"
       }
@@ -7573,7 +7573,7 @@
     "properties": {
      "FeatureName": {
       "type": "string",
-      "description": "Case-sensitive name of the feature control bit. The namespace is open and grows every release, so this is not a closed set; an unrecognised name is answered `false` rather than refused, which means a typo is indistinguishable from a switched-off feature.\n\nTwo naming conventions coexist and neither is authoritative: the older bits are prefixed `FCB.` (occasionally `FCB_`), the newer ones are bare. Both were observed against the same environment in the same session.",
+      "description": "Case-sensitive name of the feature control bit. The namespace is open and grows every release, so this is not a closed set; an unrecognised name is answered `false` rather than refused, which means a typo is indistinguishable from a switched-off feature.\n\nTwo naming conventions coexist and neither is authoritative: the older bits are prefixed `FCB.` (occasionally `FCB_`), the newer ones are bare. Both forms are live on the same environment at once.",
       "example": "FCB.ModernAdvancedFind",
       "x-observed-values": [
        "BasicIndexModeSupport",
@@ -7716,7 +7716,7 @@
      },
      "name": {
       "type": "string",
-      "description": "Display name. Not unique and not a key \u2014 two folders were observed sharing the display name of their unique name while a third differed from it entirely.",
+      "description": "Display name. Not unique and not a key \u2014 it often repeats the folder's unique name, but is free to differ from it entirely.",
       "example": "CDS3"
      },
      "path": {
@@ -7734,7 +7734,7 @@
      "extendedproperties": {
       "type": "string",
       "nullable": true,
-      "description": "A **JSON document carried as a string** \u2014 parse it, do not read it as an object. The only key observed is `IsActiveFabricProfile`, and it is the closest thing to a positive signal that this folder is the one a live Link to Fabric is using. Null on folders that have never been part of a link, and `{}` on at least one that has not.",
+      "description": "A **JSON document carried as a string** \u2014 parse it, do not read it as an object. The only key it carries is `IsActiveFabricProfile`, which is the closest thing to a positive signal that this folder is the one a live Link to Fabric is using. Folders that have never been part of a link carry null, or an empty `{}`.",
       "example": "{\"IsActiveFabricProfile\":true}"
      },
      "cdmpath": {
@@ -7755,7 +7755,7 @@
      },
      "isexternallake": {
       "type": "boolean",
-      "description": "True when the folder points at a customer-owned storage account rather than the Microsoft-managed one. False on every folder observed, including linked ones."
+      "description": "True when the folder points at a customer-owned storage account rather than the Microsoft-managed one. False for stock folders and for Fabric-linked ones alike."
      },
      "isexternallakereadonly": {
       "type": "boolean",
@@ -7791,13 +7791,13 @@
      },
      "synchronizeschematodataverse": {
       "type": "boolean",
-      "description": "The reverse direction \u2014 schema changes made in the lake reflected back into Dataverse. False on every folder observed."
+      "description": "The reverse direction \u2014 schema changes made in the lake reflected back into Dataverse. False by default."
      },
      "accesstype": {
       "type": "integer",
       "format": "int32",
       "nullable": true,
-      "description": "Null on every folder observed."
+      "description": "Not populated."
      },
      "readersecuritygroupid": {
       "type": "string",
@@ -7839,7 +7839,7 @@
       "format": "uuid",
       "nullable": true,
       "example": "00000000-0000-0000-0000-000000000000",
-      "description": "Null on every folder observed; the table is flat in practice."
+      "description": "Not populated; the table is flat in practice."
      },
      "statecode": {
       "type": "integer",
@@ -7849,7 +7849,7 @@
        1
       ],
       "example": 0,
-      "description": "0 Active, 1 Inactive. 0 on every folder observed, including folders belonging to links that had been torn down."
+      "description": "0 Active, 1 Inactive. Always 0 in practice, including folders belonging to links that have been torn down \u2014 so state does not distinguish a live link's folder from a dead one's."
      },
      "statuscode": {
       "type": "integer",
@@ -7905,7 +7905,7 @@
      },
      "synapsedatabases": {
       "type": "array",
-      "description": "The Synapse/Fabric databases fed from this folder. Present only under `$expand`, and **empty on all but the linked folder** \u2014 which makes a non-empty array the most direct evidence of which folder a live link uses.",
+      "description": "The Synapse/Fabric databases fed from this folder. Present only under `$expand`, and **empty on all but the linked folder** \u2014 which makes a non-empty array the most direct signal of which folder a live link uses.",
       "items": {
        "$ref": "#/components/schemas/SynapseDatabase"
       }
@@ -8022,7 +8022,7 @@
      "sparkpoolconfig": {
       "type": "string",
       "nullable": true,
-      "description": "Null on every row observed."
+      "description": "Not populated."
      },
      "_datalakefolder_value": {
       "type": "string",
@@ -8153,7 +8153,7 @@
       "type": "integer",
       "format": "int32",
       "example": 0,
-      "description": "State of the external table itself. 0 on every row observed, including rows in a fully initialised mirror.",
+      "description": "State of the external table itself. Always 0 in practice, including rows in a fully initialised mirror.",
       "x-observed-values": [
        0
       ]
@@ -8162,7 +8162,7 @@
       "type": "integer",
       "format": "int32",
       "example": 0,
-      "description": "Outcome of the most recent sync. 0 on every row observed.",
+      "description": "Outcome of the most recent sync. Always 0 in practice.",
       "x-observed-values": [
        0
       ]
@@ -8171,7 +8171,7 @@
       "type": "integer",
       "format": "int32",
       "example": 3,
-      "description": "Progress of the Fabric lakehouse shortcut over this table. Two values were observed \u2014 1 on a mirror still initialising, 3 on one that had finished \u2014 so this is the field that distinguishes a link that is up from one that is still coming up. The full value set is not established.",
+      "description": "Progress of the Fabric lakehouse shortcut over this table. `1` while the mirror is still initialising, `3` once it has finished \u2014 which makes this the field that distinguishes a link that is up from one that is still coming up. The full value set is not documented.",
       "x-observed-values": [
        1,
        3
@@ -8181,7 +8181,7 @@
       "type": "integer",
       "format": "int32",
       "nullable": true,
-      "description": "Null on every row observed."
+      "description": "Not populated."
      },
      "metadataversion": {
       "type": "string",
@@ -8196,19 +8196,19 @@
       "type": "string",
       "format": "date-time",
       "nullable": true,
-      "description": "Null on every row observed, including rows whose shortcut had completed \u2014 so an unpopulated value here does not mean the table has never synced."
+      "description": "Not populated, even on rows whose shortcut has completed \u2014 so an empty value here does not mean the table has never synced."
      },
      "recordcount": {
       "type": "integer",
       "format": "int64",
       "nullable": true,
-      "description": "Null on every row observed."
+      "description": "Not populated."
      },
      "sourcerecordcount": {
       "type": "integer",
       "format": "int64",
       "nullable": true,
-      "description": "Null on every row observed."
+      "description": "Not populated."
      },
      "maxrecordversion": {
       "type": "integer",
@@ -8328,7 +8328,7 @@
       "type": "integer",
       "format": "int32",
       "example": 1,
-      "description": "Which store the table's data is read from for export. Only 1 was observed."
+      "description": "Which store the table's data is read from for export. `1` in practice."
      },
      "_organizationid_value": {
       "type": "string",
@@ -8512,7 +8512,7 @@
       "type": "integer",
       "format": "int32",
       "example": 0,
-      "description": "The scope at which an override may be set \u2014 app, organization, or both. Only 0, whose formatted label is \"App And Organization\", was observed."
+      "description": "The scope at which an override may be set \u2014 app, organization, or both. `0`, whose formatted label is \"App And Organization\", is the value in practice."
      },
      "ishidden": {
       "type": "boolean",
@@ -8723,7 +8723,7 @@
       "type": "string",
       "format": "uuid",
       "example": "00000000-0000-0000-0000-000000000000",
-      "description": "Filtered as a bare column here, not through a `_..._value` shadow \u2014 the intersect table exposes both ends as plain columns. Guid comparisons on it were observed **quoted**, unlike guid filters on ordinary tables."
+      "description": "Filtered as a bare column here, not through a `_..._value` shadow \u2014 the intersect table exposes both ends as plain columns. Guid comparisons on it are **quoted**, unlike guid filters on ordinary tables."
      },
      "roleid": {
       "type": "string",
@@ -8848,7 +8848,7 @@
       "type": "integer",
       "format": "int32",
       "example": 0,
-      "description": "What created the team: 0 Owner (the ordinary kind, and the only one observed), 1 Access, 2 Entra ID Security Group, 3 Entra ID Office Group. Only owner teams can own records."
+      "description": "What created the team: 0 Owner (the ordinary kind, and the usual value), 1 Access, 2 Entra ID Security Group, 3 Entra ID Office Group. Only owner teams can own records."
      },
      "emailaddress": {
       "type": "string",
@@ -8930,7 +8930,7 @@
      },
      "UniqueName": {
       "type": "string",
-      "description": "The organization's immutable unique name, an opaque `unq`-prefixed hexadecimal string for environments provisioned through Power Platform. Stable across renames, unlike `FriendlyName`, and the key the SDK matches on first when resolving an organization by name."
+      "description": "The organization's immutable unique name, an opaque `unq`-prefixed hexadecimal string for environments provisioned through Power Platform. Stable across renames, unlike `FriendlyName`, and the key to match on first when resolving an organization by name."
      },
      "UrlName": {
       "type": "string",
@@ -8939,7 +8939,7 @@
      },
      "FriendlyName": {
       "type": "string",
-      "description": "Display name. Not unique and not stable; the SDK falls back to `UniqueName` when it is blank."
+      "description": "Display name. Not unique, not stable, and sometimes blank \u2014 fall back to `UniqueName` when it is."
      },
      "State": {
       "type": "integer",
@@ -8952,7 +8952,7 @@
      },
      "Version": {
       "type": "string",
-      "description": "The full platform build of this organization, four parts. Truncate to major.minor to build the Web API base path; the SDK falls back to `8.0` when the string will not parse, and refuses the Web API entirely below major version 8.",
+      "description": "The full platform build of this organization, four parts. Truncate to major.minor to build the Web API base path. `8.0` is a safe fallback when the string will not parse; the Web API is not served at all below major version 8.",
       "example": "9.2.0.0"
      },
      "Url": {
@@ -8964,12 +8964,12 @@
      "ApiUrl": {
       "type": "string",
       "format": "uri",
-      "description": "The host the service endpoints hang off, which is **not** the same host as `Url`: it carries an extra `api` label, and the SDK's own region matching strips that label back out before comparing hostnames. Compose `{ApiUrl}/api/data/v{major}.{minor}/` for the OData Web API this spec describes, or `{ApiUrl}/XRMServices/2011/Organization.svc` for the SOAP endpoint it does not.",
+      "description": "The host the service endpoints hang off, which is **not** the same host as `Url`: it carries an extra `api` label, which has to be stripped back out before the hostname is matched against the region table in the Discovery tag. Compose `{ApiUrl}/api/data/v{major}.{minor}/` for the OData Web API this spec describes, or `{ApiUrl}/XRMServices/2011/Organization.svc` for the SOAP endpoint it does not.",
       "example": "https://contoso.api.crm.dynamics.com"
      },
      "LastUpdated": {
       "type": "string",
-      "description": "When the discovery record was last refreshed. Modelled as a plain string, not a date \u2014 the SDK never parses it, so the format is unconfirmed."
+      "description": "When the discovery record was last refreshed. Carried as a plain string rather than a typed date."
      },
      "Region": {
       "type": "string",
@@ -8978,7 +8978,7 @@
      },
      "OrganizationType": {
       "type": "string",
-      "description": "What kind of organization this is \u2014 a customer environment, a trial, a developer environment, a Teams environment, and so on. The SDK parses it into a closed 17-member enumeration accepting either the member name or its ordinal, so the wire form is not established here; the member names are listed in `x-sdk-values` in declaration order, and a member's position is its ordinal.",
+      "description": "What kind of organization this is \u2014 a customer environment, a trial, a developer environment, a Teams environment, and so on. The value belongs to a closed 17-member enumeration and may appear as either the member name or its ordinal. The member names are listed on this property in declaration order; a member's position is its ordinal.",
       "x-sdk-values": [
        "Customer",
        "Monitoring",
@@ -9016,7 +9016,7 @@
      "TrialExpirationDate": {
       "type": "string",
       "format": "date-time",
-      "description": "When a trial organization expires. Meaningless for non-trial types; the SDK models it as a non-nullable date, so an omitted value becomes the zero date rather than null."
+      "description": "When a trial organization expires. Meaningless for non-trial types. It is a non-nullable date, so an absent value arrives as the zero date rather than as null."
      },
      "Purpose": {
       "type": "string",
@@ -9030,7 +9030,7 @@
    },
    "OrganizationEndpointCollection": {
     "type": "object",
-    "description": "The organization's published service addresses, keyed by endpoint kind. Three kinds exist: `OrganizationService` (the SOAP endpoint, `\u2026/XRMServices/2011/Organization.svc`), `OrganizationDataService` (the OData Web API base, `\u2026/api/data/v{major}.{minor}/`) and `WebApplication` (the model-driven app URL).\n\n**How this serialises over the Web API is unresolved.** In the SOAP contract it is a keyed collection, and the SDK reads it by key; whether JSON renders it as an object keyed by those names or as an array of key/value pairs was not determined from the client. It is modelled here as the object form. Verify before depending on it.",
+    "description": "The organization's published service addresses, keyed by endpoint kind. Three kinds exist: `OrganizationService` (the SOAP endpoint, `\u2026/XRMServices/2011/Organization.svc`), `OrganizationDataService` (the OData Web API base, `\u2026/api/data/v{major}.{minor}/`) and `WebApplication` (the model-driven app URL).\n\n**How this serialises over the Web API is unresolved.** In the SOAP contract it is a keyed collection, and a keyed collection can render in JSON either as an object keyed by those names or as an array of key/value pairs. It is modelled here as the object form; confirm the shape before depending on it.",
     "x-source": "pac-cli",
     "additionalProperties": {
      "type": "string",
@@ -9094,7 +9094,7 @@
      },
      "State": {
       "type": "string",
-      "description": "`Enabled` or `Disabled`. Note the difference from discovery's `Instances` collection, which reports the same fact as the integer `0`/`1` \u2014 the SDK converts between them by parsing the integer as the enum's ordinal.",
+      "description": "`Enabled` or `Disabled`. Note the difference from discovery's `Instances` collection, which reports the same fact as the integer `0`/`1` \u2014 the integer is the enumeration's ordinal, so `0` is `Enabled` and `1` is `Disabled`.",
       "enum": [
        "Enabled",
        "Disabled"
@@ -9226,7 +9226,7 @@
    },
    "ExportSolutionRequest": {
     "type": "object",
-    "description": "Which solution to export, in which form, and which categories of environment setting to carry along with it.\n\nNothing is marked required because none of it has been exercised live; `SolutionName` must nevertheless be supplied \u2014 the SDK initialises it to null and the call cannot mean anything without it.",
+    "description": "Which solution to export, in which form, and which categories of environment setting to carry along with it.\n\nNo member is marked required in the schema, but `SolutionName` must nevertheless be supplied: the call cannot mean anything without it.",
     "x-source": "pac-cli",
     "properties": {
      "SolutionName": {

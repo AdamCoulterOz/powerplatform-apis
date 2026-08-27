@@ -10,14 +10,16 @@ on:
     branches: [main]
     paths:
       - '*/oas/**'
+      - '*/evidence/**'
       - 'specs.json'
-      - 'scripts/conform.py'
+      - 'scripts/*.py'
       - '.github/workflows/conform.yml'
   pull_request:
     paths:
       - '*/oas/**'
+      - '*/evidence/**'
       - 'specs.json'
-      - 'scripts/conform.py'
+      - 'scripts/*.py'
   workflow_dispatch:
 
 permissions:
@@ -35,3 +37,6 @@ jobs:
 
       - name: Check the corpus against the contract
         run: scripts/conform.py
+
+      - name: Check the specs against recorded live responses
+        run: scripts/verify_evidence.py

@@ -1,0 +1,22 @@
+[
+  {
+    "file": "bapi-listLocations-2023-06-01.json",
+    "request": "GET /providers/Microsoft.BusinessAppPlatform/locations?api-version=2023-06-01",
+    "captured": "2026-08-28",
+    "principal": "interactive user",
+    "items": [
+      "value",
+      "*"
+    ],
+    "schema": "Location"
+  },
+  {
+    "file": "bapi-listLocations-2023-06-01.json",
+    "items": [
+      "value",
+      "*",
+      "properties"
+    ],
+    "schema": "LocationProperties"
+  }
+]

@@ -1,0 +1,7 @@
+{
+    "code": "ApiVersionInvalid",
+    "message": "API version 1999-01-01 is not supported. Supported API versions are: 2024-10-01, 2026-05-01-preview, 2022-03-01-preview, 2021-10-01-preview",
+    "innererror": {
+        "code": "ApiVersionUnsupported"
+    }
+}

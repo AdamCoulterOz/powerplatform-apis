@@ -1,0 +1,184 @@
+{
+    "collection": [
+        {
+            "name": "unitedstates",
+            "displayName": "United States",
+            "code": "NA",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": true
+        },
+        {
+            "name": "unitedstatesfirstrelease",
+            "displayName": "Preview (United States)",
+            "code": "NA",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": true
+        },
+        {
+            "name": "europe",
+            "displayName": "Europe",
+            "code": "EMEA",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": true
+        },
+        {
+            "name": "asia",
+            "displayName": "Asia",
+            "code": "APAC",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "australia",
+            "displayName": "Australia",
+            "code": "OCE",
+            "isDefault": true,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": true
+        },
+        {
+            "name": "india",
+            "displayName": "India",
+            "code": "IND",
+            "isDefault": false,
+            "isDisabled": true,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "japan",
+            "displayName": "Japan",
+            "code": "JPN",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "canada",
+            "displayName": "Canada",
+            "code": "CAN",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": true
+        },
+        {
+            "name": "unitedkingdom",
+            "displayName": "United Kingdom",
+            "code": "GBR",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "southamerica",
+            "displayName": "South America",
+            "code": "SAM",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "france",
+            "displayName": "France",
+            "code": "FRA",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "unitedarabemirates",
+            "displayName": "United Arab Emirates (UAE)",
+            "code": "UAE",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "germany",
+            "displayName": "Germany",
+            "code": "GER",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "switzerland",
+            "displayName": "Switzerland",
+            "code": "CHE",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "norway",
+            "displayName": "Norway",
+            "code": "NOR",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "korea",
+            "displayName": "Korea",
+            "code": "KOR",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "southafrica",
+            "displayName": "South Africa",
+            "code": "ZAF",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "sweden",
+            "displayName": "Sweden",
+            "code": "SWE",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "italy",
+            "displayName": "Italy",
+            "code": "ITA",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        },
+        {
+            "name": "poland",
+            "displayName": "Poland",
+            "code": "POL",
+            "isDefault": false,
+            "isDisabled": false,
+            "canProvisionDatabase": true,
+            "hasFirstReleaseIslandAvailableForProvisioning": false
+        }
+    ]
+}

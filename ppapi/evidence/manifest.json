@@ -1,0 +1,16 @@
+[
+  {
+    "file": "ppapi-getSupportedLocations-2024-10-01.json",
+    "request": "GET /environmentmanagement/provisioning/locations?api-version=2024-10-01",
+    "captured": "2026-08-28",
+    "principal": "interactive user",
+    "note": "Region-mode tenant: macroRegions and locationSelectionMode are absent by design, not missing from the spec.",
+    "items": ["collection", "*"],
+    "schema": "Location"
+  },
+  {
+    "file": "ppapi-getSupportedLocations-2024-10-01.json",
+    "items": [],
+    "schema": "ProvisioningLocations"
+  }
+]

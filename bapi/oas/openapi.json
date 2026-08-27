@@ -6010,6 +6010,10 @@
       "type": "boolean",
       "description": "Whether environments here may include Dataverse."
      },
+     "hasFirstReleaseIslandAvailableForProvisioning": {
+      "type": "boolean",
+      "description": "Whether a first-release island is available for provisioning in this geo. First-release islands take service updates ahead of the general ring."
+     },
      "canProvisionCustomerEngagementDatabase": {
       "type": "boolean",
       "description": "Whether Dynamics 365 customer-engagement applications can be installed here, which is narrower than `canProvisionDatabase`."

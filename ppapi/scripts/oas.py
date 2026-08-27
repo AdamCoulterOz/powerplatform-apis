@@ -702,7 +702,10 @@ def main():
                            "documentation (learn.microsoft.com). Tags group operations by logical "
                            "resource; x-ms-namespace records the namespace Microsoft files each "
                            "under."),
-            "x-api-versions": versions,
+            # Documented versions, unless enrichment overrides with an observed set:
+            # a 400 that enumerates what the gateway accepts is better evidence
+            # than what the docs list, and the two do not agree.
+            "x-api-versions": ENRICH.get("info", {}).get("x-api-versions", versions),
         },
         "servers": ENRICH.get("servers", DEFAULT_SERVERS),
         "security": [{"azure_auth": ["https://api.powerplatform.com/.default"]}],

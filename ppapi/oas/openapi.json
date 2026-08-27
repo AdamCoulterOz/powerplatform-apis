@@ -9,6 +9,7 @@
    "2021-10-01-preview",
    "2022-03-01-preview",
    "2024-10-01",
+   "2026-05-01-preview",
    "3"
   ]
  },
@@ -7148,6 +7149,16 @@
      }
     },
     "x-ms-namespace": "environmentmanagement/environment-provisioning",
+    "x-notes": [
+     {
+      "note": "On a tenant that selects locations by geo, the response carries `collection` only: `macroRegions` and `locationSelectionMode` are absent from the body entirely rather than present and null. A client must treat both as optional keys, not as nullable fields. What the response looks like on a tenant that selects by macro region has not been observed by anyone, and the accepted `macroRegionId` values are published nowhere -- not in the reference, and not in any first-party client.",
+      "source": "live"
+     },
+     {
+      "note": "Sending an unsupported `api-version` returns 400 `ApiVersionInvalid` whose message enumerates the accepted set: 2024-10-01, 2026-05-01-preview, 2022-03-01-preview, 2021-10-01-preview. The identical list comes back from routes in both `environmentmanagement` and `licensing`, so the gateway validates the version before routing. Note that Microsoft documents ordinal versions (`1`, `3`) on 26 operations, mostly under `/powerapps`; whether the gateway accepts those on their own routes has not been tested.",
+      "source": "live"
+     }
+    ],
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/environmentmanagement/environment-provisioning/get-supported-locations"
     }

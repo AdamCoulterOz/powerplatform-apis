@@ -409,6 +409,12 @@ html, body {
   border-radius: 6px;
   color: #fff;
   white-space: nowrap;
+  /* The chip is a grid item in a listing, so it stretches to the column and
+     the label has to be centred rather than left against the padding. The
+     indent offsets the trailing letter-space, which otherwise counts toward
+     the width and leaves the glyphs sitting a hair left of centre. */
+  text-align: center;
+  text-indent: .04em;
 }
 .method--get    { background: #1FA855; }
 .method--post   { background: #0B5FFF; }

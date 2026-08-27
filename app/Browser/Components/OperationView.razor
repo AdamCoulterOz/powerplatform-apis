@@ -5,7 +5,7 @@
 <div class="page">
     <h1 class="page__title">@Operation.Summary</h1>
 
-    @if (Operation.Prose is { } prose)
+    @if (Operation.Description is { } prose)
     {
         <p class="page__lead">@((MarkupString)Markdown.ToHtml(prose))</p>
     }
@@ -41,17 +41,7 @@
     <div class="op-body">
         <div class="op-split">
             <div>
-                @if (Operation.Notes.Count > 0)
-                {
-                    <KeelCallout Tone="CalloutTone.Info" Title="Verified against the live API" class="section">
-                        <ul style="margin:var(--space-3) 0 0;padding-left:1.15em">
-                            @foreach (var note in Operation.Notes)
-                            {
-                                <li style="margin:var(--space-3) 0">@((MarkupString)Markdown.ToHtml(note))</li>
-                            }
-                        </ul>
-                    </KeelCallout>
-                }
+                <NotesPanel Notes="Operation.Notes" />
 
                 @if (Operation.Parameters.Count > 0 || Operation.RequestBody is not null)
                 {

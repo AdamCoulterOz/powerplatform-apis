@@ -20,7 +20,7 @@ public sealed class OpenApiSpec
         Info = new SpecInfo(Obj(root, "info"));
         Servers = Arr(root, "servers").Select(s => Str(s, "url")).Where(u => u is not null).Select(u => u!).ToList();
         Tags = Arr(root, "tags")
-            .Select(t => new SpecTag(Str(t, "name") ?? "", Str(t, "description")))
+            .Select(t => new SpecTag(Str(t, "name") ?? "", Str(t, "description"), SpecNote.Read(t)))
             .ToList();
         Schemas = Obj(root, "components") is { } c && Obj(c, "schemas") is { } s
             ? s.EnumerateObject().ToDictionary(p => p.Name, p => new SchemaRef(p.Value, this), StringComparer.Ordinal)
@@ -63,7 +63,7 @@ public sealed class OpenApiSpec
         foreach (var t in Tags) { if (seen.Add(t.Name)) yield return t; }
         foreach (var op in Operations)
             foreach (var t in op.Tags)
-                if (seen.Add(t)) yield return new SpecTag(t, null);
+                if (seen.Add(t)) yield return new SpecTag(t, null, Array.Empty<SpecNote>());
     }
 
     public SchemaRef? Resolve(string reference)
@@ -97,7 +97,7 @@ public sealed class OpenApiSpec
         Arr(e, name).Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!).ToList();
 }
 
-public sealed record SpecTag(string Name, string? Description)
+public sealed record SpecTag(string Name, string? Description, IReadOnlyList<SpecNote> Notes)
 {
     public string Slug => Slugify(Name);
 
@@ -140,7 +140,7 @@ public sealed class Operation
         Tags = OpenApiSpec.StrArr(e, "tags");
         Namespace = OpenApiSpec.Str(e, "x-ms-namespace");
         IsPreview = OpenApiSpec.Bool(e, "x-ms-preview");
-        Notes = OpenApiSpec.StrArr(e, "x-notes");
+        Notes = SpecNote.Read(e);
         DocsUrl = OpenApiSpec.Obj(e, "externalDocs") is { } ed ? OpenApiSpec.Str(ed, "url") : null;
         Parameters = OpenApiSpec.Arr(e, "parameters").Select(p => new Parameter(p, spec)).ToList();
 
@@ -160,26 +160,13 @@ public sealed class Operation
     public IReadOnlyList<string> Tags { get; }
     public string? Namespace { get; }
     public bool IsPreview { get; }
-    public IReadOnlyList<string> Notes { get; }
+    public IReadOnlyList<SpecNote> Notes { get; }
     public string? DocsUrl { get; }
     public IReadOnlyList<Parameter> Parameters { get; }
     public Body? RequestBody { get; }
     public IReadOnlyList<Response> Responses { get; }
 
     public string PrimaryTag => Tags.Count > 0 ? Tags[0] : "Other";
-
-    /// <summary>The description with any note blockquote removed; notes render as their own callout.</summary>
-    public string? Prose
-    {
-        get
-        {
-            if (Description is null) return null;
-            var lines = Description.Split('\n');
-            var kept = lines.TakeWhile(l => !l.TrimStart().StartsWith(">", StringComparison.Ordinal));
-            var text = string.Join('\n', kept).Trim();
-            return text.Length == 0 ? null : text;
-        }
-    }
 }
 
 public sealed class Parameter

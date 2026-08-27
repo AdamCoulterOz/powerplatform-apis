@@ -98,6 +98,8 @@
             <p class="prop__desc">@((MarkupString)Markdown.ToHtml(d))</p>
         }
 
+        <NotesPanel Notes="Property.Schema.Notes" Compact="true" />
+
         @if (EnumValues.Count > 0)
         {
             <div class="cluster cluster--tight">

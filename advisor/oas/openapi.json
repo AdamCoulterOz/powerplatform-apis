@@ -140,6 +140,16 @@
     "summary": "List",
     "x-probe-verified": true,
     "description": "Reads the rule catalogue from one environment's advisor endpoint, optionally narrowed to one or more rulesets. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint; the catalogue is not tenant- or environment-specific beyond that, so any environment in a geography answers identically.\n\nThe response is a flat JSON array with no envelope, pagination or total count - the whole catalogue arrives in one body, around 100 rules and 40 KB, four times that with message formats.\n\nTwo behaviours matter before relying on this endpoint. First, the ruleset parameter fails open: an unrecognised id or name is not rejected, it yields the single rule that belongs to no ruleset (web-unsupported-syntax), so a typo silently produces a near-empty catalogue rather than an error. An empty, whitespace or bare-comma value behaves like omitting the parameter entirely and returns every rule. Several ruleset GUIDs joined by commas in the one parameter select the union of those rulesets.\n\nSecond, the catalogue is not identical across geographies. Rule changes reach deployment rings at different times, so the same ruleset can carry a different set of rules in one geography than in another. Anything that diffs, caches or pins this catalogue must key by region.\n\nRule text is localised by Accept-Language; code, guidanceUrl, severity and primaryCategory are invariant across languages.",
+    "x-notes": [
+     {
+      "note": "Microsoft documents a 204 for 'no results were found'. No input produced one: an unrecognised ruleset value answers 200 with a single rule instead.",
+      "source": "live"
+     },
+     {
+      "note": "The rule and ruleset reads both require a bearer token, despite Microsoft's documentation stating that they do not. The WWW-Authenticate challenge on the 401 names the resource to request one for, so an unauthenticated call is a legitimate way to discover the audience.",
+      "source": "live"
+     }
+    ],
     "parameters": [
      {
       "name": "api-version",
@@ -204,7 +214,7 @@
     ],
     "responses": {
      "200": {
-      "description": "The matching rules, as a top-level array. Also the response to an unrecognised ruleset value, with one element. Microsoft documents a 204 for 'no results were found'; no input produced one.",
+      "description": "The matching rules, as a top-level array. Also the response to an unrecognised ruleset value, with one element.",
       "content": {
        "application/json": {
         "schema": {
@@ -234,7 +244,7 @@
       }
      },
      "401": {
-      "description": "No or invalid bearer token. The rule and ruleset reads both require one, despite Microsoft's documentation stating that they do not. The WWW-Authenticate challenge names the resource to request a token for, so an unauthenticated call is a legitimate way to discover the audience.",
+      "description": "No or invalid bearer token. The WWW-Authenticate challenge names the resource to request a token for.",
       "headers": {
        "WWW-Authenticate": {
         "description": "Bearer authorization_uri=\"https://login.microsoftonline.com/common\",resource_id=\"https://api.advisor.powerapps.com/\"",
@@ -278,7 +288,17 @@
     ],
     "summary": "List",
     "x-probe-verified": true,
-    "description": "Reads every ruleset the geography publishes, as a flat array of id and name with no envelope or pagination. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint.\n\nCall this to resolve a ruleset's display name into the id a rule listing or an analysis run needs, though in practice the two public ids are stable enough to hard-code.\n\nAll 17 public geographies publish the same two rulesets. They overlap rather than nest: AppSource Certification has five rules Solution Checker does not, and Solution Checker has 39 that AppSource Certification does not.\n\nNames are not localised - an Accept-Language of fr still returns English names, unlike rule text. Note also that Microsoft's own rule documentation labels 083a2ef5-7e0e-4754-9d88-9455142dc08b 'Solution Checker' in its examples; the service says that id is AppSource Certification. Trust the service.",
+    "description": "Reads every ruleset the geography publishes, as a flat array of id and name with no envelope or pagination. Resolve the host from the environment's PowerAppsAdvisor runtime endpoint.\n\nCall this to resolve a ruleset's display name into the id a rule listing or an analysis run needs, though in practice the two public ids are stable enough to hard-code.\n\nAll 17 public geographies publish the same two rulesets. They overlap rather than nest: AppSource Certification has five rules Solution Checker does not, and Solution Checker has 39 that AppSource Certification does not.\n\nNames are not localised - an Accept-Language of fr still returns English names, unlike rule text.",
+    "x-notes": [
+     {
+      "note": "Microsoft's own rule documentation labels 083a2ef5-7e0e-4754-9d88-9455142dc08b 'Solution Checker' in its examples; the service says that id is AppSource Certification. Trust the service.",
+      "source": "live"
+     },
+     {
+      "note": "The rule and ruleset reads both require a bearer token, despite Microsoft's documentation stating that they do not.",
+      "source": "live"
+     }
+    ],
     "parameters": [
      {
       "name": "api-version",
@@ -368,7 +388,17 @@
     ],
     "summary": "File Upload",
     "x-probe-verified": false,
-    "description": "Uploads one solution file to service-managed storage in the geography and returns the URI the analysis submission will name it by. This step is optional: any storage URI the service can read works just as well, and must be used for files past the size limit. One call per file, so a run's files can be uploaded concurrently and their returned URIs collected into the submission's sasUriList.\n\nServed at api-version 1.0, and POST is the only method accepted.\n\nThe call returns a body, contrary to Microsoft's documentation: ignore it and you are left with no URI to analyse.",
+    "description": "Uploads one solution file to service-managed storage in the geography and returns the URI the analysis submission will name it by. This step is optional: any storage URI the service can read works just as well, and must be used for files past the size limit. One call per file, so a run's files can be uploaded concurrently and their returned URIs collected into the submission's sasUriList.\n\nServed at api-version 1.0, and POST is the only method accepted.",
+    "x-notes": [
+     {
+      "note": "The call returns a body, contrary to Microsoft's documentation: a bare JSON array of storage URIs, one per uploaded file. The published reference implies an empty 200, and a client that believes it has nothing to put in the submission's sasUriList.",
+      "source": "pac-cli"
+     },
+     {
+      "note": "The size limit is unresolved. Microsoft documents 30 MB with a 413 above it; the first-party client's own guard refuses locally at 100 MB. Neither figure has been observed on the wire.",
+      "source": "pac-cli"
+     }
+    ],
     "parameters": [
      {
       "$ref": "#/components/parameters/ApiVersion10"
@@ -395,7 +425,7 @@
          "file": {
           "type": "string",
           "format": "binary",
-          "description": "The solution file - a solution zip, or a cab or gzip archive. Microsoft's documentation puts the service limit at 30 MB and says a larger file is refused with 413. Above the limit, upload to your own storage and pass a SAS URI to the submission instead."
+          "description": "The solution file - a solution zip, or a cab or gzip archive. Above the size limit, upload to your own storage and pass a SAS URI to the submission instead."
          }
         }
        }
@@ -404,7 +434,7 @@
     },
     "responses": {
      "200": {
-      "description": "Uploaded. The body is a bare JSON array of storage URIs - not empty, as Microsoft's documentation implies. One element per uploaded file, so one element for a single-part request. Each element is what goes into the submission's sasUriList.",
+      "description": "Uploaded. The body is a bare JSON array of storage URIs, one element per uploaded file, so one element for a single-part request. Each element is what goes into the submission's sasUriList.",
       "content": {
        "application/json": {
         "schema": {
@@ -426,7 +456,7 @@
       "description": "No or invalid bearer token."
      },
      "413": {
-      "description": "Too large. Microsoft documents the threshold as 30 MB. Upload to your own storage and pass a SAS URI to the submission instead."
+      "description": "Too large. Upload to your own storage and pass a SAS URI to the submission instead."
      },
      "429": {
       "description": "Throttled. Retry-After is present and carries an integer number of seconds; wait that long and retry.",
@@ -452,7 +482,13 @@
     ],
     "summary": "Create",
     "x-probe-verified": false,
-    "description": "Submits a static-analysis job over one or more solution files already in storage and returns immediately with the job's status URL in the Location header. The Location value is the whole contract: a 202 without one is a protocol error, and the URL it carries should be polled verbatim rather than reconstructed - it already carries its own api-version.\n\nConfigure the run with either ruleSets or ruleCodes, not both. ruleLevelOverrides is a third, independent list that re-levels named rules for this run only; it is how a team downgrades a rule it has accepted without removing the check.\n\nServed at api-version 1.0 only, and POST is the only method accepted. Property binding is case-insensitive: the camelCase body documented below and its PascalCase equivalent (SasUriList, RuleSets, RuleCodes, RuleLevelOverrides, FileExclusions) are both accepted.",
+    "description": "Submits a static-analysis job over one or more solution files already in storage and returns immediately with the job's status URL in the Location header. The Location value is the whole contract: a 202 without one is a protocol error, and the URL it carries should be polled verbatim rather than reconstructed - it already carries its own api-version.\n\nConfigure the run with either ruleSets or ruleCodes, not both. ruleLevelOverrides is a third, independent list that re-levels named rules for this run only; it is how a team downgrades a rule it has accepted without removing the check.\n\nServed at api-version 1.0 only, and POST is the only method accepted.",
+    "x-notes": [
+     {
+      "note": "Property binding is case-insensitive: the camelCase body Microsoft documents and its PascalCase equivalent (SasUriList, RuleSets, RuleCodes, RuleLevelOverrides, FileExclusions) are both accepted. The first-party client sends PascalCase.",
+      "source": "pac-cli"
+     }
+    ],
     "parameters": [
      {
       "$ref": "#/components/parameters/ApiVersion10"
@@ -635,7 +671,17 @@
     "summary": "Create (Dataverse Context)",
     "x-probe-verified": false,
     "x-source": "pac-cli",
-    "description": "Submits an analysis run whose results are also written back into a Dataverse environment, where they appear in the Solution Health Hub app as msdyn_analysisjobs records. Despite the cds in the route it does not analyse the live environment: the files still come from storage URIs exactly as with the ordinary submission. The environment is the destination for the results, not the subject of the analysis, and identifying it is entirely the job of the x-ms-orgurl, x-ms-organization-id, x-ms-requestorid and x-ms-tenant-id headers - the body says nothing about it.\n\nIt differs from the ordinary submission in three ways that matter. It answers 200, not 202. It returns a body rather than a Location header, so the caller composes the status URL itself as /api/status/{runcorrelationid}?api-version=1.0 against the same host. And its body adds Solutions, a list the caller populates itself - one entry per storage URI, each with a caller-chosen id and name - which is how the results get labelled per solution in the environment rather than by opaque file URI.",
+    "description": "Submits an analysis run whose results are also written back into a Dataverse environment, where they appear in the Solution Health Hub app as msdyn_analysisjobs records. The environment is the destination for the results, not the subject of the analysis, and identifying it is entirely the job of the x-ms-orgurl, x-ms-organization-id, x-ms-requestorid and x-ms-tenant-id headers - the body says nothing about it.\n\nIt differs from the ordinary submission in three ways that matter. It answers 200, not 202. It returns a body rather than a Location header, so the caller composes the status URL itself as /api/status/{runcorrelationid}?api-version=1.0 against the same host. And its body adds Solutions, a list the caller populates itself - one entry per storage URI, each with a caller-chosen id and name - which is how the results get labelled per solution in the environment rather than by opaque file URI.",
+    "x-notes": [
+     {
+      "note": "Despite the cds in the route, this does not analyse a live Dataverse environment: the files still come from storage URIs exactly as with the ordinary submission.",
+      "source": "pac-cli"
+     },
+     {
+      "note": "Undocumented by Microsoft, and never invoked: the first-party client is the only evidence this route exists.",
+      "source": "pac-cli"
+     }
+    ],
     "parameters": [
      {
       "$ref": "#/components/parameters/ApiVersion10"
@@ -716,7 +762,17 @@
     "summary": "Delete",
     "x-probe-verified": false,
     "x-source": "pac-cli",
-    "description": "Purges every cached solution-checker result for the caller's tenant, so that the next import re-runs the checks instead of reusing a stored verdict. The reason to reach for it is a solution that Managed Environments enforcement keeps blocking on a result you have already fixed.\n\nTenant-wide and not undoable: it discards the results for every solution in the tenant, not only the one you are trying to unblock, and the next import of each pays for a fresh analysis. There is no companion read, no way to purge a single solution, and no confirmation beyond the status code.\n\nThe route carries no api-version, unlike every other operation on this host, and the tenant is taken from the token rather than from any parameter - the call has no path, query or body input at all.",
+    "description": "Purges every cached solution-checker result for the caller's tenant, so that the next import re-runs the checks instead of reusing a stored verdict. The reason to reach for it is a solution that Managed Environments enforcement keeps blocking on a result you have already fixed.\n\nTenant-wide and not undoable: it discards the results for every solution in the tenant, not only the one you are trying to unblock, and the next import of each pays for a fresh analysis. There is no companion read, no way to purge a single solution, and no confirmation beyond the status code.\n\nThe tenant is taken from the token rather than from any parameter - the call has no path, query or body input at all.",
+    "x-notes": [
+     {
+      "note": "Undocumented by Microsoft, and never invoked: the first-party client is the only evidence this route exists. The route name is nothing like the api/cache one might guess at.",
+      "source": "pac-cli"
+     },
+     {
+      "note": "The route carries no api-version at all, unlike every other operation on this host.",
+      "source": "pac-cli"
+     }
+    ],
     "parameters": [
      {
       "$ref": "#/components/parameters/CorrelationIdHeader"
@@ -882,7 +938,13 @@
    "Rule": {
     "type": "object",
     "x-probe-verified": true,
-    "description": "One checker rule: what it looks for, how bad a violation is, and where the guidance for fixing it lives. A rule object carries exactly these nine fields - no envelope, no @odata metadata, no pagination.\n\nOnly code, guidanceUrl, include, componentType, primaryCategory and severity are present on every rule. description, summary and howToFix are absent entirely on a rule with no authored text - web-unsupported-syntax is one - and howToFix is an empty string on roughly half of the rest.\n\nMicrosoft's documentation shows howToFix as an object with a summary property; at api-version 2.0 the service returns a plain string. No property is ever explicitly null: absent means absent.",
+    "description": "One checker rule: what it looks for, how bad a violation is, and where the guidance for fixing it lives. A rule object carries exactly these nine fields - no envelope, no @odata metadata, no pagination.\n\nOnly code, guidanceUrl, include, componentType, primaryCategory and severity are present on every rule. description, summary and howToFix are absent entirely on a rule with no authored text - web-unsupported-syntax is one - and howToFix is an empty string on roughly half of the rest.\n\nNo property is ever explicitly null: absent means absent.",
+    "x-notes": [
+     {
+      "note": "Microsoft's documentation shows howToFix as an object with a summary property; at api-version 2.0 the service returns a plain string.",
+      "source": "live"
+     }
+    ],
     "required": [
      "code",
      "guidanceUrl",
@@ -931,7 +993,13 @@
      },
      "primaryCategory": {
       "type": "integer",
-      "description": "What kind of problem the rule looks for: 1 Performance, 2 Upgrade Readiness (patterns that risk breaking on a platform version upgrade), 3 Usage (misuse of an API, pattern or configuration), 4 Security, 5 Design, 7 Maintainability, 8 Supportability (use of removed, unpublished or otherwise unsupported APIs), 9 Accessibility, 10 licensing entitlement (the meta-license-* rules; this category has no published name). The numbering is not the order of the category list published under model-driven app best practices - it was derived by cross-referencing 38 rule codes against their documented category names, with no collisions. 6 was never returned by any geography and is presumed to be Online Migration, the one documented category with no live rule.",
+      "description": "What kind of problem the rule looks for: 1 Performance, 2 Upgrade Readiness (patterns that risk breaking on a platform version upgrade), 3 Usage (misuse of an API, pattern or configuration), 4 Security, 5 Design, 7 Maintainability, 8 Supportability (use of removed, unpublished or otherwise unsupported APIs), 9 Accessibility, 10 licensing entitlement (the meta-license-* rules; this category has no published name).",
+      "x-notes": [
+       {
+        "note": "The numbering is not the order of the category list Microsoft publishes under model-driven app best practices. It was derived by cross-referencing 38 rule codes against their documented category names, with no collisions. 6 was never returned by any geography and is presumed to be Online Migration, the one documented category with no live rule.",
+        "source": "live"
+       }
+      ],
       "enum": [
        1,
        2,
@@ -1022,7 +1090,17 @@
    "AnalysisRequest": {
     "type": "object",
     "x-probe-verified": false,
-    "description": "Configuration for one analysis run: what to analyse, against which rules, and what to skip. Supply exactly one of ruleSets or ruleCodes.\n\nruleLevelOverrides is accepted even though Microsoft's documentation of this body omits it.\n\nProperty names bind case-insensitively: the camelCase below and its PascalCase equivalent (SasUriList, FileExclusions, RuleSets, RuleCodes, RuleLevelOverrides) are both accepted, and a null member may be omitted entirely instead of being sent.",
+    "description": "Configuration for one analysis run: what to analyse, against which rules, and what to skip. Supply exactly one of ruleSets or ruleCodes.",
+    "x-notes": [
+     {
+      "note": "ruleLevelOverrides is accepted even though Microsoft's documentation of this body omits it.",
+      "source": "pac-cli"
+     },
+     {
+      "note": "Property names bind case-insensitively: the camelCase spelling documented here and its PascalCase equivalent (SasUriList, FileExclusions, RuleSets, RuleCodes, RuleLevelOverrides) are both accepted, and a null member may be omitted entirely instead of being sent.",
+      "source": "pac-cli"
+     }
+    ],
     "required": [
      "sasUriList"
     ],

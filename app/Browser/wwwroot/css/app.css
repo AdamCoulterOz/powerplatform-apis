@@ -287,6 +287,32 @@ html, body {
   color: var(--text-secondary);
 }
 
+/* ----------------------------------------------------------------- notes - */
+
+/* Doc-vs-reality findings, one callout per evidence grade. The grouping is
+   the point: a finding read out of Microsoft's shipped client must not sit in
+   the same box as one seen on the wire, so the tone, the icon and the heading
+   all differ and the weaker group states what it rests on. */
+.notes { display: grid; gap: var(--s-3); }
+.notes__caveat {
+  margin: 0 0 var(--s-2);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  max-width: 68ch;
+}
+.notes__list { margin: 0; padding-left: 1.15em; max-width: 68ch; }
+.notes__list li + li { margin-top: var(--s-2); }
+
+/* hanging off a property row rather than a page: quieter, and indented to the
+   same gutter the property description uses */
+.notes--compact {
+  margin: var(--s-2) 0 0;
+  gap: var(--s-2);
+  max-width: 72ch;
+}
+.notes--compact .keel-callout { padding: 10px 12px; font-size: 13px; }
+
 /* ------------------------------------------------------------ properties - */
 
 /* Rows are separated by space, not rules. A long list of hairlines reads as

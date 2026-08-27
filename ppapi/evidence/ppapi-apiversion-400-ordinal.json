@@ -1,0 +1,10 @@
+{
+    "code": "ApiVersionInvalid",
+    "message": "API version 99 is not supported for resource /environmentmanagement/tenants/{tenantId}/provisioning/locations. Supported API versions for the resource are: 1",
+    "innererror": {
+        "code": "ApiVersionUnsupported",
+        "innererror": {
+            "code": "ApiVersionUnsupportedForResource"
+        }
+    }
+}

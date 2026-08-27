@@ -5,12 +5,39 @@
     "captured": "2026-08-28",
     "principal": "interactive user",
     "note": "Region-mode tenant: macroRegions and locationSelectionMode are absent by design, not missing from the spec.",
-    "items": ["collection", "*"],
+    "items": [
+      "collection",
+      "*"
+    ],
     "schema": "Location"
   },
   {
     "file": "ppapi-getSupportedLocations-2024-10-01.json",
     "items": [],
     "schema": "ProvisioningLocations"
+  },
+  {
+    "file": "ppapi-apiversion-400.json",
+    "request": "GET .../locations?api-version=1999-01-01",
+    "note": "Gateway rejection, date axis.",
+    "items": [],
+    "schema": "GatewayError"
+  },
+  {
+    "file": "ppapi-apiversion-400-ordinal.json",
+    "request": "GET .../locations?api-version=99",
+    "note": "Gateway rejection, ordinal axis: nests ApiVersionUnsupportedForResource.",
+    "items": [],
+    "schema": "GatewayError"
+  },
+  {
+    "file": "ppapi-getSupportedLocations-ordinal-1.json",
+    "request": "GET .../locations?api-version=1",
+    "note": "200 on the ordinal axis, byte-identical to 2024-10-01.",
+    "items": [
+      "collection",
+      "*"
+    ],
+    "schema": "Location"
   }
 ]

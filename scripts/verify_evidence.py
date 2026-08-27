@@ -95,6 +95,15 @@ def check(spec_id: str) -> int:
         return 0
     spec = json.loads((ROOT / spec_id / "oas" / "openapi.json").read_text())
     entries = json.loads(manifest.read_text())
+
+    # Gate every file in the directory, not only the ones a manifest names.
+    # Checking the listed ones is a presence question answered from a list, and
+    # a file nobody listed is exactly the file that slips through -- which it
+    # did: a provenance document carrying a tenant id was copied in beside the
+    # bodies and was not covered until this loop existed.
+    for f in sorted(cap_dir.iterdir()):
+        if f.is_file() and f.name != "manifest.json":
+            redaction_gate(spec_id, f)
     for e in entries:
         body_path = cap_dir / e["file"]
         if not body_path.exists():

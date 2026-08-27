@@ -621,7 +621,11 @@
      "source": "live"
     },
     {
-     "note": "Sending an unsupported `api-version` returns 400 `ApiVersionInvalid` whose message enumerates the accepted set: 2024-10-01, 2026-05-01-preview, 2022-03-01-preview, 2021-10-01-preview. The identical list comes back from routes in both `environmentmanagement` and `licensing`, so the gateway validates the version before routing. Note that Microsoft documents ordinal versions (`1`, `3`) on 26 operations, mostly under `/powerapps`; whether the gateway accepts those on their own routes has not been tested.",
+     "note": "`api-version` has two independent axes and the documented ordinals are real. `api-version=1` returns 200 on this route, byte-identical to `2024-10-01`. A junk *date* is refused by the gateway with a message listing the four dated versions; a junk *ordinal* is refused with a nested `ApiVersionUnsupportedForResource` and a message listing that resource's ordinals. So the dated list is the gateway's set and says nothing about any single resource, and `info.x-api-versions` is a union across resources rather than a set every route accepts.",
+     "source": "live"
+    },
+    {
+     "note": "An api-version rejection does not return the documented `ValidationResponse`. It returns the gateway's own envelope -- `code`, `message`, nested `innererror` -- so a client that parses 400s according to this operation's documented schema will fail on the most likely 400 it will ever see. Whether the resource itself returns `ValidationResponse` for its own validation failures has not been observed.",
      "source": "live"
     }
    ]
@@ -5982,6 +5986,41 @@
    "type": "object",
    "x-stub": true,
    "description": "A geography an ISV contract covers. The contract request carries a list of them."
+  },
+  "GatewayError": {
+   "type": "object",
+   "description": "The error the API gateway returns when it rejects a request before routing it, notably an unusable `api-version`. Nested `innererror` codes narrow the reason, and the innermost one is the machine-readable discriminator.",
+   "properties": {
+    "code": {
+     "type": "string",
+     "description": "The error code.",
+     "example": "ApiVersionInvalid"
+    },
+    "message": {
+     "type": "string",
+     "description": "Human-readable text. For an api-version rejection it enumerates the accepted versions, which is often the only place that set is published."
+    },
+    "innererror": {
+     "$ref": "#/components/schemas/GatewayInnerError"
+    }
+   }
+  },
+  "GatewayInnerError": {
+   "type": "object",
+   "description": "A narrowing error code, optionally nesting another. For an api-version rejection the presence of a second level distinguishes a version the gateway does not know at all from one it knows but this resource does not offer.",
+   "properties": {
+    "code": {
+     "type": "string",
+     "enum": [
+      "ApiVersionUnsupported",
+      "ApiVersionUnsupportedForResource"
+     ],
+     "description": "`ApiVersionUnsupported` at the outer level; a nested `ApiVersionUnsupportedForResource` means the version is valid somewhere but not here."
+    },
+    "innererror": {
+     "$ref": "#/components/schemas/GatewayInnerError"
+    }
+   }
   }
  }
 }

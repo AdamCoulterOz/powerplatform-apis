@@ -1,50 +1,58 @@
-[
-  {
-    "file": "ppapi-getSupportedLocations-2024-10-01.json",
-    "request": "GET /environmentmanagement/provisioning/locations?api-version=2024-10-01",
+{
+  "provenance": {
     "captured": "2026-08-28",
-    "principal": "interactive user",
-    "note": "Region-mode tenant: macroRegions and locationSelectionMode are absent by design, not missing from the spec.",
-    "items": [
-      "collection",
-      "*"
-    ],
-    "schema": "Location"
+    "cloud": "public",
+    "tenant": "a single commercial tenant, not identified here",
+    "principal": "interactive user via Azure CLI",
+    "appliesTo": "every file in this directory",
+    "limits": "One tenant and one principal. Nothing here is evidence about service-principal behaviour, about sovereign clouds, or about tenants with different licensing or feature flags. Where a route or field is absent, that is not evidence it does not exist -- only that it was not returned under these conditions."
   },
-  {
-    "file": "ppapi-getSupportedLocations-2024-10-01.json",
-    "items": [],
-    "schema": "ProvisioningLocations"
-  },
-  {
-    "file": "ppapi-apiversion-400.json",
-    "request": "GET .../locations?api-version=1999-01-01",
-    "note": "Gateway rejection, date axis.",
-    "items": [],
-    "schema": "GatewayError"
-  },
-  {
-    "file": "ppapi-apiversion-400-ordinal.json",
-    "request": "GET .../locations?api-version=99",
-    "note": "Gateway rejection, ordinal axis: nests ApiVersionUnsupportedForResource.",
-    "items": [],
-    "schema": "GatewayError"
-  },
-  {
-    "file": "ppapi-getSupportedLocations-ordinal-1.json",
-    "request": "GET .../locations?api-version=1",
-    "note": "200 on the ordinal axis, byte-identical to 2024-10-01.",
-    "items": [
-      "collection",
-      "*"
-    ],
-    "schema": "Location"
-  },
-  {
-    "file": "ppapi-notifications-apiversion-400-ordinal.json",
-    "request": "GET /powerapps/notifications?api-version=99",
-    "note": "The service enumerates this resource's ordinals (1, 3), confirming both documented values.",
-    "items": [],
-    "schema": "GatewayError"
-  }
-]
+  "assertions": [
+    {
+      "file": "ppapi-getSupportedLocations-2024-10-01.json",
+      "request": "GET /environmentmanagement/provisioning/locations?api-version=2024-10-01",
+      "note": "Region-mode tenant: macroRegions and locationSelectionMode are absent by design, not missing from the spec.",
+      "items": [
+        "collection",
+        "*"
+      ],
+      "schema": "Location"
+    },
+    {
+      "file": "ppapi-getSupportedLocations-2024-10-01.json",
+      "items": [],
+      "schema": "ProvisioningLocations"
+    },
+    {
+      "file": "ppapi-apiversion-400.json",
+      "request": "GET .../locations?api-version=1999-01-01",
+      "note": "Gateway rejection, date axis.",
+      "items": [],
+      "schema": "GatewayError"
+    },
+    {
+      "file": "ppapi-apiversion-400-ordinal.json",
+      "request": "GET .../locations?api-version=99",
+      "note": "Gateway rejection, ordinal axis: nests ApiVersionUnsupportedForResource.",
+      "items": [],
+      "schema": "GatewayError"
+    },
+    {
+      "file": "ppapi-getSupportedLocations-ordinal-1.json",
+      "request": "GET .../locations?api-version=1",
+      "note": "200 on the ordinal axis, byte-identical to 2024-10-01.",
+      "items": [
+        "collection",
+        "*"
+      ],
+      "schema": "Location"
+    },
+    {
+      "file": "ppapi-notifications-apiversion-400-ordinal.json",
+      "request": "GET /powerapps/notifications?api-version=99",
+      "note": "The service enumerates this resource's ordinals (1, 3), confirming both documented values.",
+      "items": [],
+      "schema": "GatewayError"
+    }
+  ]
+}

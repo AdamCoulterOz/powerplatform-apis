@@ -1,22 +1,30 @@
-[
-  {
-    "file": "bapi-listLocations-2023-06-01.json",
-    "request": "GET /providers/Microsoft.BusinessAppPlatform/locations?api-version=2023-06-01",
+{
+  "provenance": {
     "captured": "2026-08-28",
-    "principal": "interactive user",
-    "items": [
-      "value",
-      "*"
-    ],
-    "schema": "Location"
+    "cloud": "public",
+    "tenant": "a single commercial tenant, not identified here",
+    "principal": "interactive user via Azure CLI",
+    "appliesTo": "every file in this directory",
+    "limits": "One tenant and one principal. Nothing here is evidence about service-principal behaviour, about sovereign clouds, or about tenants with different licensing or feature flags. Where a route or field is absent, that is not evidence it does not exist -- only that it was not returned under these conditions."
   },
-  {
-    "file": "bapi-listLocations-2023-06-01.json",
-    "items": [
-      "value",
-      "*",
-      "properties"
-    ],
-    "schema": "LocationProperties"
-  }
-]
+  "assertions": [
+    {
+      "file": "bapi-listLocations-2023-06-01.json",
+      "request": "GET /providers/Microsoft.BusinessAppPlatform/locations?api-version=2023-06-01",
+      "items": [
+        "value",
+        "*"
+      ],
+      "schema": "Location"
+    },
+    {
+      "file": "bapi-listLocations-2023-06-01.json",
+      "items": [
+        "value",
+        "*",
+        "properties"
+      ],
+      "schema": "LocationProperties"
+    }
+  ]
+}

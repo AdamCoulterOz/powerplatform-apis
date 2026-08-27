@@ -94,7 +94,18 @@ def check(spec_id: str) -> int:
     if not manifest.exists():
         return 0
     spec = json.loads((ROOT / spec_id / "oas" / "openapi.json").read_text())
-    entries = json.loads(manifest.read_text())
+    loaded = json.loads(manifest.read_text())
+    # A manifest is {provenance, assertions}. The legacy bare-list form is still
+    # read, but a manifest with no provenance is refused: evidence whose
+    # conditions are unrecorded invites being read as more general than it is.
+    if isinstance(loaded, dict):
+        if not loaded.get("provenance"):
+            failures.append(f"{spec_id}: evidence/manifest.json has no provenance block")
+        entries = loaded.get("assertions", [])
+    else:
+        failures.append(f"{spec_id}: evidence/manifest.json is a bare list; it needs a "
+                        f"provenance block recording the tenant, principal and limits")
+        entries = loaded
 
     # Gate every file in the directory, not only the ones a manifest names.
     # Checking the listed ones is a presence question answered from a list, and

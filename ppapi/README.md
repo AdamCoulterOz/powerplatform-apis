@@ -15,10 +15,23 @@ This is the `ppapi` folder of the [powerplatform-apis](..) monorepo; the spec br
   - `addOperations`, keyed `METHOD /path`, contributes a whole operation the docs do not describe at all. The value is an OAS operation object; `{"$ref": "Name"}` is shorthand for a component schema, `notes` behaves as above, and `servers` names which host serves it (the prose is stripped on the way out, since it already sits in the top-level `servers` list).
   - `schemas` curates an existing model: `rename` (the docs auto-name the OData envelope item type `Value`), `description`, `notes`, `enum`, `required`, `x-probe-verified`, `x-source`, `renameProperties` for names the docs spell wrongly, and `properties` to add or replace individual properties (`null` deletes one).
   - `addSchemas` defines shapes the docs omit or model wrongly, including the two the docs left as `x-stub` placeholders that are really discriminated unions.
-  - `x-source` on any of the above records where non-docs content came from. `pac-cli` means the Power Platform CLI's own client and nothing stronger; it is what keeps client-derived findings out of the "verified against the live API" group.
+  - `x-source` on any of the above records where non-docs content came from. `pac-cli` means Microsoft's own shipped client and nothing stronger; `provider` means the Terraform provider's client, a third party's. Both keep client-derived findings out of the "verified against the live API" group.
 
   `oas.py` applies all of it at generate time and warns about keys that no longer match, so docs renames surface in the daily run. New operations that have no entry get a mechanical cleanup of Microsoft's title.
 - `scripts/` regenerates everything: `fetch.py` (stdlib only), then `catalogue.py`, then `oas.py`. `pac_extract.py` is separate: it mines the Power Platform CLI's own client and diffs it against the spec, and never writes the spec itself.
+
+**4. The Terraform provider's client**, `microsoft/terraform-provider-power-platform`. A third party's working
+client: the weakest warrant here, and sometimes the only witness. Content sourced from it carries
+`x-source: provider` and never `x-probe-verified` — it is evidence that an operation *exists and is used*, and
+says nothing about what the service returns.
+
+Read the grades as ranking **warrant**, not usefulness. A wire observation is the strongest evidence that a claim
+holds. It is not the richest source: probing asks what the service will answer, a vendor SDK says what the vendor
+models, and a working third-party client is the only thing that shows what an operation looks like when somebody
+uses it in anger. The seven connection and governance operations here came in at `provider` and are the only
+reason anyone knows that a connection is created by `PUT` to a client-chosen id, that `201` against `200` is all
+that separates a create from a replace, or that a redundant `$filter` is required anyway. `x-source: provider`
+does not mean "we could not check this properly".
 
 ## Notes
 
@@ -66,7 +79,7 @@ Three sources, in descending order of authority. Where they disagree the higher 
 
 The tokens the recorded clients presented also settle authentication: the audience is `https://api.powerplatform.com` on all three hosts, and the 87 granular delegated permissions seen in real tokens are listed under `x-delegated-scopes` on the security scheme. Which scope each operation requires is *not* recorded there — a token shows what was granted, not what was needed.
 
-**2. `Microsoft.PowerPlatform.Management`**, the Kiota-generated client shipped inside the Power Platform CLI (2.11.2), mined by `scripts/pac_extract.py`. Kiota generates from OpenAPI, so this assembly and the Learn pages are two machine projections of the same internal document — and the client is much the less lossy one, because it carries RFC 6570 URL templates, request and response types, discriminated unions and enum members rather than prose tables. It carries no descriptions at all, though: decompilation strips XML doc comments, so it can say what the shape is and never what it means. Content sourced only from it carries `x-source: pac-cli` and never `x-probe-verified`: a shipped client is strong structural evidence, but the build can be older than the service. **6 operations** and **59 schemas** are marked this way.
+**2. `Microsoft.PowerPlatform.Management`**, the Kiota-generated client, mined by `scripts/pac_extract.py` from **2.0.3503.299** on nuget.org — not the build bundled in the `pac` CLI, which is two releases behind and predates macro regions entirely, so a negative from it is blindness rather than evidence (`info.x-source-builds` records which build these claims rest on). Kiota generates from OpenAPI, so this assembly and the Learn pages are two machine projections of the same internal document — and the client is much the less lossy one, because it carries RFC 6570 URL templates, request and response types, discriminated unions and enum members rather than prose tables. It carries no descriptions at all, though: decompilation strips XML doc comments, so it can say what the shape is and never what it means. Content sourced only from it carries `x-source: pac-cli` and never `x-probe-verified`: a shipped client is strong structural evidence, but the build can be older than the service. **6 operations** and **59 schemas** are marked this way.
 
 **3. The docs mirror** in `docs/`, parsed by `oas.py`. Everything not marked otherwise comes from here, and that is still most of the file. Treat the unmarked majority as a map, not a contract.
 

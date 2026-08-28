@@ -12,6 +12,15 @@
   "adminApplications_unregister": [
    "bapi"
   ],
+  "allowedConsentPlans_delete": [
+   "bapi"
+  ],
+  "allowedConsentPlans_get": [
+   "bapi"
+  ],
+  "allowedConsentPlans_post": [
+   "bapi"
+  ],
   "analysis_create": [
    "advisor"
   ],
@@ -47,6 +56,9 @@
   ],
   "analytics_listAdvisorConversations": [
    "ppapi"
+  ],
+  "apiPolicies_get": [
+   "bapi"
   ],
   "appInsightsConfiguration_read": [
    "copilot"
@@ -250,6 +262,12 @@
   "datalakeFolders_list": [
    "dataverse"
   ],
+  "deletedEnvironmentsRecover_post": [
+   "bapi"
+  ],
+  "deletedEnvironments_get": [
+   "bapi"
+  ],
   "discovery_listInstances": [
    "dataverse"
   ],
@@ -335,6 +353,15 @@
    "bapi"
   ],
   "environmentGroups_update": [
+   "bapi"
+  ],
+  "environmentKeywordssharepointform_delete": [
+   "bapi"
+  ],
+  "environmentKeywordssharepointform_get": [
+   "bapi"
+  ],
+  "environmentKeywordssharepointform_put": [
    "bapi"
   ],
   "environmentRoleAssignments_addApplicationUser": [
@@ -499,6 +526,42 @@
   "environmentmanagement_updateEnvironmentManagementSettings": [
    "ppapi"
   ],
+  "environmentsApiPolicies_delete": [
+   "bapi"
+  ],
+  "environmentsApiPolicies_get": [
+   "bapi"
+  ],
+  "environmentsApiPolicies_put": [
+   "bapi"
+  ],
+  "environmentsBackups_delete": [
+   "bapi"
+  ],
+  "environmentsBackups_get": [
+   "bapi"
+  ],
+  "environmentsBackups_post": [
+   "bapi"
+  ],
+  "environmentsCopyTo_post": [
+   "bapi"
+  ],
+  "environmentsReset_post": [
+   "bapi"
+  ],
+  "environmentsRestoreTo_post": [
+   "bapi"
+  ],
+  "environmentsUnlock_post": [
+   "bapi"
+  ],
+  "environmentsUpdateProtectionStatus_post": [
+   "bapi"
+  ],
+  "environmentsValidateDelete_post": [
+   "bapi"
+  ],
   "environments_create": [
    "bapi"
   ],
@@ -534,6 +597,9 @@
   "environments_validateDetails": [
    "bapi"
   ],
+  "exportServicePlans_post": [
+   "bapi"
+  ],
   "fabric_workspaces_list": [
    "athena"
   ],
@@ -558,6 +624,9 @@
   ],
   "gateways_list": [
    "powerapps"
+  ],
+  "getConsumedQuota_post": [
+   "bapi"
   ],
   "governance_createCrossTenantConnectionReport": [
    "ppapi"
@@ -817,6 +886,18 @@
   "linkable_tables_relationships_list": [
    "athena"
   ],
+  "locationsGenerateProtectionKey_post": [
+   "bapi"
+  ],
+  "locationsImportProtectionKey_post": [
+   "bapi"
+  ],
+  "locationsLockAllEnvironments_post": [
+   "bapi"
+  ],
+  "locationsProtectionKeys_get": [
+   "bapi"
+  ],
   "locations_list": [
    "bapi"
   ],
@@ -879,6 +960,39 @@
   ],
   "organizations_list": [
    "admin"
+  ],
+  "policiesPolicyconnectorconfigurations_delete": [
+   "bapi"
+  ],
+  "policiesPolicyconnectorconfigurations_get": [
+   "bapi"
+  ],
+  "policiesPolicyconnectorconfigurations_patch": [
+   "bapi"
+  ],
+  "policiesPolicyconnectorconfigurations_post": [
+   "bapi"
+  ],
+  "policiesUrlPatterns_delete": [
+   "bapi"
+  ],
+  "policiesUrlPatterns_get": [
+   "bapi"
+  ],
+  "policiesUrlPatterns_post": [
+   "bapi"
+  ],
+  "policies_delete": [
+   "bapi"
+  ],
+  "policies_get": [
+   "bapi"
+  ],
+  "policies_patch": [
+   "bapi"
+  ],
+  "policies_post": [
+   "bapi"
   ],
   "powerapps_enroll": [
    "ppapi"
@@ -1045,6 +1159,12 @@
   "powerpages_uploadCertificate": [
    "ppapi"
   ],
+  "protectionKeysActivate_post": [
+   "bapi"
+  ],
+  "protectionKeysactive_get": [
+   "bapi"
+  ],
   "publishers_create": [
    "dataverse"
   ],
@@ -1147,6 +1267,9 @@
   "tenantCapacity_read": [
    "licensing"
   ],
+  "tenantIsolationPolicyOperations_get": [
+   "bapi"
+  ],
   "tenantIsolation_createOrUpdate": [
    "bapi"
   ],
@@ -1176,6 +1299,15 @@
   ],
   "trials_readDatesOnly": [
    "licensing"
+  ],
+  "urlPatterns_delete": [
+   "bapi"
+  ],
+  "urlPatterns_get": [
+   "bapi"
+  ],
+  "urlPatterns_post": [
+   "bapi"
   ],
   "usermanagement_applyAdminRole": [
    "ppapi"
@@ -1340,6 +1472,9 @@
   "Connector Metadata": [
    "bapi"
   ],
+  "Consent Plans": [
+   "bapi"
+  ],
   "Copilot Agent": [
    "ppapi"
   ],
@@ -1355,6 +1490,9 @@
   "Currency Allocation": [
    "licensing",
    "ppapi"
+  ],
+  "Customer-Managed Keys": [
+   "bapi"
   ],
   "DLP Policies": [
    "bapi"
@@ -1387,6 +1525,9 @@
   "Environment": [
    "powerapps",
    "ppapi"
+  ],
+  "Environment Backups": [
+   "bapi"
   ],
   "Environment Group": [
    "ppapi"
@@ -1513,6 +1654,12 @@
   ],
   "Service Root": [
    "licensing"
+  ],
+  "SharePoint Form Environment": [
+   "bapi"
+  ],
+  "Soft-Deleted Environments": [
+   "bapi"
   ],
   "Solution Import": [
    "dataverse"

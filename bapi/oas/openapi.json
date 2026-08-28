@@ -49,16 +49,36 @@
  ],
  "tags": [
   {
-   "name": "Environments",
-   "description": "Environment lifecycle on the admin scope: list, read, create, update, delete, SKU changes, Dataverse provisioning and pre-flight validation."
+   "name": "Admin Applications",
+   "description": "Registration of service principals as Power Platform admin management applications."
   },
   {
-   "name": "Managed Environments",
-   "description": "The governance configuration that turns Managed Environments on or off for an environment."
+   "name": "Connector Metadata",
+   "description": "Static governance metadata about connectors: which cannot be blocked and which are virtual."
+  },
+  {
+   "name": "Consent Plans",
+   "description": "Which self-service licence plans users may sign themselves up for. Blocking a plan here is how a tenant turns off self-service acquisition of it."
+  },
+  {
+   "name": "Country Opt-In Defaults",
+   "description": "Static per-country defaults for the optional-data-collection consent prompt the first-party web clients show."
+  },
+  {
+   "name": "Customer-Managed Keys",
+   "description": "Encrypting a tenant with a key it holds in Azure Key Vault rather than the platform key. Rotation is a sequence, not a setting: import or generate a key, lock every environment in the location, activate the key, then unlock each environment onto it."
+  },
+  {
+   "name": "DLP Policies",
+   "description": "Data-loss-prevention (connector classification) policies, governance v2 surface."
   },
   {
    "name": "Enterprise Policies",
    "description": "Linking Azure-side enterprise policies (VNet injection, customer-managed keys, identity) to environments."
+  },
+  {
+   "name": "Environment Backups",
+   "description": "Backups an environment keeps, and the copy, restore and reset operations that use them. A copy or a restore writes over a *target* environment, so both name two environments."
   },
   {
    "name": "Environment Groups",
@@ -69,6 +89,34 @@
    "description": "Admin-scope user and application-user membership inside an environment. Applies only to environments without Dataverse: once an organization is linked, every operation here is refused with `LinkedEnvironmentForbiddenOperation` and membership is managed through Dataverse security roles."
   },
   {
+   "name": "Environments",
+   "description": "Environment lifecycle on the admin scope: list, read, create, update, delete, SKU changes, Dataverse provisioning and pre-flight validation."
+  },
+  {
+   "name": "Feature Gates",
+   "description": "Microsoft's internal service-rollout flags, as they resolve for one directory principal. Diagnostic only: the names are undocumented, unstable, and not a contract."
+  },
+  {
+   "name": "Lifecycle Operations",
+   "description": "Polling of asynchronous operations through the absolute URL a 202 hands back in `Location` or `Operation-Location`. BAPI runs at most one lifecycle operation per environment; every other mutation is refused with 409 until it finishes."
+  },
+  {
+   "name": "Locations",
+   "description": "Geographic locations and the currencies, languages and environment templates available in each."
+  },
+  {
+   "name": "Managed Environments",
+   "description": "The governance configuration that turns Managed Environments on or off for an environment."
+  },
+  {
+   "name": "SharePoint Form Environment",
+   "description": "Which environment SharePoint form customisation targets. One tenant-wide setting, addressed by the literal keyword `~sharepointform`."
+  },
+  {
+   "name": "Soft-Deleted Environments",
+   "description": "Environments inside the window where a delete can still be undone."
+  },
+  {
    "name": "Tenant",
    "description": "Tenant metadata and tenant-wide settings."
   },
@@ -77,39 +125,76 @@
    "description": "The tenant isolation policy controlling cross-tenant connections."
   },
   {
-   "name": "DLP Policies",
-   "description": "Data-loss-prevention (connector classification) policies, governance v2 surface."
-  },
-  {
-   "name": "Connector Metadata",
-   "description": "Static governance metadata about connectors: which cannot be blocked and which are virtual."
-  },
-  {
-   "name": "Locations",
-   "description": "Geographic locations and the currencies, languages and environment templates available in each."
-  },
-  {
-   "name": "Admin Applications",
-   "description": "Registration of service principals as Power Platform admin management applications."
-  },
-  {
-   "name": "Lifecycle Operations",
-   "description": "Polling of asynchronous operations through the absolute URL a 202 hands back in `Location` or `Operation-Location`. BAPI runs at most one lifecycle operation per environment; every other mutation is refused with 409 until it finishes."
-  },
-  {
    "name": "Tenant-to-Tenant Migrations",
    "description": "Migration of an environment from one Entra tenant to another. Only the read endpoint is described here; the operations that start and drive a migration are not."
-  },
-  {
-   "name": "Country Opt-In Defaults",
-   "description": "Static per-country defaults for the optional-data-collection consent prompt the first-party web clients show."
-  },
-  {
-   "name": "Feature Gates",
-   "description": "Microsoft's internal service-rollout flags, as they resolve for one directory principal. Diagnostic only: the names are undocumented, unstable, and not a contract."
   }
  ],
  "paths": {
+  "/providers/Microsoft.BusinessAppPlatform/adminApplications": {
+   "get": {
+    "operationId": "adminApplications_list",
+    "tags": [
+     "Admin Applications"
+    ],
+    "summary": "List",
+    "description": "Lists every service principal registered as an admin management application in the tenant. It is the only way to enumerate registrations, since reading one requires knowing its client id already.",
+    "x-provider-unsourced": true,
+    "x-probe-verified": true,
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-10-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The registered applications, each carrying only its `applicationId`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AdminManagementApplicationList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "The request was rejected before anything happened; `error.code` names the specific rejection and `error.message` frequently enumerates the accepted values.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/providers/Microsoft.BusinessAppPlatform/adminApplications/{clientId}": {
    "get": {
     "operationId": "adminApplications_get",
@@ -326,6 +411,52 @@
      }
     },
     "description": "Revokes a service principal's admin management application registration, ending its unattended access to the admin APIs."
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/countryDefaultOptIn": {
+   "get": {
+    "operationId": "countryDefaultOptIn_list",
+    "tags": [
+     "Country Opt-In Defaults"
+    ],
+    "summary": "List",
+    "description": "Returns the per-country default for the optional-data-collection consent prompt, for every country the platform knows. Static reference data: it depends on the country, not on the tenant or the caller, and the maker portal reads it to decide whether to show the prompt at all and how to pre-set it.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The version the maker portal sends. This surface has not changed shape across versions."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every country, with its default.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CountryDefaultOptInList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
    }
   },
   "/providers/Microsoft.BusinessAppPlatform/environmentGroups": {
@@ -893,6 +1024,108 @@
     "x-probe-verified": true
    }
   },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentId}": {
+   "get": {
+    "operationId": "environments_getMakerScope",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Read (Maker Scope)",
+    "description": "Reads one environment as the calling user, without requiring an admin role. `environmentId` also accepts the alias `~default`, which resolves to the tenant's default environment without the caller having to know its id \u2014 the maker portal's normal entry point.\n\nWhat comes back depends on `api-version` more than on anything else here, so pin it: the same environment answers 2020-08-01, 2020-10-01-alpha and 2021-04-01 with different property sets. `properties.permissions` is the one thing this scope has that the admin scope does not, and it arrives only under `$expand`.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Environment id, or the literal `~default` for the tenant's default environment.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01",
+       "x-notes": [
+        {
+         "note": "`2020-10-01-alpha` is accepted on this route despite not appearing in the service's own list of versions.",
+         "source": "live"
+        }
+       ]
+      },
+      "description": "2020-08-01, 2020-10-01-alpha and 2021-04-01 each answer this route with a different property set, so pin one."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`properties.permissions` adds the caller's permission map; `properties/copilotPolicies` adds the Copilot data-movement consents. Neither is returned otherwise.",
+      "example": "properties.permissions"
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Takes the form `minimumAppPermission eq 'CanEdit'`, paired with `$expand=properties.permissions`.",
+      "example": "minimumAppPermission eq 'CanEdit'"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environment, under the maker-scope `id` and `type`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Environment"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller has no access to this environment. The maker scope does not fall back to a 404, so a 403 here does not tell you whether the environment exists.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`EnvironmentNotFound` \u2014 no environment with this id is visible to the caller.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
   "/providers/Microsoft.BusinessAppPlatform/environments/{environmentId}/enterprisePolicies/{environmentType}/{action}": {
    "post": {
     "operationId": "enterprisePolicies_linkUnlink",
@@ -1247,6 +1480,435 @@
      },
      "409": {
       "description": "The environment already has a Dataverse organization, or another lifecycle operation is in flight.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentName}/backups": {
+   "post": {
+    "operationId": "environmentsBackups_post",
+    "tags": [
+     "Environment Backups"
+    ],
+    "summary": "Create",
+    "description": "Takes a manual backup, in addition to the automatic ones the platform keeps.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "get": {
+    "operationId": "environmentsBackups_get",
+    "tags": [
+     "Environment Backups"
+    ],
+    "summary": "List",
+    "description": "Lists the restore points held for an environment.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentName}/backups/{backupId}": {
+   "delete": {
+    "operationId": "environmentsBackups_delete",
+    "tags": [
+     "Environment Backups"
+    ],
+    "summary": "Delete",
+    "description": "Discards one backup.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "backupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The backup's id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentName}/copyTo": {
+   "post": {
+    "operationId": "environmentsCopyTo_post",
+    "tags": [
+     "Environment Backups"
+    ],
+    "summary": "Copy",
+    "description": "Copies an environment over a target environment, replacing it. The body names the target and whether audit data and security groups come with it.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentName}/reset": {
+   "post": {
+    "operationId": "environmentsReset_post",
+    "tags": [
+     "Environment Backups"
+    ],
+    "summary": "Reset",
+    "description": "Empties an environment back to a bare Dataverse instance, keeping the environment itself.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentName}/restoreTo": {
+   "post": {
+    "operationId": "environmentsRestoreTo_post",
+    "tags": [
+     "Environment Backups"
+    ],
+    "summary": "Restore",
+    "description": "Restores an environment from one of its backups onto a target environment.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentName}/unlock": {
+   "post": {
+    "operationId": "environmentsUnlock_post",
+    "tags": [
+     "Customer-Managed Keys"
+    ],
+    "summary": "Unlock",
+    "description": "Unlocks an environment locked by a tenant key change, bringing it onto the active key.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentName}/updateProtectionStatus": {
+   "post": {
+    "operationId": "environmentsUpdateProtectionStatus_post",
+    "tags": [
+     "Customer-Managed Keys"
+    ],
+    "summary": "Protection Status Set",
+    "description": "Moves an environment between the platform-managed key and the tenant customer-managed key.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-10-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-10-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/lifecycleOperations": {
+   "get": {
+    "operationId": "lifecycleOperations_list",
+    "tags": [
+     "Lifecycle Operations"
+    ],
+    "summary": "List",
+    "description": "Lists lifecycle operations, newest first. Filtering by environment is effectively mandatory in practice \u2014 this is how the admin center renders an environment's history tab.\n\nUnlike the single-operation read, the list is the *record* of what has happened to an environment: completed operations stay here indefinitely, including operations raised by the platform itself rather than by a user, which appear with `requestedBy.type: Service`. It also surfaces operations no client ever polled \u2014 a Managed Environments enable, for instance, raises `EnableGovernanceConfiguration` and then a separate `UpdateGovernanceConfiguration` attributed to `SYSTEM`.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-05-01"
+      },
+      "description": "The version the admin center sends for this operation."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData filter. `environment eq '{environmentId}'` scopes the list to one environment's history.",
+      "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching operations, newest first, each rendered exactly as the single-operation read renders it \u2014 `stages` included.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LifecycleOperationList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "The request was rejected before anything happened; `error.code` names the specific rejection.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
       "content": {
        "application/json": {
         "schema": {
@@ -1641,6 +2303,267 @@
     "description": "Lists the base languages a new Dataverse organization in this location may use, as LCIDs. Like the currency, the base language is fixed at provisioning time; additional languages are enabled inside Dataverse afterwards."
    }
   },
+  "/providers/Microsoft.BusinessAppPlatform/locations/{location}/generateProtectionKey": {
+   "post": {
+    "operationId": "locationsGenerateProtectionKey_post",
+    "tags": [
+     "Customer-Managed Keys"
+    ],
+    "summary": "Key Generate",
+    "description": "Asks the service to generate a tenant protection key in a location.",
+    "parameters": [
+     {
+      "name": "location",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The BAP location (a geography name such as `europe`), not an Azure region."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/locations/{location}/importProtectionKey": {
+   "post": {
+    "operationId": "locationsImportProtectionKey_post",
+    "tags": [
+     "Customer-Managed Keys"
+    ],
+    "summary": "Key Import",
+    "description": "Registers a key the tenant already holds in Azure Key Vault as a candidate protection key.",
+    "parameters": [
+     {
+      "name": "location",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The BAP location (a geography name such as `europe`), not an Azure region."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/locations/{location}/lockAllEnvironments": {
+   "post": {
+    "operationId": "locationsLockAllEnvironments_post",
+    "tags": [
+     "Customer-Managed Keys"
+    ],
+    "summary": "Lock All Environments",
+    "description": "Locks every environment in a location, which a key rotation requires before a new key can be activated.",
+    "parameters": [
+     {
+      "name": "location",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The BAP location (a geography name such as `europe`), not an Azure region."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/locations/{location}/protectionKeys": {
+   "get": {
+    "operationId": "locationsProtectionKeys_get",
+    "tags": [
+     "Customer-Managed Keys"
+    ],
+    "summary": "Keys List",
+    "description": "Lists the protection keys available to the tenant in a location.",
+    "parameters": [
+     {
+      "name": "location",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The BAP location (a geography name such as `europe`), not an Azure region."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/locations/{location}/protectionKeys/{keyName}/activate": {
+   "post": {
+    "operationId": "protectionKeysActivate_post",
+    "tags": [
+     "Customer-Managed Keys"
+    ],
+    "summary": "Key Activate",
+    "description": "Makes one key the tenant active key. Environments must be locked first.",
+    "parameters": [
+     {
+      "name": "location",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The BAP location (a geography name such as `europe`), not an Azure region."
+     },
+     {
+      "name": "keyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The protection key's name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/locations/{location}/protectionKeys/~active": {
+   "get": {
+    "operationId": "protectionKeysactive_get",
+    "tags": [
+     "Customer-Managed Keys"
+    ],
+    "summary": "Active Key Read",
+    "description": "Reads the key currently active for the tenant in a location. `~active` is a literal alias, not an id.",
+    "parameters": [
+     {
+      "name": "location",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The BAP location (a geography name such as `europe`), not an Azure region."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
   "/providers/Microsoft.BusinessAppPlatform/locations/{location}/templates": {
    "get": {
     "operationId": "locations_listTemplates",
@@ -1720,6 +2643,351 @@
     },
     "description": "Lists the Dynamics 365 application templates installable into a new Dataverse organization in this location. Entries the tenant is not licensed for are returned with `isDisabled` true and a `disabledReason` rather than omitted.\n\nThe response shape depends on the api-version: 2021-04-01 and later group the templates into SKU buckets, while 2019-10-01 returns one flat `value` collection of the same items.",
     "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/objectIds/{objectId}/features": {
+   "get": {
+    "operationId": "features_list",
+    "tags": [
+     "Feature Gates"
+    ],
+    "summary": "List",
+    "description": "Lists the Power Platform feature gates currently enabled for a directory principal. Only enabled flags are returned, so membership in the list is the value \u2014 there is no flag to read false.\n\nThis is Microsoft's own rollout machinery, exposed rather than published: the flag names and descriptions are internal, change without notice, and are not a contract. It is useful for explaining why a tenant sees behaviour another tenant does not, and for nothing else.\n\nThe response is large, on the order of a thousand entries.",
+    "x-notes": [
+     {
+      "note": "The resource ids come back under the `Microsoft.PowerApps` provider even though the request goes to a `Microsoft.BusinessAppPlatform` path.",
+      "source": "live"
+     }
+    ],
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "objectId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "Entra object id of the principal whose gates to evaluate. The maker portal sends the signed-in user's own object id.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every gate enabled for the principal.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FeatureList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/allowedConsentPlans": {
+   "delete": {
+    "operationId": "allowedConsentPlans_delete",
+    "tags": [
+     "Consent Plans"
+    ],
+    "summary": "Remove",
+    "description": "Blocks a plan type, which is how self-service sign-up is turned off for it.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "post": {
+    "operationId": "allowedConsentPlans_post",
+    "tags": [
+     "Consent Plans"
+    ],
+    "summary": "Add",
+    "description": "Re-allows a plan type.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "get": {
+    "operationId": "allowedConsentPlans_get",
+    "tags": [
+     "Consent Plans"
+    ],
+    "summary": "List",
+    "description": "Lists which self-service licence plans users may consent to.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/apiPolicies": {
+   "get": {
+    "operationId": "apiPolicies_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Legacy List",
+    "description": "Lists tenant DLP policies in the pre-Governance representation.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/deletedEnvironments": {
+   "get": {
+    "operationId": "deletedEnvironments_get",
+    "tags": [
+     "Soft-Deleted Environments"
+    ],
+    "summary": "List",
+    "description": "Lists environments deleted but still inside the recovery window.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/deletedEnvironments/{environmentName}/recover": {
+   "post": {
+    "operationId": "deletedEnvironmentsRecover_post",
+    "tags": [
+     "Soft-Deleted Environments"
+    ],
+    "summary": "Recover",
+    "description": "Restores a soft-deleted environment before its recovery window closes.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2019-05-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2019-05-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environmentKeywords/~sharepointform": {
+   "get": {
+    "operationId": "environmentKeywordssharepointform_get",
+    "tags": [
+     "SharePoint Form Environment"
+    ],
+    "summary": "Read",
+    "description": "Reads which environment SharePoint form customisation targets.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "put": {
+    "operationId": "environmentKeywordssharepointform_put",
+    "tags": [
+     "SharePoint Form Environment"
+    ],
+    "summary": "Set",
+    "description": "Points SharePoint form customisation at an environment.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "delete": {
+    "operationId": "environmentKeywordssharepointform_delete",
+    "tags": [
+     "SharePoint Form Environment"
+    ],
+    "summary": "Reset",
+    "description": "Returns it to the default environment.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
    }
   },
   "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments": {
@@ -2317,6 +3585,81 @@
     }
    }
   },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}/lastActivity": {
+   "get": {
+    "operationId": "environments_getLastActivity",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Last Activity Read",
+    "description": "Reads the environment's activity timestamps on their own, without pulling the whole environment down. The same object is available inline on an environment read under `properties.lastActivity`, so this endpoint is worth using only when activity is all you want \u2014 for an inactivity sweep across a large tenant, for instance.\n\nRead `lastActivityTime`, not `lastUpdatedTime`: the latter is when the platform last recomputed the figure and moves even on an environment nobody has touched in a year.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The rolled-up figure and the per-service breakdown behind it.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentLastActivity"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`EnvironmentNotFound` \u2014 no environment with this id.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
   "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}/modifyRoleAssignments": {
    "post": {
     "operationId": "environmentRoleAssignments_modify",
@@ -2609,6 +3952,243 @@
     "x-probe-verified": true
    }
   },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentName}/apiPolicies/{policyName}": {
+   "get": {
+    "operationId": "environmentsApiPolicies_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Legacy Read (Environment)",
+    "description": "Reads one environment-scoped DLP policy.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "put": {
+    "operationId": "environmentsApiPolicies_put",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Legacy Replace (Environment)",
+    "description": "Replaces one environment-scoped policy whole.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "delete": {
+    "operationId": "environmentsApiPolicies_delete",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Legacy Delete (Environment)",
+    "description": "Deletes one environment-scoped DLP policy.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentName}/validateDelete": {
+   "post": {
+    "operationId": "environmentsValidateDelete_post",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Delete Validate",
+    "description": "Asks whether an environment can be deleted and what would block it, without deleting it.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2018-01-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2018-01-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/exportServicePlans": {
+   "post": {
+    "operationId": "exportServicePlans_post",
+    "tags": [
+     "Tenant"
+    ],
+    "summary": "Service Plans Export",
+    "description": "Starts an export of per-user licence assignments across the tenant.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/getConsumedQuota": {
+   "post": {
+    "operationId": "getConsumedQuota_post",
+    "tags": [
+     "Tenant"
+    ],
+    "summary": "Consumed Quota Read",
+    "description": "Reads how much of the tenant storage and add-on quota is in use.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
   "/providers/Microsoft.BusinessAppPlatform/scopes/admin/updateTenantSettings": {
    "post": {
     "operationId": "tenantSettings_update",
@@ -2681,6 +4261,74 @@
       }
      }
     }
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/t2tmigrations/{migrationId}/get": {
+   "get": {
+    "operationId": "tenantToTenantMigrations_get",
+    "tags": [
+     "Tenant-to-Tenant Migrations"
+    ],
+    "summary": "Read",
+    "description": "Reads one tenant-to-tenant migration. The trailing `/get` is part of the path, not a mistake \u2014 the verb is spelled out as a path segment even though the method is already GET.\n\nThe identifier is a migration scoped to the calling tenant, and one that does not resolve is reported as not found. The success body is not described here.\n\nMigrations are started elsewhere; the matching `MigrateTenantToTenant` and `PrepareTenantToTenant` lifecycle operation types appear in every environment's `lifecycleOperationsEnforcement`.",
+    "x-provider-unsourced": true,
+    "parameters": [
+     {
+      "name": "migrationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The migration's identifier, resolved within the calling tenant \u2014 the 400 names both the identifier and the tenant it was looked up in. Its form, GUID or otherwise, is not established.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-04-01"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The migration. No schema is described for this response."
+     },
+     "400": {
+      "description": "`BadRequest` \u2014 \"Tenant To Tenant Migration {migrationId} was not found in Tenant {tenantId}.\" Note that an unknown migration is a 400, not a 404, and that the message discloses the caller's own tenant id.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
    }
   },
   "/providers/Microsoft.BusinessAppPlatform/tenant": {
@@ -2955,6 +4603,504 @@
     "x-probe-verified": true
    }
   },
+  "/providers/PowerPlatform.Governance/v1/policies": {
+   "get": {
+    "operationId": "policies_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "List",
+    "description": "Lists tenant DLP policies. Takes `$top`, which the module pins at 50.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "post": {
+    "operationId": "policies_post",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Create",
+    "description": "Creates a DLP policy.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/policies/{policyName}": {
+   "delete": {
+    "operationId": "policies_delete",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Delete",
+    "description": "Deletes one DLP policy.",
+    "parameters": [
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "patch": {
+    "operationId": "policies_patch",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Update",
+    "description": "Updates one DLP policy.",
+    "parameters": [
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/tenants/{tenantId}/policies/{policyName}/policyconnectorconfigurations": {
+   "get": {
+    "operationId": "policiesPolicyconnectorconfigurations_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Connector Configurations Read",
+    "description": "Reads the per-connector endpoint rules attached to a policy.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "post": {
+    "operationId": "policiesPolicyconnectorconfigurations_post",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Connector Configurations Create",
+    "description": "Attaches per-connector endpoint rules to a policy.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "delete": {
+    "operationId": "policiesPolicyconnectorconfigurations_delete",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Connector Configurations Delete",
+    "description": "Removes the per-connector endpoint rules.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "patch": {
+    "operationId": "policiesPolicyconnectorconfigurations_patch",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Connector Configurations Update",
+    "description": "Updates the per-connector endpoint rules.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/tenants/{tenantId}/policies/{policyName}/urlPatterns": {
+   "get": {
+    "operationId": "policiesUrlPatterns_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "URL Patterns Read",
+    "description": "Reads the URL allow and deny patterns a policy enforces.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "post": {
+    "operationId": "policiesUrlPatterns_post",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "URL Patterns Create",
+    "description": "Sets the URL patterns a policy enforces.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "delete": {
+    "operationId": "policiesUrlPatterns_delete",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "URL Patterns Delete",
+    "description": "Removes a policy URL patterns.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "policyName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The policy's name, which is its GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
   "/providers/PowerPlatform.Governance/v1/tenants/{tenantId}/tenantIsolationPolicy": {
    "get": {
     "operationId": "tenantIsolation_get",
@@ -3123,6 +5269,142 @@
       }
      }
     }
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/tenants/{tenantId}/tenantIsolationPolicy/operations/{operationId}": {
+   "get": {
+    "operationId": "tenantIsolationPolicyOperations_get",
+    "tags": [
+     "Tenant Isolation"
+    ],
+    "summary": "Operation Status",
+    "description": "Polls a tenant isolation policy change, which is applied asynchronously.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "operationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The asynchronous operation's id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2020-06-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2020-06-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/urlPatterns": {
+   "get": {
+    "operationId": "urlPatterns_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Tenant URL Patterns Read",
+    "description": "Reads the tenant-wide URL patterns.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "post": {
+    "operationId": "urlPatterns_post",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Tenant URL Patterns Create",
+    "description": "Sets the tenant-wide URL patterns.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "delete": {
+    "operationId": "urlPatterns_delete",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Tenant URL Patterns Delete",
+    "description": "Removes the tenant-wide URL patterns.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Microsoft's admin module sends `2016-11-01` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The request succeeded."
+     }
+    },
+    "x-source": "ps-admin"
    }
   },
   "/providers/PowerPlatform.Governance/v2/policies": {
@@ -3466,510 +5748,6 @@
      }
     },
     "description": "Deletes a DLP policy. Immediate and unconditional \u2014 there is no lifecycle operation, no soft delete, and `etag` is not honoured as a precondition.",
-    "x-probe-verified": true
-   }
-  },
-  "/providers/Microsoft.BusinessAppPlatform/adminApplications": {
-   "get": {
-    "operationId": "adminApplications_list",
-    "tags": [
-     "Admin Applications"
-    ],
-    "summary": "List",
-    "description": "Lists every service principal registered as an admin management application in the tenant. It is the only way to enumerate registrations, since reading one requires knowing its client id already.",
-    "x-provider-unsourced": true,
-    "x-probe-verified": true,
-    "parameters": [
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "default": "2020-10-01"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The registered applications, each carrying only its `applicationId`.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/AdminManagementApplicationList"
-        }
-       }
-      }
-     },
-     "400": {
-      "description": "The request was rejected before anything happened; `error.code` names the specific rejection and `error.message` frequently enumerates the accepted values.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "403": {
-      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     }
-    }
-   }
-  },
-  "/providers/Microsoft.BusinessAppPlatform/lifecycleOperations": {
-   "get": {
-    "operationId": "lifecycleOperations_list",
-    "tags": [
-     "Lifecycle Operations"
-    ],
-    "summary": "List",
-    "description": "Lists lifecycle operations, newest first. Filtering by environment is effectively mandatory in practice \u2014 this is how the admin center renders an environment's history tab.\n\nUnlike the single-operation read, the list is the *record* of what has happened to an environment: completed operations stay here indefinitely, including operations raised by the platform itself rather than by a user, which appear with `requestedBy.type: Service`. It also surfaces operations no client ever polled \u2014 a Managed Environments enable, for instance, raises `EnableGovernanceConfiguration` and then a separate `UpdateGovernanceConfiguration` attributed to `SYSTEM`.",
-    "x-provider-unsourced": true,
-    "parameters": [
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "default": "2024-05-01"
-      },
-      "description": "The version the admin center sends for this operation."
-     },
-     {
-      "name": "$filter",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "type": "string"
-      },
-      "description": "OData filter. `environment eq '{environmentId}'` scopes the list to one environment's history.",
-      "example": "environment eq '00000000-0000-0000-0000-000000000000'"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The matching operations, newest first, each rendered exactly as the single-operation read renders it \u2014 `stages` included.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/LifecycleOperationList"
-        }
-       }
-      }
-     },
-     "400": {
-      "description": "The request was rejected before anything happened; `error.code` names the specific rejection.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "403": {
-      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     }
-    },
-    "x-probe-verified": true
-   }
-  },
-  "/providers/Microsoft.BusinessAppPlatform/environments/{environmentId}": {
-   "get": {
-    "operationId": "environments_getMakerScope",
-    "tags": [
-     "Environments"
-    ],
-    "summary": "Read (Maker Scope)",
-    "description": "Reads one environment as the calling user, without requiring an admin role. `environmentId` also accepts the alias `~default`, which resolves to the tenant's default environment without the caller having to know its id \u2014 the maker portal's normal entry point.\n\nWhat comes back depends on `api-version` more than on anything else here, so pin it: the same environment answers 2020-08-01, 2020-10-01-alpha and 2021-04-01 with different property sets. `properties.permissions` is the one thing this scope has that the admin scope does not, and it arrives only under `$expand`.",
-    "x-provider-unsourced": true,
-    "parameters": [
-     {
-      "name": "environmentId",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string"
-      },
-      "description": "Environment id, or the literal `~default` for the tenant's default environment.",
-      "example": "00000000-0000-0000-0000-000000000000"
-     },
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "default": "2021-04-01",
-       "x-notes": [
-        {
-         "note": "`2020-10-01-alpha` is accepted on this route despite not appearing in the service's own list of versions.",
-         "source": "live"
-        }
-       ]
-      },
-      "description": "2020-08-01, 2020-10-01-alpha and 2021-04-01 each answer this route with a different property set, so pin one."
-     },
-     {
-      "name": "$expand",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "type": "string"
-      },
-      "description": "`properties.permissions` adds the caller's permission map; `properties/copilotPolicies` adds the Copilot data-movement consents. Neither is returned otherwise.",
-      "example": "properties.permissions"
-     },
-     {
-      "name": "$filter",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "type": "string"
-      },
-      "description": "Takes the form `minimumAppPermission eq 'CanEdit'`, paired with `$expand=properties.permissions`.",
-      "example": "minimumAppPermission eq 'CanEdit'"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The environment, under the maker-scope `id` and `type`.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Environment"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "403": {
-      "description": "The caller has no access to this environment. The maker scope does not fall back to a 404, so a 403 here does not tell you whether the environment exists.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "404": {
-      "description": "`EnvironmentNotFound` \u2014 no environment with this id is visible to the caller.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     }
-    },
-    "x-probe-verified": true
-   }
-  },
-  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/{environmentId}/lastActivity": {
-   "get": {
-    "operationId": "environments_getLastActivity",
-    "tags": [
-     "Environments"
-    ],
-    "summary": "Last Activity Read",
-    "description": "Reads the environment's activity timestamps on their own, without pulling the whole environment down. The same object is available inline on an environment read under `properties.lastActivity`, so this endpoint is worth using only when activity is all you want \u2014 for an inactivity sweep across a large tenant, for instance.\n\nRead `lastActivityTime`, not `lastUpdatedTime`: the latter is when the platform last recomputed the figure and moves even on an environment nobody has touched in a year.",
-    "x-provider-unsourced": true,
-    "parameters": [
-     {
-      "name": "environmentId",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "format": "uuid"
-      },
-      "example": "00000000-0000-0000-0000-000000000000"
-     },
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "default": "2021-04-01"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The rolled-up figure and the per-service breakdown behind it.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/EnvironmentLastActivity"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "403": {
-      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "404": {
-      "description": "`EnvironmentNotFound` \u2014 no environment with this id.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     }
-    },
-    "x-probe-verified": true
-   }
-  },
-  "/providers/Microsoft.BusinessAppPlatform/t2tmigrations/{migrationId}/get": {
-   "get": {
-    "operationId": "tenantToTenantMigrations_get",
-    "tags": [
-     "Tenant-to-Tenant Migrations"
-    ],
-    "summary": "Read",
-    "description": "Reads one tenant-to-tenant migration. The trailing `/get` is part of the path, not a mistake \u2014 the verb is spelled out as a path segment even though the method is already GET.\n\nThe identifier is a migration scoped to the calling tenant, and one that does not resolve is reported as not found. The success body is not described here.\n\nMigrations are started elsewhere; the matching `MigrateTenantToTenant` and `PrepareTenantToTenant` lifecycle operation types appear in every environment's `lifecycleOperationsEnforcement`.",
-    "x-provider-unsourced": true,
-    "parameters": [
-     {
-      "name": "migrationId",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string"
-      },
-      "description": "The migration's identifier, resolved within the calling tenant \u2014 the 400 names both the identifier and the tenant it was looked up in. Its form, GUID or otherwise, is not established.",
-      "example": "00000000-0000-0000-0000-000000000000"
-     },
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "default": "2021-04-01"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The migration. No schema is described for this response."
-     },
-     "400": {
-      "description": "`BadRequest` \u2014 \"Tenant To Tenant Migration {migrationId} was not found in Tenant {tenantId}.\" Note that an unknown migration is a 400, not a 404, and that the message discloses the caller's own tenant id.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "403": {
-      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     }
-    },
-    "x-probe-verified": true
-   }
-  },
-  "/providers/Microsoft.BusinessAppPlatform/countryDefaultOptIn": {
-   "get": {
-    "operationId": "countryDefaultOptIn_list",
-    "tags": [
-     "Country Opt-In Defaults"
-    ],
-    "summary": "List",
-    "description": "Returns the per-country default for the optional-data-collection consent prompt, for every country the platform knows. Static reference data: it depends on the country, not on the tenant or the caller, and the maker portal reads it to decide whether to show the prompt at all and how to pre-set it.",
-    "x-provider-unsourced": true,
-    "parameters": [
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "default": "2016-11-01"
-      },
-      "description": "The version the maker portal sends. This surface has not changed shape across versions."
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Every country, with its default.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/CountryDefaultOptInList"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     }
-    },
-    "x-probe-verified": true
-   }
-  },
-  "/providers/Microsoft.BusinessAppPlatform/objectIds/{objectId}/features": {
-   "get": {
-    "operationId": "features_list",
-    "tags": [
-     "Feature Gates"
-    ],
-    "summary": "List",
-    "description": "Lists the Power Platform feature gates currently enabled for a directory principal. Only enabled flags are returned, so membership in the list is the value \u2014 there is no flag to read false.\n\nThis is Microsoft's own rollout machinery, exposed rather than published: the flag names and descriptions are internal, change without notice, and are not a contract. It is useful for explaining why a tenant sees behaviour another tenant does not, and for nothing else.\n\nThe response is large, on the order of a thousand entries.",
-    "x-notes": [
-     {
-      "note": "The resource ids come back under the `Microsoft.PowerApps` provider even though the request goes to a `Microsoft.BusinessAppPlatform` path.",
-      "source": "live"
-     }
-    ],
-    "x-provider-unsourced": true,
-    "parameters": [
-     {
-      "name": "objectId",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "format": "uuid"
-      },
-      "description": "Entra object id of the principal whose gates to evaluate. The maker portal sends the signed-in user's own object id.",
-      "example": "00000000-0000-0000-0000-000000000000"
-     },
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "default": "2019-05-01"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Every gate enabled for the principal.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/FeatureList"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "The bearer token is missing, expired, or not issued for the PowerApps service audience.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     },
-     "403": {
-      "description": "The caller is not a Power Platform admin, or is a registered admin management application calling a path it may not.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Error"
-        }
-       }
-      }
-     }
-    },
     "x-probe-verified": true
    }
   }

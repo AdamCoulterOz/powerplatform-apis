@@ -55,7 +55,9 @@ It authenticates through the logged-in `az` CLI. No tenant id is hardcoded: ids 
 - `api-version` defaults are per operation (2019-10-01 → 2023-06-01); the `PowerPlatform.Governance` paths take no api-version at all. The version is not always cosmetic: `locations/{location}/templates` returns a *different response shape* either side of 2021-04-01, and the environment PATCH is pinned to 2021-04-01 because newer versions turn Managed Environments on as a side effect.
 - Contracts live in the schema, not the prose: `enum` for every closed set observed, `format`/`pattern` for real constraints, `example` for id and hostname shapes, `default` on api-version.
 - `required` appears only where a request was actually rejected without the field. On responses it means nothing: BAPI omits members rather than nulling them, and which members appear varies with SKU, Dataverse linkage and `$expand`.
-- `x-probe-verified: true` marks what was confirmed live, by probing or by recorded first-party traffic. Its absence means provider-derived only.
+- `x-probe-verified: true` marks what was confirmed live, by probing or by recorded first-party traffic.
+- `x-source` records where non-probed content came from. **`ps-admin`** is Microsoft's own `Microsoft.PowerApps.Administration.PowerShell` module (2.0.99 on the PowerShell Gallery), which ships as readable script rather than a compiled assembly, so its route templates, HTTP methods and per-cmdlet `api-version` defaults are quoted rather than inferred. Like any client it is evidence that an operation *exists and is called*, and says nothing about what the service returns — so nothing sourced from it is `x-probe-verified`, and its response bodies are unmodelled rather than guessed.
+- Absence of both means provider-derived only.
 - Async mutations respond 202 with an absolute poll URL in `Location` (or, for `modifySku`, `Operation-Location`) rendering a `LifecycleOperation`; states run `NotStarted` → `Running` → `Succeeded`/`Failed`.
 
 ## Status

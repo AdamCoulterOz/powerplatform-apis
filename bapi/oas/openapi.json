@@ -6727,7 +6727,13 @@
      }
     },
     "description": "A page of environments. BAPI returns the whole tenant in one response: there is no continuation token or `nextLink`.",
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-notes": [
+     {
+      "note": "The admin environment list is not paged. Three responses carrying 409 environments each contained no continuation of any kind -- no `nextLink`, no `@odata.nextLink`, no continuation token. A client looping on either key never iterates. This is a property of the collection rather than of the tenant size, and it differs from sibling APIs: `Microsoft.ProcessSimple` run listings on the Flow host do page, using a bare `nextLink` that is absent rather than null when there is no next page. Observed in recorded traffic shipped as test fixtures with Microsoft's Employee Self-Service Agent Developer Kit: three admin environment-list responses of 409 environments each, captured against real tenants and redacted before publication.",
+      "source": "live"
+     }
+    ]
    },
    "EnvironmentProperties": {
     "type": "object",
@@ -6958,7 +6964,13 @@
      }
     },
     "description": "Everything about an environment other than its identity. Several members are projections that only materialise when named in `$expand`.",
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-notes": [
+     {
+      "note": "Optionality on this object is expressed by **absence, never by an explicit null** -- across 409 environments there was not one null. The commonly-missing members and how often: `description` absent on 352, `usedBy` on 331, `parentEnvironmentGroup` on 362, `linkedEnvironmentMetadata` on 397 of the environments without Dataverse, and `securityGroupId` on 271 of the 397 that do have it. A client must test for presence, not for null. `environmentType` was absent from every one of the 409, so although it is modelled here it should not be relied on from this route. Observed in recorded traffic shipped as test fixtures with Microsoft's Employee Self-Service Agent Developer Kit: three admin environment-list responses of 409 environments each, captured against real tenants and redacted before publication.",
+      "source": "live"
+     }
+    ]
    },
    "EnvironmentSettings": {
     "type": "object",
@@ -8196,7 +8208,13 @@
      }
     },
     "description": "Per-service regional base URLs for this environment. Clients should read the endpoint for a service from here rather than deriving it from the location, because the Power Virtual Agents endpoint is cluster-specific and differs between two environments in the same geo.",
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-notes": [
+     {
+      "note": "Read these, do not compose them. All seven keys were present and non-null on every one of 409 environments observed, but the regional host is **not** one substitution applied seven times. For a United States environment `microsoft.Flow` is `us.api.flow.microsoft.com` while Canada and France use the full geography name rather than a two-letter token, and `microsoft.ApiManagement` is `management.usa.azure-apihub.net` in lower case against `management.CANADA.` and `management.FRANCE.` in upper. A client deriving any of these from the environment's location will be right for some services in some geographies and wrong elsewhere. Observed in recorded traffic shipped as test fixtures with Microsoft's Employee Self-Service Agent Developer Kit: three admin environment-list responses of 409 environments each, captured against real tenants and redacted before publication.",
+      "source": "live"
+     }
+    ]
    },
    "RuntimeEnvironment": {
     "type": "object",

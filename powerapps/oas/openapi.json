@@ -51,12 +51,12 @@
    "description": "Canvas apps: the drag-and-drop apps makers build in Power Apps Studio. Model-driven apps are Dataverse solution components and are not served here."
   },
   {
-   "name": "Connector",
-   "description": "The connector catalogue \u2014 called 'apis' on the wire. What a maker in a given environment could connect to, with the licensing tier and capability metadata that DLP policies and licence checks are built on."
-  },
-  {
    "name": "Connection",
    "description": "Connection instances: a user's stored, authenticated binding to one connector in one environment. Where the connector catalogue says what could be used, these say what is."
+  },
+  {
+   "name": "Connector",
+   "description": "The connector catalogue \u2014 called 'apis' on the wire. What a maker in a given environment could connect to, with the licensing tier and capability metadata that DLP policies and licence checks are built on."
   },
   {
    "name": "Environment",
@@ -68,250 +68,6 @@
   }
  ],
  "paths": {
-  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps": {
-   "get": {
-    "operationId": "apps_listByEnvironment",
-    "tags": [
-     "Canvas App"
-    ],
-    "summary": "List (By Environment)",
-    "description": "Lists the canvas apps of one environment through the tenant admin scope, which returns every app in the environment regardless of who owns or has shared it.\n\nThe response is a single flat `value` array: there is no continuation token, `nextLink` or `@odata.*` envelope, and `$top` is accepted without changing it. The `$filter` and `$expand` grammar is the narrow app-specific one described on those parameters, not general OData \u2014 an unsupported `$filter` key is silently ignored rather than rejected, so a typo yields the unfiltered list.",
-    "parameters": [
-     {
-      "name": "environmentId",
-      "in": "path",
-      "required": true,
-      "description": "Environment id. This is the `name` of an environment resource, not its Dataverse organization id.",
-      "schema": {
-       "type": "string",
-       "format": "uuid",
-       "example": "00000000-0000-0000-0000-000000000000"
-      }
-     },
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": true,
-      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
-      "schema": {
-       "type": "string",
-       "default": "2023-06-01",
-       "enum": [
-        "2015-02-01",
-        "2015-03-01",
-        "2015-08-01",
-        "2016-01-01",
-        "2016-02-01",
-        "2016-04-01",
-        "2016-05-01",
-        "2016-07-01",
-        "2016-11-01",
-        "2017-02-01",
-        "2017-04-01",
-        "2017-05-01",
-        "2017-06-01",
-        "2017-07-01",
-        "2017-08-01",
-        "2018-10-01",
-        "2019-05-01",
-        "2020-02-01",
-        "2020-06-01",
-        "2020-07-01",
-        "2021-02-01",
-        "2022-11-01",
-        "2023-06-01",
-        "2025-03-01",
-        "2025-04-01"
-       ]
-      }
-     },
-     {
-      "name": "$filter",
-      "in": "query",
-      "required": false,
-      "description": "Only two forms are recognised: a `tagname`/`tagvalue` pair, or `Visibility` on its own. Any other key is silently ignored rather than rejected, so a typo yields the unfiltered list. Cannot be combined with `$expand` \u2014 the service supports one query type per request and rejects the pair with `InvalidAppFilterCombination`.",
-      "schema": {
-       "type": "string",
-       "example": "Visibility eq 'Teams'"
-      }
-     },
-     {
-      "name": "$expand",
-      "in": "query",
-      "required": false,
-      "description": "Expands each app's sharing permissions. The single accepted form is `permissions($filter=maxAssignedTo('<objectId>'))`, which limits the expansion to grants held by that Entra object id. Cannot be combined with `$filter`.",
-      "schema": {
-       "type": "string",
-       "example": "permissions($filter=maxAssignedTo('00000000-0000-0000-0000-000000000000'))"
-      }
-     },
-     {
-      "name": "$top",
-      "in": "query",
-      "required": false,
-      "description": "Accepted; page size cap.",
-      "schema": {
-       "type": "integer",
-       "minimum": 1
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The apps in the environment. An environment with no canvas apps returns `{\"value\": []}` rather than a 404.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/AppList"
-        }
-       }
-      }
-     },
-     "400": {
-      "description": "`InvalidApiVersion` for an unknown or empty `api-version`, or `InvalidAppFilterCombination` when `$filter` and `$expand` are sent together.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ErrorResponse"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ErrorResponse"
-        }
-       }
-      }
-     },
-     "403": {
-      "description": "The caller is authenticated but is not a Power Platform admin, so the admin scope is closed to it.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ErrorResponse"
-        }
-       }
-      }
-     },
-     "404": {
-      "description": "`BusinessAppPlatformRequestFailed`, wrapping an `EnvironmentNotFound` in `details`: no environment with that id exists in the caller's tenant. The wrapper carries a correlation id in its message.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ErrorResponse"
-        }
-       }
-      }
-     }
-    },
-    "x-probe-verified": true
-   }
-  },
-  "/providers/Microsoft.PowerApps/apps": {
-   "get": {
-    "operationId": "apps_list",
-    "tags": [
-     "Canvas App"
-    ],
-    "summary": "List",
-    "description": "Lists the canvas apps the calling identity can see, rather than every app in the tenant. Without an `environment` filter the result spans environments; the admin-scope variant is the way to enumerate apps a caller does not personally have access to.",
-    "parameters": [
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": true,
-      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
-      "schema": {
-       "type": "string",
-       "default": "2016-11-01",
-       "enum": [
-        "2015-02-01",
-        "2015-03-01",
-        "2015-08-01",
-        "2016-01-01",
-        "2016-02-01",
-        "2016-04-01",
-        "2016-05-01",
-        "2016-07-01",
-        "2016-11-01",
-        "2017-02-01",
-        "2017-04-01",
-        "2017-05-01",
-        "2017-06-01",
-        "2017-07-01",
-        "2017-08-01",
-        "2018-10-01",
-        "2019-05-01",
-        "2020-02-01",
-        "2020-06-01",
-        "2020-07-01",
-        "2021-02-01",
-        "2022-11-01",
-        "2023-06-01",
-        "2025-03-01",
-        "2025-04-01"
-       ]
-      }
-     },
-     {
-      "name": "$filter",
-      "in": "query",
-      "required": false,
-      "description": "Same narrow grammar as the admin-scope list: a `tagname`/`tagvalue` pair, or `Visibility` alone, or `environment eq '<environmentId>'` to scope to one environment. An unrecognised key is rejected with `InvalidAppFilterCombination`, whose message states the supported grammar verbatim.",
-      "schema": {
-       "type": "string",
-       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
-      }
-     },
-     {
-      "name": "$expand",
-      "in": "query",
-      "required": false,
-      "description": "`permissions($filter=maxAssignedTo('<objectId>'))`; mutually exclusive with `$filter`.",
-      "schema": {
-       "type": "string"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The apps visible to the caller.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/AppList"
-        }
-       }
-      }
-     },
-     "400": {
-      "description": "`InvalidAppFilterCombination` \u2014 the `$filter` key is not one of the supported ones, or `$filter` and `$expand` were sent together.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ErrorResponse"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ErrorResponse"
-        }
-       }
-      }
-     }
-    },
-    "x-probe-verified": true
-   }
-  },
   "/providers/Microsoft.PowerApps/apis": {
    "get": {
     "operationId": "connectors_list",
@@ -657,6 +413,188 @@
     "x-probe-verified": true
    }
   },
+  "/providers/Microsoft.PowerApps/apps": {
+   "get": {
+    "operationId": "apps_list",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "List",
+    "description": "Lists the canvas apps the calling identity can see, rather than every app in the tenant. Without an `environment` filter the result spans environments; the admin-scope variant is the way to enumerate apps a caller does not personally have access to.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "description": "Same narrow grammar as the admin-scope list: a `tagname`/`tagvalue` pair, or `Visibility` alone, or `environment eq '<environmentId>'` to scope to one environment. An unrecognised key is rejected with `InvalidAppFilterCombination`, whose message states the supported grammar verbatim.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "description": "`permissions($filter=maxAssignedTo('<objectId>'))`; mutually exclusive with `$filter`.",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The apps visible to the caller.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AppList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`InvalidAppFilterCombination` \u2014 the `$filter` key is not one of the supported ones, or `$filter` and `$expand` were sent together.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps/{appId}/displayName": {
+   "post": {
+    "operationId": "displayNameSet_post",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Display Name Set",
+    "description": "Renames an app. A POST rather than a PATCH, and the name is the whole body.",
+    "parameters": [
+     {
+      "name": "appId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appId`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps/{appId}/publishedSettings": {
+   "post": {
+    "operationId": "publishedSettingsSet_post",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Published Settings Set",
+    "description": "Writes the settings of the published version of an app.",
+    "parameters": [
+     {
+      "name": "appId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appId`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps/{appId}/unpublishedSettings": {
+   "post": {
+    "operationId": "unpublishedSettingsSet_post",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Unpublished Settings Set",
+    "description": "Writes settings that take effect only when the app is next published, so published and unpublished settings are two separate stores.",
+    "parameters": [
+     {
+      "name": "appId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appId`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/providers/Microsoft.PowerApps/connections": {
    "get": {
     "operationId": "connections_list",
@@ -737,99 +675,6 @@
      },
      "401": {
       "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ErrorResponse"
-        }
-       }
-      }
-     }
-    },
-    "x-probe-verified": true
-   }
-  },
-  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/connections": {
-   "get": {
-    "operationId": "connections_listByEnvironment",
-    "tags": [
-     "Connection"
-    ],
-    "summary": "List (By Environment)",
-    "description": "Lists every connection in an environment, whoever created it, through the tenant admin scope. This is the list an admin needs to audit which connectors are actually in use and by whom \u2014 the connector catalogue says what *could* be used, this says what is.",
-    "parameters": [
-     {
-      "name": "environmentId",
-      "in": "path",
-      "required": true,
-      "description": "Environment id. This is the `name` of an environment resource, not its Dataverse organization id.",
-      "schema": {
-       "type": "string",
-       "format": "uuid",
-       "example": "00000000-0000-0000-0000-000000000000"
-      }
-     },
-     {
-      "name": "api-version",
-      "in": "query",
-      "required": true,
-      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
-      "schema": {
-       "type": "string",
-       "default": "2016-11-01",
-       "enum": [
-        "2015-02-01",
-        "2015-03-01",
-        "2015-08-01",
-        "2016-01-01",
-        "2016-02-01",
-        "2016-04-01",
-        "2016-05-01",
-        "2016-07-01",
-        "2016-11-01",
-        "2017-02-01",
-        "2017-04-01",
-        "2017-05-01",
-        "2017-06-01",
-        "2017-07-01",
-        "2017-08-01",
-        "2018-10-01",
-        "2019-05-01",
-        "2020-02-01",
-        "2020-06-01",
-        "2020-07-01",
-        "2021-02-01",
-        "2022-11-01",
-        "2023-06-01",
-        "2025-03-01",
-        "2025-04-01"
-       ]
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Every connection in the environment.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ConnectionList"
-        }
-       }
-      }
-     },
-     "401": {
-      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ErrorResponse"
-        }
-       }
-      }
-     },
-     "403": {
-      "description": "The caller is not a Power Platform admin.",
       "content": {
        "application/json": {
         "schema": {
@@ -1078,6 +923,314 @@
      },
      "401": {
       "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apis": {
+   "get": {
+    "operationId": "listAdminScope_get",
+    "tags": [
+     "Connector"
+    ],
+    "summary": "List (Admin Scope)",
+    "description": "The connectors available in an environment, from the admin scope. Its query parameters select which DLP-relevant subsets to include: those with terms of service, those exempt from DLP, and those that DLP can enforce on at all.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "showApisWithToS",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`showApisWithToS`."
+     },
+     {
+      "name": "hideDlpExemptApis",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`hideDlpExemptApis`."
+     },
+     {
+      "name": "showAllDlpEnforceableApis",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`showAllDlpEnforceableApis`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps": {
+   "get": {
+    "operationId": "apps_listByEnvironment",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "List (By Environment)",
+    "description": "Lists the canvas apps of one environment through the tenant admin scope, which returns every app in the environment regardless of who owns or has shared it.\n\nThe response is a single flat `value` array: there is no continuation token, `nextLink` or `@odata.*` envelope, and `$top` is accepted without changing it. The `$filter` and `$expand` grammar is the narrow app-specific one described on those parameters, not general OData \u2014 an unsupported `$filter` key is silently ignored rather than rejected, so a typo yields the unfiltered list.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "description": "Environment id. This is the `name` of an environment resource, not its Dataverse organization id.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2023-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "description": "Only two forms are recognised: a `tagname`/`tagvalue` pair, or `Visibility` on its own. Any other key is silently ignored rather than rejected, so a typo yields the unfiltered list. Cannot be combined with `$expand` \u2014 the service supports one query type per request and rejects the pair with `InvalidAppFilterCombination`.",
+      "schema": {
+       "type": "string",
+       "example": "Visibility eq 'Teams'"
+      }
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "description": "Expands each app's sharing permissions. The single accepted form is `permissions($filter=maxAssignedTo('<objectId>'))`, which limits the expansion to grants held by that Entra object id. Cannot be combined with `$filter`.",
+      "schema": {
+       "type": "string",
+       "example": "permissions($filter=maxAssignedTo('00000000-0000-0000-0000-000000000000'))"
+      }
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "description": "Accepted; page size cap.",
+      "schema": {
+       "type": "integer",
+       "minimum": 1
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The apps in the environment. An environment with no canvas apps returns `{\"value\": []}` rather than a 404.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AppList"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "`InvalidApiVersion` for an unknown or empty `api-version`, or `InvalidAppFilterCombination` when `$filter` and `$expand` are sent together.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is authenticated but is not a Power Platform admin, so the admin scope is closed to it.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "`BusinessAppPlatformRequestFailed`, wrapping an `EnvironmentNotFound` in `details`: no environment with that id exists in the caller's tenant. The wrapper carries a correlation id in its message.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/connections": {
+   "get": {
+    "operationId": "connections_listByEnvironment",
+    "tags": [
+     "Connection"
+    ],
+    "summary": "List (By Environment)",
+    "description": "Lists every connection in an environment, whoever created it, through the tenant admin scope. This is the list an admin needs to audit which connectors are actually in use and by whom \u2014 the connector catalogue says what *could* be used, this says what is.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "description": "Environment id. This is the `name` of an environment resource, not its Dataverse organization id.",
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      }
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "An unknown or empty value is rejected with `InvalidApiVersion`, whose message echoes the full list of versions provider `Microsoft.PowerApps` accepts; the enum here is that list. Older versions stay routable and appear to be routing labels rather than contracts \u2014 the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.",
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Every connection in the environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ConnectionList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, malformed or expired; the service answers `InvalidAuthenticationToken`. An entirely absent `Authorization` header produces the same 401 rather than a challenge.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform admin.",
       "content": {
        "application/json": {
         "schema": {

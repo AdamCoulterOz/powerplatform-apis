@@ -1028,6 +1028,52 @@
     "x-probe-verified": true
    }
   },
+  "/providers/Microsoft.BusinessAppPlatform/environments/getOrCreate": {
+   "post": {
+    "operationId": "getorCreate_post",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Get or Create",
+    "description": "Returns an environment matching the request, creating one if none matches. `getEnvironmentOnly` turns it into a pure lookup, which is how a caller tests for existence without risking a create.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "getEnvironmentOnly",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`getEnvironmentOnly`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/providers/Microsoft.BusinessAppPlatform/environments/{environmentId}": {
    "get": {
     "operationId": "environments_getMakerScope",
@@ -1847,6 +1893,33 @@
      }
     },
     "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/environments/~default": {
+   "get": {
+    "operationId": "readDefault_get",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Read Default",
+    "description": "The tenant's default environment on the maker scope. `~default` is a literal alias, not an id, and this is the unscoped sibling of the admin-scope route of the same name.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/providers/Microsoft.BusinessAppPlatform/lifecycleOperations": {
@@ -3001,6 +3074,42 @@
      }
     },
     "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/scopes/admin/enroll": {
+   "post": {
+    "operationId": "enroll_post",
+    "tags": [
+     "Tenant"
+    ],
+    "summary": "Enroll",
+    "description": "Enrolls or unenrolls the tenant in a programme, selected by the `action` query parameter rather than by the body.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "action",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`action`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environmentKeywords/~sharepointform": {
@@ -4598,6 +4707,111 @@
      }
     },
     "x-probe-verified": true
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/connectorActions": {
+   "get": {
+    "operationId": "connectorActionsList_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Connector Actions List",
+    "description": "The individual connector actions a DLP policy can allow or block, which is the granularity below blocking a whole connector.",
+    "parameters": [
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/connectors": {
+   "get": {
+    "operationId": "connectorsList_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Connectors List",
+    "description": "Every connector a DLP policy can classify.",
+    "parameters": [
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/connectors/metadata/connectorblockingcustomizable": {
+   "get": {
+    "operationId": "blockingCustomisable_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Blocking Customisable",
+    "description": "Which connectors a tenant may choose to block. The complement of the unblockable list already documented here.",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/connectors/metadata/connectorblockingexclusion": {
+   "get": {
+    "operationId": "blockingExclusions_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Blocking Exclusions",
+    "description": "Connectors excluded from blocking regardless of policy.",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/providers/PowerPlatform.Governance/v1/connectors/metadata/endpointfiltering": {
+   "get": {
+    "operationId": "endpointFilteringSupport_get",
+    "tags": [
+     "DLP Policies"
+    ],
+    "summary": "Endpoint Filtering Support",
+    "description": "Which connectors support endpoint filtering, the per-URL rules a policy can attach rather than an allow-or-block decision on the whole connector.",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/providers/PowerPlatform.Governance/v1/connectors/metadata/unblockable": {

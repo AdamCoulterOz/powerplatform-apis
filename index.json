@@ -216,6 +216,12 @@
   "billingPolicyEnvironments_readPolicyForEnvironment": [
    "licensing"
   ],
+  "blockingCustomisable_get": [
+   "bapi"
+  ],
+  "blockingExclusions_get": [
+   "bapi"
+  ],
   "clientLog_publish": [
    "admin"
   ],
@@ -304,10 +310,16 @@
   "connectivity_putConnection": [
    "ppapi"
   ],
+  "connectorActionsList_get": [
+   "bapi"
+  ],
   "connectorMetadata_listUnblockable": [
    "bapi"
   ],
   "connectorMetadata_listVirtual": [
+   "bapi"
+  ],
+  "connectorsList_get": [
    "bapi"
   ],
   "connectors_get": [
@@ -415,6 +427,9 @@
   "discovery_readInstance": [
    "dataverse"
   ],
+  "displayNameSet_post": [
+   "powerapps"
+  ],
   "dlpPolicies_create": [
    "bapi"
   ],
@@ -454,8 +469,14 @@
   "dynamics_updateFinOpsMaintenanceSettings": [
    "ppapi"
   ],
+  "endpointFilteringSupport_get": [
+   "bapi"
+  ],
   "enforcementCache_delete": [
    "advisor"
+  ],
+  "enroll_post": [
+   "bapi"
   ],
   "enterprisePolicies_linkUnlink": [
    "bapi"
@@ -787,6 +808,9 @@
   "getConsumedQuota_post": [
    "bapi"
   ],
+  "getorCreate_post": [
+   "bapi"
+  ],
   "governanceEnvironmentGroupsRuleBasedPoliciesEnvironmentsRemoveInheritedAcp_post": [
    "ppapi"
   ],
@@ -1104,6 +1128,9 @@
   ],
   "linkable_tables_relationships_list": [
    "athena"
+  ],
+  "listAdminScope_get": [
+   "powerapps"
   ],
   "locationsGenerateProtectionKey_post": [
    "bapi"
@@ -1471,6 +1498,9 @@
   "protectionKeysactive_get": [
    "bapi"
   ],
+  "publishedSettingsSet_post": [
+   "powerapps"
+  ],
   "publishers_create": [
    "dataverse"
   ],
@@ -1485,6 +1515,12 @@
   ],
   "publishers_update": [
    "dataverse"
+  ],
+  "readDefault_get": [
+   "bapi"
+  ],
+  "recommendations_get": [
+   "licensing"
   ],
   "records_create": [
    "dataverse"
@@ -1626,6 +1662,9 @@
   ],
   "trials_readDatesOnly": [
    "licensing"
+  ],
+  "unpublishedSettingsSet_post": [
+   "powerapps"
   ],
   "urlPatterns_delete": [
    "bapi"

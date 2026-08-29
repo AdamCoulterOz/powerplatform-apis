@@ -1135,6 +1135,70 @@
    },
    "x-allowed-methods": "GET"
   },
+  "/v1.0/tenants/{tenantId}/recommendations/{recommendationType}": {
+   "get": {
+    "operationId": "recommendations_get",
+    "tags": [
+     "Copilot Studio Messages"
+    ],
+    "summary": "Recommendations Read",
+    "description": "Licensing recommendations of a given type for the tenant. **Paged with a continuation token**: the response carries `continuationtoken` alongside `value`, and the caller passes it back on the query string to fetch the next page. Note the spelling -- all lower case, not `continuationToken`.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "recommendationType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Which class of recommendation to return."
+     },
+     {
+      "name": "continuationtoken",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The token from the previous response. All lower case."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The recommendations, with `continuationtoken` set when more remain.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "value": {
+           "type": "array",
+           "items": {
+            "type": "object"
+           }
+          },
+          "continuationtoken": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/v2.0/tenants/{tenantId}/BillingPolicies": {
    "get": {
     "operationId": "billingPolicies_list",

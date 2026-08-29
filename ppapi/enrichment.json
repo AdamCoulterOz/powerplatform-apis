@@ -21,6 +21,10 @@
    {
     "note": "Ten environment mutation operations return an undocumented **409** carrying `ValidationResponse` -- `provisioning/environments` and, on an environment, `enableDisasterRecovery`, `failback`, `forceFailover`, `governanceSetting/enableManaged`, `governanceSetting/disableManaged`, `modifySku`, `recover`, `reset` and `restore`. Microsoft's own client handles that status on all ten; the published reference documents it on none. A conflicting concurrent operation is the expected cause, so a client that treats 409 as an unexpected failure will mishandle the ordinary case.",
     "source": "pac-cli"
+   },
+   {
+    "note": "The tenant- and environment-scoped hosts are built by splitting the id's 32 hex characters **30 + 2**, not 31 + 1: strip the dashes, take the last two characters as their own DNS label, and the preceding thirty as the label before it. Verified live -- the 30+2 form resolves through a CNAME to a regional gateway and answers `401` without a token, while the 31+1 form is NXDOMAIN and never reaches a server. Worth stating because two first-party samples disagree on it and one of them ships a unit test asserting 31+1; a client built from that sample fails with a DNS error rather than an API error, which sends the reader looking in the wrong place entirely.",
+    "source": "live"
    }
   ],
   "x-source-builds": {

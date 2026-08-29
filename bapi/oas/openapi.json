@@ -3017,7 +3017,13 @@
        "type": "string"
       },
       "description": "Comma-separated projections merged into each environment's `properties`. `properties/billingPolicy` expands the attached billing policy from an id into the full policy; `properties/copilotPolicies` and `properties/enterprisePolicies` add blocks that are otherwise absent. `properties.capacity` \u2014 note the dot \u2014 is accepted only on the single-environment read.",
-      "example": "properties/billingPolicy,properties/copilotPolicies"
+      "example": "properties/billingPolicy,properties/copilotPolicies",
+      "x-notes": [
+       {
+        "note": "`$expand` accepts two spellings and they are **not interchangeable**: each expandable member answers to exactly one, and a wrong spelling returns `200` with the member silently absent rather than an error.\n\nVerified against a live tenant of 13 environments: `properties.capacity` with a **dot** returns capacity on all 13 while `properties/capacity` returns it on none; `properties/billingPolicy` and `properties/copilotPolicies` with a **slash** return theirs while the dot spellings return nothing. Requesting `properties/billingPolicy` also returns `capacity` unasked.\n\nSo a caller must mix the two forms in one `$expand` -- there is no consistent spelling that returns everything, and normalising to either one silently loses data. The Terraform provider's list `permissions,properties.capacity,properties/billingPolicy,properties/copilotPolicies` looks like an inconsistency to tidy up and is in fact the only spelling that works.\n\n`billingPolicy` came back on 11 of the 13, so its absence means the environment has no billing policy rather than that the expand failed -- which is indistinguishable from the failure mode above unless another member proves the expand was honoured.",
+        "source": "live"
+       }
+      ]
      },
      {
       "name": "$filter",

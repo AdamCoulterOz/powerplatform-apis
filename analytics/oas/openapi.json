@@ -215,6 +215,67 @@
   }
  ],
  "paths": {
+  "/api/v1/connections": {
+   "get": {
+    "operationId": "connections_list_v1",
+    "summary": "List (v1)",
+    "tags": [
+     "Data Export Connections"
+    ],
+    "x-probe-verified": true,
+    "description": "The predecessor of the v2 listing, still served on every regional host. It answers with the same envelope and the same read-only behaviour as v2, and is scoped to the same geography.\n\nPrefer v2.",
+    "responses": {
+     "200": {
+      "description": "The tenant's data-export connections in this geography.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ConnectionListResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "$ref": "#/components/responses/Unauthorized"
+     },
+     "405": {
+      "$ref": "#/components/responses/MethodNotAllowed"
+     }
+    }
+   }
+  },
+  "/api/v1/tenants/{tenantId}/tenantconsent": {
+   "get": {
+    "operationId": "tenantConsent_get",
+    "tags": [
+     "Data Export Connections"
+    ],
+    "summary": "Tenant Consent Read",
+    "description": "Whether the tenant has consented to the analytics data flow. Observed answering **204 with no body** on every one of eleven calls in a session where consent had not been given -- so a client must treat 204 as 'no consent recorded' rather than as an error or as an empty success. The portal re-asks on each navigation rather than caching the answer.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "The tenant's id."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The recorded consent."
+     },
+     "204": {
+      "description": "No consent has been recorded for the tenant. Not an error."
+     }
+    },
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
   "/api/v2/connections": {
    "get": {
     "operationId": "connections_list",
@@ -288,35 +349,6 @@
      },
      "404": {
       "$ref": "#/components/responses/NotFound"
-     },
-     "405": {
-      "$ref": "#/components/responses/MethodNotAllowed"
-     }
-    }
-   }
-  },
-  "/api/v1/connections": {
-   "get": {
-    "operationId": "connections_list_v1",
-    "summary": "List (v1)",
-    "tags": [
-     "Data Export Connections"
-    ],
-    "x-probe-verified": true,
-    "description": "The predecessor of the v2 listing, still served on every regional host. It answers with the same envelope and the same read-only behaviour as v2, and is scoped to the same geography.\n\nPrefer v2.",
-    "responses": {
-     "200": {
-      "description": "The tenant's data-export connections in this geography.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/ConnectionListResponse"
-        }
-       }
-      }
-     },
-     "401": {
-      "$ref": "#/components/responses/Unauthorized"
      },
      "405": {
       "$ref": "#/components/responses/MethodNotAllowed"

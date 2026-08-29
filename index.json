@@ -141,6 +141,12 @@
   "billingPolicyEnvironments_readPolicyForEnvironment": [
    "licensing"
   ],
+  "clientLog_publish": [
+   "admin"
+  ],
+  "configs_get": [
+   "admin"
+  ],
   "connections_list": [
    "analytics",
    "powerapps"
@@ -709,6 +715,9 @@
   "governance_updateRuleSet": [
    "ppapi"
   ],
+  "health_ping": [
+   "admin"
+  ],
   "identity_whoAmI": [
    "dataverse"
   ],
@@ -912,6 +921,9 @@
   ],
   "managedEnvironments_setGovernanceConfiguration": [
    "bapi"
+  ],
+  "omnichannelAuth_getUnifiedToken": [
+   "admin"
   ],
   "organizationSettings_list": [
    "dataverse"
@@ -1297,6 +1309,9 @@
   "tenantCapacity_read": [
    "licensing"
   ],
+  "tenantConsent_get": [
+   "analytics"
+  ],
   "tenantIsolationPolicyOperations_get": [
    "bapi"
   ],
@@ -1648,6 +1663,12 @@
   ],
   "Platform Apps": [
    "bapi"
+  ],
+  "Portal Configuration": [
+   "admin"
+  ],
+  "Portal Telemetry": [
+   "admin"
   ],
   "Power Pages Website": [
    "ppapi"

@@ -23,41 +23,80 @@
    "description": "A Dataverse organization: the database half of an environment, identified by an organization id that is not the environment id. This resource is also the mapping table the rest of the API depends on -- it is where an environment's organization id is paired with the geo every other operation requires."
   },
   {
+   "name": "Portal Configuration",
+   "description": "The configuration document the admin portal fetches before it does anything else, and the endpoints it discovers from it."
+  },
+  {
+   "name": "Portal Telemetry",
+   "description": "Routes the portal calls for its own operation rather than to administer anything."
+  },
+  {
    "name": "Release Wave Feature",
    "description": "Per-organization opt-in to Dataverse release waves -- the admin centre's 'Manage features' surface. Microsoft ships two waves a year, each a bundle of Dataverse and model-driven-app changes that lands automatically on a per-geo date. A wave appears here as a named feature a tenant admin may switch on early, before that date, to test the changes; once on it cannot be switched off."
   }
  ],
  "paths": {
-  "/api/tenants/mytenant/organizations": {
-   "get": {
-    "operationId": "organizations_list",
+  "/api/OmnichannelAuth/OmnichannelUnifiedToken": {
+   "post": {
+    "operationId": "omnichannelAuth_getUnifiedToken",
     "tags": [
-     "Organization"
+     "Portal Telemetry"
     ],
-    "summary": "List",
-    "description": "Lists every Dataverse organization in the tenant behind the credentials. 'mytenant' is a literal path segment, not a placeholder -- the tenant comes from the token and there is no way to name another one.\n\nThis is the mapping step every other operation depends on. Given a Power Platform environment id, read the environment from BAPI, take properties.linkedEnvironmentMetadata.resourceId, and match it against the id field here; the matching organization's crmGeo is the geo parameter the feature operations require. Nothing else publishes that geo.\n\nOnly environments that have Dataverse appear. An environment without a database -- a Default environment that was never provisioned, for instance -- has no organization and is simply absent, so this listing is shorter than BAPI's environment listing and a missing entry is not an error.\n\nThe response is a bare JSON array: no envelope, no paging, no filter parameters. Unrecognised query parameters are ignored rather than rejected.",
-    "x-probe-verified": true,
-    "responses": {
-     "200": {
-      "description": "Every Dataverse organization in the tenant, unpaged.",
-      "content": {
-       "application/json": {
-        "schema": {
-         "type": "array",
-         "items": {
-          "$ref": "#/components/schemas/Organization"
+    "summary": "Support Chat Token",
+    "description": "Mints the token the in-portal support chat uses. Takes a `copilotContext` object and returns the token as a bare JSON string rather than an object. Part of the portal's support experience, not of the administrative surface.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "copilotContext": {
+          "type": "object"
          }
         }
        }
       }
-     },
-     "401": {
-      "description": "The bearer token is missing, expired, or was issued for a different audience. A token minted for any other Power Platform scope is rejected here. No WWW-Authenticate challenge is returned, so acquire a token for this API's own scope rather than negotiating."
-     },
-     "403": {
-      "description": "The caller cannot administer this organization, or it does not exist. The two are indistinguishable and neither produces a 404, so a 403 more often means the wrong id was passed -- a Power Platform environment id instead of an organization id -- than a genuine permission problem. The body is empty."
      }
-    }
+    },
+    "responses": {
+     "200": {
+      "description": "The token, as a bare JSON string.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
+  "/api/configs": {
+   "get": {
+    "operationId": "configs_get",
+    "tags": [
+     "Portal Configuration"
+    ],
+    "summary": "Read",
+    "description": "The admin portal's bootstrap document, and in effect a **service-discovery endpoint**: about 50 KB of configuration whose `endpoint` block names sixteen services the portal will talk to, four of them with the api-version and token resource to use.\n\nThat makes it the authoritative answer to where a service lives, in preference to a hardcoded host. It also names services by their internal codename: `neptuneEndpoint` points at `licensing.powerplatform.microsoft.com` with `apiVersion: v0.1-alpha`, which is independent confirmation that Neptune is the licensing service -- the same conclusion this corpus reached separately from the `nptn-<cloud>-tm` Traffic Manager names. `plutoEndpoint` names `pluto-prod.admin.powerplatform.microsoft.com`, a sub-service of this host that nothing else advertises.\n\nThe `environment` block reports the serving datacenter and geo, and `features` carries the portal's own flags. No token is required to read shape, but the document is tenant-scoped.",
+    "responses": {
+     "200": {
+      "description": "The portal configuration. Top-level members observed: `endpoint`, `environment`, `features`, `landingPage`, `lcs`, `liveChat`, `persistentChat`, `professionalEntitlementTypes`, `pvaChat`, `supportedProducts`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true,
+    "x-source": "live"
    }
   },
   "/api/environments/{organizationId}/features": {
@@ -276,6 +315,114 @@
         }
        }
       }
+     }
+    }
+   }
+  },
+  "/api/health/ping": {
+   "get": {
+    "operationId": "health_ping",
+    "tags": [
+     "Portal Telemetry"
+    ],
+    "summary": "Ping",
+    "description": "A liveness route that answers `200` with the plain-text string `This action is to redirect legacy routes` rather than any health document. It is a redirect shim that no longer redirects, so treat it as proof the host is answering and nothing more.",
+    "responses": {
+     "200": {
+      "description": "Plain text, not JSON.",
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string",
+         "example": "This action is to redirect legacy routes"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
+  "/api/publishclientlog/clientlog": {
+   "post": {
+    "operationId": "clientLog_publish",
+    "tags": [
+     "Portal Telemetry"
+    ],
+    "summary": "Client Log Publish",
+    "description": "Accepts a log line from the portal's own front end. Answers `200` with a bare JSON boolean. Of no use to an administrative client, and documented so that anyone reading a capture of this host can recognise the traffic -- it was the single most frequent call in the session recorded here.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "logLevel": {
+          "type": "string"
+         },
+         "logTag": {
+          "type": "string"
+         },
+         "message": {
+          "type": "string"
+         },
+         "args": {
+          "type": "array",
+          "items": {
+           "type": "object"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "A bare boolean.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "boolean"
+        }
+       }
+      }
+     }
+    },
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
+  "/api/tenants/mytenant/organizations": {
+   "get": {
+    "operationId": "organizations_list",
+    "tags": [
+     "Organization"
+    ],
+    "summary": "List",
+    "description": "Lists every Dataverse organization in the tenant behind the credentials. 'mytenant' is a literal path segment, not a placeholder -- the tenant comes from the token and there is no way to name another one.\n\nThis is the mapping step every other operation depends on. Given a Power Platform environment id, read the environment from BAPI, take properties.linkedEnvironmentMetadata.resourceId, and match it against the id field here; the matching organization's crmGeo is the geo parameter the feature operations require. Nothing else publishes that geo.\n\nOnly environments that have Dataverse appear. An environment without a database -- a Default environment that was never provisioned, for instance -- has no organization and is simply absent, so this listing is shorter than BAPI's environment listing and a missing entry is not an error.\n\nThe response is a bare JSON array: no envelope, no paging, no filter parameters. Unrecognised query parameters are ignored rather than rejected.",
+    "x-probe-verified": true,
+    "responses": {
+     "200": {
+      "description": "Every Dataverse organization in the tenant, unpaged.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/Organization"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "The bearer token is missing, expired, or was issued for a different audience. A token minted for any other Power Platform scope is rejected here. No WWW-Authenticate challenge is returned, so acquire a token for this API's own scope rather than negotiating."
+     },
+     "403": {
+      "description": "The caller cannot administer this organization, or it does not exist. The two are indistinguishable and neither produces a 404, so a 403 more often means the wrong id was passed -- a Power Platform environment id instead of an organization id -- than a genuine permission problem. The body is empty."
      }
     }
    }

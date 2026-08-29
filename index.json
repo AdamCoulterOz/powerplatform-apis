@@ -259,6 +259,9 @@
   "currencyAllocations_read": [
    "licensing"
   ],
+  "currencyReports": [
+   "licensing"
+  ],
   "currencyReports_list": [
    "licensing"
   ],
@@ -357,6 +360,9 @@
   ],
   "envGroupRules_ruleEnvironments": [
    "analytics"
+  ],
+  "environmentConsumption": [
+   "licensing"
   ],
   "environmentGroups_create": [
    "bapi"
@@ -1282,6 +1288,9 @@
   "relationships_removeByKey": [
    "dataverse"
   ],
+  "resourceConsumption": [
+   "licensing"
+  ],
   "resourceMetrics_diagnosticLogs": [
    "analytics"
   ],
@@ -1395,6 +1404,9 @@
   ],
   "urlPatterns_post": [
    "bapi"
+  ],
+  "userConsumption": [
+   "licensing"
   ],
   "usermanagement_applyAdminRole": [
    "ppapi"
@@ -1512,6 +1524,9 @@
   "Advisor Recommendation": [
    "ppapi"
   ],
+  "Allocations V2": [
+   "licensing"
+  ],
   "Analysis": [
    "advisor"
   ],
@@ -1567,6 +1582,9 @@
   ],
   "Copilot Governance Setting": [
    "ppapi"
+  ],
+  "Copilot Studio Messages": [
+   "licensing"
   ],
   "Country Opt-In Defaults": [
    "bapi"

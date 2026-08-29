@@ -179,7 +179,17 @@
     "**Write surface.** Both hosts take writes on the same resources -- `info.x-write-surface` maps this one from Allow headers -- but ppapi documents its request bodies and this one does not, so nothing here is written up as a mutation. ppapi additionally has `environments/add` and `environments/remove`, which are not routes on this host at all."
    ],
    "whichToUse": "Prefer ppapi. It is documented on Microsoft Learn, versioned coherently, tenant-scoped by token, and it is what the Terraform provider calls. Reach for this host only for what ppapi does not expose -- the per-product `v0.1-alpha` policy representation, `payGoEntitlements`, `billingInstrument.provisioningStatus`, and per-user trials -- or when reading a tenant other than the token's own."
-  }
+  },
+  "x-notes": [
+   {
+    "note": "**Eleven further routes are known to exist on this host but are not modelled as operations here**, because the only evidence for them is that a discovery script tried them. Nothing in the source that names them parses a response, so there is nothing to say about what they return, and modelling them would put entries in this spec whose sole content is a path someone guessed:\n\n`GET /v0.1/tenants/{tenantId}/allocationsV2/sum`, `POST /v0.1/tenants/{tenantId}/allocationsV2/getmany` (seen with an empty body and with `{startDate,endDate}`), `POST /v0.1/tenants/{tenantId}/allocationsV2/overage/getmany`, `GET /v0.1/tenants/{tenantId}/ManagedEnvironment/PowerApps/GetLicenseSummary`, `GET /v0.1-alpha/tenants/{tenantId}/entitlements/extension`, `GET /v2.0/tenants/{tenantId}/entitlements/MCSMessages`, `GET /v0.1-alpha/tenants/{tenantId}/entitlements/MCSMessages/snapshot/resources` (`startDate`, `endDate`), `GET /v0.1-alpha/tenants/{tenantId}/entitlements/MCSMessages/snapshot/product`, `GET /v0.1-alpha/tenants/{tenantId}/entitlements/MCSMessages/trends` (`from`, `to`), `GET /v1.0/tenants/{tenantId}/capacityTypes/MCSMessages/trends`.\n\nThey are recorded because knowing a route exists is worth something to whoever probes next, and because their shape is informative on its own: `allocationsV2` reads in bulk through POST rather than GET, and the MCSMessages family spans three version prefixes at once.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Four version families are live on this host simultaneously** -- `v0.1-alpha`, `v0.1`, `v1.0` and `v2.0` -- and they are not successive generations of one surface. `CurrencyReports` exists at both `v0.1-alpha` and `v1.0`; `MCSMessages` entitlements appear under `v0.1-alpha` and `v2.0`; `allocationsV2` sits alone on `v0.1`. The prefix is part of the route rather than a version of the API, so a client cannot pick one and use it throughout.",
+    "source": "ppac-spa"
+   }
+  ]
  },
  "servers": [
   {
@@ -220,6 +230,10 @@
  ],
  "tags": [
   {
+   "name": "Allocations V2",
+   "description": "A second-generation allocation surface addressed with bulk reads. Distinct from the `allocationsByEnvironment` routes, and on its own `v0.1` version family."
+  },
+  {
    "name": "Billing Policy",
    "description": "A pay-as-you-go billing policy: the object that links a set of Power Platform environments to an Azure subscription so that consumption beyond the tenant's licensed capacity is billed to that subscription rather than blocked. A policy names the Azure billing instrument, the geography it may cover, and which product meters are switched into pay-as-you-go. See [Pay-as-you-go overview](https://learn.microsoft.com/power-platform/admin/pay-as-you-go-overview)."
   },
@@ -228,24 +242,28 @@
    "description": "The many-to-one association between environments and a billing policy. An environment has at most one policy; a policy covers any number of environments in its geography. The link is readable from either side, and the two sides live on different route shapes."
   },
   {
-   "name": "Entitlement",
-   "description": "A single metered resource the tenant is entitled to -- storage in megabytes, API calls, Windows 365 pay-as-you-go hours -- with what was purchased, what has been consumed, what has been allocated to environments, and which licences contribute to it. This is the per-meter view; *Tenant Capacity* is the same information rolled up."
-  },
-  {
-   "name": "Tenant Capacity",
-   "description": "The tenant-wide capacity rollup that backs the admin center's *Capacity* page: every storage and count meter, its entitlement, its measured consumption, the licences that granted it, and an overall status summary. Consumption figures are snapshots refreshed on a schedule, not live counters."
+   "name": "Copilot Studio Messages",
+   "description": "Capacity for Copilot Studio messages (`MCSMessages`), the consumption currency Copilot Studio bills against. Reported per environment, per agent resource and per user, as snapshots and as trends."
   },
   {
    "name": "Currency Allocation",
    "description": "Power Platform *currencies* -- prepaid unit pools such as Windows 365 pay-as-you-go hours or AI Builder credits -- and how a tenant's purchased units are distributed to environments. A currency is purchased at tenant level and then allocated; unallocated units sit in the tenant pool."
   },
   {
-   "name": "User Trial",
-   "description": "A per-user product trial: a time-boxed grant of a currency to one user, with its start and expiry and how much of the granted allowance has been consumed. Read by the maker portal to decide whether to offer trial-backed features to the signed-in user."
+   "name": "Entitlement",
+   "description": "A single metered resource the tenant is entitled to -- storage in megabytes, API calls, Windows 365 pay-as-you-go hours -- with what was purchased, what has been consumed, what has been allocated to environments, and which licences contribute to it. This is the per-meter view; *Tenant Capacity* is the same information rolled up."
   },
   {
    "name": "Service Root",
    "description": "A vestigial OData surface mounted at the host root. It is not part of the licensing API and exposes no data, but it answers `200`, so route discovery that treats a `200` as a live endpoint will be misled by it."
+  },
+  {
+   "name": "Tenant Capacity",
+   "description": "The tenant-wide capacity rollup that backs the admin center's *Capacity* page: every storage and count meter, its entitlement, its measured consumption, the licences that granted it, and an overall status summary. Consumption figures are snapshots refreshed on a schedule, not live counters."
+  },
+  {
+   "name": "User Trial",
+   "description": "A per-user product trial: a time-boxed grant of a currency to one user, with its start and expiry and how much of the granted allowance has been consumed. Read by the maker portal to decide whether to offer trial-backed features to the signed-in user."
   }
  ],
  "paths": {
@@ -916,6 +934,79 @@
    },
    "x-allowed-methods": "GET"
   },
+  "/v1.0/tenants/{tenantId}/CurrencyReports": {
+   "get": {
+    "operationId": "currencyReports",
+    "tags": [
+     "Copilot Studio Messages"
+    ],
+    "summary": "Currency Reports",
+    "description": "Purchased, allocated and consumed quantities per currency type for the tenant. A `v1.0` sibling of the `v0.1-alpha` route of the same name, and the version the admin centre calls.\n\n**The response is polymorphic**: it is sometimes a bare JSON array and sometimes an object wrapping that array in `value`. A client must test which it received -- Microsoft's own consumer does exactly that.\n\nThe caller must hold Power Platform Administrator or Global Administrator. Anything less is refused with `403` rather than an empty result.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "includeAllocations",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Include allocation figures."
+     },
+     {
+      "name": "includeConsumptions",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Include consumption figures."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields observed being read by Microsoft's own consumer: `value`, `currencyType`, `purchased`, `allocated`, `consumed`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "value": {
+           "type": "string"
+          },
+          "currencyType": {
+           "type": "string"
+          },
+          "purchased": {
+           "type": "string"
+          },
+          "allocated": {
+           "type": "string"
+          },
+          "consumed": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform or Global Administrator."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/v1.0/tenants/{tenantId}/Users/{userId}/Trials": {
    "get": {
     "operationId": "trials_list",
@@ -1227,6 +1318,201 @@
     }
    },
    "x-allowed-methods": "GET"
+  },
+  "/v2.0/tenants/{tenantId}/entitlements/MCSMessages/resources": {
+   "get": {
+    "operationId": "resourceConsumption",
+    "tags": [
+     "Copilot Studio Messages"
+    ],
+    "summary": "Resource Consumption",
+    "description": "Message consumption per agent resource, across **every environment in one call** rather than per environment. Each row carries the environment, the resource, what it consumed and the unit, with the resource's name and any non-billable quantity under `metadata`.\n\nThe caller must hold Power Platform Administrator or Global Administrator. Anything less is refused with `403` rather than an empty result.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "The tenant's id."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields observed being read by Microsoft's own consumer: `resources`, `environmentId`, `resourceId`, `consumed`, `unit`, `metadata.ResourceName`, `metadata.NonBillableQuantity`, `asOfDate`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "resources": {
+           "type": "string"
+          },
+          "environmentId": {
+           "type": "string"
+          },
+          "resourceId": {
+           "type": "string"
+          },
+          "consumed": {
+           "type": "string"
+          },
+          "unit": {
+           "type": "string"
+          },
+          "metadata": {
+           "type": "string"
+          },
+          "asOfDate": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform or Global Administrator."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/v2.0/tenants/{tenantId}/entitlements/MCSMessages/users": {
+   "get": {
+    "operationId": "userConsumption",
+    "tags": [
+     "Copilot Studio Messages"
+    ],
+    "summary": "User Consumption",
+    "description": "Message consumption per user over an explicit window. **The window is mandatory** -- unlike the resource route, this one does not default to a period, and `fromDate` and `toDate` must both be supplied.\n\nThe caller must hold Power Platform Administrator or Global Administrator. Anything less is refused with `403` rather than an empty result.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "The tenant's id."
+     },
+     {
+      "name": "fromDate",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Start of the window. Required."
+     },
+     {
+      "name": "toDate",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "End of the window. Required."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields observed being read by Microsoft's own consumer: `value`, `users`, `tenantId`, `userId`, `consumed`, `unit`, `metadata.Resources`, `metadata.NonBillableQuantity`, `asOfDate`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "value": {
+           "type": "string"
+          },
+          "users": {
+           "type": "string"
+          },
+          "tenantId": {
+           "type": "string"
+          },
+          "userId": {
+           "type": "string"
+          },
+          "consumed": {
+           "type": "string"
+          },
+          "unit": {
+           "type": "string"
+          },
+          "metadata": {
+           "type": "string"
+          },
+          "asOfDate": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform or Global Administrator."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/v2.0/tenants/{tenantId}/environments/entitlementConsumptions/MCSMessages": {
+   "get": {
+    "operationId": "environmentConsumption",
+    "tags": [
+     "Copilot Studio Messages"
+    ],
+    "summary": "Environment Consumption",
+    "description": "Message capacity and consumption per environment.\n\n**The capacity object is not uniformly shaped**: `allocated` and `consumed` are wrapped objects carrying a `value`, while `availableQuantity` beside them is a bare scalar. A client that treats the three alike will read an object where it expects a number.\n\nThe caller must hold Power Platform Administrator or Global Administrator. Anything less is refused with `403` rather than an empty result.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      },
+      "description": "The tenant's id."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields observed being read by Microsoft's own consumer: `value`, `environmentId`, `environmentName`, `entitlement.capacity.allocated.value`, `entitlement.capacity.consumed.value`, `entitlement.capacity.availableQuantity`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "value": {
+           "type": "string"
+          },
+          "environmentId": {
+           "type": "string"
+          },
+          "environmentName": {
+           "type": "string"
+          },
+          "entitlement": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "The caller is not a Power Platform or Global Administrator."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
   }
  },
  "components": {

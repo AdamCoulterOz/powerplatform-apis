@@ -18,7 +18,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # The evidence grades. In the extracted design a corpus declares its own
 # vocabulary and this becomes agreement-with-declaration; until then the
 # triple lives here, in one place, so generalising it is one edit.
-GRADES = {"live", "pac-cli", "provider", "ps-admin"}
+GRADES = {"live", "pac-cli", "provider", "ps-admin", "ppac-spa"}
 
 
 def stale(value, known) -> str:

@@ -149,7 +149,17 @@
     "The provider's map lacks the live `pol` (Poland) and `ita` (Italy) hosts. Added here.",
     "The provider upper-cases the geoName before lookup while the service returns it lower-case. Its map keys are upper-case so this works, but it means an unmapped geography fails hard rather than degrading."
    ]
-  }
+  },
+  "x-notes": [
+   {
+    "note": "Most of this spec is read out of the Power Platform admin centre's own JavaScript bundles. Three things follow that a reader should hold onto.\n\n**`adminanalytics` is a different service from `csanalytics`**, on its own host, and csanalytics names it as its own authorization endpoint. Both take the same geo short-code prefix.\n\n**The bundles do not contain hostnames at the call sites.** They build `https://csanalytics/api/...` where `csanalytics` is a *service alias key*, swapped for a real endpoint by a request interceptor against a per-ring table. Anyone reading these bundles will otherwise attribute routes to the wrong host -- which is exactly what happened while this spec was being written, putting the `/api/v1/cds/*` reports on csanalytics when they belong to adminanalytics.\n\n**A bundle shows what the client *can* send, not what the service accepted.** Every query parameter and body field here is one the code is capable of setting, including on branches no session reached. That makes the coverage wider than a capture and the confirmation weaker: nothing sourced this way is `x-probe-verified`.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "The geo prefix is derived differently by different clients, and the answers need not agree. This spec's `x-region-hosts` maps the `geoName` from `GET /gateway/cluster`. The admin centre instead reads `GET /providers/Microsoft.BusinessAppPlatform/tenant?api-version=2020-08-01` and takes `defaultEnvironmentGeo`, falling back to `dataStorageGeo`, then maps that through a 24-entry table. A tenant whose default environment sits outside its data-storage geography would resolve to different hosts by the two routes.",
+    "source": "ppac-spa"
+   }
+  ]
  },
  "servers": [
   {
@@ -210,11 +220,614 @@
    "description": "A data-export connection is the tenant-level object behind *Data export* in the Power Platform admin center: it binds a set of environments to one Azure sink (an Application Insights component) and streams a chosen set of telemetry scenarios into it, reporting ingestion health per scenario. Connections are created and edited in the admin center UI; this API only reads them back."
   },
   {
+   "name": "Environment Group Rules",
+   "description": "Which environments a group's rules apply to, and which rules apply to an environment."
+  },
+  {
+   "name": "Organization Metrics",
+   "description": "Time series and category series for one Dataverse organization, plus the metric catalogue."
+  },
+  {
    "name": "Region Discovery",
    "description": "Which geography, and therefore which analytics host, serves the caller's tenant. This resource belongs to the Power Platform API (ppapi) rather than to analytics; it is reproduced here because no analytics operation can be addressed without it."
+  },
+  {
+   "name": "Resource Metrics",
+   "description": "A generic metric surface addressed by resource type and sub-type rather than by a named report."
+  },
+  {
+   "name": "Service",
+   "description": "Liveness."
   }
  ],
  "paths": {
+  "/api/echo": {
+   "get": {
+    "operationId": "service_echo",
+    "tags": [
+     "Service"
+    ],
+    "summary": "Echo",
+    "description": "Liveness check.",
+    "servers": [
+     {
+      "url": "https://adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics without a geo prefix. Also the authorization endpoint csanalytics itself points at."
+     }
+    ],
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/cds/CategorySeries/Organizations/{organizationId}": {
+   "get": {
+    "operationId": "orgMetrics_categorySeries",
+    "tags": [
+     "Organization Metrics"
+    ],
+    "summary": "Category Series",
+    "description": "Metric values broken down by category rather than by time.",
+    "servers": [
+     {
+      "url": "https://{region}.adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics, geo-prefixed with the same short code as the csanalytics host.",
+      "variables": {
+       "region": {
+        "default": "na",
+        "enum": [
+         "apac",
+         "can",
+         "che",
+         "emea",
+         "fra",
+         "gbr",
+         "ger",
+         "ind",
+         "ita",
+         "jpn",
+         "kor",
+         "na",
+         "nor",
+         "oce",
+         "pol",
+         "sam",
+         "sgp",
+         "swe",
+         "uae",
+         "zaf"
+        ],
+        "description": "Regional host prefix. **Not always the geoName**: an Australian tenant reports geoName `au` and is served by `oce`, and a `pac` tenant by `apac`. Sovereign clouds are separate `servers` entries because they use different domains."
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "organizationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `organizationId`."
+     },
+     {
+      "name": "Metrics",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "Rollups",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "StartTime",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "EndTime",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/v1/cds/CopilotUsageV2": {
+   "get": {
+    "operationId": "orgMetrics_copilotUsage",
+    "tags": [
+     "Organization Metrics"
+    ],
+    "summary": "Copilot Usage",
+    "description": "Copilot usage, filterable and pageable through its query parameters.",
+    "servers": [
+     {
+      "url": "https://{region}.adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics, geo-prefixed with the same short code as the csanalytics host.",
+      "variables": {
+       "region": {
+        "default": "na",
+        "enum": [
+         "apac",
+         "can",
+         "che",
+         "emea",
+         "fra",
+         "gbr",
+         "ger",
+         "ind",
+         "ita",
+         "jpn",
+         "kor",
+         "na",
+         "nor",
+         "oce",
+         "pol",
+         "sam",
+         "sgp",
+         "swe",
+         "uae",
+         "zaf"
+        ],
+        "description": "Regional host prefix. **Not always the geoName**: an Australian tenant reports geoName `au` and is served by `oce`, and a `pac` tenant by `apac`. Sovereign clouds are separate `servers` entries because they use different domains."
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "organizationId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "entityId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "dataEventName",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "entityRecords",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "metricType",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "skipCount",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "sortOrder",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "searchString",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/cds/GreenlandReport/Tenants/{tenantId}": {
+   "get": {
+    "operationId": "orgMetrics_appAccessReport",
+    "tags": [
+     "Organization Metrics"
+    ],
+    "summary": "App Access Report",
+    "description": "Per-user application access for a tenant. Internally codenamed *Greenland*; rows carry a timestamp, organization and application name, and the acting user.",
+    "servers": [
+     {
+      "url": "https://{region}.adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics, geo-prefixed with the same short code as the csanalytics host.",
+      "variables": {
+       "region": {
+        "default": "na",
+        "enum": [
+         "apac",
+         "can",
+         "che",
+         "emea",
+         "fra",
+         "gbr",
+         "ger",
+         "ind",
+         "ita",
+         "jpn",
+         "kor",
+         "na",
+         "nor",
+         "oce",
+         "pol",
+         "sam",
+         "sgp",
+         "swe",
+         "uae",
+         "zaf"
+        ],
+        "description": "Regional host prefix. **Not always the geoName**: an Australian tenant reports geoName `au` and is served by `oce`, and a `pac` tenant by `apac`. Sovereign clouds are separate `servers` entries because they use different domains."
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "organizationId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "StartTime",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "EndTime",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/v1/cds/OrgInsightsMetrics/List": {
+   "get": {
+    "operationId": "orgMetrics_listCatalogue",
+    "tags": [
+     "Organization Metrics"
+    ],
+    "summary": "Metric Catalogue",
+    "description": "The metrics available for an organization version, localised by `languageCode`.",
+    "servers": [
+     {
+      "url": "https://{region}.adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics, geo-prefixed with the same short code as the csanalytics host.",
+      "variables": {
+       "region": {
+        "default": "na",
+        "enum": [
+         "apac",
+         "can",
+         "che",
+         "emea",
+         "fra",
+         "gbr",
+         "ger",
+         "ind",
+         "ita",
+         "jpn",
+         "kor",
+         "na",
+         "nor",
+         "oce",
+         "pol",
+         "sam",
+         "sgp",
+         "swe",
+         "uae",
+         "zaf"
+        ],
+        "description": "Regional host prefix. **Not always the geoName**: an Australian tenant reports geoName `au` and is served by `oce`, and a `pac` tenant by `apac`. Sovereign clouds are separate `servers` entries because they use different domains."
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "OrganizationVersion",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "languageCode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/cds/TMUsageReport/Organizations/{organizationId}": {
+   "get": {
+    "operationId": "orgMetrics_tmUsageReport",
+    "tags": [
+     "Organization Metrics"
+    ],
+    "summary": "TM Usage Report",
+    "description": "A usage report for one organization over a window.",
+    "servers": [
+     {
+      "url": "https://{region}.adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics, geo-prefixed with the same short code as the csanalytics host.",
+      "variables": {
+       "region": {
+        "default": "na",
+        "enum": [
+         "apac",
+         "can",
+         "che",
+         "emea",
+         "fra",
+         "gbr",
+         "ger",
+         "ind",
+         "ita",
+         "jpn",
+         "kor",
+         "na",
+         "nor",
+         "oce",
+         "pol",
+         "sam",
+         "sgp",
+         "swe",
+         "uae",
+         "zaf"
+        ],
+        "description": "Regional host prefix. **Not always the geoName**: an Australian tenant reports geoName `au` and is served by `oce`, and a `pac` tenant by `apac`. Sovereign clouds are separate `servers` entries because they use different domains."
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "organizationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `organizationId`."
+     },
+     {
+      "name": "StartTime",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "EndTime",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/v1/cds/TimeSeries/Organizations/{organizationId}": {
+   "get": {
+    "operationId": "orgMetrics_timeSeries",
+    "tags": [
+     "Organization Metrics"
+    ],
+    "summary": "Time Series",
+    "description": "Metric values over time for one organization. `Metrics` and `Rollups` select which series and at what granularity.",
+    "servers": [
+     {
+      "url": "https://{region}.adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics, geo-prefixed with the same short code as the csanalytics host.",
+      "variables": {
+       "region": {
+        "default": "na",
+        "enum": [
+         "apac",
+         "can",
+         "che",
+         "emea",
+         "fra",
+         "gbr",
+         "ger",
+         "ind",
+         "ita",
+         "jpn",
+         "kor",
+         "na",
+         "nor",
+         "oce",
+         "pol",
+         "sam",
+         "sgp",
+         "swe",
+         "uae",
+         "zaf"
+        ],
+        "description": "Regional host prefix. **Not always the geoName**: an Australian tenant reports geoName `au` and is served by `oce`, and a `pac` tenant by `apac`. Sovereign clouds are separate `servers` entries because they use different domains."
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "organizationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `organizationId`."
+     },
+     {
+      "name": "Metrics",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "Rollups",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "StartTime",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "EndTime",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
   "/api/v1/connections": {
    "get": {
     "operationId": "connections_list_v1",
@@ -242,6 +855,338 @@
       "$ref": "#/components/responses/MethodNotAllowed"
      }
     }
+   }
+  },
+  "/api/v1/metrics/diagnosticlogs": {
+   "post": {
+    "operationId": "resourceMetrics_diagnosticLogs",
+    "tags": [
+     "Resource Metrics"
+    ],
+    "summary": "Diagnostic Logs",
+    "description": "Diagnostic log rows for a resource over a window.",
+    "servers": [
+     {
+      "url": "https://{region}.adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics, geo-prefixed with the same short code as the csanalytics host.",
+      "variables": {
+       "region": {
+        "default": "na",
+        "enum": [
+         "apac",
+         "can",
+         "che",
+         "emea",
+         "fra",
+         "gbr",
+         "ger",
+         "ind",
+         "ita",
+         "jpn",
+         "kor",
+         "na",
+         "nor",
+         "oce",
+         "pol",
+         "sam",
+         "sgp",
+         "swe",
+         "uae",
+         "zaf"
+        ],
+        "description": "Regional host prefix. **Not always the geoName**: an Australian tenant reports geoName `au` and is served by `oce`, and a `pac` tenant by `apac`. Sovereign clouds are separate `servers` entries because they use different domains."
+       }
+      }
+     }
+    ],
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "metricName": {
+          "type": "string"
+         },
+         "metricType": {
+          "type": "string"
+         },
+         "startTime": {
+          "type": "string"
+         },
+         "endTime": {
+          "type": "string"
+         },
+         "resourceId": {
+          "type": "string"
+         },
+         "environmentId": {
+          "type": "string"
+         },
+         "limit": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/v1/metrics/resourceType/{resourceType}/resourceSubType/{resourceSubType}/latest": {
+   "post": {
+    "operationId": "resourceMetrics_latest",
+    "tags": [
+     "Resource Metrics"
+    ],
+    "summary": "Latest",
+    "description": "The most recent values for a metric, with paging and dimension filters. Same conditional `/admin` segment as the time-series route.",
+    "servers": [
+     {
+      "url": "https://{region}.adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics, geo-prefixed with the same short code as the csanalytics host.",
+      "variables": {
+       "region": {
+        "default": "na",
+        "enum": [
+         "apac",
+         "can",
+         "che",
+         "emea",
+         "fra",
+         "gbr",
+         "ger",
+         "ind",
+         "ita",
+         "jpn",
+         "kor",
+         "na",
+         "nor",
+         "oce",
+         "pol",
+         "sam",
+         "sgp",
+         "swe",
+         "uae",
+         "zaf"
+        ],
+        "description": "Regional host prefix. **Not always the geoName**: an Australian tenant reports geoName `au` and is served by `oce`, and a `pac` tenant by `apac`. Sovereign clouds are separate `servers` entries because they use different domains."
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "resourceType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceType`."
+     },
+     {
+      "name": "resourceSubType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceSubType`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "metricName": {
+          "type": "string"
+         },
+         "metricType": {
+          "type": "string"
+         },
+         "startTime": {
+          "type": "string"
+         },
+         "endTime": {
+          "type": "string"
+         },
+         "limit": {
+          "type": "string"
+         },
+         "offset": {
+          "type": "string"
+         },
+         "preAggregateName": {
+          "type": "string"
+         },
+         "dimensionFilters": {
+          "type": "string"
+         },
+         "excludeToday": {
+          "type": "string"
+         },
+         "includePreviousMetricValue": {
+          "type": "string"
+         },
+         "groupByDimensionKey": {
+          "type": "string"
+         },
+         "aggregationType": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/v1/metrics/resourceType/{resourceType}/resourceSubType/{resourceSubType}/timeseries": {
+   "post": {
+    "operationId": "resourceMetrics_timeSeries",
+    "tags": [
+     "Resource Metrics"
+    ],
+    "summary": "Time Series",
+    "description": "A metric over time for a resource type and sub-type. The path carries an optional `/admin` segment inserted when the caller holds the admin role, so the same handler is addressed by two live paths.",
+    "servers": [
+     {
+      "url": "https://{region}.adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics, geo-prefixed with the same short code as the csanalytics host.",
+      "variables": {
+       "region": {
+        "default": "na",
+        "enum": [
+         "apac",
+         "can",
+         "che",
+         "emea",
+         "fra",
+         "gbr",
+         "ger",
+         "ind",
+         "ita",
+         "jpn",
+         "kor",
+         "na",
+         "nor",
+         "oce",
+         "pol",
+         "sam",
+         "sgp",
+         "swe",
+         "uae",
+         "zaf"
+        ],
+        "description": "Regional host prefix. **Not always the geoName**: an Australian tenant reports geoName `au` and is served by `oce`, and a `pac` tenant by `apac`. Sovereign clouds are separate `servers` entries because they use different domains."
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "resourceType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceType`."
+     },
+     {
+      "name": "resourceSubType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceSubType`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "metricName": {
+          "type": "string"
+         },
+         "metricType": {
+          "type": "string"
+         },
+         "startTime": {
+          "type": "string"
+         },
+         "endTime": {
+          "type": "string"
+         },
+         "preAggregateName": {
+          "type": "string"
+         },
+         "resourceId": {
+          "type": "string"
+         },
+         "environmentId": {
+          "type": "string"
+         },
+         "groupByDimensionKey": {
+          "type": "string"
+         },
+         "aggregationType": {
+          "type": "string"
+         },
+         "role": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
    }
   },
   "/api/v1/tenants/{tenantId}/tenantconsent": {
@@ -436,6 +1381,216 @@
       "$ref": "#/components/responses/Unauthorized"
      }
     }
+   }
+  },
+  "/v1/tenants/{tenantId}/environmentGroup/{environmentGroupId}/environment/{environmentId}/rules": {
+   "get": {
+    "operationId": "envGroupRules_environmentRules",
+    "tags": [
+     "Environment Group Rules"
+    ],
+    "summary": "Environment Rules",
+    "description": "Which of a group's rules apply to one environment.",
+    "servers": [
+     {
+      "url": "https://adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics without a geo prefix. Also the authorization endpoint csanalytics itself points at."
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentGroupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentGroupId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/v1/tenants/{tenantId}/environmentGroup/{environmentGroupId}/environments": {
+   "get": {
+    "operationId": "envGroupRules_groupEnvironments",
+    "tags": [
+     "Environment Group Rules"
+    ],
+    "summary": "Group Environments",
+    "description": "Which environments an environment group contains.",
+    "servers": [
+     {
+      "url": "https://adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics without a geo prefix. Also the authorization endpoint csanalytics itself points at."
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentGroupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentGroupId`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/v1/tenants/{tenantId}/environmentGroup/{environmentGroupId}/rule/{ruleId}/environments": {
+   "get": {
+    "operationId": "envGroupRules_ruleEnvironments",
+    "tags": [
+     "Environment Group Rules"
+    ],
+    "summary": "Rule Environments",
+    "description": "Which environments one rule of a group applies to.",
+    "servers": [
+     {
+      "url": "https://adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics without a geo prefix. Also the authorization endpoint csanalytics itself points at."
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentGroupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentGroupId`."
+     },
+     {
+      "name": "ruleId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `ruleId`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/v1/tenants/{tenantId}/environmentGroup/{environmentGroupId}/rules": {
+   "get": {
+    "operationId": "envGroupRules_list",
+    "tags": [
+     "Environment Group Rules"
+    ],
+    "summary": "Group Rules",
+    "description": "The rules defined on an environment group.",
+    "servers": [
+     {
+      "url": "https://adminanalytics.powerplatform.microsoft.com",
+      "description": "Admin analytics without a geo prefix. Also the authorization endpoint csanalytics itself points at."
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentGroupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentGroupId`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     }
+    ]
    }
   }
  },

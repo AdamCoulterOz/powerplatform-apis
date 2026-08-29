@@ -346,6 +346,18 @@
   "entityDefinitions_readAttribute": [
    "dataverse"
   ],
+  "envGroupRules_environmentRules": [
+   "analytics"
+  ],
+  "envGroupRules_groupEnvironments": [
+   "analytics"
+  ],
+  "envGroupRules_list": [
+   "analytics"
+  ],
+  "envGroupRules_ruleEnvironments": [
+   "analytics"
+  ],
   "environmentGroups_create": [
    "bapi"
   ],
@@ -925,6 +937,24 @@
   "omnichannelAuth_getUnifiedToken": [
    "admin"
   ],
+  "orgMetrics_appAccessReport": [
+   "analytics"
+  ],
+  "orgMetrics_categorySeries": [
+   "analytics"
+  ],
+  "orgMetrics_copilotUsage": [
+   "analytics"
+  ],
+  "orgMetrics_listCatalogue": [
+   "analytics"
+  ],
+  "orgMetrics_timeSeries": [
+   "analytics"
+  ],
+  "orgMetrics_tmUsageReport": [
+   "analytics"
+  ],
   "organizationSettings_list": [
    "dataverse"
   ],
@@ -1252,6 +1282,15 @@
   "relationships_removeByKey": [
    "dataverse"
   ],
+  "resourceMetrics_diagnosticLogs": [
+   "analytics"
+  ],
+  "resourceMetrics_latest": [
+   "analytics"
+  ],
+  "resourceMetrics_timeSeries": [
+   "analytics"
+  ],
   "resourcequery_queryResources": [
    "ppapi"
   ],
@@ -1266,6 +1305,9 @@
   ],
   "serviceRoot_read": [
    "licensing"
+  ],
+  "service_echo": [
+   "analytics"
   ],
   "solutionImport_publishAllCustomizations": [
    "dataverse"
@@ -1577,6 +1619,9 @@
   "Environment Group": [
    "ppapi"
   ],
+  "Environment Group Rules": [
+   "analytics"
+  ],
   "Environment Groups": [
    "bapi"
   ],
@@ -1652,6 +1697,9 @@
   "Organization": [
    "admin"
   ],
+  "Organization Metrics": [
+   "analytics"
+  ],
   "Organization Registration": [
    "athena"
   ],
@@ -1688,6 +1736,9 @@
   "Release Wave Feature": [
    "admin"
   ],
+  "Resource Metrics": [
+   "analytics"
+  ],
   "Resource Query": [
    "ppapi"
   ],
@@ -1705,6 +1756,9 @@
   ],
   "Rulesets": [
    "advisor"
+  ],
+  "Service": [
+   "analytics"
   ],
   "Service Plan": [
    "ppapi"

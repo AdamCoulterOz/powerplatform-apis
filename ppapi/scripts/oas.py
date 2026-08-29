@@ -744,6 +744,19 @@ def main():
     out_path = OUT / "openapi.json"
     tmp_path = out_path.with_suffix(".json.tmp")
     tmp_path.write_text(json.dumps(spec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    # Validate the candidate BEFORE it replaces the live spec. Writing first and
+    # validating after means an invalid build silently becomes the published one
+    # -- which it did: a duplicated path parameter produced a spec that failed
+    # validation and had already overwritten the good file by the time anyone saw.
+    try:
+        from openapi_spec_validator import validate  # type: ignore
+        validate(json.loads(tmp_path.read_text(encoding="utf-8")))
+    except ImportError:
+        print("openapi-spec-validator not installed; publishing without validating")
+    except Exception as exc:
+        tmp_path.unlink(missing_ok=True)
+        raise SystemExit(f"generated spec is invalid, previous spec left in place: {exc}")
     os.replace(tmp_path, out_path)
     stale = set(ENRICH.get("operations", {})) - ENRICH_USED
     for k in sorted(stale):

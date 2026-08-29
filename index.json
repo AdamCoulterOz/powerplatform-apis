@@ -33,6 +33,69 @@
   "analysis_uploadFile": [
    "advisor"
   ],
+  "analyticsInventoryV2ResourceTypeBot_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsActionHistoryRedact_post": [
+   "ppapi"
+  ],
+  "analyticsTenantsActionsShareRecommendation_post": [
+   "ppapi"
+  ],
+  "analyticsTenantsAdvisorConfigurations_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsAdvisorRecommendationStaticUXMetadata_getX": [
+   "ppapi"
+  ],
+  "analyticsTenantsAdvisorRecommendationsHintsSummary_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsAdvisorRecommendationsHintsSummary_get2": [
+   "ppapi"
+  ],
+  "analyticsTenantsAdvisorRecommendationsScenarios_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsAdvisorRecommendations_getX": [
+   "ppapi"
+  ],
+  "analyticsTenantsCopilotInsightsResourceTypeCopilotStudioEnvironmentsResourceId_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsCopilotInsightsResourceTypeD365salesSkillUsageMetrics_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsCopilotInsightsResourceTypeOverall_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsCopilotInsightsResourceTypePowerAppsAgentsEnvironmentsApps_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsCopilotInsightsResourceTypePowerAppsAgentsEnvironments_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsEnvironmentsCopilotInsightsResourceTypeD365salesSkillUsageMetrics_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsEnvironmentsResourceTypesAppMakerAdvisorRecommendationsResources_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsResourceTypesAdvisorRecommendationsResources_get": [
+   "ppapi"
+  ],
+  "analyticsTenantsSuppressions_deleteX": [
+   "ppapi"
+  ],
+  "analyticsTenantsSuppressions_getX": [
+   "ppapi"
+  ],
+  "analyticsTenantsSuppressions_postX": [
+   "ppapi"
+  ],
+  "analyticsTenants_getX": [
+   "ppapi"
+  ],
   "analytics_askAdvisor": [
    "ppapi"
   ],
@@ -65,6 +128,18 @@
   ],
   "appInsightsConfiguration_update": [
    "copilot"
+  ],
+  "appmanagementEnvironmentsProvisioningPackagesMicrosoftCrmCloudPesTpsProvision_post": [
+   "ppapi"
+  ],
+  "appmanagementTenantsEnvironmentsInstancePackagesMicrosoftCrmCloudPesTpsUserGetInstancePackagesLcid1033_get": [
+   "ppapi"
+  ],
+  "appmanagementTenantsEnvironmentsTenantProductsMicrosoftCrmCloudPesTpsInstallAppSource_post": [
+   "ppapi"
+  ],
+  "appmanagementTenantsTenantProductsMicrosoftCrmCloudPesTpsUserListTenantProductsV2_get": [
+   "ppapi"
   ],
   "appmanagement_getApplicationPackageInstallStatus": [
    "ppapi"
@@ -157,6 +232,45 @@
   "connections_list_v1": [
    "analytics"
   ],
+  "connectivityTenantsEnvironmentsConnectionsORConnectivityTenantsEnvironmentsConnectorsConnections_get": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsConnectorsConnectionsConfirmConsentCode_post": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsConnectorsConnectionsGetConsentLink_post": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsConnectorsConnections_get": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsConnectorsConnections_put": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsConnectorsCreateoboconnection_post": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsConnectors_get": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsConnectors_get2": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsGatewayClusters_get": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsGateways_get": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsListCapabilities_post": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsModifyPermissions_post": [
+   "ppapi"
+  ],
+  "connectivityTenantsEnvironmentsPermissions_get": [
+   "ppapi"
+  ],
   "connectivity_deleteConnection": [
    "ppapi"
   ],
@@ -204,6 +318,21 @@
   ],
   "connectors_listConnections": [
    "powerapps"
+  ],
+  "copilotgovernanceTenantsEnvironmentsSettings_get": [
+   "ppapi"
+  ],
+  "copilotgovernanceTenantsEnvironmentsSettings_put": [
+   "ppapi"
+  ],
+  "copilotgovernanceTenantsFeatures_getX": [
+   "ppapi"
+  ],
+  "copilotgovernanceTenantsSettingGroups_getX": [
+   "ppapi"
+  ],
+  "copilotgovernanceTenantsSettingsFetchSummary_post": [
+   "ppapi"
   ],
   "copilotgovernance_getSetting": [
    "ppapi"
@@ -300,6 +429,12 @@
   ],
   "dlpPolicies_update": [
    "bapi"
+  ],
+  "dynamicsTenantsEnvironmentsFinopsadminsettings_put": [
+   "ppapi"
+  ],
+  "dynamicsTenantsEnvironmentsFinopsproperties_get": [
+   "ppapi"
   ],
   "dynamics_applyFinOpsVersion": [
    "ppapi"
@@ -652,6 +787,60 @@
   "getConsumedQuota_post": [
    "bapi"
   ],
+  "governanceEnvironmentGroupsRuleBasedPoliciesEnvironmentsRemoveInheritedAcp_post": [
+   "ppapi"
+  ],
+  "governanceEnvironmentsEffectiveClassicDlpPolicies_getX": [
+   "ppapi"
+  ],
+  "governanceEnvironmentsRuleBasedPoliciesEnvironmentGroupsRemoveInheritedAcp_post": [
+   "ppapi"
+  ],
+  "governanceLockboxPolicies_getX": [
+   "ppapi"
+  ],
+  "governanceLockboxPolicies_postX": [
+   "ppapi"
+  ],
+  "governanceRecommendationsAcpmigration_getX": [
+   "ppapi"
+  ],
+  "governanceRecommendationsAcpmigration_patchX": [
+   "ppapi"
+  ],
+  "governanceTenantsConnectorsFilterableParameters_get": [
+   "ppapi"
+  ],
+  "governanceTenantsEnvironmentGroupsRuleBasedPolicies_get": [
+   "ppapi"
+  ],
+  "governanceTenantsRuleBasedPoliciesEnvironmentGroupsAssignments_delete": [
+   "ppapi"
+  ],
+  "governanceTenantsRuleBasedPoliciesEnvironmentGroupsAssignments_post": [
+   "ppapi"
+  ],
+  "governanceTenantsRuleBasedPoliciesRemoveRule_patch": [
+   "ppapi"
+  ],
+  "governanceTenantsRuleBasedPolicies_deleteX": [
+   "ppapi"
+  ],
+  "governanceTenantsRuleBasedPolicies_getX": [
+   "ppapi"
+  ],
+  "governanceTenantsRuleBasedPolicies_patchX": [
+   "ppapi"
+  ],
+  "governanceTenantsRuleBasedPolicies_postX": [
+   "ppapi"
+  ],
+  "governanceTenantsRuleSetUIConfigurations_getX": [
+   "ppapi"
+  ],
+  "governanceTenantsTenantRuleBasedPolicies_getX": [
+   "ppapi"
+  ],
   "governance_createCrossTenantConnectionReport": [
    "ppapi"
   ],
@@ -756,6 +945,9 @@
   ],
   "lakehouse_artifacts_premium_licence_read": [
    "athena"
+  ],
+  "licensingRecommendations_getX": [
+   "ppapi"
   ],
   "licensing_addBillingPolicyEnvironment": [
    "ppapi"
@@ -940,6 +1132,18 @@
   "managedEnvironments_setGovernanceConfiguration": [
    "bapi"
   ],
+  "monitoringhubTenantsEnvironmentsMetricsResourceTypeResourceSubTypeTimeseries_post": [
+   "ppapi"
+  ],
+  "notificationserviceNotificationsMetadata_getX": [
+   "ppapi"
+  ],
+  "notificationserviceNotificationsStatus_postX": [
+   "ppapi"
+  ],
+  "notificationserviceNotifications_getX": [
+   "ppapi"
+  ],
   "omnichannelAuth_getUnifiedToken": [
    "admin"
   ],
@@ -1072,6 +1276,27 @@
   "policies_post": [
    "bapi"
   ],
+  "powerappsAppsUpdateDisplayName_postX": [
+   "ppapi"
+  ],
+  "powerappsAppsUpdatePublishedSettings_postX": [
+   "ppapi"
+  ],
+  "powerappsAppsUpdateUnpublishedSettings_postX": [
+   "ppapi"
+  ],
+  "powerappsTenantsEnvironmentsAppsPermissions_get": [
+   "ppapi"
+  ],
+  "powerappsTenantsEnvironmentsApps_get": [
+   "ppapi"
+  ],
+  "powerappsTenantsEnvironmentsEnvironment_get": [
+   "ppapi"
+  ],
+  "powerappsTenantsEnvironments_getX": [
+   "ppapi"
+  ],
   "powerapps_enroll": [
    "ppapi"
   ],
@@ -1118,6 +1343,9 @@
    "ppapi"
   ],
   "powerapps_subscribeToNotificationChannel": [
+   "ppapi"
+  ],
+  "powerautomateTenantsEnvironmentsApisConnections_post": [
    "ppapi"
   ],
   "powerautomate_listCloudFlows": [
@@ -1351,6 +1579,9 @@
   "solutions_readPreferred": [
    "dataverse"
   ],
+  "supportTenantsSupportticketsIseligibleforsupport_get": [
+   "ppapi"
+  ],
   "synapseDatabases_list": [
    "dataverse"
   ],
@@ -1533,6 +1764,9 @@
   "Application Insights Configuration": [
    "copilot"
   ],
+  "Application Management": [
+   "ppapi"
+  ],
   "Application Package": [
    "ppapi"
   ],
@@ -1567,6 +1801,9 @@
    "powerapps",
    "ppapi"
   ],
+  "Connectivity": [
+   "ppapi"
+  ],
   "Connector": [
    "powerapps",
    "ppapi"
@@ -1578,6 +1815,9 @@
    "bapi"
   ],
   "Copilot Agent": [
+   "ppapi"
+  ],
+  "Copilot Governance": [
    "ppapi"
   ],
   "Copilot Governance Setting": [
@@ -1616,6 +1856,9 @@
   ],
   "Discovery": [
    "dataverse"
+  ],
+  "Dynamics": [
+   "ppapi"
   ],
   "Enforcement Cache": [
    "advisor"
@@ -1679,6 +1922,9 @@
   "Gateway": [
    "powerapps"
   ],
+  "Governance": [
+   "ppapi"
+  ],
   "Governance Configuration": [
    "ppapi"
   ],
@@ -1694,6 +1940,9 @@
   "Lakehouse Artifacts": [
    "athena"
   ],
+  "Licensing (PPAPI)": [
+   "ppapi"
+  ],
   "Lifecycle Operations": [
    "bapi"
   ],
@@ -1706,10 +1955,16 @@
   "Managed Environments": [
    "bapi"
   ],
+  "Monitoring": [
+   "ppapi"
+  ],
   "Network Diagnostics": [
    "ppapi"
   ],
   "Notification": [
+   "ppapi"
+  ],
+  "Notifications": [
    "ppapi"
   ],
   "Organization": [
@@ -1735,6 +1990,12 @@
   ],
   "Portal Telemetry": [
    "admin"
+  ],
+  "Power Apps (PPAPI)": [
+   "ppapi"
+  ],
+  "Power Automate (PPAPI)": [
+   "ppapi"
   ],
   "Power Pages Website": [
    "ppapi"
@@ -1796,11 +2057,17 @@
   "Solutions": [
    "dataverse"
   ],
+  "Support": [
+   "ppapi"
+  ],
   "Table Definitions": [
    "dataverse"
   ],
   "Tenant": [
    "bapi"
+  ],
+  "Tenant Analytics": [
+   "ppapi"
   ],
   "Tenant Capacity": [
    "licensing",

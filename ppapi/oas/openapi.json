@@ -85,6 +85,10 @@
    "description": "Recommendations and actions"
   },
   {
+   "name": "Application Management",
+   "description": "Installing and tracking application packages in an environment."
+  },
+  {
    "name": "Application Package",
    "description": "Tenant and environment app install"
   },
@@ -121,12 +125,20 @@
    "description": "Connections"
   },
   {
+   "name": "Connectivity",
+   "description": "Connectors and connections, and the permissions attached to them."
+  },
+  {
    "name": "Connector",
    "description": "Connector catalogue"
   },
   {
    "name": "Copilot Agent",
    "description": "Agent admin and quarantine; Channels"
+  },
+  {
+   "name": "Copilot Governance",
+   "description": "Per-setting Copilot governance, whose backing store the client calls *Cafe*. Settings are addressed individually by name rather than as one document."
   },
   {
    "name": "Copilot Governance Setting",
@@ -143,6 +155,10 @@
   {
    "name": "DSR Compliance Request",
    "description": "DSR workflows"
+  },
+  {
+   "name": "Dynamics",
+   "description": "Dynamics-specific surfaces exposed through the Power Platform API."
   },
   {
    "name": "Entitlement",
@@ -173,12 +189,24 @@
    "description": "F&O licensing"
   },
   {
+   "name": "Governance",
+   "description": "Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*."
+  },
+  {
    "name": "Governance Configuration",
    "description": "Tenant-authored governance content surfaced to makers in the maker portal, addressed by configuration name."
   },
   {
    "name": "ISV Contract",
    "description": "Pay-as-you-go contracts"
+  },
+  {
+   "name": "Licensing (PPAPI)",
+   "description": "Licensing surfaces addressed on the Power Platform API host rather than the licensing host."
+  },
+  {
+   "name": "Monitoring",
+   "description": "The monitoring hub surface."
   },
   {
    "name": "Network Diagnostics",
@@ -189,8 +217,20 @@
    "description": "In-product notifications for the calling maker, and the Web PubSub channel that pushes them live."
   },
   {
+   "name": "Notifications",
+   "description": "Admin notifications raised to the tenant."
+  },
+  {
    "name": "Per-Flow Capacity",
    "description": "Per-user-per-flow capacity"
+  },
+  {
+   "name": "Power Apps (PPAPI)",
+   "description": "Power Apps resources addressed through the Power Platform API rather than the legacy PowerApps resource provider."
+  },
+  {
+   "name": "Power Automate (PPAPI)",
+   "description": "Power Automate resources addressed through the Power Platform API."
   },
   {
    "name": "Power Pages Website",
@@ -217,6 +257,14 @@
    "description": "The Power Platform service plans (licences) assigned to the calling user, and the policy limits each plan grants."
   },
   {
+   "name": "Support",
+   "description": "Support tooling the admin centre calls on the tenant's behalf."
+  },
+  {
+   "name": "Tenant Analytics",
+   "description": "Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking."
+  },
+  {
    "name": "Tenant Capacity",
    "description": "Capacity; Storage warnings; Thresholds"
   },
@@ -230,6 +278,90 @@
   }
  ],
  "paths": {
+  "/analytics/Inventory/v2/resourceType/bot": {
+   "get": {
+    "operationId": "analyticsInventoryV2ResourceTypeBot_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Bot List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "pageSize",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`pageSize`."
+     },
+     {
+      "name": "filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     },
+     {
+      "name": "sort",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     },
+     {
+      "name": "pageNumber",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `typeCell`, `resourceName`, `properties.resourcePublishedById`, `properties.resourcePublishedOnTime`, `resourceType`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "typeCell": {
+           "type": "string"
+          },
+          "resourceName": {
+           "type": "string"
+          },
+          "properties": {
+           "type": "string"
+          },
+          "resourceType": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/analytics/actions/{actionName}": {
    "post": {
     "operationId": "analytics_executeRecommendationAction",
@@ -748,6 +880,1321 @@
     }
    }
   },
+  "/analytics/tenants/{tenantId}/actionHistory/redact": {
+   "post": {
+    "operationId": "analyticsTenantsActionHistoryRedact_post",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Redact Create",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "userId": {
+          "type": "string"
+         },
+         "tenantId": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/actions/ShareRecommendation": {
+   "post": {
+    "operationId": "analyticsTenantsActionsShareRecommendation_post",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Share Recommendation Create",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "isDemoMode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     },
+     {
+      "name": "simulateActionFailure",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     },
+     {
+      "name": "requestSourceType",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "actionType": {
+          "type": "string"
+         },
+         "scenario": {
+          "type": "string"
+         },
+         "actionDetails": {
+          "type": "string"
+         },
+         "actionDetails[].customMessage": {
+          "type": "string"
+         },
+         "actionDetails[].shareContext": {
+          "type": "string"
+         },
+         "actionDetails[].shareWithObjectIds": {
+          "type": "string"
+         },
+         "actionDetails[].recommendationDetailsUrl": {
+          "type": "string"
+         },
+         "actionDetails[].shareWholeRecommendation": {
+          "type": "string"
+         },
+         "actionDetails[].totalResourceCount": {
+          "type": "string"
+         },
+         "actionDetails[].resourceId": {
+          "type": "string"
+         },
+         "actionDetails[].environmentId": {
+          "type": "string"
+         },
+         "actionDetails[].resourceName": {
+          "type": "string"
+         },
+         "actionDetails[].environmentName": {
+          "type": "string"
+         },
+         "actionDetails[].resourceSubType": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/advisor/configurations": {
+   "get": {
+    "operationId": "analyticsTenantsAdvisorConfigurations_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Configurations List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "experienceId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.disclaimer`, `data.promptSuggestions`, `data.promptSuggestions[].id`, `data.promptSuggestions[].text`, `data.promptSuggestions[].category`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/advisorRecommendationStaticUXMetadata": {
+   "get": {
+    "operationId": "analyticsTenantsAdvisorRecommendationStaticUXMetadata_getX",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Advisor Recommendation Static UXMetadata List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/advisorRecommendations": {
+   "get": {
+    "operationId": "analyticsTenantsAdvisorRecommendations_getX",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Advisor Recommendations List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "source",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`source`."
+     },
+     {
+      "name": "includeMetadata",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`includeMetadata`."
+     },
+     {
+      "name": "experimentRecommendationTitle",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`experimentRecommendationTitle`."
+     },
+     {
+      "name": "isDemoMode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/advisorRecommendations/scenarios": {
+   "get": {
+    "operationId": "analyticsTenantsAdvisorRecommendationsScenarios_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Scenarios List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/advisorRecommendations/{scenarioId}/hintsSummary": {
+   "get": {
+    "operationId": "analyticsTenantsAdvisorRecommendationsHintsSummary_get2",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Hints Summary List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "scenarioId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `scenarioId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "isDemoMode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `environmentCount`, `resourceCount`, `recommendationHints`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "environmentCount": {
+           "type": "string"
+          },
+          "resourceCount": {
+           "type": "string"
+          },
+          "recommendationHints": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/advisorRecommendations/{scenario}/hintsSummary": {
+   "get": {
+    "operationId": "analyticsTenantsAdvisorRecommendationsHintsSummary_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Hints Summary List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "scenario",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `scenario`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "isDemoMode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/copilotInsights/resourceType/CopilotStudio/environments/{environmentId}/resourceId/{resourceId}": {
+   "get": {
+    "operationId": "analyticsTenantsCopilotInsightsResourceTypeCopilotStudioEnvironmentsResourceId_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Resource Id Read",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "resourceId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "isDemoMode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`isDemoMode`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `(whole response, throws if falsy)`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "(whole response, throws if falsy)": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/copilotInsights/resourceType/PowerApps/agents/{agentType}/environments": {
+   "get": {
+    "operationId": "analyticsTenantsCopilotInsightsResourceTypePowerAppsAgentsEnvironments_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Environments List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "agentType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `agentType`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `resources[].resourceId`, `resources[].resourceName`, `resources[].monthlyActiveUserCount`, `resources[].monthlyActionTakenCount`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "resources[]": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/copilotInsights/resourceType/PowerApps/agents/{agentType}/environments/{environmentId}/apps": {
+   "get": {
+    "operationId": "analyticsTenantsCopilotInsightsResourceTypePowerAppsAgentsEnvironmentsApps_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Apps List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "agentType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `agentType`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `resources`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "resources": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/copilotInsights/resourceType/d365sales/skillUsageMetrics": {
+   "get": {
+    "operationId": "analyticsTenantsCopilotInsightsResourceTypeD365salesSkillUsageMetrics_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Skill Usage Metrics List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `overAllSkillsUsageTrend[].aggregationDate`, `overAllSkillsUsageTrend[].dailyActiveUserCount`, `overAllSkillsUsageTrend[].weeklyActiveUserCount`, `overAllSkillsUsageTrend[].monthlyActiveUserCount`, `perSkillUsage`, `aggregationDate`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "overAllSkillsUsageTrend[]": {
+           "type": "string"
+          },
+          "perSkillUsage": {
+           "type": "string"
+          },
+          "aggregationDate": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/copilotInsights/resourceType/{resourceType}/overall": {
+   "get": {
+    "operationId": "analyticsTenantsCopilotInsightsResourceTypeOverall_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Overall List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "resourceType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceType`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `activeUserMetric.monthlyCount`, `activeUserMetric.monthlyCountChange`, `activeUserMetric.aggregationDate`, `actionTakenMetric.monthlyCount`, `actionTakenMetric.monthlyCountChange`, `actionTakenMetric.aggregationDate`, `activeUserMetric.agents[].agentType`, `activeUserMetric.agents[].agentTrend`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "activeUserMetric": {
+           "type": "string"
+          },
+          "actionTakenMetric": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/environments/{environmentId}/copilotInsights/resourceType/d365sales/skillUsageMetrics": {
+   "get": {
+    "operationId": "analyticsTenantsEnvironmentsCopilotInsightsResourceTypeD365salesSkillUsageMetrics_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Skill Usage Metrics List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `overAllSkillsUsageTrend`, `perSkillUsage`, `aggregationDate`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "overAllSkillsUsageTrend": {
+           "type": "string"
+          },
+          "perSkillUsage": {
+           "type": "string"
+          },
+          "aggregationDate": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/environments/{environmentId}/resourceTypes/App/makerAdvisorRecommendations/resources": {
+   "get": {
+    "operationId": "analyticsTenantsEnvironmentsResourceTypesAppMakerAdvisorRecommendationsResources_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Resources List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "requestSourceType",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`requestSourceType`."
+     },
+     {
+      "name": "includeMetadata",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`includeMetadata`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.value`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/resourceTypes/{resourceType}/advisorRecommendations/resources": {
+   "get": {
+    "operationId": "analyticsTenantsResourceTypesAdvisorRecommendationsResources_get",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Resources List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "resourceType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceType`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "requestSourceType",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`requestSourceType`."
+     },
+     {
+      "name": "includeMetadata",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`includeMetadata`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/suppressions": {
+   "get": {
+    "operationId": "analyticsTenantsSuppressions_getX",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Suppressions List",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     },
+     {
+      "name": "isDemoMode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.value`, `data.value[].suppressionCategory`, `data.value[].suppressionActionType`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "post": {
+    "operationId": "analyticsTenantsSuppressions_postX",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Suppressions Create",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "isDemoMode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`isDemoMode`."
+     },
+     {
+      "name": "SuppressionActionType",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`SuppressionActionType`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "ActionType": {
+          "type": "string"
+         },
+         "AppliesTo": {
+          "type": "string"
+         },
+         "Duration": {
+          "type": "string"
+         },
+         "EffectiveTill": {
+          "type": "string"
+         },
+         "SuppressionReason": {
+          "type": "string"
+         },
+         "SuppressionScope": {
+          "type": "string"
+         },
+         "SuppressionScopeValue": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}/suppressions/{suppressionId}": {
+   "delete": {
+    "operationId": "analyticsTenantsSuppressions_deleteX",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Suppressions Delete",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "suppressionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `suppressionId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "isDemoMode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`isDemoMode`."
+     },
+     {
+      "name": "simulateActionFailure",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`simulateActionFailure`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/analytics/tenants/{tenantId}{relativePath}": {
+   "get": {
+    "operationId": "analyticsTenants_getX",
+    "tags": [
+     "Tenant Analytics"
+    ],
+    "summary": "Tenants Read",
+    "description": "Read from the admin centre's own client. Tenant-wide analytics and the admin actions the analytics experience can trigger, including the security responses behind attacker-IP blocking.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "relativePath",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `relativePath`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "isDemoMode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/appmanagement/applicationPackages": {
    "get": {
     "operationId": "appmanagement_getTenantApplicationPackage",
@@ -792,6 +2239,66 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/appmanagement/applications/get-tenant-application-package"
     }
+   }
+  },
+  "/appmanagement/environments/{environmentId}/ProvisioningPackages/Microsoft.Crm.Cloud.Pes.Tps.Provision()": {
+   "post": {
+    "operationId": "appmanagementEnvironmentsProvisioningPackagesMicrosoftCrmCloudPesTpsProvision_post",
+    "tags": [
+     "Application Management"
+    ],
+    "summary": "Microsoft.Crm.Cloud.Pes.Tps.Provision() Create",
+    "description": "Read from the admin centre's own client. Installing and tracking application packages in an environment.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "InstanceId": {
+          "type": "string"
+         },
+         "InitialUserObjectId": {
+          "type": "string"
+         },
+         "InstallType": {
+          "type": "string"
+         },
+         "Payload": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/appmanagement/environments/{environmentId}/applicationPackages": {
@@ -1012,6 +2519,219 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/appmanagement/applications/get-application-package-install-status"
     }
+   }
+  },
+  "/appmanagement/tenants/{tenantId}/TenantProducts/Microsoft.Crm.Cloud.Pes.Tps.UserListTenantProductsV2()": {
+   "get": {
+    "operationId": "appmanagementTenantsTenantProductsMicrosoftCrmCloudPesTpsUserListTenantProductsV2_get",
+    "tags": [
+     "Application Management"
+    ],
+    "summary": "Microsoft.Crm.Cloud.Pes.Tps.User List Tenant Products V2() List",
+    "description": "Read from the admin centre's own client. Installing and tracking application packages in an environment.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `json`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "json": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/appmanagement/tenants/{tenantId}/environments/{environmentId}/InstancePackages/Microsoft.Crm.Cloud.Pes.Tps.UserGetInstancePackages(Lcid='1033')": {
+   "get": {
+    "operationId": "appmanagementTenantsEnvironmentsInstancePackagesMicrosoftCrmCloudPesTpsUserGetInstancePackagesLcid1033_get",
+    "tags": [
+     "Application Management"
+    ],
+    "summary": "Microsoft.Crm.Cloud.Pes.Tps.User Get Instance Packages(Lcid='1033') List",
+    "description": "Read from the admin centre's own client. Installing and tracking application packages in an environment.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "geoType",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`geoType`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.value`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/appmanagement/tenants/{tenantId}/environments/{environmentId}/TenantProducts/Microsoft.Crm.Cloud.Pes.Tps.InstallAppSource()": {
+   "post": {
+    "operationId": "appmanagementTenantsEnvironmentsTenantProductsMicrosoftCrmCloudPesTpsInstallAppSource_post",
+    "tags": [
+     "Application Management"
+    ],
+    "summary": "Microsoft.Crm.Cloud.Pes.Tps.Install App Source() Create",
+    "description": "Read from the admin centre's own client. Installing and tracking application packages in an environment.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$expand`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "InstanceId": {
+          "type": "string"
+         },
+         "capabilityString": {
+          "type": "string"
+         },
+         "responseUrl": {
+          "type": "string"
+         },
+         "countryCode": {
+          "type": "string"
+         },
+         "crmVersion": {
+          "type": "string"
+         },
+         "geoCode": {
+          "type": "string"
+         },
+         "telemetryCorrelationId": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `TenantProducts[0]`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "TenantProducts[0]": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/authorization/environmentGroups/{environmentGroupId}/roleAssignments": {
@@ -2499,6 +4219,1045 @@
     }
    }
   },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/connections OR /connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/{connectorId}/connections": {
+   "get": {
+    "operationId": "connectivityTenantsEnvironmentsConnectionsORConnectivityTenantsEnvironmentsConnectorsConnections_get",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Connections List",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "connectorId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectorId`."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.value`, `data.nextLink`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/connectors": {
+   "get": {
+    "operationId": "connectivityTenantsEnvironmentsConnectors_get",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Connectors List",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.value`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/{connectorId}": {
+   "get": {
+    "operationId": "connectivityTenantsEnvironmentsConnectors_get2",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Connectors Read",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "connectorId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectorId`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/{connectorId}/connections/{connectionId}": {
+   "get": {
+    "operationId": "connectivityTenantsEnvironmentsConnectorsConnections_get",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Connections Read",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "connectorId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectorId`."
+     },
+     {
+      "name": "connectionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectionId`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "put": {
+    "operationId": "connectivityTenantsEnvironmentsConnectorsConnections_put",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Connections Set",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "connectorId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectorId`."
+     },
+     {
+      "name": "connectionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectionId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "connectionQueryParams",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "<connection payload passed as data>": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/{connectorId}/connections/{connectionId}/confirmConsentCode": {
+   "post": {
+    "operationId": "connectivityTenantsEnvironmentsConnectorsConnectionsConfirmConsentCode_post",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Confirm Consent Code Create",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "connectorId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectorId`."
+     },
+     {
+      "name": "connectionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectionId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "code": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/{connectorId}/connections/{connectionId}/getConsentLink": {
+   "post": {
+    "operationId": "connectivityTenantsEnvironmentsConnectorsConnectionsGetConsentLink_post",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Get Consent Link Create",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "connectorId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectorId`."
+     },
+     {
+      "name": "connectionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectionId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "redirectUrl": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/{connectorId}/createoboconnection": {
+   "post": {
+    "operationId": "connectivityTenantsEnvironmentsConnectorsCreateoboconnection_post",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Createoboconnection Create",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "connectorId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectorId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "connectionDefinition.properties": {
+          "type": "string"
+         },
+         "connectionDefinition.properties.consentInfo.redirectUrl": {
+          "type": "string"
+         },
+         "skipTestConnection": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`, `name`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          },
+          "name": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/gatewayClusters": {
+   "get": {
+    "operationId": "connectivityTenantsEnvironmentsGatewayClusters_get",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Gateway Clusters List",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.value`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/gateways/{gatewayId}": {
+   "get": {
+    "operationId": "connectivityTenantsEnvironmentsGateways_get",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Gateways Read",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "gatewayId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `gatewayId`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/{resourceUrl}/listCapabilities": {
+   "post": {
+    "operationId": "connectivityTenantsEnvironmentsListCapabilities_post",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "List Capabilities Create",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "resourceUrl",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceUrl`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.value`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/{resourceUrl}/modifyPermissions": {
+   "post": {
+    "operationId": "connectivityTenantsEnvironmentsModifyPermissions_post",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Modify Permissions Create",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "resourceUrl",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceUrl`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "<permissions payload>": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/connectivity/tenants/{tenantId}/environments/{environmentId}/{resourceUrl}/permissions": {
+   "get": {
+    "operationId": "connectivityTenantsEnvironmentsPermissions_get",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Permissions List",
+    "description": "Read from the admin centre's own client. Connectors and connections, and the permissions attached to them.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "resourceUrl",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceUrl`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.value`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/copilotgovernance/settings/{settingName}": {
    "get": {
     "operationId": "copilotgovernance_getSetting",
@@ -2562,6 +5321,252 @@
       "source": "live"
      }
     ]
+   }
+  },
+  "/copilotgovernance/tenants/{tenantId}/environments/{environmentId}/settings": {
+   "put": {
+    "operationId": "copilotgovernanceTenantsEnvironmentsSettings_put",
+    "tags": [
+     "Copilot Governance"
+    ],
+    "summary": "Settings Set",
+    "description": "Read from the admin centre's own client. Per-setting Copilot governance, whose backing store the client calls *Cafe*. Settings are addressed individually by name rather than as one document.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "settings.{settingName}.value": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/copilotgovernance/tenants/{tenantId}/environments/{environmentId}/settings/{settingName}": {
+   "get": {
+    "operationId": "copilotgovernanceTenantsEnvironmentsSettings_get",
+    "tags": [
+     "Copilot Governance"
+    ],
+    "summary": "Settings Read",
+    "description": "Read from the admin centre's own client. Per-setting Copilot governance, whose backing store the client calls *Cafe*. Settings are addressed individually by name rather than as one document.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "settingName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `settingName`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/copilotgovernance/tenants/{tenantId}/features": {
+   "get": {
+    "operationId": "copilotgovernanceTenantsFeatures_getX",
+    "tags": [
+     "Copilot Governance"
+    ],
+    "summary": "Features List",
+    "description": "Read from the admin centre's own client. Per-setting Copilot governance, whose backing store the client calls *Cafe*. Settings are addressed individually by name rather than as one document.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.results[].platformProduct`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/copilotgovernance/tenants/{tenantId}/settingGroups": {
+   "get": {
+    "operationId": "copilotgovernanceTenantsSettingGroups_getX",
+    "tags": [
+     "Copilot Governance"
+    ],
+    "summary": "Setting Groups List",
+    "description": "Read from the admin centre's own client. Per-setting Copilot governance, whose backing store the client calls *Cafe*. Settings are addressed individually by name rather than as one document.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/copilotgovernance/tenants/{tenantId}/settings/fetchSummary": {
+   "post": {
+    "operationId": "copilotgovernanceTenantsSettingsFetchSummary_post",
+    "tags": [
+     "Copilot Governance"
+    ],
+    "summary": "Fetch Summary Create",
+    "description": "Read from the admin centre's own client. Per-setting Copilot governance, whose backing store the client calls *Cafe*. Settings are addressed individually by name rather than as one document.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `results`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "results": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/copilotstudio/environments/{EnvironmentId}/agents/{AgentId}/channels/{ChannelName}/download": {
@@ -4105,6 +7110,126 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/dynamics/finance-and-operations-operation-errors/get-fin-ops-operation-errors"
     }
+   }
+  },
+  "/dynamics/tenants/{tenantId}/environments/{environmentId}/finopsadminsettings": {
+   "put": {
+    "operationId": "dynamicsTenantsEnvironmentsFinopsadminsettings_put",
+    "tags": [
+     "Dynamics"
+    ],
+    "summary": "Finopsadminsettings Set",
+    "description": "Read from the admin centre's own client. Dynamics-specific surfaces exposed through the Power Platform API.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "UpdatedMaintenanceWindowCadence": {
+          "type": "string"
+         },
+         "UpdatedMaintenanceWindowDaysOfWeek": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/dynamics/tenants/{tenantId}/environments/{environmentId}/finopsproperties": {
+   "get": {
+    "operationId": "dynamicsTenantsEnvironmentsFinopsproperties_get",
+    "tags": [
+     "Dynamics"
+    ],
+    "summary": "Finopsproperties List",
+    "description": "Read from the admin centre's own client. Dynamics-specific surfaces exposed through the Power Platform API.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `json (whole body stored as properties)`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "json (whole body stored as properties)": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/environmentmanagement/environmentGroupOperations/{operationId}": {
@@ -8152,6 +11277,58 @@
     "x-probe-verified": true
    }
   },
+  "/governance/environmentGroups/{groupId}/ruleBasedPolicies/environments/removeInheritedAcp": {
+   "post": {
+    "operationId": "governanceEnvironmentGroupsRuleBasedPoliciesEnvironmentsRemoveInheritedAcp_post",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Remove Inherited Acp Create",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "groupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `groupId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "environmentIds": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/governance/environmentGroups/{groupId}/ruleSets": {
    "post": {
     "operationId": "governance_createRuleSet",
@@ -8379,6 +11556,63 @@
     }
    }
   },
+  "/governance/environments/{environmentId}/effectiveClassicDlpPolicies": {
+   "get": {
+    "operationId": "governanceEnvironmentsEffectiveClassicDlpPolicies_getX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Effective Classic Dlp Policies List",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "pageSize",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`pageSize`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data.value[0]`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/governance/environments/{environmentId}/effectiveRuleBasedPolicies": {
    "get": {
     "operationId": "governance_listEffectiveRuleBasedPoliciesByEnvironment",
@@ -8447,6 +11681,267 @@
     },
     "x-ms-namespace": "governance/rule-based-policies",
     "x-probe-verified": true
+   }
+  },
+  "/governance/environments/{environmentId}/ruleBasedPolicies/environmentGroups/{groupId}/removeInheritedAcp": {
+   "post": {
+    "operationId": "governanceEnvironmentsRuleBasedPoliciesEnvironmentGroupsRemoveInheritedAcp_post",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Remove Inherited Acp Create",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "groupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `groupId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/governance/lockboxPolicies": {
+   "get": {
+    "operationId": "governanceLockboxPolicies_getX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Lockbox Policies List",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "productType",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`productType`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `value`, `value[0]`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "value": {
+           "type": "string"
+          },
+          "value[0]": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "post": {
+    "operationId": "governanceLockboxPolicies_postX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Lockbox Policies Create",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "productType",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`productType`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "(arbitrary lockbox policy object)": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/governance/recommendations/acpmigration/{id}": {
+   "get": {
+    "operationId": "governanceRecommendationsAcpmigration_getX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Acpmigration Read",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `id`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "patch": {
+    "operationId": "governanceRecommendationsAcpmigration_patchX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Acpmigration Update",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `id`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "completedSteps[].stepType": {
+          "type": "string"
+         },
+         "completedSteps[].stepStatus": {
+          "type": "string"
+         },
+         "completedSteps[].createdEntityId": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/governance/ruleBasedPolicies": {
@@ -9871,6 +13366,583 @@
     },
     "x-ms-namespace": "governance/rule-based-policies",
     "x-probe-verified": true
+   }
+  },
+  "/governance/tenants/{tenantId}/connectors/filterableParameters": {
+   "get": {
+    "operationId": "governanceTenantsConnectorsFilterableParameters_get",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Filterable Parameters List",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "connectorId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`connectorId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/governance/tenants/{tenantId}/environmentGroups/{groupId}/ruleBasedPolicies": {
+   "get": {
+    "operationId": "governanceTenantsEnvironmentGroupsRuleBasedPolicies_get",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Rule Based Policies List",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "groupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `groupId`."
+     },
+     {
+      "name": "includeCustomerContent",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`includeCustomerContent`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/governance/tenants/{tenantId}/ruleBasedPolicies": {
+   "post": {
+    "operationId": "governanceTenantsRuleBasedPolicies_postX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Rule Based Policies Create",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "<opaque policy definition, passed through as 'r'>": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/governance/tenants/{tenantId}/ruleBasedPolicies/{policyId}": {
+   "delete": {
+    "operationId": "governanceTenantsRuleBasedPolicies_deleteX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Rule Based Policies Delete",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "policyId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `policyId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "get": {
+    "operationId": "governanceTenantsRuleBasedPolicies_getX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Rule Based Policies Read",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "policyId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `policyId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `eTag (derived from response ETag header, merged into returned object)`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "eTag (derived from response ETag header, merged into returned object)": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "patch": {
+    "operationId": "governanceTenantsRuleBasedPolicies_patchX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Rule Based Policies Update",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "policyId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `policyId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "<opaque policy object, passed through as 'r'>": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/governance/tenants/{tenantId}/ruleBasedPolicies/{policyId}/environmentGroups/{groupId}/assignments": {
+   "delete": {
+    "operationId": "governanceTenantsRuleBasedPoliciesEnvironmentGroupsAssignments_delete",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Assignments Delete",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "policyId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `policyId`."
+     },
+     {
+      "name": "groupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `groupId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "post": {
+    "operationId": "governanceTenantsRuleBasedPoliciesEnvironmentGroupsAssignments_post",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Assignments Create",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "policyId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `policyId`."
+     },
+     {
+      "name": "groupId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `groupId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/governance/tenants/{tenantId}/ruleBasedPolicies/{policyId}/removeRule": {
+   "patch": {
+    "operationId": "governanceTenantsRuleBasedPoliciesRemoveRule_patch",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Remove Rule Update",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "policyId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `policyId`."
+     },
+     {
+      "name": "removeFromEnvironments",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "<opaque rule-removal payload, passed through as 'e'>": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/governance/tenants/{tenantId}/ruleSetUIConfigurations": {
+   "get": {
+    "operationId": "governanceTenantsRuleSetUIConfigurations_getX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Rule Set UIConfigurations List",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/governance/tenants/{tenantId}/tenantRuleBasedPolicies": {
+   "get": {
+    "operationId": "governanceTenantsTenantRuleBasedPolicies_getX",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Tenant Rule Based Policies List",
+    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2021-10-01-preview"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `value`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "value": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/licensing/FinOpsLicensing/GetLicenseSummaryV2": {
@@ -13183,6 +17255,66 @@
     }
    }
   },
+  "/licensing/recommendations/{recommendationType}": {
+   "get": {
+    "operationId": "licensingRecommendations_getX",
+    "tags": [
+     "Licensing (PPAPI)"
+    ],
+    "summary": "Recommendations Read",
+    "description": "Read from the admin centre's own client. Licensing surfaces addressed on the Power Platform API host rather than the licensing host.",
+    "parameters": [
+     {
+      "name": "recommendationType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `recommendationType`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "continuationtoken",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Set only on some call paths."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `value`, `continuationtoken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "value": {
+           "type": "string"
+          },
+          "continuationtoken": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/licensing/storageWarning/getAllStorageWarnings": {
    "get": {
     "operationId": "licensing_listStorageWarnings",
@@ -13456,6 +17588,276 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/licensing/currency-reports/list-currency-reports"
     }
+   }
+  },
+  "/monitoringhub/tenants/{tenantId}/environments/{environmentId}/metrics/resourceType/{resourceType}/resourceSubType/{resourceSubType}/timeseries": {
+   "post": {
+    "operationId": "monitoringhubTenantsEnvironmentsMetricsResourceTypeResourceSubTypeTimeseries_post",
+    "tags": [
+     "Monitoring"
+    ],
+    "summary": "Timeseries Create",
+    "description": "Read from the admin centre's own client. The monitoring hub surface.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "resourceType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceType`."
+     },
+     {
+      "name": "resourceSubType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceSubType`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "metricName": {
+          "type": "string"
+         },
+         "metricType": {
+          "type": "string"
+         },
+         "startTime": {
+          "type": "string"
+         },
+         "endTime": {
+          "type": "string"
+         },
+         "preAggregateName": {
+          "type": "string"
+         },
+         "resourceId": {
+          "type": "string"
+         },
+         "environmentId": {
+          "type": "string"
+         },
+         "groupByDimensionKey": {
+          "type": "string"
+         },
+         "role": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/notificationservice/notifications": {
+   "get": {
+    "operationId": "notificationserviceNotifications_getX",
+    "tags": [
+     "Notifications"
+    ],
+    "summary": "Notifications List",
+    "description": "Read from the admin centre's own client. Admin notifications raised to the tenant.",
+    "parameters": [
+     {
+      "name": "targetClient",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`targetClient`."
+     },
+     {
+      "name": "notificationType",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`notificationType`."
+     },
+     {
+      "name": "language",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`language`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/notificationservice/notifications/metadata": {
+   "get": {
+    "operationId": "notificationserviceNotificationsMetadata_getX",
+    "tags": [
+     "Notifications"
+    ],
+    "summary": "Metadata List",
+    "description": "Read from the admin centre's own client. Admin notifications raised to the tenant.",
+    "parameters": [
+     {
+      "name": "targetClient",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`targetClient`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/notificationservice/notifications/status": {
+   "post": {
+    "operationId": "notificationserviceNotificationsStatus_postX",
+    "tags": [
+     "Notifications"
+    ],
+    "summary": "Status Create",
+    "description": "Read from the admin centre's own client. Admin notifications raised to the tenant.",
+    "parameters": [
+     {
+      "name": "targetClient",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`targetClient`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "Status": {
+          "type": "string"
+         },
+         "NotificationIds": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/plex/TestAppInsightsConnection": {
@@ -13938,6 +18340,114 @@
     },
     "x-ms-namespace": "powerapps/apps",
     "x-probe-verified": true
+   }
+  },
+  "/powerapps/apps/{appId}/updateDisplayName": {
+   "post": {
+    "operationId": "powerappsAppsUpdateDisplayName_postX",
+    "tags": [
+     "Power Apps (PPAPI)"
+    ],
+    "summary": "Update Display Name Create",
+    "description": "Read from the admin centre's own client. Power Apps resources addressed through the Power Platform API rather than the legacy PowerApps resource provider.",
+    "parameters": [
+     {
+      "name": "appId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerapps/apps/{appId}/updatePublishedSettings": {
+   "post": {
+    "operationId": "powerappsAppsUpdatePublishedSettings_postX",
+    "tags": [
+     "Power Apps (PPAPI)"
+    ],
+    "summary": "Update Published Settings Create",
+    "description": "Read from the admin centre's own client. Power Apps resources addressed through the Power Platform API rather than the legacy PowerApps resource provider.",
+    "parameters": [
+     {
+      "name": "appId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerapps/apps/{appId}/updateUnpublishedSettings": {
+   "post": {
+    "operationId": "powerappsAppsUpdateUnpublishedSettings_postX",
+    "tags": [
+     "Power Apps (PPAPI)"
+    ],
+    "summary": "Update Unpublished Settings Create",
+    "description": "Read from the admin centre's own client. Power Apps resources addressed through the Power Platform API rather than the legacy PowerApps resource provider.",
+    "parameters": [
+     {
+      "name": "appId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/powerapps/apps/{appName}": {
@@ -14825,6 +19335,261 @@
     "x-probe-verified": true
    }
   },
+  "/powerapps/tenants/{tenantId}/environments": {
+   "get": {
+    "operationId": "powerappsTenantsEnvironments_getX",
+    "tags": [
+     "Power Apps (PPAPI)"
+    ],
+    "summary": "Environments List",
+    "description": "Read from the admin centre's own client. Power Apps resources addressed through the Power Platform API rather than the legacy PowerApps resource provider.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$expand`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$top`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerapps/tenants/{tenantId}/environments/{environmentId}/apps/{appId}": {
+   "get": {
+    "operationId": "powerappsTenantsEnvironmentsApps_get",
+    "tags": [
+     "Power Apps (PPAPI)"
+    ],
+    "summary": "Apps Read",
+    "description": "Read from the admin centre's own client. Power Apps resources addressed through the Power Platform API rather than the legacy PowerApps resource provider.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "appId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `properties.displayName`, `properties.owner.id`, `properties.owner.displayName`, `appType`, `status`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "properties": {
+           "type": "string"
+          },
+          "appType": {
+           "type": "string"
+          },
+          "status": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerapps/tenants/{tenantId}/environments/{environmentId}/apps/{appId}/permissions": {
+   "get": {
+    "operationId": "powerappsTenantsEnvironmentsAppsPermissions_get",
+    "tags": [
+     "Power Apps (PPAPI)"
+    ],
+    "summary": "Permissions List",
+    "description": "Read from the admin centre's own client. Power Apps resources addressed through the Power Platform API rather than the legacy PowerApps resource provider.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "appId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `data`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "data": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerapps/tenants/{tenantId}/environments/{environmentId}/environment": {
+   "get": {
+    "operationId": "powerappsTenantsEnvironmentsEnvironment_get",
+    "tags": [
+     "Power Apps (PPAPI)"
+    ],
+    "summary": "Environment List",
+    "description": "Read from the admin centre's own client. Power Apps resources addressed through the Power Platform API rather than the legacy PowerApps resource provider.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$expand`."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`$filter`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/powerapps/userSettings/{settingName}": {
    "get": {
     "operationId": "powerapps_getUserSetting",
@@ -15256,6 +20021,93 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/powerautomate/flow-runs/list-flow-runs"
     }
+   }
+  },
+  "/powerautomate/tenants/{tenantId}/environments/{environmentId}/apis/{apiId}/connections/{connectionId}/{action}": {
+   "post": {
+    "operationId": "powerautomateTenantsEnvironmentsApisConnections_post",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Connections Create",
+    "description": "Read from the admin centre's own client. Power Automate resources addressed through the Power Platform API.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentId`."
+     },
+     {
+      "name": "apiId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `apiId`."
+     },
+     {
+      "name": "connectionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `connectionId`."
+     },
+     {
+      "name": "action",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `action`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`api-version`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "<action-specific data>": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/powerpages/environments/{environmentId}/websites": {
@@ -18638,6 +23490,63 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/resourcequery/resource-query/query-resources"
     }
+   }
+  },
+  "/support/tenants/{tenantId}/supporttickets/iseligibleforsupport": {
+   "get": {
+    "operationId": "supportTenantsSupportticketsIseligibleforsupport_get",
+    "tags": [
+     "Support"
+    ],
+    "summary": "Iseligibleforsupport List",
+    "description": "Read from the admin centre's own client. Support tooling the admin centre calls on the tenant's behalf.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "(unresolved g.a)",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`(unresolved g.a)`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Fields the admin centre reads from this response: `status (200 check only)`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "status (200 check only)": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/usermanagement/environments/{environmentId}/plugins": {

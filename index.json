@@ -222,6 +222,9 @@
   "blockingExclusions_get": [
    "bapi"
   ],
+  "chatModalities_post": [
+   "admin"
+  ],
   "clientLog_publish": [
    "admin"
   ],
@@ -331,6 +334,12 @@
   "connectors_listConnections": [
    "powerapps"
   ],
+  "copilotEnvironments_get": [
+   "admin"
+  ],
+  "copilotSolutions_post": [
+   "admin"
+  ],
   "copilotgovernanceTenantsEnvironmentsSettings_get": [
    "ppapi"
   ],
@@ -412,6 +421,9 @@
   "datalakeFolders_list": [
    "dataverse"
   ],
+  "deflectionResource_post": [
+   "admin"
+  ],
   "deletedEnvironmentsRecover_post": [
    "bapi"
   ],
@@ -480,6 +492,9 @@
   ],
   "enterprisePolicies_linkUnlink": [
    "bapi"
+  ],
+  "entitlementsRead_get": [
+   "admin"
   ],
   "entitlements_list": [
    "licensing"
@@ -796,6 +811,9 @@
    "admin",
    "bapi"
   ],
+  "feedbackSubmit_post": [
+   "admin"
+  ],
   "gatewayCluster_read": [
    "analytics"
   ],
@@ -951,6 +969,24 @@
   ],
   "identity_whoAmI": [
    "dataverse"
+  ],
+  "importantTagsAdd_post": [
+   "analytics"
+  ],
+  "importantTagsRead_get": [
+   "analytics"
+  ],
+  "importantTagsRemove_delete": [
+   "analytics"
+  ],
+  "knownIssuesSearch_post": [
+   "admin"
+  ],
+  "lCSProjects_get": [
+   "admin"
+  ],
+  "lCSRead_get": [
+   "admin"
   ],
   "lake_profile_activate": [
    "athena"
@@ -1240,6 +1276,9 @@
   "organizations_list": [
    "admin"
   ],
+  "outofboxSettingsRead_get": [
+   "analytics"
+  ],
   "platformApps_getStatus": [
    "bapi"
   ],
@@ -1492,6 +1531,9 @@
   "powerpages_uploadCertificate": [
    "ppapi"
   ],
+  "predictedSkill_post": [
+   "admin"
+  ],
   "protectionKeysActivate_post": [
    "bapi"
   ],
@@ -1576,10 +1618,34 @@
   "search_readStatus": [
    "dataverse"
   ],
+  "serviceHealthDetails_post": [
+   "admin"
+  ],
   "serviceRoot_read": [
    "licensing"
   ],
   "service_echo": [
+   "analytics"
+  ],
+  "settingDelete_delete": [
+   "analytics"
+  ],
+  "settingRead_get": [
+   "analytics"
+  ],
+  "settingUpdate_post": [
+   "analytics"
+  ],
+  "sinkConnectionCreatev1_post": [
+   "analytics"
+  ],
+  "sinkConnectionCreatev2_post": [
+   "analytics"
+  ],
+  "sinkConnectionDeletev1_delete": [
+   "analytics"
+  ],
+  "sinkConnectionDeletev2_delete": [
    "analytics"
   ],
   "solutionImport_publishAllCustomizations": [
@@ -1617,6 +1683,15 @@
   ],
   "supportTenantsSupportticketsIseligibleforsupport_get": [
    "ppapi"
+  ],
+  "supportTicketAttachFiles_post": [
+   "admin"
+  ],
+  "supportTicketCreate_post": [
+   "admin"
+  ],
+  "supportTopics_get": [
+   "admin"
   ],
   "synapseDatabases_list": [
    "dataverse"
@@ -1884,6 +1959,9 @@
   "DSR Compliance Request": [
    "ppapi"
   ],
+  "Data Export": [
+   "analytics"
+  ],
   "Data Export Connections": [
    "analytics"
   ],
@@ -1973,6 +2051,9 @@
   "Identity": [
    "dataverse"
   ],
+  "Inventory Tags": [
+   "analytics"
+  ],
   "Lake Profiles": [
    "athena"
   ],
@@ -2025,6 +2106,9 @@
    "bapi"
   ],
   "Portal Configuration": [
+   "admin"
+  ],
+  "Portal Support": [
    "admin"
   ],
   "Portal Telemetry": [
@@ -2114,6 +2198,9 @@
   ],
   "Tenant Isolation": [
    "bapi"
+  ],
+  "Tenant Settings": [
+   "analytics"
   ],
   "Tenant-to-Tenant Migrations": [
    "bapi"

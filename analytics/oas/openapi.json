@@ -216,12 +216,20 @@
  ],
  "tags": [
   {
+   "name": "Data Export",
+   "description": "Exporting Dataverse and Power Platform telemetry to a customer-owned sink."
+  },
+  {
    "name": "Data Export Connections",
    "description": "A data-export connection is the tenant-level object behind *Data export* in the Power Platform admin center: it binds a set of environments to one Azure sink (an Application Insights component) and streams a chosen set of telemetry scenarios into it, reporting ingestion health per scenario. Connections are created and edited in the admin center UI; this API only reads them back."
   },
   {
    "name": "Environment Group Rules",
    "description": "Which environments a group's rules apply to, and which rules apply to an environment."
+  },
+  {
+   "name": "Inventory Tags",
+   "description": "Marking resources important so they surface first in inventory views."
   },
   {
    "name": "Organization Metrics",
@@ -238,6 +246,10 @@
   {
    "name": "Service",
    "description": "Liveness."
+  },
+  {
+   "name": "Tenant Settings",
+   "description": "Tenant-scoped settings addressed individually by key."
   }
  ],
  "paths": {
@@ -1189,6 +1201,212 @@
     ]
    }
   },
+  "/api/v1/oobsettings/{geo}": {
+   "get": {
+    "operationId": "outofboxSettingsRead_get",
+    "tags": [
+     "Tenant Settings"
+    ],
+    "summary": "Out-of-box Settings Read",
+    "description": "Default settings for a geography, used to seed a tenant that has none of its own.",
+    "parameters": [
+     {
+      "name": "geo",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `geo`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/sinks/{sinkType}/connections": {
+   "post": {
+    "operationId": "sinkConnectionCreatev1_post",
+    "tags": [
+     "Data Export"
+    ],
+    "summary": "Sink Connection Create (v1)",
+    "description": "Creates a data-export connection from a set of environments to a destination sink. The body names the source, the environments by both `environmentId` and `organizationId`, and the sink by its Azure subscription and resource group.",
+    "parameters": [
+     {
+      "name": "sinkType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `sinkType`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/sinks/{sinkType}/ids/{resourceName}/sources/{source}": {
+   "delete": {
+    "operationId": "sinkConnectionDeletev1_delete",
+    "tags": [
+     "Data Export"
+    ],
+    "summary": "Sink Connection Delete (v1)",
+    "description": "Removes a data-export connection. Note the segment order differs from v2.",
+    "parameters": [
+     {
+      "name": "sinkType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `sinkType`."
+     },
+     {
+      "name": "resourceName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceName`."
+     },
+     {
+      "name": "source",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `source`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/tenants/{tenantId}/inventorytags/important": {
+   "get": {
+    "operationId": "importantTagsRead_get",
+    "tags": [
+     "Inventory Tags"
+    ],
+    "summary": "Important Tags Read",
+    "description": "Which resources the tenant has marked important, as a map of ARM resource type to resource ids.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "post": {
+    "operationId": "importantTagsAdd_post",
+    "tags": [
+     "Inventory Tags"
+    ],
+    "summary": "Important Tags Add",
+    "description": "Marks resources important. The body is a map keyed by a **normalised** resource type -- `microsoft.powerplatform/environments` becomes `environments`, `microsoft.copilotstudio/agents` becomes `copilotstudio` -- rather than by the full ARM type.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "delete": {
+    "operationId": "importantTagsRemove_delete",
+    "tags": [
+     "Inventory Tags"
+    ],
+    "summary": "Important Tags Remove",
+    "description": "Unmarks resources. **This DELETE carries a JSON request body**, in the same shape as the POST. Many generated clients cannot send one, and many proxies drop it.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
   "/api/v1/tenants/{tenantId}/tenantconsent": {
    "get": {
     "operationId": "tenantConsent_get",
@@ -1219,6 +1437,124 @@
     },
     "x-probe-verified": true,
     "x-source": "live"
+   }
+  },
+  "/api/v1/tenants/{tenantId}/{settingKey}": {
+   "get": {
+    "operationId": "settingRead_get",
+    "tags": [
+     "Tenant Settings"
+    ],
+    "summary": "Setting Read",
+    "description": "Reads one tenant setting, addressed by key in the path rather than by a query parameter. `tenantconsent` is one such key.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "settingKey",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `settingKey`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/tenants/{tenantId}/{settingKey}/delete": {
+   "delete": {
+    "operationId": "settingDelete_delete",
+    "tags": [
+     "Tenant Settings"
+    ],
+    "summary": "Setting Delete",
+    "description": "Removes a tenant setting. Note the verb appears in the path as well as in the method.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "settingKey",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `settingKey`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/tenants/{tenantId}/{settingKey}/update": {
+   "post": {
+    "operationId": "settingUpdate_post",
+    "tags": [
+     "Tenant Settings"
+    ],
+    "summary": "Setting Update",
+    "description": "Writes one tenant setting. The body carries the acting `userId` alongside the value, so the service records who consented rather than inferring it from the token.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `tenantId`."
+     },
+     {
+      "name": "settingKey",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `settingKey`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/api/v2/connections": {
@@ -1299,6 +1635,88 @@
       "$ref": "#/components/responses/MethodNotAllowed"
      }
     }
+   }
+  },
+  "/api/v2/sinks/{sinkType}/connections": {
+   "post": {
+    "operationId": "sinkConnectionCreatev2_post",
+    "tags": [
+     "Data Export"
+    ],
+    "summary": "Sink Connection Create (v2)",
+    "description": "The v2 form of sink connection creation. Its `resourceProvider` values are **space-containing strings** -- `cloud flow`, `customer service`, `dataverse`, `power apps` -- rather than identifiers, and two sink fields (`vnetEnabled`, `connectionString`) are attached only when a feature check passes.",
+    "parameters": [
+     {
+      "name": "sinkType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `sinkType`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v2/sinks/{sinkType}/sources/{source}/connection/{resourceName}": {
+   "delete": {
+    "operationId": "sinkConnectionDeletev2_delete",
+    "tags": [
+     "Data Export"
+    ],
+    "summary": "Sink Connection Delete (v2)",
+    "description": "The v2 delete. The same three identifiers appear in a different order and under a different segment name (`connection` rather than `ids`), so the two versions are not path-compatible.",
+    "parameters": [
+     {
+      "name": "sinkType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `sinkType`."
+     },
+     {
+      "name": "source",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `source`."
+     },
+     {
+      "name": "resourceName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `resourceName`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa"
    }
   },
   "/gateway/cluster": {

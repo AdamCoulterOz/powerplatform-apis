@@ -26,8 +26,8 @@
     "source": "pac-cli"
    },
    {
-    "note": "The tenant- and environment-scoped hosts are built by splitting the id's 32 hex characters **30 + 2**, not 31 + 1: strip the dashes, take the last two characters as their own DNS label, and the preceding thirty as the label before it. Verified live -- the 30+2 form resolves through a CNAME to a regional gateway and answers `401` without a token, while the 31+1 form is NXDOMAIN and never reaches a server. Worth stating because two first-party samples disagree on it and one of them ships a unit test asserting 31+1; a client built from that sample fails with a DNS error rather than an API error, which sends the reader looking in the wrong place entirely.",
-    "source": "live"
+    "note": "Scoped hosts are built by **splitting the last characters of the id into their own DNS label**, not by a fixed 30/2 offset: strip the dashes, take the final two characters as one label and everything before them as the label in front. For a 32-character GUID that reads as 30+2, but the rule is positional from the end, so a non-GUID environment id keeps its prefix intact -- `Default3496a85439b341bda7831f2479ca3fbd` becomes `Default3496a85439b341bda7831f2479ca3f.bd.environment...`.\n\n**The count is not two in every cloud.** Microsoft's own enterprise-policies module splits off only **one** character for the tip1 and tip2 test rings and for usgovhigh and dod. So two first-party samples that appear to contradict each other on 30+2 versus 31+1 are each correct for the cloud they target, and a client that hardcodes either number is wrong somewhere.\n\nConfirmed live for the commercial cloud: the two-character form resolves through a CNAME to a regional gateway and answers `401` without a token, while the one-character form is NXDOMAIN. The sovereign counts are from the module's source and have not been observed. Note how the wrong split fails -- DNS resolution, not an API error -- which sends whoever debugs it to networking rather than to the hostname.",
+    "source": "pac-cli"
    }
   ],
   "x-source-builds": {

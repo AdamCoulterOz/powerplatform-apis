@@ -33,7 +33,13 @@
    "source": "Power Platform admin center and maker portal HAR captures",
    "calls": 459,
    "date": "2026-08"
-  }
+  },
+  "x-notes": [
+   {
+    "note": "**This API's environment lifecycle is being superseded.** The Power Platform admin centre carries a second implementation of backup, copy, restore, recover, reset, delete, failover, provisioning reference data, lifecycle-operation polling and managed-environment toggling, against a service its own code calls **PPEM** (Power Platform Environment Management) on the Power Platform API host. Each is behind its own feature flag -- `UsePpemBackupApis`, `UsePpemCopyApi`, `UsePpemRestoreApi` and so on -- so the portal chooses per operation at runtime which of the two to call.\n\nNothing here is deprecated today and every route in this spec was reachable when it was written. But a client building on this API's environment lifecycle should know a replacement exists, that the two take differently shaped request bodies for the same act, and that the switch is being made one operation at a time rather than all at once. See the `ppapi` spec, where the PPEM side is recorded.",
+    "source": "ppac-spa"
+   }
+  ]
  },
  "servers": [
   {

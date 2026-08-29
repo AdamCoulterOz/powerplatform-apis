@@ -182,6 +182,9 @@
   },
   "User Setting": {
    "description": "A per-user preference blob stored against the caller's Entra object id and addressed by setting name. The maker portal uses them to persist UI state; each setting name has its own free-form shape."
+  },
+  "Network Diagnostics": {
+   "description": "Diagnostics that run **from inside an environment's injected subnet** rather than from the caller. That is what makes them useful: they answer what the environment can reach, which no request made from outside it can establish."
   }
  },
  "operations": {
@@ -3709,6 +3712,394 @@
     }
    },
    "x-source": "provider"
+  },
+  "GET /plex/networkUsage": {
+   "operationId": "plex_getNetworkUsage",
+   "tags": [
+    "Network Diagnostics"
+   ],
+   "summary": "Network Usage",
+   "description": "Reports the subnet an environment is injected into and how much of it is in use. The reserved-IP count is the number a caller needs to size a subnet before injecting further environments into it.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2024-10-01"
+     },
+     "description": "The API version."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The diagnostic result."
+    }
+   },
+   "x-source": "ps-admin"
+  },
+  "GET /plex/networkUsage/environmentHistoricalUsage": {
+   "operationId": "plex_getEnvironmentHistoricalUsage",
+   "tags": [
+    "Network Diagnostics"
+   ],
+   "summary": "Network Usage History (Environment)",
+   "description": "Network usage for this environment over time rather than at an instant.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2024-10-01"
+     },
+     "description": "The API version."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The diagnostic result."
+    }
+   },
+   "x-source": "ps-admin"
+  },
+  "GET /plex/networkUsage/subnetHistoricalUsage": {
+   "operationId": "plex_getSubnetHistoricalUsage",
+   "tags": [
+    "Network Diagnostics"
+   ],
+   "summary": "Network Usage History (Subnet)",
+   "description": "Usage over time for a whole subnet across every environment injected into it. The only diagnostic on the tenant host rather than the environment host, because the subnet is shared.",
+   "servers": [
+    {
+     "url": "https://il-{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+     "variables": {
+      "tenantIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "tenantIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2024-10-01"
+     },
+     "description": "The API version."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The diagnostic result."
+    }
+   },
+   "x-source": "ps-admin"
+  },
+  "GET /plex/environmentRegion": {
+   "operationId": "plex_getEnvironmentRegion",
+   "tags": [
+    "Network Diagnostics"
+   ],
+   "summary": "Region Read",
+   "description": "The Azure region actually serving this environment, which is not always the one its geography implies.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2026-02-01"
+     },
+     "description": "The API version."
+    }
+   ],
+   "responses": {
+    "200": {
+     "description": "The diagnostic result."
+    }
+   },
+   "x-source": "ps-admin"
+  },
+  "POST /plex/resolveDns": {
+   "operationId": "plex_resolveDns",
+   "tags": [
+    "Network Diagnostics"
+   ],
+   "summary": "DNS Resolve",
+   "description": "Resolves a hostname **from inside the environment's injected subnet**, which is the point: it answers whether the environment can see a private DNS zone, not whether the caller can.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2026-02-01"
+     },
+     "description": "The API version."
+    }
+   ],
+   "requestBody": {
+    "required": true,
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object",
+       "properties": {
+        "HostName": {
+         "type": "string",
+         "description": "The hostname to resolve from inside the subnet."
+        }
+       }
+      }
+     }
+    }
+   },
+   "responses": {
+    "200": {
+     "description": "The resolution result, including the addresses and which DNS servers answered."
+    }
+   },
+   "x-source": "ps-admin"
+  },
+  "POST /plex/testConnection": {
+   "operationId": "plex_testConnection",
+   "tags": [
+    "Network Diagnostics"
+   ],
+   "summary": "TCP Connection Test",
+   "description": "Opens a TCP connection from inside the environment's subnet to a destination and port, which is how a caller distinguishes a network-injection problem from an application one.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2026-02-01"
+     },
+     "description": "The API version."
+    }
+   ],
+   "requestBody": {
+    "required": true,
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object",
+       "properties": {
+        "Destination": {
+         "type": "string",
+         "description": "Host to connect to."
+        },
+        "Port": {
+         "type": "integer",
+         "description": "Port to connect on."
+        }
+       }
+      }
+     }
+    }
+   },
+   "responses": {
+    "200": {
+     "description": "Whether the connection succeeded, and the container address it was attempted from."
+    }
+   },
+   "x-source": "ps-admin"
+  },
+  "POST /plex/testTLSConnection": {
+   "operationId": "plex_testTlsConnection",
+   "tags": [
+    "Network Diagnostics"
+   ],
+   "summary": "TLS Connection Test",
+   "description": "As the TCP test, but completes a TLS handshake and returns the certificate the destination presented -- issuer, subject, signature algorithm, and whether it is expired or self-signed. That makes an interception proxy visible, which a plain TCP test cannot show.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2026-02-01"
+     },
+     "description": "The API version."
+    }
+   ],
+   "requestBody": {
+    "required": true,
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object",
+       "properties": {
+        "Destination": {
+         "type": "string",
+         "description": "Host to connect to."
+        },
+        "Port": {
+         "type": "integer",
+         "description": "Port to connect on."
+        }
+       }
+      }
+     }
+    }
+   },
+   "responses": {
+    "200": {
+     "description": "The handshake outcome and the presented certificate."
+    }
+   },
+   "x-source": "ps-admin"
+  },
+  "POST /plex/TestAppInsightsConnection": {
+   "operationId": "plex_testAppInsightsConnection",
+   "tags": [
+    "Network Diagnostics"
+   ],
+   "summary": "Application Insights Test",
+   "description": "Sends a test message to an Application Insights connection string from inside the subnet, separating an invalid connection string from a network path that cannot reach the ingestion endpoint.",
+   "servers": [
+    {
+     "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "variables": {
+      "environmentIdHead": {
+       "default": "000000000000000000000000000000"
+      },
+      "environmentIdTail": {
+       "default": "ab"
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "name": "api-version",
+     "in": "query",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "default": "2026-02-01"
+     },
+     "description": "The API version."
+    }
+   ],
+   "requestBody": {
+    "required": true,
+    "content": {
+     "application/json": {
+      "schema": {
+       "type": "object",
+       "properties": {
+        "ConnectionString": {
+         "type": "string",
+         "description": "The Application Insights connection string to test."
+        },
+        "Message": {
+         "type": "string",
+         "description": "The test message to send."
+        }
+       }
+      }
+     }
+    }
+   },
+   "responses": {
+    "200": {
+     "description": "Whether the connection string parsed and whether the message was accepted."
+    }
+   },
+   "x-source": "ps-admin"
   }
  },
  "schemas": {

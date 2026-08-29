@@ -109,6 +109,10 @@
    "description": "The governance configuration that turns Managed Environments on or off for an environment."
   },
   {
+   "name": "Platform Apps",
+   "description": "Enterprise policies attached at the **tenant** level rather than to one environment. Same policy types as the per-environment surface, no environment id, and a materially newer api-version."
+  },
+  {
    "name": "SharePoint Form Environment",
    "description": "Which environment SharePoint form customisation targets. One tenant-wide setting, addressed by the literal keyword `~sharepointform`."
   },
@@ -2715,6 +2719,105 @@
      }
     },
     "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/platformapps/enterprisePolicies/{policyType}/{operation}": {
+   "post": {
+    "operationId": "platformApps_modifyEnterprisePolicy",
+    "tags": [
+     "Platform Apps"
+    ],
+    "summary": "Enterprise Policy Link",
+    "description": "Attaches or detaches an enterprise policy for the whole tenant rather than for one environment. `{operation}` is `link` or `unlink`; the body carries only the policy's `SystemId`.\n\nThe `{policyType}` segment is the display form rather than the name a caller usually holds: a customer-managed key policy is `Encryption`, a virtual-network policy is `NetworkInjection`, and a managed-identity policy is `Identity`.",
+    "parameters": [
+     {
+      "name": "policyType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "Encryption",
+        "NetworkInjection",
+        "Identity"
+       ]
+      },
+      "description": "The policy kind, in its display form."
+     },
+     {
+      "name": "operation",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "link",
+        "unlink"
+       ]
+      },
+      "description": "Whether to attach or detach the policy."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-05-01"
+      },
+      "description": "The API version. This tenant-level surface takes `2024-05-01`, where the equivalent per-environment routes are still on `2019-10-01`."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "SystemId": {
+          "type": "string",
+          "description": "The enterprise policy's system id, which is its Azure resource id rather than a GUID on its own."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The policy link was changed."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.BusinessAppPlatform/platformapps/status": {
+   "get": {
+    "operationId": "platformApps_getStatus",
+    "tags": [
+     "Platform Apps"
+    ],
+    "summary": "Status Read",
+    "description": "Reads the state of the tenant-level platform-apps policies, which is how a caller confirms a link or unlink took effect.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-05-01"
+      },
+      "description": "The API version. This tenant-level surface takes `2024-05-01`, where the equivalent per-environment routes are still on `2019-10-01`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The tenant-level policy status."
+     }
+    },
+    "x-source": "ps-admin"
    }
   },
   "/providers/Microsoft.BusinessAppPlatform/scopes/admin/allowedConsentPlans": {

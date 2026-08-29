@@ -29,6 +29,7 @@ Output: oas/openapi.json. Deterministic; no timestamps. Docs-derived unless an
 operation or schema carries x-probe-verified; a map, not a contract.
 """
 import json
+import os
 import pathlib
 import re
 
@@ -523,9 +524,13 @@ def rewrite_refs(node, rename):
 
 
 def main():
+    # Deliberately does NOT clear OUT here. Deleting the previous spec before
+    # building the new one means any failure in between leaves the repository
+    # with no spec at all -- which happened, and which the conformance check
+    # then reported as five broken cross-spec links in *other* specs, pointing
+    # at everything except the cause. The spec is replaced atomically at the
+    # end instead, so a failed run leaves the last good one in place.
     OUT.mkdir(exist_ok=True)
-    for stale in OUT.glob("*.json"):
-        stale.unlink()
 
     namespaces = sorted({p.parent.parent.name for p in DOCS.glob("*/*/*.md")})
     staged = {}  # ns -> (paths, schemas, seen)
@@ -733,8 +738,13 @@ def main():
             "schemas": {k: global_schemas[k] for k in sorted(global_schemas)},
         },
     }
-    (OUT / "openapi.json").write_text(json.dumps(spec, indent=1, ensure_ascii=False) + "\n",
-                                    encoding="utf-8")
+    # Write beside the target and rename over it: os.replace is atomic within a
+    # filesystem, so a reader never sees a half-written spec and a crash never
+    # leaves the repository without one.
+    out_path = OUT / "openapi.json"
+    tmp_path = out_path.with_suffix(".json.tmp")
+    tmp_path.write_text(json.dumps(spec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    os.replace(tmp_path, out_path)
     stale = set(ENRICH.get("operations", {})) - ENRICH_USED
     for k in sorted(stale):
         print(f"WARNING: enrichment key matches no operation (docs renamed?): {k}")

@@ -44,6 +44,14 @@
    {
     "note": "**What was found in the bundles and deliberately not modelled here.** The mining produced 522 candidate operations; 95 are modelled across this corpus. The rest failed one of two bars and are recorded as a count rather than as entries:\n\n- **294 had no determinable HTTP method.** Minification separates the path literal from the call that uses it, and a guessed method is worse than none -- a spec that says GET where the service wants POST sends a reader somewhere a missing entry would not.\n- **104 were assembled from concatenated fragments** rather than appearing as a whole string. The segments are real; their order and separators are inferred.\n\nBy namespace the unmodelled remainder is heaviest in `/analytics`, `/governance` and the PowerApps legacy surface. A capture of the corresponding admin-centre pages would settle the methods for most of them, since a recorded call carries the method the bundle does not.",
     "source": "ppac-spa"
+   },
+   {
+    "note": "**Status codes on the environment lifecycle are specific and not interchangeable**, asserted exactly by a first-party client's live-run tests rather than inferred: a real environment delete returns **202** with an `operation-location` header; creating a backup returns **201**; deleting a backup returns **204**; provisioning a new environment returns **201** when it completes synchronously and **202** when it does not; executing disaster recovery and running a DR drill each return **201** rather than the 202 an async operation would suggest; and enabling or disabling DR returns **202**, with both supporting `ValidateOnly`. A client that accepts any 2xx will work; one that switches on the exact code needs these.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Two independent clients disagree on the BAP token scope, and one of them has a double slash**: `https://service.powerapps.com//.default` against `https://service.powerapps.com/.default`. Both are in shipped code from separate vendors. A doubled slash in a scope is the kind of thing that is copied forward for years because it happens to work, so a client seeing an unexpected token audience should check this before looking anywhere else.",
+    "source": "provider"
    }
   ],
   "x-source-builds": {
@@ -32798,7 +32806,13 @@
       "type": "array"
      }
     },
-    "type": "object"
+    "type": "object",
+    "x-notes": [
+     {
+      "note": "**The envelope is `collection`, not the OData `value` used elsewhere on this host.** `/environmentmanagement/environments` returns `value`; this route and the per-environment operations list return `collection`. A client with one envelope reader will silently find nothing on one of them.\n\nA first-party client's source comment describes the envelope as `{collection, continuationToken}`. A recorded response carrying all 20 locations had **no** `continuationToken` at all -- absent, not null, not empty. So either it appears only when a page is incomplete, which would match this API family's habit of omitting rather than nulling, or the comment describes an envelope the route does not use. Nobody has observed a truncated page, so it is not modelled here. The same comment also omits `hasFirstReleaseIslandAvailableForProvisioning`, which the recording does contain, so it is incomplete on a point that can be checked.",
+      "source": "live"
+     }
+    ]
    },
    "RbacRoleAssignment": {
     "type": "object",

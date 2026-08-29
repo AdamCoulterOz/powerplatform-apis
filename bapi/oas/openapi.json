@@ -38,6 +38,14 @@
    {
     "note": "**This API's environment lifecycle is being superseded.** The Power Platform admin centre carries a second implementation of backup, copy, restore, recover, reset, delete, failover, provisioning reference data, lifecycle-operation polling and managed-environment toggling, against a service its own code calls **PPEM** (Power Platform Environment Management) on the Power Platform API host. Each is behind its own feature flag -- `UsePpemBackupApis`, `UsePpemCopyApi`, `UsePpemRestoreApi` and so on -- so the portal chooses per operation at runtime which of the two to call.\n\nNothing here is deprecated today and every route in this spec was reachable when it was written. But a client building on this API's environment lifecycle should know a replacement exists, that the two take differently shaped request bodies for the same act, and that the switch is being made one operation at a time rather than all at once. See the `ppapi` spec, where the PPEM side is recorded.",
     "source": "ppac-spa"
+   },
+   {
+    "note": "**`listTenantSettings` is called three different ways by three shipped clients, and they disagree on both the scope and the version.** One calls it unscoped at `2016-11-01`, another unscoped at `2023-06-01`, a third scoped under `/scopes/admin/` at `2020-10-01`. More oddly, one client uses the **unscoped** path to read tenant settings and the **admin-scoped** path to write them, for the same settings object.\n\nNothing here establishes which is correct, and they may all work. It is recorded because a reader comparing this spec against a working client is likely to find a mismatch and assume one of them is wrong, when the real situation is that the route tolerates more than one spelling and no source agrees on which to prefer.",
+    "source": "provider"
+   },
+   {
+    "note": "**The DLP policy list has two representations that are not versions of each other.** The `/scopes/admin/apiPolicies` route at `2016-11-01` returns policies nested under `properties.definition.constraints.environmentFilter1.parameters.filterType`, carrying `include` or `exclude`; the `PowerPlatform.Governance` routes return flat objects with `displayName`, `environmentType` and `environments` and no `properties` wrapper. One shipped client normalises between them in code, which is the clearest evidence that both are live rather than one superseding the other. Two independent clients corroborate the nested shape -- one reading it, one writing it.",
+    "source": "provider"
    }
   ]
  },

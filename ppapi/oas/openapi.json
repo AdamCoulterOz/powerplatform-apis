@@ -121,6 +121,10 @@
    "description": "Job polling"
   },
   {
+   "name": "Authorization",
+   "description": "unmapped"
+  },
+  {
    "name": "Billing Policy",
    "description": "CRUD"
   },
@@ -2960,6 +2964,98 @@
     }
    }
   },
+  "/authorization/environments/{EnvironmentId}/checkPrincipalPermissionForScope": {
+   "post": {
+    "operationId": "permissionCheck_post",
+    "tags": [
+     "Authorization"
+    ],
+    "summary": "Permission Check",
+    "description": "Asks whether a principal holds a permission at a scope, rather than returning the assignments and leaving the caller to work it out. The answer accounts for inheritance.",
+    "parameters": [
+     {
+      "name": "EnvironmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `EnvironmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/authorization/environments/{EnvironmentId}/listRoleAssignments": {
+   "post": {
+    "operationId": "roleAssignmentsListEnvironment_post",
+    "tags": [
+     "Authorization"
+    ],
+    "summary": "Role Assignments List (Environment)",
+    "description": "The environment-scoped form of the same read. Also a POST.",
+    "parameters": [
+     {
+      "name": "EnvironmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `EnvironmentId`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
   "/authorization/environments/{environmentId}/roleAssignments": {
    "post": {
     "operationId": "authorization_createEnvironmentRoleAssignment",
@@ -3192,6 +3288,43 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/authorization/role-based-access-control/delete-environment-role-assignment"
     }
+   }
+  },
+  "/authorization/listRoleAssignments": {
+   "post": {
+    "operationId": "roleAssignmentsListTenant_post",
+    "tags": [
+     "Authorization"
+    ],
+    "summary": "Role Assignments List (Tenant)",
+    "description": "Lists tenant role assignments. **A POST that reads** -- the filter travels in the body rather than the query string, which is how this API handles list criteria too large or too structured for a URL.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
    }
   },
   "/authorization/roleAssignments": {

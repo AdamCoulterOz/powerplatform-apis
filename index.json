@@ -433,8 +433,12 @@
   "deflectionResource_post": [
    "admin"
   ],
+  "deleteAdminScope_delete": [
+   "powerapps"
+  ],
   "delete_delete": [
-   "dataverse"
+   "dataverse",
+   "powerapps"
   ],
   "delete_get": [
    "dataverse"
@@ -1297,6 +1301,15 @@
   "outofboxSettingsRead_get": [
    "analytics"
   ],
+  "permissionCheck_post": [
+   "ppapi"
+  ],
+  "permissionsList_get": [
+   "powerapps"
+  ],
+  "permissionsModify_post": [
+   "powerapps"
+  ],
   "platformApps_getStatus": [
    "bapi"
   ],
@@ -1579,8 +1592,14 @@
   "publishers_update": [
    "dataverse"
   ],
+  "readAdminScope_get": [
+   "powerapps"
+  ],
   "readDefault_get": [
    "bapi"
+  ],
+  "read_get": [
+   "powerapps"
   ],
   "recommendations_get": [
    "licensing"
@@ -1630,6 +1649,12 @@
   "resourcequery_queryResources": [
    "ppapi"
   ],
+  "roleAssignmentsListEnvironment_post": [
+   "ppapi"
+  ],
+  "roleAssignmentsListTenant_post": [
+   "ppapi"
+  ],
   "roleCreate_post": [
    "dataverse"
   ],
@@ -1668,6 +1693,9 @@
   ],
   "settingUpdate_post": [
    "analytics"
+  ],
+  "settingsReadlowercase_post": [
+   "bapi"
   ],
   "sinkConnectionCreatev1_post": [
    "analytics"
@@ -1924,6 +1952,9 @@
    "ppapi"
   ],
   "Async Operation": [
+   "ppapi"
+  ],
+  "Authorization": [
    "ppapi"
   ],
   "Batch": [

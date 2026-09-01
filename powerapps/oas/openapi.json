@@ -595,6 +595,148 @@
     "x-source": "ppac-spa"
    }
   },
+  "/providers/Microsoft.PowerApps/apps/{appName}": {
+   "get": {
+    "operationId": "read_get",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Read",
+    "description": "Reads one app by name. The name is a GUID, not the display name.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appName`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   },
+   "delete": {
+    "operationId": "delete_delete",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Delete",
+    "description": "Deletes an app.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appName`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps/{appName}/modifyPermissions": {
+   "post": {
+    "operationId": "permissionsModify_post",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Permissions Modify",
+    "description": "Grants or revokes access to an app. Grants and revocations travel in one body, as elsewhere on this API.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appName`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps/{appName}/permissions": {
+   "get": {
+    "operationId": "permissionsList_get",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Permissions List",
+    "description": "Who can use an app and in what role.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appName`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
   "/providers/Microsoft.PowerApps/connections": {
    "get": {
     "operationId": "connections_list",
@@ -1241,6 +1383,94 @@
      }
     },
     "x-probe-verified": true
+   }
+  },
+  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentName}/apps/{appName}": {
+   "get": {
+    "operationId": "readAdminScope_get",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Read (Admin Scope)",
+    "description": "Reads an app as a tenant administrator, without needing to be shared on it.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentName`."
+     },
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appName`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   },
+   "delete": {
+    "operationId": "deleteAdminScope_delete",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Delete (Admin Scope)",
+    "description": "Deletes an app as a tenant administrator.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `environmentName`."
+     },
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The `appName`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
    }
   }
  },

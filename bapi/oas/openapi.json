@@ -2179,6 +2179,43 @@
     "x-probe-verified": true
    }
   },
+  "/providers/Microsoft.BusinessAppPlatform/listtenantsettings": {
+   "post": {
+    "operationId": "settingsReadlowercase_post",
+    "tags": [
+     "Tenant"
+    ],
+    "summary": "Settings Read (lower case)",
+    "description": "Reads tenant settings. **A fourth spelling of this operation**: shipped clients variously call `listTenantSettings` unscoped at `2016-11-01`, unscoped at `2023-06-01`, admin-scoped at `2020-10-01`, and this all-lower-case form. The route evidently tolerates casing the others do not use, which means a reader comparing clients will find four spellings and no authority on which is intended.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The API version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
   "/providers/Microsoft.BusinessAppPlatform/locations": {
    "get": {
     "operationId": "locations_list",

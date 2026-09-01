@@ -12,6 +12,7 @@ powerplatform-apis/
   specs.json               the APIs the browser offers, each pointing at its own oas/openapi.json
   ppapi/                   Power Platform API — reverse-engineered from Microsoft Learn's OpenAPI-generated docs
   bapi/                    Business Application Platform API — reverse-engineered from the Terraform provider's code
+  flow/                    Power Automate API — reverse-engineered from working third-party clients
   .github/workflows/       per-API refresh jobs (e.g. ppapi-mirror runs daily)
 ```
 

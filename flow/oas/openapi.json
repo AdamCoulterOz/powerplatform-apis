@@ -1,0 +1,849 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "Power Automate API",
+  "version": "unversioned",
+  "description": "The Power Automate service API (`api.flow.microsoft.com`), which addresses flows under the `Microsoft.ProcessSimple` resource provider -- the internal name Power Automate still carries on the wire.\n\nIt is a sibling of the Power Apps API rather than part of the Power Platform API: same shape, same `/providers/{rp}/environments/{env}/...` convention, same `scopes/admin` elevation, and its own host.\n\nUnofficial and reverse-engineered. Every operation here was read from a working third-party client's call sites rather than from documentation, so the routes and methods are real and the response bodies are deliberately unmodelled -- see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/flow).",
+  "x-notes": [
+   {
+    "note": "**This spec is client-derived and nothing in it has been observed on the wire.** It exists because the corpus was silent on Power Automate while every other Power Platform surface was covered, and a reader comparing a working client against the corpus would have found nothing at all here.\n\nThat makes it the weakest spec in the corpus by evidence: no operation carries `x-probe-verified`, no response body is modelled, and the api-version is the one shipped clients send rather than one the service was seen to accept. Treat it as a map of what exists and is called, not as a contract.",
+    "source": "provider"
+   }
+  ]
+ },
+ "servers": [
+  {
+   "url": "https://api.flow.microsoft.com",
+   "description": "The global Power Automate host. Regional prefixes such as `europe.` and `emea.` are used by some clients; none has been verified here."
+  }
+ ],
+ "security": [
+  {
+   "azure_auth": [
+    "https://service.flow.microsoft.com//.default"
+   ]
+  }
+ ],
+ "tags": [
+  {
+   "name": "Environments",
+   "description": "Environments as the flow service sees them, which is not always what the platform reports."
+  },
+  {
+   "name": "Flows",
+   "description": "Flows and their lifecycle: read, delete, turn on and off, restore, and export as a template."
+  },
+  {
+   "name": "Permissions",
+   "description": "Who may see or edit a flow."
+  },
+  {
+   "name": "Runs",
+   "description": "Execution history, and cancelling one in progress."
+  },
+  {
+   "name": "Triggers",
+   "description": "A flow's triggers, and re-running a past firing."
+  }
+ ],
+ "paths": {
+  "/providers/Microsoft.ProcessSimple/environments": {
+   "get": {
+    "operationId": "environments_list",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "List",
+    "description": "Environments visible to the caller on the Power Automate host. Distinct from the BAPI and Power Platform API environment lists: this one reports what the flow service knows, which can lag the platform.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}": {
+   "get": {
+    "operationId": "environments_get",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "Read",
+    "description": "One environment as the flow service sees it. `~default` is a literal alias for the tenant default rather than an id.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows": {
+   "get": {
+    "operationId": "flows_list",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "List",
+    "description": "The flows in an environment that the caller can see.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}": {
+   "get": {
+    "operationId": "flows_get",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Read",
+    "description": "One flow, including its definition.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   },
+   "delete": {
+    "operationId": "flows_delete",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Delete",
+    "description": "Deletes a flow. Recoverable through the admin restore route for a period afterwards.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/exportToARMTemplate": {
+   "post": {
+    "operationId": "flows_exportToArmTemplate",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Export to ARM Template",
+    "description": "Exports a flow as an ARM template, which is the supported way to move one between environments as code.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/modifyPermissions": {
+   "post": {
+    "operationId": "flows_modifyPermissions",
+    "tags": [
+     "Permissions"
+    ],
+    "summary": "Modify",
+    "description": "Grants and revokes access in a single body, as elsewhere in this family of APIs.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/permissions": {
+   "get": {
+    "operationId": "flows_listPermissions",
+    "tags": [
+     "Permissions"
+    ],
+    "summary": "List",
+    "description": "Who can see or edit a flow, and in what role.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/runs": {
+   "get": {
+    "operationId": "runs_list",
+    "tags": [
+     "Runs"
+    ],
+    "summary": "List",
+    "description": "A flow's run history. Pages with a bare `nextLink`, which is **absent rather than null** when there is no next page.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/runs/{runName}": {
+   "get": {
+    "operationId": "runs_get",
+    "tags": [
+     "Runs"
+    ],
+    "summary": "Read",
+    "description": "One run, including its status and outputs.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "runName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The run's identifier."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/runs/{runName}/cancel": {
+   "post": {
+    "operationId": "runs_cancel",
+    "tags": [
+     "Runs"
+    ],
+    "summary": "Cancel",
+    "description": "Cancels a run that is still in progress.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "runName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The run's identifier."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/start": {
+   "post": {
+    "operationId": "flows_start",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Start",
+    "description": "Turns a flow back on.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/stop": {
+   "post": {
+    "operationId": "flows_stop",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Stop",
+    "description": "Turns a flow off. It keeps its definition and history and stops responding to triggers.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/triggers": {
+   "get": {
+    "operationId": "triggers_list",
+    "tags": [
+     "Triggers"
+    ],
+    "summary": "List",
+    "description": "A flow's triggers as defined in its definition.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/triggers/{triggerName}/histories/{runName}/resubmit": {
+   "post": {
+    "operationId": "triggers_resubmit",
+    "tags": [
+     "Triggers"
+    ],
+    "summary": "Resubmit Run",
+    "description": "Re-runs a past trigger firing. The path threads through the trigger's history rather than the flow's run list, so the run id here is addressed under `triggers/{triggerName}/histories/`.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "triggerName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The trigger's name, as it appears in the flow definition."
+     },
+     {
+      "name": "runName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The run's identifier."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/scopes/admin/environments/{environmentName}/flows/{flowName}/restore": {
+   "post": {
+    "operationId": "flows_restore",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Restore (Admin Scope)",
+    "description": "Restores a soft-deleted flow. Only exists on the admin scope, so an owner cannot undo their own delete -- an administrator must.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/scopes/admin/environments/{environmentName}/v2/flows": {
+   "get": {
+    "operationId": "flows_listAdmin",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "List (Admin Scope)",
+    "description": "Every flow in an environment, including those the caller does not own. Note the shape of the route: the admin form inserts `scopes/admin` **and** a `/v2/` segment, so it is not simply the user route with a prefix.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "azure_auth": {
+    "type": "oauth2",
+    "description": "Entra ID.",
+    "flows": {
+     "implicit": {
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
+      "scopes": {
+       "https://service.flow.microsoft.com//.default": "Power Automate service"
+      }
+     }
+    }
+   }
+  },
+  "schemas": {}
+ }
+}

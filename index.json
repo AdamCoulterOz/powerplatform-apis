@@ -784,6 +784,7 @@
   ],
   "environments_get": [
    "bapi",
+   "flow",
    "powerapps"
   ],
   "environments_getLastActivity": [
@@ -794,6 +795,7 @@
   ],
   "environments_list": [
    "bapi",
+   "flow",
    "powerapps"
   ],
   "environments_listMakerScope": [
@@ -832,6 +834,36 @@
   ],
   "feedbackSubmit_post": [
    "admin"
+  ],
+  "flows_delete": [
+   "flow"
+  ],
+  "flows_exportToArmTemplate": [
+   "flow"
+  ],
+  "flows_get": [
+   "flow"
+  ],
+  "flows_list": [
+   "flow"
+  ],
+  "flows_listAdmin": [
+   "flow"
+  ],
+  "flows_listPermissions": [
+   "flow"
+  ],
+  "flows_modifyPermissions": [
+   "flow"
+  ],
+  "flows_restore": [
+   "flow"
+  ],
+  "flows_start": [
+   "flow"
+  ],
+  "flows_stop": [
+   "flow"
   ],
   "gatewayCluster_read": [
    "analytics"
@@ -1673,6 +1705,15 @@
   "rulesets_list": [
    "advisor"
   ],
+  "runs_cancel": [
+   "flow"
+  ],
+  "runs_get": [
+   "flow"
+  ],
+  "runs_list": [
+   "flow"
+  ],
   "search_readStatus": [
    "dataverse"
   ],
@@ -1804,6 +1845,12 @@
   ],
   "trials_readDatesOnly": [
    "licensing"
+  ],
+  "triggers_list": [
+   "flow"
+  ],
+  "triggers_resubmit": [
+   "flow"
   ],
   "unpublishedSettingsSet_post": [
    "powerapps"
@@ -2083,7 +2130,8 @@
    "dataverse"
   ],
   "Environments": [
-   "bapi"
+   "bapi",
+   "flow"
   ],
   "F&O Environment": [
    "ppapi"
@@ -2105,6 +2153,9 @@
   ],
   "FinOps Licensing": [
    "ppapi"
+  ],
+  "Flows": [
+   "flow"
   ],
   "Gateway": [
    "powerapps"
@@ -2172,6 +2223,9 @@
   "Per-Flow Capacity": [
    "ppapi"
   ],
+  "Permissions": [
+   "flow"
+  ],
   "Platform Apps": [
    "bapi"
   ],
@@ -2229,6 +2283,9 @@
   "Rulesets": [
    "advisor"
   ],
+  "Runs": [
+   "flow"
+  ],
   "Service": [
    "analytics"
   ],
@@ -2274,6 +2331,9 @@
   ],
   "Tenant-to-Tenant Migrations": [
    "bapi"
+  ],
+  "Triggers": [
+   "flow"
   ],
   "User": [
    "ppapi"

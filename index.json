@@ -129,6 +129,9 @@
   "appInsightsConfiguration_update": [
    "copilot"
   ],
+  "appModulesUnpublished_get": [
+   "dataverse"
+  ],
   "appmanagementEnvironmentsProvisioningPackagesMicrosoftCrmCloudPesTpsProvision_post": [
    "ppapi"
   ],
@@ -222,11 +225,17 @@
   "blockingExclusions_get": [
    "bapi"
   ],
+  "businessUnitsRead_get": [
+   "dataverse"
+  ],
   "chatModalities_post": [
    "admin"
   ],
   "clientLog_publish": [
    "admin"
+  ],
+  "componentSummary_get": [
+   "dataverse"
   ],
   "configs_get": [
    "admin"
@@ -423,6 +432,12 @@
   ],
   "deflectionResource_post": [
    "admin"
+  ],
+  "delete_delete": [
+   "dataverse"
+  ],
+  "delete_get": [
+   "dataverse"
   ],
   "deletedEnvironmentsRecover_post": [
    "bapi"
@@ -966,6 +981,9 @@
   ],
   "health_ping": [
    "admin"
+  ],
+  "history_get": [
+   "dataverse"
   ],
   "identity_whoAmI": [
    "dataverse"
@@ -1540,6 +1558,9 @@
   "protectionKeysactive_get": [
    "bapi"
   ],
+  "publishTargeted_post": [
+   "dataverse"
+  ],
   "publishedSettingsSet_post": [
    "powerapps"
   ],
@@ -1608,6 +1629,18 @@
   ],
   "resourcequery_queryResources": [
    "ppapi"
+  ],
+  "roleCreate_post": [
+   "dataverse"
+  ],
+  "rolePrivilegesAdd_post": [
+   "dataverse"
+  ],
+  "rolePrivilegesRead_get": [
+   "dataverse"
+  ],
+  "rolePrivilegesReplace_post": [
+   "dataverse"
   ],
   "rules_list": [
    "advisor"
@@ -1697,6 +1730,12 @@
    "dataverse"
   ],
   "synapseLinkExternalTableStates_list": [
+   "dataverse"
+  ],
+  "teamCreate_post": [
+   "dataverse"
+  ],
+  "teamRoleAssign_post": [
    "dataverse"
   ],
   "tenantCapacity_read": [

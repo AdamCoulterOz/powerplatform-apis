@@ -13,6 +13,10 @@
    {
     "note": "**Routes found on this API and deliberately left out, with the reason.** This spec is a curated admin and ALM subset; the tables below are real and reachable, and belong to other products that happen to store their data in Dataverse. Recorded so nobody re-discovers them and assumes an oversight.\n\n**Finance and Operations provisioning** -- `msprov_getfnoversiondetails`, `msprov_queuefnoinstallorupdate`, `msprov_operationhistories` (and its `msprov_logs/$value` attachment stream), `msprov_getfinopsapplicationdetails`, `msprov_getfinopssqljitaccessasync`, `msprov_fnopackages`, `msprov_fnomodules`, `RetrieveFinanceAndOperationsIntegrationDetails`, `mserp_financeandoperationsentities`. A distinct product surface with its own lifecycle. Note that `msprov_getfinopssqljitaccessasync` returns live database credentials, so a client enumerating custom actions should not call it casually.\n\n**Power Pages tables** -- `powerpagesites`, `mspp_webroles`. The management API for Power Pages is on the Power Platform API host and is documented in the `ppapi` spec; these are its storage.\n\n**Copilot Studio and AI Builder** -- `bots`, `bots({id})/Microsoft.Dynamics.CRM.PvaDeleteBot`, `msdyn_aimodels`. Bots are administered through the Copilot Studio host, which has its own spec here.\n\n**SOAP** -- `POST /XRMServices/2011/Organization.svc/web`. Out of scope by the same rule that keeps the regional discovery endpoints out: this spec covers the REST Web API.\n\nEvery one of these was observed in a working third-party administration tool, so their absence is a scope decision rather than a coverage gap.",
     "source": "provider"
+   },
+   {
+    "note": "**Collection-valued relationships are unverified.** This spec routes them through the `$ref` collection rather than `@odata.bind`, and associate/disassociate is documented on that basis, but nobody has read the metadata for a collection-valued relationship or exercised one. Treat that half as unconfirmed rather than as confirmed-correct -- the single-valued half was wrong for months on an assumption that looked equally safe.",
+    "source": "provider"
    }
   ]
  },
@@ -78,7 +82,7 @@
   },
   {
    "name": "Relationships",
-   "description": "Reading and changing the links between records: `@odata.bind` for single-valued lookups, and the `$ref` collection for collection-valued relationships such as a user's security roles."
+   "description": "Reading and changing the links between records: `@odata.bind` for single-valued lookups, and the `$ref` collection for collection-valued relationships such as a user's security roles.\n\nThe binding key is the navigation property, not the lookup column. See the `Record` schema for how to read it per relationship and why the two usually coincide."
   },
   {
    "name": "Solution Import",
@@ -2491,7 +2495,13 @@
      "501": {
       "$ref": "#/components/responses/501"
      }
-    }
+    },
+    "x-notes": [
+     {
+      "note": "The `publisherid@odata.bind` spelling used in this description is **not verified**. It is the common case -- nav property equal to the lowercase column -- but nobody has read `solution`'s relationship metadata to confirm it, and this corpus has already been wrong once by assuming exactly that convention. Check with a `ManyToOneRelationships` query before relying on it.",
+      "source": "provider"
+     }
+    ]
    },
    "delete": {
     "operationId": "solutions_delete",
@@ -2801,6 +2811,10 @@
      {
       "note": "Moving a user between business units through `businessunitid@odata.bind` silently drops every security role scoped to the old unit, because roles are per business unit. Re-assign afterwards.",
       "source": "provider"
+     },
+     {
+      "note": "The `businessunitid@odata.bind` spelling used here is **verified**: a metadata read of `systemuser`'s many-to-one relationships gives `ReferencingAttribute businessunitid` with the navigation property also `businessunitid`. This is the coinciding case, confirmed rather than assumed.",
+      "source": "live"
      }
     ],
     "x-probe-verified": false,
@@ -4215,7 +4229,13 @@
      "429": {
       "$ref": "#/components/responses/429"
      }
-    }
+    },
+    "x-notes": [
+     {
+      "note": "For a generic record write the **binding key is caller-supplied**. The Terraform provider passes whatever the practitioner wrote straight through as `{key}@odata.bind`, deriving only the value, and deliberately does not remap column names to navigation properties -- remapping would change the meaning of configurations already passing the correct name. So a caller of this operation is responsible for supplying the navigation property, and a wrong one surfaces as `0x80048d19` rather than as a validation error.",
+      "source": "provider"
+     }
+    ]
    }
   },
   "/api/data/{apiVersion}/{entitySetName}({recordId})": {
@@ -6195,7 +6215,13 @@
      "primarycontactid@odata.bind": "/contacts(00000000-0000-0000-0000-000000000000)",
      "statuscode": 1,
      "createdon": "2024-01-01T00:00:00Z"
-    }
+    },
+    "x-notes": [
+     {
+      "note": "**The `@odata.bind` key is the navigation property's declared name, and it is not derivable from the column name.** Read `ReferencingEntityNavigationPropertyName` from metadata per relationship:\n\n```\nGET /api/data/v9.2/EntityDefinitions(LogicalName='{table}')/ManyToOneRelationships?$select=ReferencingEntityNavigationPropertyName,ReferencedEntity,ReferencingAttribute\n```\n\n**The nav property usually equals the lowercase column name, and that is a coincidence rather than a rule** -- which is exactly why getting it wrong survives review. One table demonstrates both cases at once: on `environmentvariablevalue`, the four system lookups (`createdby`, `createdonbehalfby`, `modifiedby`, `modifiedonbehalfby`) have nav properties identical to their columns, while `environmentvariabledefinitionid` has the nav property **`EnvironmentVariableDefinitionId`** -- PascalCase and different. A caller who infers the convention from the first four gets the fifth wrong, and the service answers `0x80048d19` \"undeclared property\" rather than anything that points at the cause.",
+      "source": "live"
+     }
+    ]
    },
    "RecordCollection": {
     "type": "object",

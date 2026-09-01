@@ -1249,14 +1249,6 @@
   },
   "workflowsagent/dsr-compliance/get-run-history-data-non-singleton": {
    "summary": "Run History Data Non Singleton Read"
-  },
-  "environmentmanagement/environment-provisioning/create-environment-alternate": {
-   "notes": [
-    {
-     "note": "**This route does not exist.** It answers `RouteNotFound` on every host and every api-version tried, as both an interactive user and a service principal, while the primary `/environmentmanagement/provisioning/environments` works and has been used to create and delete real environments. The two are documented with identical request-body property sets, so a caller loses nothing by using the primary -- but a client generated from the reference and pointed at this one will fail with a 404 that looks like a bad path rather than a documentation error.",
-     "source": "live"
-    }
-   ]
   }
  },
  "addOperations": {
@@ -2984,6 +2976,12 @@
    "notes": [
     "Absent from the published reference, which documents the `/provisioning/environments` route instead. It answers with an OperationExecutionResult, like that route.",
     "The client's CreateEnvironmentRequest carries no `macroRegion`, which the documented route's body does. Whether the field is genuinely rejected here or simply absent from the client's build has not been tested."
+   ],
+   "x-notes": [
+    {
+     "note": "**This route does not exist.** It answers `RouteNotFound` on every host and every api-version tried, as both an interactive user and a service principal, while the primary `/environmentmanagement/provisioning/environments` works and has been used to create and delete real environments. The two are documented with identical request-body property sets, so a caller loses nothing by using the primary -- but a client generated from the reference and pointed at this one will fail with a 404 that looks like a bad path rather than a documentation error.",
+     "source": "live"
+    }
    ]
   },
   "POST /powerapps/apps/{appName}/locate": {

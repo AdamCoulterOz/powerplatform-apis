@@ -5,7 +5,7 @@
     "tenant": "a single commercial tenant, not identified here",
     "principal": "interactive user via Azure CLI",
     "appliesTo": "every file in this directory",
-    "limits": "One tenant and one principal. Nothing here is evidence about service-principal behaviour, about sovereign clouds, or about tenants with different licensing or feature flags. Where a route or field is absent, that is not evidence it does not exist -- only that it was not returned under these conditions. Entries may carry their own `provenance` block; where present it overrides this one. A status code is a fact about a principal as much as about a route, so anything resting on one records its principal per entry rather than inheriting it from here."
+    "limits": "One tenant and one principal. Nothing here is evidence about service-principal behaviour, about sovereign clouds, or about tenants with different licensing or feature flags. Where a route or field is absent, that is not evidence it does not exist -- only that it was not returned under these conditions. Entries may carry their own `provenance` block; where present it overrides this one. A status code is a fact about a principal as much as about a route, so anything resting on one records its principal per entry rather than inheriting it from here. Every entry now carries its own provenance; the block above remains as a default for anything added without one, and verify_evidence.py refuses a manifest lacking it."
   },
   "assertions": [
     {
@@ -16,26 +16,50 @@
         "collection",
         "*"
       ],
-      "schema": "Location"
+      "schema": "Location",
+      "provenance": {
+        "capturedAt": "2026-08-28",
+        "principal": "interactive user via Azure CLI",
+        "appliesTo": "this entry",
+        "note": "Inherited from the set-level block when provenance moved per entry; both agree."
+      }
     },
     {
       "file": "ppapi-getSupportedLocations-2024-10-01.json",
       "items": [],
-      "schema": "ProvisioningLocations"
+      "schema": "ProvisioningLocations",
+      "provenance": {
+        "capturedAt": "2026-08-28",
+        "principal": "interactive user via Azure CLI",
+        "appliesTo": "this entry",
+        "note": "Inherited from the set-level block when provenance moved per entry; both agree."
+      }
     },
     {
       "file": "ppapi-apiversion-400.json",
       "request": "GET .../locations?api-version=1999-01-01",
       "note": "Gateway rejection, date axis.",
       "items": [],
-      "schema": "GatewayError"
+      "schema": "GatewayError",
+      "provenance": {
+        "capturedAt": "2026-08-28",
+        "principal": "interactive user via Azure CLI",
+        "appliesTo": "this entry",
+        "note": "Inherited from the set-level block when provenance moved per entry; both agree."
+      }
     },
     {
       "file": "ppapi-apiversion-400-ordinal.json",
       "request": "GET .../locations?api-version=99",
       "note": "Gateway rejection, ordinal axis: nests ApiVersionUnsupportedForResource.",
       "items": [],
-      "schema": "GatewayError"
+      "schema": "GatewayError",
+      "provenance": {
+        "capturedAt": "2026-08-28",
+        "principal": "interactive user via Azure CLI",
+        "appliesTo": "this entry",
+        "note": "Inherited from the set-level block when provenance moved per entry; both agree."
+      }
     },
     {
       "file": "ppapi-getSupportedLocations-ordinal-1.json",
@@ -45,14 +69,26 @@
         "collection",
         "*"
       ],
-      "schema": "Location"
+      "schema": "Location",
+      "provenance": {
+        "capturedAt": "2026-08-28",
+        "principal": "interactive user via Azure CLI",
+        "appliesTo": "this entry",
+        "note": "Inherited from the set-level block when provenance moved per entry; both agree."
+      }
     },
     {
       "file": "ppapi-notifications-apiversion-400-ordinal.json",
       "request": "GET /powerapps/notifications?api-version=99",
       "note": "The service enumerates this resource's ordinals (1, 3), confirming both documented values.",
       "items": [],
-      "schema": "GatewayError"
+      "schema": "GatewayError",
+      "provenance": {
+        "capturedAt": "2026-08-28",
+        "principal": "interactive user via Azure CLI",
+        "appliesTo": "this entry",
+        "note": "Inherited from the set-level block when provenance moved per entry; both agree."
+      }
     },
     {
       "file": "ppapi-principal-sweep-2026-09-01.json",

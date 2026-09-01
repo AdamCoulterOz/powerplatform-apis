@@ -119,6 +119,10 @@ def check(spec_id: str) -> int:
         # An entry may opt out of shape-checking: some evidence records status
         # codes or timings rather than a response body, and binding it to a
         # schema would assert something the file does not contain.
+        if not e.get("provenance"):
+            failures.append(f"{spec_id}: entry {e.get('file')} has no provenance. A status code or a shape is "
+                            f"a fact about the principal and moment it was captured, so it cannot inherit "
+                            f"those from a set-level block once a set contains more than one capture.")
         if e.get("schema") is None:
             body_path = cap_dir / e["file"]
             if not body_path.exists():

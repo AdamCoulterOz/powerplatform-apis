@@ -5,7 +5,7 @@
     "tenant": "a single commercial tenant, not identified here",
     "principal": "interactive user via Azure CLI",
     "appliesTo": "every file in this directory",
-    "limits": "One tenant and one principal. Nothing here is evidence about service-principal behaviour, about sovereign clouds, or about tenants with different licensing or feature flags. Where a route or field is absent, that is not evidence it does not exist -- only that it was not returned under these conditions."
+    "limits": "One tenant and one principal. Nothing here is evidence about service-principal behaviour, about sovereign clouds, or about tenants with different licensing or feature flags. Where a route or field is absent, that is not evidence it does not exist -- only that it was not returned under these conditions. Every entry now carries its own provenance; the block above remains as a default for anything added without one, and verify_evidence.py refuses a manifest lacking it."
   },
   "assertions": [
     {
@@ -15,7 +15,13 @@
         "value",
         "*"
       ],
-      "schema": "Location"
+      "schema": "Location",
+      "provenance": {
+        "capturedAt": "2026-08-28",
+        "principal": "interactive user via Azure CLI",
+        "appliesTo": "this entry",
+        "note": "Inherited from the set-level block when provenance moved per entry; both agree."
+      }
     },
     {
       "file": "bapi-listLocations-2023-06-01.json",
@@ -24,7 +30,13 @@
         "*",
         "properties"
       ],
-      "schema": "LocationProperties"
+      "schema": "LocationProperties",
+      "provenance": {
+        "capturedAt": "2026-08-28",
+        "principal": "interactive user via Azure CLI",
+        "appliesTo": "this entry",
+        "note": "Inherited from the set-level block when provenance moved per entry; both agree."
+      }
     }
   ]
 }

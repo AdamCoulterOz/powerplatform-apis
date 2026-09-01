@@ -15,10 +15,6 @@
     "source": "live"
    },
    {
-    "note": "**Nine of the 43 parameterless GET routes in this spec did not resolve**, answering `RouteNotFound` before any version validation: `/analytics/advisor/chat/conversations`, `/connectivity/connections`, `/connectivity/connectors`, `/governance/tenantRuleBasedPolicies`, `/powerapps/environment`, `/powerapps/features`, `/powerapps/globalApps`, `/powerapps/plans`, `/workflowsagent/conversationTranscripts`. Observed as an interactive user on one commercial tenant, so this does not prove the paths are wrong in the documentation: a route gated by licence, by tenant feature flag, or by principal type would look identical. It does mean a client cannot assume a documented path is reachable.",
-    "source": "live"
-   },
-   {
     "note": "Ten environment mutation operations return an undocumented **409** carrying `ValidationResponse` -- `provisioning/environments` and, on an environment, `enableDisasterRecovery`, `failback`, `forceFailover`, `governanceSetting/enableManaged`, `governanceSetting/disableManaged`, `modifySku`, `recover`, `reset` and `restore`. Microsoft's own client handles that status on all ten; the published reference documents it on none. A conflicting concurrent operation is the expected cause, so a client that treats 409 as an unexpected failure will mishandle the ordinary case.",
     "source": "pac-cli"
    },
@@ -49,6 +45,18 @@
    {
     "note": "**Two independent clients disagree on the BAP token scope, and one of them has a double slash**: `https://service.powerapps.com//.default` against `https://service.powerapps.com/.default`. Both are in shipped code from separate vendors. A doubled slash in a scope is the kind of thing that is copied forward for years because it happens to work, so a client seeing an unexpected token audience should check this before looking anywhere else.",
     "source": "provider"
+   },
+   {
+    "note": "**Fifteen documented routes do not resolve, and the cause is not the caller.** A sweep of all 51 parameterless GET routes was run twice on one tenant -- once as an interactive user, once as a service principal registered as a Power Platform admin management application -- and **every `RouteNotFound` was identical across both principals**. Not one flipped. So principal type is eliminated, and three candidates remain: a licence gate, a tenant feature flag, or a gateway older than the documentation.\n\nThe routes: `/analytics/advisor/chat/conversations`, `/connectivity/connections`, `/connectivity/connectors`, `/governance/tenantRuleBasedPolicies`, `/powerapps/environment`, `/powerapps/features`, `/powerapps/globalApps`, `/powerapps/plans`, `/workflowsagent/conversationTranscripts`, and five more found by the same sweep. Two of the original nine have since been explained separately: `/connectivity/connections` and `/connectivity/connectors` exist on the **environment-scoped host**, and the published reference gives the global one.\n\n`/environmentmanagement/provisioning/create` is the fifteenth. It answers `RouteNotFound` on every host and every api-version tried, while the primary `/environmentmanagement/provisioning/environments` works and has been used to create and delete real environments. Both are documented with identical request bodies, so nothing downstream differs -- one of them simply is not there.",
+    "source": "live"
+   },
+   {
+    "note": "**A `403` on this API is as much a fact about the principal as about the route, and the asymmetry runs both ways.** The same sweep, as an interactive user and as a service principal:\n\nReadable only by the **service principal** -- `analytics/advisorRecommendations`, `powerapps/apps`, `powerapps/environments`, `powerapps/notifications`: `403` as a user, `200` as an SP.\n\nReadable only by the **user** -- `authorization/roleAssignments`, `authorization/roleDefinitions`, `environmentmanagement/environmentGroups`, `environmentmanagement/provisioning/locations`, `governance/ruleBasedPolicies`, `governance/ruleSets`, `licensing/FinOpsLicensing/GetLicenseSummaryV2`: `200` as a user, `403` as an SP.\n\n**Neither principal is a superset of the other**, so there is no single identity that can read this API completely. Two separate mechanisms are at work and the sweep separates them cleanly: route *existence* is not principal-dependent at all, while route *authorization* strongly is. Any evidence recorded here that rests on a status code needs the principal recorded alongside it, per capture rather than per evidence set.",
+    "source": "live"
+   },
+   {
+    "note": "**Host affinity is per route, not per namespace.** `environmentmanagement/environments` answers `200` on the shared `api.powerplatform.com` host and `400 EndpointInvalid` on the tenant-specific `{id}.{realm}.tenant.api.powerplatform.com` host -- for both principals. `environmentmanagement/provisioning/locations` works on either. So a client cannot pick a host per namespace and use it throughout, and anything migrating environment reads onto a tenant-host helper will fail on a route that looks like it should work.",
+    "source": "live"
    }
   ],
   "x-source-builds": {
@@ -1241,6 +1249,14 @@
   },
   "workflowsagent/dsr-compliance/get-run-history-data-non-singleton": {
    "summary": "Run History Data Non Singleton Read"
+  },
+  "environmentmanagement/environment-provisioning/create-environment-alternate": {
+   "notes": [
+    {
+     "note": "**This route does not exist.** It answers `RouteNotFound` on every host and every api-version tried, as both an interactive user and a service principal, while the primary `/environmentmanagement/provisioning/environments` works and has been used to create and delete real environments. The two are documented with identical request-body property sets, so a caller loses nothing by using the primary -- but a client generated from the reference and pointed at this one will fail with a 404 that looks like a bad path rather than a documentation error.",
+     "source": "live"
+    }
+   ]
   }
  },
  "addOperations": {

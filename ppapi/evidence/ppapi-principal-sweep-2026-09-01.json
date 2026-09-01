@@ -8,7 +8,8 @@
     "Every route swept at the same api-version, both principals, same session.",
     "A 403 reflects the principal as much as the route and must not be read as a property of the route alone.",
     "Every 404 (RouteNotFound) was identical across principals, so route existence is not principal-dependent on this tenant.",
-    "Absence of a 200 is not evidence a route does not exist; it may be licence-gated, feature-flag-gated, or newer than this gateway."
+    "Absence of a 200 is not evidence a route does not exist; it may be licence-gated, feature-flag-gated, or newer than this gateway.",
+    "Annotated after the fact by the corpus owner. Four of the routeNotFoundBothPrincipals entries are declared in the ppapi spec on a different host and answer there; they are listed under routeNotFoundBecauseElsewhere with the host each belongs to. The original field is left unchanged because it is an accurate record of what was measured -- only its name invites the wrong reading."
   ],
   "tenant": {
     "named": false,
@@ -77,7 +78,29 @@
       "/powerapps/globalApps",
       "/powerapps/plans",
       "/workflowsagent/conversationTranscripts"
-    ]
+    ],
+    "routeNotFoundBothPrincipals_meaning": "404 on the host this sweep used (api.powerplatform.com), for both principals. It does NOT mean the route does not exist: this API has per-route host affinity, so asking the wrong host returns the same status as an absent route. Read with routeNotFoundBecauseElsewhere below.",
+    "routeNotFoundBecauseElsewhere": {
+      "/connectivity/connections": "environment-scoped host",
+      "/connectivity/connectors": "environment-scoped host",
+      "/plex/environmentRegion": "environment-scoped host",
+      "/plex/networkUsage": "environment-scoped host",
+      "/plex/networkUsage/environmentHistoricalUsage": "environment-scoped host",
+      "/plex/networkUsage/subnetHistoricalUsage": "tenant-island host (il- prefixed)"
+    },
+    "routeNotFoundUnexplained": [
+      "/analytics/advisor/chat/conversations",
+      "/governance/lockboxPolicies",
+      "/governance/tenantRuleBasedPolicies",
+      "/notificationservice/notifications",
+      "/notificationservice/notifications/metadata",
+      "/powerapps/environment",
+      "/powerapps/features",
+      "/powerapps/globalApps",
+      "/powerapps/plans",
+      "/workflowsagent/conversationTranscripts"
+    ],
+    "countUnexplained": 10
   },
   "results": [
     {

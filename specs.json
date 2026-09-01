@@ -6,6 +6,43 @@
     "short": "PP APIs",
     "description": "Unofficial OpenAPI specifications for ten Power Platform APIs, reverse-engineered and graded by the evidence behind each claim."
   },
+  "grades": [
+    {
+      "id": "live",
+      "title": "Verified against the live API",
+      "observed": true,
+      "caveat": null,
+      "description": "Seen on the wire, by probing this service or in recorded first-party traffic."
+    },
+    {
+      "id": "ppac-spa",
+      "title": "From the admin centre's own client",
+      "observed": false,
+      "caveat": "A shipped client is strong structural evidence, not an observation.",
+      "description": "Read from the Power Platform admin centre's JavaScript bundles. A bundle contains every route the client can call, including branches no session exercised, so its coverage is wider than a capture while its confirmation is weaker. It is the most authoritative client for the admin, analytics and athena hosts, which no shipped SDK or PowerShell module touches at all."
+    },
+    {
+      "id": "pac-cli",
+      "title": "From Microsoft's own client",
+      "observed": false,
+      "caveat": "A shipped client is strong structural evidence, not an observation, and the build can be older than the service.",
+      "description": "Read from Microsoft.PowerPlatform.Management, the Kiota-generated SDK. See each spec's info.x-source-builds for the exact build a claim rests on."
+    },
+    {
+      "id": "ps-admin",
+      "title": "From Microsoft's PowerShell admin module",
+      "observed": false,
+      "caveat": "A shipped client is strong structural evidence, not an observation.",
+      "description": "Read from Microsoft.PowerApps.Administration.PowerShell, which ships as readable script, so route templates, methods and per-cmdlet api-version defaults are quoted rather than inferred."
+    },
+    {
+      "id": "provider",
+      "title": "From a third-party client",
+      "observed": false,
+      "caveat": "Evidence that an operation exists and is called. Silent about what the service returns.",
+      "description": "Read from the Terraform provider or another third party's working client. The weakest warrant here and sometimes the only witness: it shows what an operation looks like when somebody uses it in anger, which no vendor artefact does."
+    }
+  ],
   "specs": [
     {
       "id": "ppapi",

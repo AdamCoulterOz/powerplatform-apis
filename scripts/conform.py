@@ -18,12 +18,29 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # The evidence grades. In the extracted design a corpus declares its own
 # vocabulary and this becomes agreement-with-declaration; until then the
 # triple lives here, in one place, so generalising it is one edit.
-GRADES = {"live", "pac-cli", "provider", "ps-admin", "ppac-spa"}
+def _declared_grades() -> set:
+    """The grade vocabulary, read from the catalogue rather than remembered here.
+
+    This was a literal, and it was the one assertion in this checker that could
+    go stale: a corpus adding a grade would fail on correct data, and the failure
+    would read as a data defect rather than a stale checker. The catalogue now
+    declares its own vocabulary, so this derives instead of remembering."""
+    import json as _json, pathlib as _pl
+    raw = _json.loads((_pl.Path(__file__).resolve().parent.parent / "specs.json").read_text())
+    if isinstance(raw, dict) and raw.get("grades"):
+        return {g["id"] for g in raw["grades"]}
+    return {"live", "pac-cli", "provider"}
+
+
+GRADES = _declared_grades()
 
 
 def stale(value, known) -> str:
-    """Failure text for an assertion whose expectation is *remembered* rather
-    than derived from the document.
+    """Failure text for a grade that is not in the declared vocabulary.
+
+    This once named two suspects because the grade set was a literal here and
+    could go stale. It is now read from the catalogue, so there is only one
+    suspect left -- which is what retiring a remembered value buys.
 
     Every other check here reads its answer out of the data and cannot be out
     of date. This one holds a literal, so when it fires there are two suspects,
@@ -31,9 +48,10 @@ def stale(value, known) -> str:
     looks exactly like a data defect, and the corpus gets edited to satisfy it.
     Naming both suspects is what stops a correct value being "fixed" away.
     """
-    return (f"{value!r} is not in the known grade set {sorted(known)}. "
-            f"Either the value is wrong, or this checker predates a grade the "
-            f"corpus now declares -- check which before editing the spec.")
+    return (f"{value!r} is not one of the grades this corpus declares: {sorted(known)}. "
+            f"The set is read from specs.json at run time, so this checker cannot be out of "
+            f"date -- either the value is wrong, or the grade is real and belongs in the "
+            f"catalogue's `grades` block, where a consumer can read what it means.")
 
 failures: list[str] = []
 
@@ -246,6 +264,14 @@ def check_catalogue(entries: list, cat: dict) -> None:
                 fail("specs.json", "brand/short",
                      "brand.long without brand.short: the shell falls back to the long form "
                      "in a narrow bar, where it is cramped rather than absent")
+
+    for g in cat.get("grades", []):
+        for f in ("id", "title", "description"):
+            if not isinstance(g.get(f), str) or not g[f].strip():
+                fail("specs.json", f"grades/{g.get('id','?')}/{f}", f"grade {f} must be a non-empty string")
+        if not isinstance(g.get("observed"), bool):
+            fail("specs.json", f"grades/{g.get('id','?')}/observed",
+                 "a grade must say whether it is observed; a consumer decides how much to trust it on that")
 
     default = cat.get("default")
     if cat and default is None:

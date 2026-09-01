@@ -27,7 +27,13 @@
       "se",
       "w"
      ],
-     "x-observed-values-note": "e and se were observed in recorded traffic against the same island scale unit, from environments in australiaeast and australiasoutheast respectively. n and w were confirmed by DNS against real island scale units. The set is plainly larger than these four -- every Azure region hosting a Power Platform island contributes one -- so no enum is asserted."
+     "x-observed-values-note": "e and se were observed in recorded traffic against the same island scale unit, from environments in australiaeast and australiasoutheast respectively. n and w were confirmed by DNS against real island scale units. The set is plainly larger than these four -- every Azure region hosting a Power Platform island contributes one -- so no enum is asserted.",
+     "x-notes": [
+      {
+       "note": "**The enumerable object is the compass-word map, not a region table.** There is no published lookup from Azure region to prefix and roughly seventy regions to guess at, but the rule underneath is five rows and closed:\n\n| word | letter |\n|---|---|\n| north | `n` |\n| south | `s` |\n| east | `e` |\n| west | `w` |\n| central | `c` |\n\nThe prefix is the letters of the compass words appearing in the region name, **in the order they appear**. `australiasoutheast` gives `se`; `eastus` gives `e`; `northcentralus` gives `nc`.\n\n**Two traps, and prose alone will not save an implementer from either.**\n\n**Match the direction as a suffix before trying it as a prefix.** Some region names carry it at the end (`australiasoutheast`, `southafricanorth`) and others at the start (`eastus`, `northeurope`, `southcentralus`). Try prefix-first and `southafricanorth` matches *South* \u2014 the geography, not the direction \u2014 and yields `s` instead of `n`. The result is a hostname that does not resolve, so the failure arrives as a DNS error with nothing pointing at the cause.\n\n**Ignore trailing ordinals.** `eastus2` is `e`, `australiacentral2` is `c`.\n\nThis rule is an inference that reproduces every confirmed data point, not an observation of a published mapping. `e`, `n`, `w` and `se` are observed; `c` and the compound forms `nc`, `sc` and `wc` follow the same rule and **have never been seen**. That is why `x-observed-values` lists four rather than the full set the rule implies.",
+       "source": "provider"
+      }
+     ]
     },
     "clusterUriSuffix": {
      "default": "us-il102.gateway.prod.island",
@@ -593,7 +599,13 @@
      "200": {
       "description": "The link is gone. The response body is empty, served as text/plain. Confirm by re-reading the Data Lakes list rather than by trusting the status alone."
      }
-    }
+    },
+    "x-notes": [
+     {
+      "note": "**Why the first-row fallback is unsafe, by case.** The folder list is ambiguous in three distinct situations and only the last is recoverable from the row itself:\n\n- **Never linked** -- every row is a stock folder, so taking the first selects something like `msdyn_analytics` and this DELETE removes an unrelated system folder.\n- **Synapse or ADLS linked but no Fabric link** -- a `synapselinkprofile` exists and names a folder, but not the Fabric one.\n- **Both link types present** -- two profile-referenced folders, and the only thing distinguishing them is the `cds3_workspace` name seen in a captured portal unlink. That is a name rather than an identity, and is not strong enough to build on.\n\nThe supported route is `lakedetails`, which supersedes this one. Resolve the folder from the `synapselinkprofile` rather than from the folder list; the lookup column carrying that reference has not been confirmed, so read it off the row rather than naming it in `$select`, where a wrong guess returns 400 instead of degrading.",
+      "source": "provider"
+     }
+    ]
    }
   },
   "/environment/{environmentId}/lakeprofile/{profileId}": {

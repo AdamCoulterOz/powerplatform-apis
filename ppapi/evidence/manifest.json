@@ -5,7 +5,7 @@
     "tenant": "a single commercial tenant, not identified here",
     "principal": "interactive user via Azure CLI",
     "appliesTo": "every file in this directory",
-    "limits": "One tenant and one principal. Nothing here is evidence about service-principal behaviour, about sovereign clouds, or about tenants with different licensing or feature flags. Where a route or field is absent, that is not evidence it does not exist -- only that it was not returned under these conditions."
+    "limits": "One tenant and one principal. Nothing here is evidence about service-principal behaviour, about sovereign clouds, or about tenants with different licensing or feature flags. Where a route or field is absent, that is not evidence it does not exist -- only that it was not returned under these conditions. Entries may carry their own `provenance` block; where present it overrides this one. A status code is a fact about a principal as much as about a route, so anything resting on one records its principal per entry rather than inheriting it from here."
   },
   "assertions": [
     {
@@ -53,6 +53,19 @@
       "note": "The service enumerates this resource's ordinals (1, 3), confirming both documented values.",
       "items": [],
       "schema": "GatewayError"
+    },
+    {
+      "file": "ppapi-principal-sweep-2026-09-01.json",
+      "request": "GET x51 parameterless routes on api.powerplatform.com, api-version=2024-10-01, swept twice",
+      "provenance": {
+        "capturedAt": "2026-09-01T07:25:00Z",
+        "principals": "interactive user AND app-only service principal, registered via PUT adminApplications; the Entra token carries no app roles or delegated scopes",
+        "appliesTo": "this file only",
+        "note": "Status codes only, no bodies. Captured by the session working issue #1227 and handed over."
+      },
+      "note": "Not bound to a schema: this file records status codes rather than a response shape, so it is evidence about reachability and authorization rather than about a model.",
+      "items": [],
+      "schema": null
     }
   ]
 }

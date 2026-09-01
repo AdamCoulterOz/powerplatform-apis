@@ -116,6 +116,14 @@ def check(spec_id: str) -> int:
         if f.is_file() and f.name != "manifest.json":
             redaction_gate(spec_id, f)
     for e in entries:
+        # An entry may opt out of shape-checking: some evidence records status
+        # codes or timings rather than a response body, and binding it to a
+        # schema would assert something the file does not contain.
+        if e.get("schema") is None:
+            body_path = cap_dir / e["file"]
+            if not body_path.exists():
+                failures.append(f"{spec_id}: manifest names {e['file']}, which is not in evidence/")
+            continue
         body_path = cap_dir / e["file"]
         if not body_path.exists():
             failures.append(f"{spec_id}: manifest names {e['file']}, which is not in evidence/")

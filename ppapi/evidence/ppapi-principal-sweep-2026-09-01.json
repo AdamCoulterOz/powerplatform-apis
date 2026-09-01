@@ -1,0 +1,339 @@
+{
+  "capturedAt": "2026-09-01T07:25:00Z",
+  "capturedFor": "terraform-provider-power-platform macro-region work, upstream issue 1227",
+  "method": "direct curl; status codes only, no response bodies stored",
+  "host": "api.powerplatform.com",
+  "apiVersion": "2024-10-01",
+  "notes": [
+    "Every route swept at the same api-version, both principals, same session.",
+    "A 403 reflects the principal as much as the route and must not be read as a property of the route alone.",
+    "Every 404 (RouteNotFound) was identical across principals, so route existence is not principal-dependent on this tenant.",
+    "Absence of a 200 is not evidence a route does not exist; it may be licence-gated, feature-flag-gated, or newer than this gateway."
+  ],
+  "tenant": {
+    "named": false,
+    "cloud": "public",
+    "environmentCount": 13,
+    "locationSelectionMode": "Region",
+    "advancedDataResidency": "not enabled; inferred from the tenant being offered individual datacenter regions rather than macro regions",
+    "databaseCapacity": "exhausted; Sandbox and Production creates return 409 InsufficientCapacity_StorageDriven"
+  },
+  "principals": {
+    "user": {
+      "type": "interactive user, delegated token",
+      "tokenClaims": {
+        "idtyp": "user"
+      },
+      "directoryRole": "tenant owner / global administrator"
+    },
+    "servicePrincipal": {
+      "type": "app-only, client credentials grant",
+      "tokenClaims": {
+        "idtyp": "app",
+        "roles": null,
+        "scp": null
+      },
+      "entraGrants": "none: no app roles, no delegated scopes, no admin consent",
+      "powerPlatformRegistration": "PUT /providers/Microsoft.BusinessAppPlatform/adminApplications/{appId}?api-version=2020-10-01",
+      "registrationNote": "The Power Platform admin-management registration is a Power Platform side grant and places nothing in the Entra token; roles and scp are both absent.",
+      "lifecycle": "app registration created solely for this sweep, then deleted; PP admin registration removed and confirmed 404; client secret destroyed"
+    }
+  },
+  "summary": {
+    "routesSwept": 51,
+    "identicalStatus": 33,
+    "userOnlySuccess": [
+      "/authorization/roleAssignments",
+      "/authorization/roleDefinitions",
+      "/environmentmanagement/environmentGroups",
+      "/environmentmanagement/provisioning/locations",
+      "/governance/ruleBasedPolicies",
+      "/governance/ruleBasedPolicies/assignments",
+      "/governance/ruleSetUIConfigurations",
+      "/governance/ruleSets",
+      "/licensing/FinOpsLicensing/GetLicenseSummaryV2"
+    ],
+    "servicePrincipalOnlySuccess": [
+      "/analytics/advisorRecommendations",
+      "/analytics/advisorRecommendations/scenarios",
+      "/powerapps/apps",
+      "/powerapps/environments",
+      "/powerapps/notifications"
+    ],
+    "routeNotFoundBothPrincipals": [
+      "/analytics/advisor/chat/conversations",
+      "/connectivity/connections",
+      "/connectivity/connectors",
+      "/governance/lockboxPolicies",
+      "/governance/tenantRuleBasedPolicies",
+      "/notificationservice/notifications",
+      "/notificationservice/notifications/metadata",
+      "/plex/environmentRegion",
+      "/plex/networkUsage",
+      "/plex/networkUsage/environmentHistoricalUsage",
+      "/plex/networkUsage/subnetHistoricalUsage",
+      "/powerapps/environment",
+      "/powerapps/features",
+      "/powerapps/globalApps",
+      "/powerapps/plans",
+      "/workflowsagent/conversationTranscripts"
+    ]
+  },
+  "results": [
+    {
+      "route": "/analytics/Inventory/v2/resourceType/bot",
+      "user": 401,
+      "servicePrincipal": 401
+    },
+    {
+      "route": "/analytics/advisor/chat/conversations",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/analytics/advisorRecommendations",
+      "user": 403,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/analytics/advisorRecommendations/scenarios",
+      "user": 403,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/appmanagement/applicationPackages",
+      "user": 401,
+      "servicePrincipal": 401
+    },
+    {
+      "route": "/authorization/roleAssignments",
+      "user": 200,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/authorization/roleDefinitions",
+      "user": 200,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/connectivity/connections",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/connectivity/connectors",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/environmentmanagement/environmentGroups",
+      "user": 200,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/environmentmanagement/environments",
+      "user": 200,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/environmentmanagement/provisioning/locations",
+      "user": 200,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/gateway/cluster",
+      "user": 200,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/governance/crossTenantConnectionReports",
+      "user": 403,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/governance/lockboxPolicies",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/governance/ruleBasedPolicies",
+      "user": 200,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/governance/ruleBasedPolicies/assignments",
+      "user": 200,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/governance/ruleSetUIConfigurations",
+      "user": 200,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/governance/ruleSets",
+      "user": 200,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/governance/tenantRuleBasedPolicies",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/licensing/FinOpsLicensing/GetLicenseSummaryV2",
+      "user": 200,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/licensing/UserPerFlowCapacitySource",
+      "user": 400,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/licensing/UserPerFlowCapacitySource/FlowContextSummary",
+      "user": 400,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/licensing/UserPerFlowCapacitySource/TenantContextSummary",
+      "user": 400,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/licensing/UserPerFlowCapacitySource/UserContextSummary",
+      "user": 400,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/licensing/allocationsByEnvironment",
+      "user": 200,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/licensing/allocationsV2/availability",
+      "user": 400,
+      "servicePrincipal": 400
+    },
+    {
+      "route": "/licensing/allocationsV2/entitlements/reserved",
+      "user": 400,
+      "servicePrincipal": 400
+    },
+    {
+      "route": "/licensing/billingPolicies",
+      "user": 200,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/licensing/isvContracts",
+      "user": 403,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/licensing/storageWarning/getAllStorageWarnings",
+      "user": 200,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/licensing/tenantCapacity",
+      "user": 200,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/licensing/tenantCapacity/currencyReports",
+      "user": 200,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/notificationservice/notifications",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/notificationservice/notifications/metadata",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/plex/environmentRegion",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/plex/networkUsage",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/plex/networkUsage/environmentHistoricalUsage",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/plex/networkUsage/subnetHistoricalUsage",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/powerapps/apps",
+      "user": 403,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/powerapps/environment",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/powerapps/environments",
+      "user": 403,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/powerapps/features",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/powerapps/globalApps",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/powerapps/notifications",
+      "user": 403,
+      "servicePrincipal": 200
+    },
+    {
+      "route": "/powerapps/plans",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/workflowsagent/approvals",
+      "user": 403,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/workflowsagent/connections",
+      "user": 403,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/workflowsagent/conversationTranscripts",
+      "user": 404,
+      "servicePrincipal": 404
+    },
+    {
+      "route": "/workflowsagent/flows",
+      "user": 403,
+      "servicePrincipal": 403
+    },
+    {
+      "route": "/workflowsagent/prompts",
+      "user": 403,
+      "servicePrincipal": 403
+    }
+  ]
+}

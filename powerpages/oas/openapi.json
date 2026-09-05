@@ -1,0 +1,2105 @@
+{
+ "openapi": "3.0.3",
+ "info": {
+  "title": "Power Pages Sitewide API",
+  "version": "v1",
+  "description": "The Power Pages **sitewide** API -- the control plane the Power Pages maker portal calls to manage sites rather than to build them. It lists a tenant's sites, reads and writes their app settings, drives the go-live and site-health checks, and configures the Azure Front Door WAF, the DDoS diagnostic setting and the security agent that sit in front of a published site.\n\nIt is **not** the surface a site is authored on. Site content lives in Dataverse tables and is reached through the Dataverse Web API (spec:dataverse); this host is the provisioning and governance plane above that, and the two share no route.\n\nIt is also **not** the `/powerpages/` family on the Power Platform API host, which spec:ppapi documents over 27 paths. That family is a namespace of PPAPI, reached on the global and tenant hosts and versioned with an `api-version` like the rest of PPAPI. This spec is a separate service on a separate host with its own `/api/v1/` prefix and no versioning at all. Two Power Pages control surfaces exist; a reader arriving from a capture needs to know which host they saw.\n\n**No operation here takes an `api-version`** -- not as a query parameter, not as a header, not as a path segment beyond the literal `/api/v1` prefix. All 39 call sites read from the shipped client send the bare route, and the three routes observed on the wire sent none either. This is a finding, not an omission: do not add one.\n\n**There is also no hostname in the client.** Every call is written against the literal `https://portals-provision/...` and the host is substituted at request time from a per-cloud settings key. See `info.x-cloud-hosts`.\n\nUnofficial and reverse-engineered -- see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/powerpages) for how it was derived and which parts are verified.",
+  "x-cloud-hosts": {
+   "description": "appSettings ring key -> the value of `powerPortalSitewideApiHostname` for that ring. This is a per-cloud lookup inside the client's own settings, not a hostname anyone assembles per request, and no endpoint publishes it -- which is why it is written out in full here as well as in `servers`.",
+   "map": {
+    "default": "portalsitewide-tip.portal-infra.dynamics.com",
+    "tie": "portalsitewide-tip.portal-infra.dynamics.com",
+    "test": "sitewide-test.portal-infra.dynamics.com",
+    "preprod": "portalsitewide-tip.portal-infra.dynamics.com",
+    "preview": "portalsitewide-nam.portal-infra.dynamics.com",
+    "prod": "portalsitewide-nam.portal-infra.dynamics.com",
+    "gov": "portalsitewide-gcc.portal-infra.dynamics.com",
+    "high": "portalsitewide-gcch.portal-infra.microsoftdynamics.us",
+    "dod": "portalsitewide.portal-infra.appsplatform.us",
+    "mooncake": "portalsitewide-chn.portal-infra.dynamics.cn",
+    "ex": "portalsitewide.portal-infra.dynamics.eaglex.ic.gov",
+    "rx": "portalsitewide.portal-infra.dynamics.microsoft.scloud"
+   },
+   "notes": {
+    "default": "The fallback when no ring matches. Quoted verbatim from the settings object.",
+    "tie": "The TIP ring. **Inferred.** The extract's prose names a `tip` ring served by `portalsitewide-tip`, while the ring key vocabulary it publishes elsewhere spells the key `tie`. The host is certain; that this key carries it is a reading of two facts that do not quite meet.",
+    "test": "**The one host that breaks the pattern**: the prefix is `sitewide-test`, not `portalsitewide-test`. Anyone templating `portalsitewide-{ring}` will get this one wrong.",
+    "preprod": "Shares the TIP host.",
+    "preview": "Shares the production host. Quoted verbatim from the settings object.",
+    "prod": "Commercial production. Quoted verbatim from the settings object.",
+    "gov": "US Government Community Cloud -- still on `.dynamics.com`, unlike the other sovereign rings.",
+    "high": "US Government GCC High. Different domain: `.portal-infra.microsoftdynamics.us`.",
+    "dod": "US Department of Defense. No ring suffix on the label at all.",
+    "mooncake": "China, operated by 21Vianet. No ring suffix.",
+    "ex": "Sovereign cloud (EX). No ring suffix.",
+    "rx": "Sovereign cloud (RX). No ring suffix."
+   },
+   "verification": {
+    "note": "**None of these hosts has been reached from here.** The three `live` operations were observed on this API on 2026-09-05, but the capture that witnessed them recorded status codes only and did not record which host served them, so no entry in this table carries a reachability claim. The table is the client's settings object, transcribed."
+   }
+  },
+  "x-source-builds": {
+   "description": "The artefacts every `ppac-spa` claim in this spec rests on.",
+   "powerpages": {
+    "app": "powerpages-microsoft-com",
+    "mainBundle": "main.d3ab5fdc.js",
+    "build": "0.0.20260901.3-2608.3-prod",
+    "commit": "ff37ba73119e46f6b22f1872d33417afaa736408",
+    "builtOn": "2026-09-01T13:17:48Z",
+    "chunk": "power-portals.9253fc2f.chunk.js",
+    "operations": 39
+   },
+   "powerapps": {
+    "app": "make-powerapps-com",
+    "mainBundle": "main.7b9447f8.js",
+    "build": "0.0.20260827.1-2608.3-prod",
+    "commit": "6f4ab889a113cbcc25e599636b151b57851f2905",
+    "builtOn": "2026-08-27T23:35:09Z",
+    "chunk": "plan-designer~powerap~48c206a9.72e52778.chunk.js",
+    "operations": 1,
+    "note": "Contributes `portals_listByOrgId` only."
+   },
+   "downloadedOn": "2026-09-05",
+   "sourceMaps": "None. The sourcemap host is decommissioned, so every claim graded `ppac-spa` here was read out of minified JavaScript."
+  },
+  "x-verb-unknown": {
+   "description": "Routes on this host that are real but have **no established HTTP verb**, and are therefore deliberately absent from `paths`. In both cases the URL is assembled into a local variable and the evidence window closes before the call that consumes it, so the verb is not recoverable from what was mined. Guessing one would put a wrong method in a spec that reads as though it had been observed.",
+   "routes": [
+    {
+     "path": "/api/v1/powerPortal/UpgradeTpsPackage",
+     "queryParameters": [
+      "orgId",
+      "packageName",
+      "lcid",
+      "packageId",
+      "dataImportBypass",
+      "orgUrl"
+     ],
+     "known": "The write half of `setup_getInstancePackages`. Six query parameters are visible, the last (`orgUrl`) truncated mid-token. Headers: `Prefer`, plus `x-ms-environment-id` when the environment is known. Its telemetry scope falls back to the literal `sitewide-api`, which is the only place the client names this service in words.",
+     "source": "ppac-spa"
+    },
+    {
+     "path": "/api/v1/powerPortal/loadTesting",
+     "queryParameters": [],
+     "known": "The URL is bound to a module-level constant next to a generic query-string builder that drops null and empty values and URL-encodes the rest. No parameter name and no verb survive in the evidence, so nothing but the path is known.",
+     "source": "ppac-spa"
+    }
+   ]
+  },
+  "x-notes": [
+   {
+    "note": "**The client contains no hostname for this service.** Every call is written against the literal `https://portals-provision/...`, and the shell's HTTP client looks `portals-provision` up in a service registry (map key `swprovision`), takes the endpoint for the current cloud from the settings key `powerPortalSitewideApiHostname`, attaches that service's token, and rewrites the hostname before the request leaves.\n\nTwo things follow. A reader of these bundles who takes the URL literally will attribute all forty routes to a host called `portals-provision`, which does not exist. And because the endpoint is a settings lookup rather than an assembly, there is no discovery call a client can make -- the table in `info.x-cloud-hosts` is the whole of it.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Nothing on this API carries an `api-version`.** Every other Power Platform surface in this corpus versions its requests; this one does not, on any of the 39 mined call sites or on the three routes seen live. The version is in the path (`/api/v1`) and nowhere else. A client that adds `?api-version=...` out of habit is sending a parameter this spec has no evidence the service reads.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**How the methods here were established, and where that stops.** The extract binds a verb only when the URL is passed directly to the call that carries it; 23 of the 39 records arrived that way. Fourteen more are bound in this spec, by reading the verb off the same statement in the evidence string: the URL is assigned to a local (`var l = \"https://portals-provision/...\"`) and consumed two tokens later by `client.get(l, ...)` or `client.post(l, ...)` in the same visible window. That is the same call site, just spread over two statements, and it is the same client object the bound records use.\n\nTwo records could not be bound and are **not** in `paths`. They are listed in `info.x-verb-unknown` with what is known about them. No verb anywhere in this spec is a guess.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Five POSTs send a header object as their request body.** `RunDiagnostic`, `UpdateLicenseCheckInfo`, `UpdateSiteHealthCheckInfo`, `UpdateSiteVisibility` and `UpdatePortalName` all call `post(url, {Prefer: 'odata.include-annotations=\"*\"'})`, and the second positional argument of that client is the body rather than the config. So each sends that object as JSON and sets no `Prefer` header. `RunDiagnostic` sends the enclosing `{headers: {...}}` wrapper as well.\n\nEvery one of these operations carries the misplacement in its `requestBody` because that is what goes on the wire. None of them is evidence that the service wants a body.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Several routes return JSON that has been serialised twice.** The client calls `JSON.parse()` on an already-parsed response body on `InstallFlow`, on the generic `powerPortal` POST and on `GetPortalAppSetting`, and the extract carries the same observation as a note on `listPortalsByOrgId`. `GetPortalAppSetting` goes further and lower-cases the string first, which is only necessary for `True`/`False` -- a .NET boolean rendered as text and repaired on the client.\n\nNone of this is a response schema: no reply from any of these routes has been seen here. It is the shape the client's own code implies, which is a weaker claim, and it is recorded as prose in each operation's `200` description rather than as a schema for exactly that reason. This spec declares no response schemas at all.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**The route names are not normalised, and two of them read as mistakes.** `createDDOSDaignosticSetting`, `deleteDDOSDaignosticSetting` and `isDDOSDaignosticSettingEnabled` transpose `Diagnostic`; the governance route drops to lower-case `powerportal` where every other route on the host uses `powerPortal`. Both are reproduced verbatim -- correcting either would produce a path that does not exist.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Two routes take their last path segment from the caller.** The client builds `/api/v1/powerPortal/{apiName}` and `/api/v1/powerPortal/SearchSummary/{apiName}` from an argument, so these are route *families* rather than routes, and every concrete `/api/v1/powerPortal/...` operation in this spec is also reachable through the first of them. No literal `apiName` value appears in the mined chunks: the helpers are generic and their callers were not in the chunk set.\n\nThe live `ListPortals` route has exactly that shape. That is a resemblance worth noticing and not a corroboration, which is why it carries no `x-corroborated-by`.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Three operations are graded `live` and none of them appears in the bundles.** `ListPortals`, `ZAP/GetDeepScanEnabledPortalByTenant` and `dlp/policies/portals/disableAnonymousAccessInPowerPages/status` were observed on the wire on 2026-09-05. Searching the whole extract for `ListPortals`, `ZAP`, `GetDeepScanEnabled` and `disableAnonymousAccess` returns nothing, so no bundle route was merged into them: the nearest neighbours -- `listPortalsByOrgId` and `dlp/policyErrorSetting` -- differ in more than casing and are kept as separate routes.\n\nThe capture recorded status codes only. So these three carry `x-probe-verified` for the route and the method, and their `200` descriptions assert nothing about a body, because no body was kept.",
+    "source": "live"
+   },
+   {
+    "note": "**A bundle shows what a client can send, not what a service accepted.** Every parameter, body field and route graded `ppac-spa` here is one the shipped code is capable of producing, including on branches no session reached. That makes the coverage wider than a capture and the confirmation weaker, and it is why 37 of the 40 operations carry no `x-probe-verified`.\n\nOne consequence worth stating: the extract's own `requestBodyFields` list is unreliable on this host -- it collects destructured argument names and fallback-object keys as though they were body fields. Request bodies in this spec were re-read from the evidence strings instead, which is why most of them are empty objects.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**The audience for this host is not documented here because it is not known.** The shell attaches whatever token its service registry holds for `swprovision`, and the registry entry's resource id is not in the mined chunks. Every other spec in this corpus names a scope; this one deliberately declares no `security` rather than guess one from the hostname, which is the mistake spec:athena records as having been made against a differently-named service.",
+    "source": "ppac-spa"
+   }
+  ]
+ },
+ "servers": [
+  {
+   "url": "https://{hostPrefix}.portal-infra.dynamics.com",
+   "description": "Commercial and GCC rings. Pick `hostPrefix` by resolving the client's ring through `info.x-cloud-hosts`. The other five clouds are separate entries below because their domains differ.",
+   "variables": {
+    "hostPrefix": {
+     "default": "portalsitewide-nam",
+     "enum": [
+      "portalsitewide-nam",
+      "portalsitewide-tip",
+      "portalsitewide-gcc",
+      "sitewide-test"
+     ],
+     "description": "The host label for the ring. **Not a uniform pattern**: the test ring is `sitewide-test`, dropping the `portal` the other three carry, so `portalsitewide-{ring}` is wrong for one of the four. `portalsitewide-nam` serves both `prod` and `preview`; `portalsitewide-tip` serves `default`, `preprod` and the TIP ring."
+    }
+   }
+  },
+  {
+   "url": "https://portalsitewide-gcch.portal-infra.microsoftdynamics.us",
+   "description": "US Government GCC High. Not reached from here."
+  },
+  {
+   "url": "https://portalsitewide.portal-infra.appsplatform.us",
+   "description": "US Department of Defense. Note the label loses its ring suffix entirely rather than gaining one. Not reached from here."
+  },
+  {
+   "url": "https://portalsitewide-chn.portal-infra.dynamics.cn",
+   "description": "China, operated by 21Vianet. Not reached from here."
+  },
+  {
+   "url": "https://portalsitewide.portal-infra.dynamics.eaglex.ic.gov",
+   "description": "Sovereign cloud (EX). Not reached from here."
+  },
+  {
+   "url": "https://portalsitewide.portal-infra.dynamics.microsoft.scloud",
+   "description": "Sovereign cloud (RX). Not reached from here."
+  }
+ ],
+ "tags": [
+  {
+   "name": "Access",
+   "description": "What the caller is allowed to be, asked as a yes/no question about the token."
+  },
+  {
+   "name": "Analytics",
+   "description": "The identifier behind the site's embedded Power BI report."
+  },
+  {
+   "name": "App Settings",
+   "description": "Named settings on one site, read and written one key at a time. Both halves are POSTs."
+  },
+  {
+   "name": "DDoS Protection",
+   "description": "The site's DDoS diagnostic setting: on, off, and whether it is on. All three routes misspell `Diagnostic`."
+  },
+  {
+   "name": "Governance",
+   "description": "Tenant policy as it bears on one site -- security-group access, DLP, public sites outside production, and cross-geo Copilot data movement."
+  },
+  {
+   "name": "Portals",
+   "description": "Sites themselves: listing them, renaming them, changing their visibility, and the generic helper that reaches the rest of the `powerPortal` root by name."
+  },
+  {
+   "name": "Search",
+   "description": "The status of a site's search skills."
+  },
+  {
+   "name": "Security Agent",
+   "description": "The Power Pages security agent: dynamic and deep scanning, the recommendations it generates, and how it notifies."
+  },
+  {
+   "name": "Setup Automation",
+   "description": "Cloud flows and template packages installed on behalf of a site."
+  },
+  {
+   "name": "Site Health",
+   "description": "The set-up workspace's checks -- licence, diagnostics and the go-live checklist -- and the routes that record their results. The only group living under `/api/v1/admincenter/`."
+  },
+  {
+   "name": "Web Application Firewall",
+   "description": "The Azure Front Door WAF policy in front of a published site: its association, its rules, and the one write that migrates managed rule set versions."
+  }
+ ],
+ "paths": {
+  "/api/v1/admincenter/GetFlowsInstallationStatus": {
+   "post": {
+    "operationId": "setup_getFlowsInstallationStatus",
+    "tags": [
+     "Setup Automation"
+    ],
+    "summary": "Get Flows Installation Status",
+    "description": "The installation status of a set of cloud flows for one site. A POST because the list of workflow ids is the body.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The workflow ids to report on. The client passes its `workflowIds` argument through as the body; the element type is not visible at the call site and `string` here is the shape an id takes elsewhere on this host, not something witnessed.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client returns the body whole, falling back to an empty object."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/admincenter/InstallFlow": {
+   "post": {
+    "operationId": "setup_installFlow",
+    "tags": [
+     "Setup Automation"
+    ],
+    "summary": "Install Flow",
+    "description": "Installs one cloud flow for a site and hands back the trigger URI to call it with.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "flowId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow to install. Present in the URL the client builds but absent from the extract's own parameter list for this record -- read here from the evidence string."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "The client sends an empty object literal. Every value this operation carries is in the query string.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: `flowTriggerUri`, which is the key of the empty-string fallback the client returns when the body is empty."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "**The reply is a JSON string, not a JSON object.** The client calls `JSON.parse()` on the already-parsed response body, which only works if the service returns JSON that has been serialised twice. A caller that parses once gets a string back.",
+      "source": "ppac-spa"
+     },
+     {
+      "note": "This call site reuses the `listPortalsByOrgId` telemetry name. Two of the four `admincenter` operations do the same thing, so telemetry names on this host do not identify the route.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/admincenter/diagnostics/RunDiagnostic": {
+   "post": {
+    "operationId": "siteHealth_runDiagnostic",
+    "tags": [
+     "Site Health"
+    ],
+    "summary": "Run Diagnostic",
+    "description": "Runs the site diagnostics whose tallies `UpdateSiteHealthCheckInfo` records. Unlike the go-live checker this one is a POST, so the two halves of the same panel disagree about whether running a check is a write.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "lcid",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The caller's locale id, as a decimal LCID. Present here and on the package routes; the diagnostics text is localised."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "The client sends `{\"headers\":{\"Prefer\":\"odata.include-annotations=\\\"*\\\"\"}}` -- an axios config object misplaced into the body argument. It is not known whether the service reads a body here.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client passes the body through unchanged."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "**A config object, not just a header, ends up in the body here.** The call is `post(url, {headers: {Prefer: ...}})`, so the whole axios config -- `headers` wrapper included -- is serialised as the request body and no `Prefer` header is sent. The four other POSTs with this defect send the inner object; this one sends the wrapper too.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/admincenter/setUpWorkspace/GetPortalSiteHealthData": {
+   "get": {
+    "operationId": "siteHealth_getSiteHealthData",
+    "tags": [
+     "Site Health"
+    ],
+    "summary": "Get Site Health Data",
+    "description": "The site-health panel of the Power Pages set-up workspace: whatever the service has already computed about one site's health.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client passes the body straight through, falling back to an empty object, so it expects an object and names no field."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/admincenter/setUpWorkspace/HasLicense": {
+   "get": {
+    "operationId": "siteHealth_hasLicense",
+    "tags": [
+     "Site Health"
+    ],
+    "summary": "Has License",
+    "description": "Whether the site is licensed. The client coerces the reply to a boolean, so this is a yes/no question rather than a licence description.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: a single truthy or falsy value; no field is named."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/admincenter/setUpWorkspace/RunGoLiveChecker": {
+   "get": {
+    "operationId": "siteHealth_runGoLiveChecker",
+    "tags": [
+     "Site Health"
+    ],
+    "summary": "Run Go-Live Checker",
+    "description": "Runs the go-live checklist over a site. **It is a GET that runs something**, which matters for retries and for anything that caches by method.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client falls back to an empty *array*, so the reply is a list of check results; no element field is named."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/admincenter/setUpWorkspace/UpdateLicenseCheckInfo": {
+   "post": {
+    "operationId": "siteHealth_updateLicenseCheckInfo",
+    "tags": [
+     "Site Health"
+    ],
+    "summary": "Update License Check Info",
+    "description": "Records that the licence step of the set-up workspace has been completed. The flag travels in the query string.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "licenseCheckCompleted",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Whether the licence check has been completed. Concatenated into the URL, so it arrives as text."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "What the client actually sends here is its `Prefer` header, misplaced into the body argument. Whether the service reads a body on this route is unknown.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: a single truthy or falsy value."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "**The client sends a header object where the body goes.** The call is `post(url, {Prefer: 'odata.include-annotations=\"*\"'})`, and the second positional argument of that client is the request body, not the config. So this operation sends `{\"Prefer\":\"odata.include-annotations=\\\"*\\\"\"}` as its JSON body and sets no `Prefer` header at all. Recorded as observed; it reads as a client defect rather than as something the service asks for, and a caller reproducing it should not assume the body is required.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/admincenter/setUpWorkspace/UpdateSiteHealthCheckInfo": {
+   "post": {
+    "operationId": "siteHealth_updateSiteHealthCheckInfo",
+    "tags": [
+     "Site Health"
+    ],
+    "summary": "Update Site Health Check Info",
+    "description": "Records the tallies from a diagnostics run back onto the set-up workspace. All three counts go in the query string.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "diagnosticsSuccess",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "How many diagnostics passed."
+     },
+     {
+      "name": "diagnosticsWarnings",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "How many warned."
+     },
+     {
+      "name": "diagnosticsFailure",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "How many failed. Singular, where the other two are plural -- the spelling is the client's."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "What the client actually sends here is its `Prefer` header, misplaced into the body argument. Whether the service reads a body on this route is unknown.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: a single truthy or falsy value."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "**The client sends a header object where the body goes.** The call is `post(url, {Prefer: 'odata.include-annotations=\"*\"'})`, and the second positional argument of that client is the request body, not the config. So this operation sends `{\"Prefer\":\"odata.include-annotations=\\\"*\\\"\"}` as its JSON body and sets no `Prefer` header at all. Recorded as observed; it reads as a client defect rather than as something the service asks for, and a caller reproducing it should not assume the body is required.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/GetAgentNotificationConfig": {
+   "get": {
+    "operationId": "securityAgent_getNotificationConfig",
+    "tags": [
+     "Security Agent"
+    ],
+    "summary": "Get Agent Notification Config",
+    "description": "How the security agent is configured to notify, for one site and one use case.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "useCaseType",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Which agent use case the configuration belongs to. No literal value appears in the mined chunks, so the vocabulary is unknown."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client returns the body whole, falling back to `null`."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/GetDynamicScanAgentValue": {
+   "get": {
+    "operationId": "securityAgent_getDynamicScanValue",
+    "tags": [
+     "Security Agent"
+    ],
+    "summary": "Get Dynamic Scan Setting",
+    "description": "Whether dynamic scanning is enabled for a site.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client returns the body whole, falling back to `null`."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/GetPortalAppSetting": {
+   "post": {
+    "operationId": "appSettings_get",
+    "tags": [
+     "App Settings"
+    ],
+    "summary": "Get Site App Setting",
+    "description": "Reads one named app setting for a site. **It is a POST that reads**, with both operands in the query string and an empty body -- the read and the write on this resource are both POSTs and differ only by route name.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "appSettingName",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The setting's name."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "The client sends an empty object literal. Every value this operation carries is in the query string.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client lower-cases the body and then `JSON.parse`s it into a boolean, so the reply is a JSON string and the settings this call site reads are booleans."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "The lower-casing is the interesting part. `JSON.parse(body.toLocaleLowerCase())` is only necessary if the service returns `True`/`False` with a capital letter, which is not valid JSON -- so this is a .NET boolean serialised as text and repaired on the client. Inferred from the repair, not seen on the wire.",
+      "source": "ppac-spa"
+     },
+     {
+      "note": "**The reply is a JSON string, not a JSON object.** The client calls `JSON.parse()` on the already-parsed response body, which only works if the service returns JSON that has been serialised twice. A caller that parses once gets a string back.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/GetPowerBIEmbedIdentifier": {
+   "get": {
+    "operationId": "analytics_getPowerBIEmbedIdentifier",
+    "tags": [
+     "Analytics"
+    ],
+    "summary": "Get Power BI Embed Identifier",
+    "description": "The identifier the maker portal needs to embed the site's Power BI analytics report. Cached by the client with `staleTime: Infinity`, so it is treated as immutable for the life of the page.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client returns the body whole and names no field."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/GovernanceControl/WebsiteSecurityGroup/CheckAccess": {
+   "get": {
+    "operationId": "governance_checkWebsiteSecurityGroupAccess",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Check Website Security Group Access",
+    "description": "Whether the caller passes the site's security-group restriction. A boolean gate the maker portal checks before showing a site.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: a single truthy or falsy value; the client defaults it to false when the body is empty."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/IsCrossGeoCopilotDataMovementEnabled": {
+   "get": {
+    "operationId": "governance_isCrossGeoCopilotDataMovementEnabled",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Is Cross-Geo Copilot Data Movement Enabled",
+    "description": "Whether the environment may move Copilot data across geographies. The maker portal gates its Copilot features on this, and treats a failure as a `false` rather than as an error.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment id."
+     },
+     {
+      "name": "organizationId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Dataverse organization id. Named in full here where the sibling routes use `orgId`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: a single truthy or falsy value."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/IsUserControlPlaneAdmin": {
+   "get": {
+    "operationId": "access_isUserControlPlaneAdmin",
+    "tags": [
+     "Access"
+    ],
+    "summary": "Is User Control-Plane Admin",
+    "description": "Whether the caller is a control-plane administrator. No parameters at all -- the question is entirely about the token.",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: a single truthy or falsy value; the client defaults it to false."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/IsUserEnvironmentMaker": {
+   "get": {
+    "operationId": "access_isUserEnvironmentMaker",
+    "tags": [
+     "Access"
+    ],
+    "summary": "Is User Environment Maker",
+    "description": "Whether the caller holds the Environment Maker role in one environment. The client refuses to issue the request unless it has both the organization id and the organization URL, so both are required here even though neither is marked so by the service.",
+    "parameters": [
+     {
+      "name": "orgId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Dataverse organization id of the environment the site lives in."
+     },
+     {
+      "name": "orgUrl",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's Dataverse organization URL."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: a single truthy or falsy value."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/ListPortals": {
+   "get": {
+    "operationId": "portals_list",
+    "tags": [
+     "Portals"
+    ],
+    "summary": "List Sites",
+    "description": "Lists sites for the caller. Reached with no query string at all -- no organization, no tenant, no site id -- so the scope comes from the token.\n\n**This is not `listPortalsByOrgId` under another name.** The two differ in more than casing: this one takes no parameters and the bundles never call it. It is recorded as its own route because it was seen as its own route.",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "Observed to answer on 2026-09-05. The capture recorded the status only and not the body, so nothing is asserted about the shape."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "Fits the shape of the generic `/api/v1/powerPortal/{apiName}` route the bundles build, with `apiName` = `ListPortals`. That is a resemblance and not a corroboration: the bundles witness the template, never this value, so this operation carries no `x-corroborated-by`.",
+      "source": "live"
+     }
+    ],
+    "x-source": "live",
+    "x-probe-verified": true
+   }
+  },
+  "/api/v1/powerPortal/SearchSummary/{apiName}": {
+   "get": {
+    "operationId": "search_getSummary",
+    "tags": [
+     "Search"
+    ],
+    "summary": "Get Search Summary",
+    "description": "Reads the status of one site-search skill. Like the `powerPortal` root, the last segment is a caller-supplied `apiName` rather than a fixed route.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The trailing route segment. No literal value is witnessed."
+     },
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: `SkillStatus` and `SkillId`, the keys of the undefined-valued object the client falls back to."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "post": {
+    "operationId": "search_updateSummary",
+    "tags": [
+     "Search"
+    ],
+    "summary": "Update Search Summary",
+    "description": "The write half of the same route. `skillId` is appended to the query string only when the client has one, which is the one genuinely conditional parameter in this spec.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The trailing route segment. No literal value is witnessed."
+     },
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "skillId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The skill to update. Appended only when the client already has an id, so its absence is meaningful rather than a default."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "The client sends an empty object literal. Every value this operation carries is in the query string.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: `SkillStatus` and `SkillId`."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/SetPortalAppSetting": {
+   "post": {
+    "operationId": "appSettings_set",
+    "tags": [
+     "App Settings"
+    ],
+    "summary": "Set Site App Setting",
+    "description": "Writes one named app setting. Name and value both travel in the query string, so the value is limited to what a URL will carry.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "appSettingName",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The setting's name."
+     },
+     {
+      "name": "appSettingValue",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The value to set, as a string in the query string."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. The client reads no field -- it maps any non-throwing reply to `true` and any rejection to `false`."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "The client passes `undefined` as the body and puts every value in the query string, so this POST sends no request body at all.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/UpdateAgentNotificationConfig": {
+   "post": {
+    "operationId": "securityAgent_updateNotificationConfig",
+    "tags": [
+     "Security Agent"
+    ],
+    "summary": "Update Agent Notification Config",
+    "description": "Sets the notification channels for one site and use case. Six values, all in the query string, no body.\n\nOne of them is `ddosConsentChecked`, which is a consent flag travelling as a URL parameter on a notification-settings route -- worth knowing before treating this as a cosmetic write.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "useCaseType",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Which agent use case. No literal value is witnessed."
+     },
+     {
+      "name": "isEmailNotificationEnabled",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Whether to notify by e-mail."
+     },
+     {
+      "name": "isTeamsNotificationEnabled",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Whether to notify in Teams."
+     },
+     {
+      "name": "inAppNotificationEnabled",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Whether to notify in the maker portal. Note the missing `is` prefix the other two carry; the spelling is the service's."
+     },
+     {
+      "name": "ddosConsentChecked",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Whether the DDoS consent box has been ticked."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: `error`, and `error.message` beneath it -- the client throws on an `error` object in an otherwise successful reply."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "The client passes `undefined` as the body and puts every value in the query string, so this POST sends no request body at all.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/UpdateDynamicScanAgentValue": {
+   "post": {
+    "operationId": "securityAgent_updateDynamicScanValue",
+    "tags": [
+     "Security Agent"
+    ],
+    "summary": "Update Dynamic Scan Setting",
+    "description": "Turns dynamic scanning on or off for a site.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "isDynamicScanEnabled",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Whether dynamic scanning should be on."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: `error`, and `error.message` beneath it."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "The client passes `undefined` as the body and puts every value in the query string, so this POST sends no request body at all.",
+      "source": "ppac-spa"
+     },
+     {
+      "note": "This call site reuses the `updateAgentNotificationConfig` telemetry name rather than declaring its own, which is why the two operations are indistinguishable in the client's own telemetry.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/UpdateSiteVisibility": {
+   "post": {
+    "operationId": "portals_updateVisibility",
+    "tags": [
+     "Portals"
+    ],
+    "summary": "Update Site Visibility",
+    "description": "Switches a site between public and private. The visibility value is a query parameter; no value for it appears anywhere in the mined chunks, so the vocabulary is unknown and none is guessed here.",
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "siteVisibility",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The visibility to set. No literal value is witnessed."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "What the client actually sends here is its `Prefer` header, misplaced into the body argument. Whether the service reads a body on this route is unknown.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. The client reads no field -- it treats any status in 200-299 as success and everything else as failure."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "**The client sends a header object where the body goes.** The call is `post(url, {Prefer: 'odata.include-annotations=\"*\"'})`, and the second positional argument of that client is the request body, not the config. So this operation sends `{\"Prefer\":\"odata.include-annotations=\\\"*\\\"\"}` as its JSON body and sets no `Prefer` header at all. Recorded as observed; it reads as a client defect rather than as something the service asks for, and a caller reproducing it should not assume the body is required.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/ZAP/GetDeepScanEnabledPortalByTenant": {
+   "get": {
+    "operationId": "securityAgent_getDeepScanEnabledPortalByTenant",
+    "tags": [
+     "Security Agent"
+    ],
+    "summary": "Get Deep-Scan Enabled Sites By Tenant",
+    "description": "Which of the tenant's sites have deep scanning enabled. Reached with no query string, so the tenant comes from the token despite the route name.\n\n`ZAP` in the path is the only occurrence of that segment on this host and it appears in no bundle; on the strength of the route name it reads as the OWASP ZAP scanner behind the deep scan, but that is a reading of a name and not evidence.",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "Observed to answer on 2026-09-05. The capture recorded the status only and not the body, so nothing is asserted about the shape."
+     }
+    },
+    "x-source": "live",
+    "x-probe-verified": true
+   }
+  },
+  "/api/v1/powerPortal/azureFrontDoor/FetchWAFAssociationForPortal": {
+   "get": {
+    "operationId": "waf_fetchAssociation",
+    "tags": [
+     "Web Application Firewall"
+    ],
+    "summary": "Fetch WAF Association",
+    "description": "Which Azure Front Door WAF policy, if any, is associated with a site.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client returns the body whole; on the error path it reads `Message` -- capitalised -- off the error body, which is the only response field named anywhere in the WAF routes."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "The error body's field is `Message` with a capital M, not the lower-case `error.message` that the rename and scan routes read. Two error shapes coexist on this host.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/azureFrontDoor/GetCustomRulesForWAF": {
+   "get": {
+    "operationId": "waf_getCustomRules",
+    "tags": [
+     "Web Application Firewall"
+    ],
+    "summary": "Get Custom WAF Rules",
+    "description": "The custom rules on the site's WAF policy.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it. URL-encoded by the client on this route, which the site routes do not bother to do."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: `rules` -- the client returns `body.rules` and falls back to an empty array."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/azureFrontDoor/GetManagedRulesForWAF": {
+   "get": {
+    "operationId": "waf_getManagedRules",
+    "tags": [
+     "Web Application Firewall"
+    ],
+    "summary": "Get Managed WAF Rules",
+    "description": "The managed rule sets on the site's WAF policy.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it. URL-encoded by the client."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the reply is a top-level array the client walks, reshaping each entry; the evidence window closes on the first field it copies (`provisioni...`), so no element field is asserted."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/azureFrontDoor/MigrateWAFPolicyManagedRuleSetVersions": {
+   "post": {
+    "operationId": "waf_migrateManagedRuleSetVersions",
+    "tags": [
+     "Web Application Firewall"
+    ],
+    "summary": "Migrate Managed Rule Set Versions",
+    "description": "Moves a site's WAF policy onto newer managed rule set versions. The only WAF write, and the only route in this spec that sets `Content-Type` explicitly alongside a real body.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it. URL-encoded by the client."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The rule sets to migrate. The client passes its `rulesets` argument through as the body; its element shape is not visible at this call site.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "array",
+        "items": {
+         "type": "object"
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. The client reads no body -- it treats any status in 200-299 as success and returns nothing."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/createDDOSDaignosticSetting": {
+   "put": {
+    "operationId": "ddos_createDiagnosticSetting",
+    "tags": [
+     "DDoS Protection"
+    ],
+    "summary": "Create DDoS Diagnostic Setting",
+    "description": "Turns on the DDoS diagnostic setting for a site.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it. URL-encoded by the client."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "The client sends an empty object literal. Every value this operation carries is in the query string.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client returns the body when the status is 200-299 and the empty string otherwise; no field is named."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "**Both the create and the delete are called with `PUT`, and the delete reuses the create's telemetry name.** The two call sites are byte-for-byte identical apart from the word `create`/`delete` in the URL: same verb, same empty body, same `createDDOSDaignosticSetting` telemetry scope. Recorded as observed. It may be that the service really does accept `PUT` on both, or it may be that the delete was written by copying the create; nothing here can tell the difference, so no `DELETE` is invented.",
+      "source": "ppac-spa"
+     },
+     {
+      "note": "`Daignostic` is the route's real spelling -- the transposition is in the service's path, on all three of these routes, and is reproduced here verbatim. A caller who corrects it will get a 404.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/deleteDDOSDaignosticSetting": {
+   "put": {
+    "operationId": "ddos_deleteDiagnosticSetting",
+    "tags": [
+     "DDoS Protection"
+    ],
+    "summary": "Delete DDoS Diagnostic Setting",
+    "description": "Turns the DDoS diagnostic setting back off. Called with `PUT`, not `DELETE` -- see the note.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it. URL-encoded by the client."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "The client sends an empty object literal. Every value this operation carries is in the query string.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client returns the body when the status is 200-299 and the empty string otherwise."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "**Both the create and the delete are called with `PUT`, and the delete reuses the create's telemetry name.** The two call sites are byte-for-byte identical apart from the word `create`/`delete` in the URL: same verb, same empty body, same `createDDOSDaignosticSetting` telemetry scope. Recorded as observed. It may be that the service really does accept `PUT` on both, or it may be that the delete was written by copying the create; nothing here can tell the difference, so no `DELETE` is invented.",
+      "source": "ppac-spa"
+     },
+     {
+      "note": "`Daignostic` is the route's real spelling -- the transposition is in the service's path, on all three of these routes, and is reproduced here verbatim. A caller who corrects it will get a 404.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/dlp/policies/portals/disableAnonymousAccessInPowerPages/status": {
+   "get": {
+    "operationId": "governance_getAnonymousAccessPolicyStatus",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Get Anonymous Access Policy Status",
+    "description": "Whether the tenant's DLP policy disables anonymous access in Power Pages.\n\nThe route names the policy as a path segment, the same way the governance setting route does, which is the second sign that this host addresses named policies positionally. It shares only its `dlp/` prefix with `policyErrorSetting`: the rest of the path is different and the bundles do not contain it.",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "Observed to answer on 2026-09-05. The capture recorded the status only and not the body, so nothing is asserted about the shape."
+     }
+    },
+    "x-source": "live",
+    "x-probe-verified": true
+   }
+  },
+  "/api/v1/powerPortal/dlp/policyErrorSetting": {
+   "get": {
+    "operationId": "governance_getDlpPolicyErrorSetting",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Get DLP Policy Error Setting",
+    "description": "How DLP policy violations should be surfaced. Takes no parameters, so the answer is tenant-wide and comes from the token. The maker portal reads it while rendering table permissions.",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client passes the body through to its table-permission code and names no field at this call site."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/isDDOSDaignosticSettingEnabled": {
+   "get": {
+    "operationId": "ddos_isDiagnosticSettingEnabled",
+    "tags": [
+     "DDoS Protection"
+    ],
+    "summary": "Is DDoS Diagnostic Setting Enabled",
+    "description": "Whether the DDoS diagnostic setting is on for a site.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it. URL-encoded by the client."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: a single truthy or falsy value, returned as-is."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "`Daignostic` is the route's real spelling -- the transposition is in the service's path, on all three of these routes, and is reproduced here verbatim. A caller who corrects it will get a 404.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/listPortalsByOrgId": {
+   "get": {
+    "operationId": "portals_listByOrgId",
+    "tags": [
+     "Portals"
+    ],
+    "summary": "List Sites By Organization",
+    "description": "Lists the Power Pages sites in one Dataverse organization. This is the route the Power Apps maker portal calls when it needs to know what sites an environment already has -- it is the only listing route in the bundles, and the only operation in this spec that a portal other than Power Pages calls.",
+    "parameters": [
+     {
+      "name": "orgId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Dataverse organization id of the environment the site lives in."
+     },
+     {
+      "name": "orgUrl",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's Dataverse organization URL. Sent only when the caller already knows it, so it is conditional rather than required."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     },
+     {
+      "name": "x-ms-environment-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment the site belongs to. The client attaches it only when it already knows the environment, so it is conditional rather than optional by design -- whether the service does anything with it is unknown."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client treats the reply as the site list and reads no field off it by name at this call site."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "The extract carries a note on this one call site and on no other: the reply is a JSON string the caller parses a second time. That is the same double-encoding the security-summary and flow-install routes show at their own call sites.",
+      "source": "ppac-spa"
+     },
+     {
+      "note": "Read from the **Power Apps** maker bundle (`plan-designer~powerap~48c206a9.72e52778.chunk.js`), not the Power Pages one. Every other operation in this spec comes from `power-portals.9253fc2f.chunk.js`.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/portal/UpdatePortalName": {
+   "post": {
+    "operationId": "portals_updateName",
+    "tags": [
+     "Portals"
+    ],
+    "summary": "Update Site Name",
+    "description": "Renames a site. The new name travels in the query string, unencoded -- the client concatenates it straight onto the URL rather than passing it through `encodeURIComponent`, which the neighbouring WAF routes do use for `portalId`.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     },
+     {
+      "name": "name",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The new site name. Concatenated raw; a name containing `&` or `#` will not survive the round trip."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "What the client actually sends here is its `Prefer` header, misplaced into the body argument. Whether the service reads a body on this route is unknown.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client checks for an `error` object on the body and treats its `message` as the failure text, so a rejection can arrive inside a successful response."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "**The client sends a header object where the body goes.** The call is `post(url, {Prefer: 'odata.include-annotations=\"*\"'})`, and the second positional argument of that client is the request body, not the config. So this operation sends `{\"Prefer\":\"odata.include-annotations=\\\"*\\\"\"}` as its JSON body and sets no `Prefer` header at all. Recorded as observed; it reads as a client defect rather than as something the service asks for, and a caller reproducing it should not assume the body is required.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/securityAgent/GenerateRecommendation": {
+   "post": {
+    "operationId": "securityAgent_generateRecommendation",
+    "tags": [
+     "Security Agent"
+    ],
+    "summary": "Generate Scan Recommendation",
+    "description": "Asks the security agent for a remediation recommendation about one failing scan rule. The only operation in this spec with a request body whose fields are all visible at the call site.",
+    "parameters": [
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The rule to explain, and the text that failed it.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "EnvironmentId": {
+          "type": "string",
+          "description": "The environment id."
+         },
+         "RuleId": {
+          "type": "string",
+          "description": "The scan rule that failed."
+         },
+         "InValidText": {
+          "type": "string",
+          "description": "The offending text the rule matched. The spelling is the client's."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client returns the body whole, falling back to `null`."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "The three body fields are Pascal-cased where every query parameter on this host is camel-cased. Sent with an explicit `Content-Type: application/json`.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/tps/GetInstancePackages": {
+   "get": {
+    "operationId": "setup_getInstancePackages",
+    "tags": [
+     "Setup Automation"
+    ],
+    "summary": "Get Instance Packages",
+    "description": "The template packages installed on a Dataverse instance. `tps` is the package service the Power Pages templates ship through; `UpgradeTpsPackage` is its write half and is absent from `paths` because no verb could be established for it -- see `info.x-verb-unknown`.",
+    "parameters": [
+     {
+      "name": "orgId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Dataverse organization id of the environment the site lives in."
+     },
+     {
+      "name": "tenantId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Entra ID tenant id."
+     },
+     {
+      "name": "lcid",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The caller's locale id, as a decimal LCID."
+     },
+     {
+      "name": "Prefer",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": {
+        "odata.include-annotations=\"*\"": "Twelve of the fifteen call sites that set the header spell it this way.",
+        "odata.include-annotations= \"*\"": "Three spell it with a space after the `=`. Both spellings ship in the same bundle, so either the service tolerates the space or those three calls have always sent an unparsed header."
+       }
+      },
+      "description": "An OData preference header the client attaches to most reads on this host, although nothing here is an OData surface. Never varies by operation."
+     },
+     {
+      "name": "x-ms-environment-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment the site belongs to. The client attaches it only when it already knows the environment, so it is conditional rather than optional by design -- whether the service does anything with it is unknown."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the reply is an array the client returns whole, falling back to an empty one; no element field is named."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerPortal/{apiName}": {
+   "get": {
+    "operationId": "portals_readByApiName",
+    "tags": [
+     "Portals"
+    ],
+    "summary": "Read By API Name",
+    "description": "A generic read against the `powerPortal` root, where the last path segment is supplied by the caller as `apiName`. The client has one helper that builds `/api/v1/powerPortal/{apiName}?portalId={id}` and hands the reply back untouched, so every concrete `/api/v1/powerPortal/...` route in this spec is reachable through it as well as by its own name.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The trailing route segment. No value is witnessed at this call site -- the helper is generic and its callers were not in the mined chunks."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: the client returns the body as-is, falling back to the empty string, so it expects a scalar rather than an object."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "post": {
+    "operationId": "portals_writeByApiName",
+    "tags": [
+     "Portals"
+    ],
+    "summary": "Write By API Name",
+    "description": "The write half of the generic `powerPortal` helper: same path shape, same `portalId`, an empty object for a body.\n\nIts fallback value names what the maker portal uses it for -- a security-check summary -- so at least one `apiName` value returns check counts rather than an acknowledgement.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The trailing route segment. Not witnessed as a literal."
+     },
+     {
+      "name": "portalId",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it."
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "description": "The client sends an empty object literal. Every value this operation carries is in the query string.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: `TotalSecurityChecks`, `PassedSecurityChecks` and `Strength`, which are the keys of the zero-valued object the client falls back to when the body is empty."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "**The reply is a JSON string, not a JSON object.** The client calls `JSON.parse()` on the already-parsed response body, which only works if the service returns JSON that has been serialised twice. A caller that parses once gets a string back.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/v1/powerportal/governance/portals/{portalId}/PowerPages_AllowNonProdPublicSites": {
+   "get": {
+    "operationId": "governance_allowNonProdPublicSites",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Allow Non-Production Public Sites",
+    "description": "Whether tenant governance permits this site to be public while it is not a production site.\n\n**Note the casing.** This is the only route on the host whose second-to-last namespace segment is `powerportal` in lower case rather than `powerPortal`, and the only one that names its governance setting as a path segment rather than a query parameter. Both are reproduced verbatim; neither is normalised.",
+    "parameters": [
+     {
+      "name": "portalId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Pages site's id, as the maker portal holds it. The client-side name is cut off by the evidence window (`...d:t`); the enclosing segment is `portals/`, which is why it is read as the site id."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. No reply has been seen -- this describes what the client *reads* out of the body, which is a weaker claim than a schema: a single value returned as-is; the client only checks that the body is not undefined."
+     }
+    },
+    "x-notes": [
+     {
+      "note": "The setting name `PowerPages_AllowNonProdPublicSites` sits in the path, which suggests a family of `/governance/portals/{portalId}/{settingName}` routes. Only this one value is witnessed, so only this one is written out.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-source": "ppac-spa"
+   }
+  }
+ }
+}

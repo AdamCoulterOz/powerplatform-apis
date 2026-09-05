@@ -3,11 +3,23 @@
  "info": {
   "title": "Power Automate API",
   "version": "unversioned",
-  "description": "The Power Automate service API (`api.flow.microsoft.com`), which addresses flows under the `Microsoft.ProcessSimple` resource provider -- the internal name Power Automate still carries on the wire.\n\nIt is a sibling of the Power Apps API rather than part of the Power Platform API: same shape, same `/providers/{rp}/environments/{env}/...` convention, same `scopes/admin` elevation, and its own host.\n\nUnofficial and reverse-engineered. Every operation here was read from a working third-party client's call sites rather than from documentation, so the routes and methods are real and the response bodies are deliberately unmodelled -- see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/flow).",
+  "description": "The Power Automate service API (`api.flow.microsoft.com`), which addresses flows under the `Microsoft.ProcessSimple` resource provider -- the internal name Power Automate still carries on the wire.\n\nIt is a sibling of the Power Apps API rather than part of the Power Platform API: same shape, same `/providers/{rp}/environments/{env}/...` convention, same `scopes/admin` elevation, and its own host.\n\nUnofficial and reverse-engineered. Every operation here was read from a shipped client's call sites rather than from documentation -- Microsoft's own PowerShell administration module, the Power Platform admin centre's JavaScript, and third-party clients -- so the routes and methods are real, and the response shapes are the ones those clients expect rather than replies anyone here has seen. See the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/flow).",
   "x-notes": [
    {
-    "note": "**This spec is client-derived and nothing in it has been observed on the wire.** It exists because the corpus was silent on Power Automate while every other Power Platform surface was covered, and a reader comparing a working client against the corpus would have found nothing at all here.\n\nThat makes it the weakest spec in the corpus by evidence: no operation carries `x-probe-verified`, no response body is modelled, and the api-version is the one shipped clients send rather than one the service was seen to accept. Treat it as a map of what exists and is called, not as a contract.",
+    "note": "**This spec is client-derived and nothing in it has been observed on the wire.** It exists because the corpus was silent on Power Automate while every other Power Platform surface was covered, and a reader comparing a working client against the corpus would have found nothing at all here.\n\nThat still makes it the weakest spec in the corpus by evidence, though it is no longer the thinnest: no operation carries `x-probe-verified`; the response shapes are what clients expect, read from their own test fixtures and from the fields their code reaches for, never from a reply seen here; and each `api-version` is the one a shipped client sends rather than one the service was seen to accept. Treat it as a map of what exists and is called, not as a contract.\n\nWhat has changed is the grading. Operations are no longer all `provider`: each one now carries the strongest source that witnesses it, and `x-corroborated-by` lists the weaker sources that witness the same route independently. Agreement between a Microsoft client and a third-party one is worth reading -- it is the only kind of confirmation available here -- but it is agreement about the request, never about the reply.",
     "source": "provider"
+   },
+   {
+    "note": "**The api-version on every PowerShell-derived route is a client default, not a service requirement.** Microsoft.PowerApps.Administration.PowerShell carries `{apiVersion}` as a macro in each route literal and fills it from the cmdlet's own default parameter, which a caller can override with `-ApiVersion`. So the defaults recorded here are what those cmdlets send; they say nothing about which versions the service accepts, and nothing about which it rejects.\n\nThe same is true of the host. The module resolves it per cloud from the signed-in session rather than hardcoding it, and the value in this spec's `servers` block is the public-cloud one.",
+    "source": "ps-admin"
+   },
+   {
+    "note": "**`scopes/admin/` is an optional path segment, and that is why some operations appear twice here.** In cli-microsoft365 it is a `--asAdmin` switch that concatenates either `scopes/admin/` or an empty string into the URL, so one call site is two concrete routes. OpenAPI has no way to describe an optional segment, so each is written out: `flows_get` and `flows_getAdmin`, `flows_start` and `flows_startAdmin`, and so on.\n\nThe axis is not uniform. `restore` and `modifyowners` exist **only** on the admin scope, the admin flow list inserts a `/v2/` segment as well as the scope, and `modifyPermissions` is called on the user scope by the same module that calls `modifyowners` on the admin one. Do not assume a route has an admin twin because its neighbour does.",
+    "source": "provider"
+   },
+   {
+    "note": "**`~default` is a value, not a route.** Clients substitute the literal `~default` for the environment name to mean the tenant default environment, so it is documented as a value of `environmentName` rather than as a path of its own.",
+    "source": "ps-admin"
    }
   ]
  },
@@ -26,20 +38,28 @@
  ],
  "tags": [
   {
+   "name": "Approvals",
+   "description": "The approvals feature: what is waiting on a principal, and answering it."
+  },
+  {
    "name": "Environments",
    "description": "Environments as the flow service sees them, which is not always what the platform reports."
   },
   {
    "name": "Flows",
-   "description": "Flows and their lifecycle: read, delete, turn on and off, restore, and export as a template."
+   "description": "Flows and their lifecycle: read, delete, turn on and off, restore, export as a template, rotate trigger keys, and move into a solution."
   },
   {
    "name": "Permissions",
-   "description": "Who may see or edit a flow."
+   "description": "Who may see or edit a flow, and who owns it."
   },
   {
    "name": "Runs",
    "description": "Execution history, and cancelling one in progress."
+  },
+  {
+   "name": "Service",
+   "description": "Routes that hang off the host or the resource provider with no environment beneath them: the batch envelope, and the tenant-wide request report."
   },
   {
    "name": "Triggers",
@@ -47,15 +67,70 @@
   }
  ],
  "paths": {
-  "/providers/Microsoft.ProcessSimple/environments": {
-   "get": {
-    "operationId": "environments_list",
+  "/batch": {
+   "post": {
+    "operationId": "service_batch",
     "tags": [
-     "Environments"
+     "Service"
     ],
-    "summary": "List",
-    "description": "Environments visible to the caller on the Power Automate host. Distinct from the BAPI and Power Platform API environment lists: this one reports what the flow service knows, which can lag the platform.",
+    "summary": "Batch",
+    "description": "Sends several ProcessSimple requests in one call. It hangs off the host root with no resource provider, no environment and no `api-version` -- the sub-requests carry their own routes.\n\nThe admin centre uses it to read a flow and its sharing state together while monitoring an environment. Failure is reported per entry inside the body, so a batch can return successfully with every entry refused.",
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BatchRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The sub-responses, in order. Each entry is either a result or an error; the outer status does not reflect the inner ones.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BatchResponseItem"
+        }
+       }
+      }
+     }
+    },
+    "x-notes": [
+     "The sub-request envelope's property name could not be recovered: the admin centre builds the body through a `batchOf` helper whose module is absent from the mined bundles. The entry shape (`method`, `url`) is witnessed; the name of the array holding them is not."
+    ],
+    "x-source": "ppac-spa"
+   }
+  },
+  "/providers/Microsoft.Flow/environments/{environmentName}/solutions/{solutionId}/migrateFlows": {
+   "post": {
+    "operationId": "flows_migrateToSolution",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Migrate Flows Into Solution",
+    "description": "Makes existing flows solution-aware by moving them into a solution.\n\n**Read the resource provider again.** This route is under `Microsoft.Flow`, not `Microsoft.ProcessSimple`. It is the only one in this spec that is, and the difference is in the path rather than the host: the same host serves both namespaces. A client that builds flow URLs by templating the provider segment once will send this one to the wrong place.",
     "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "solutionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The target solution's id."
+     },
      {
       "name": "api-version",
       "in": "query",
@@ -64,15 +139,73 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/MigrateFlowsRequest"
+       }
+      }
+     }
+    },
     "responses": {
      "200": {
       "description": "The result."
      }
     },
-    "x-source": "provider"
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments": {
+   "get": {
+    "operationId": "environments_list",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "List",
+    "description": "Environments visible to the caller on the Power Automate host. Distinct from the BAPI and Power Platform API environment lists: this one reports what the flow service knows, which can lag the platform.\n\nThe PowerShell admin module lists environments from three different hosts in one module -- BAPI, Power Apps and here -- which is worth knowing before treating any of them as authoritative.",
+    "parameters": [
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "permissions"
+      },
+      "description": "The client sends `permissions`, which adds the caller's permissions to each environment. Note the spelling: the admin centre expands `properties/permissions` on the single-environment read instead."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environments.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EnvironmentList"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-corroborated-by": [
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.ProcessSimple/environments/{environmentName}": {
@@ -94,6 +227,30 @@
       "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
      },
      {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "x-observed-values": [
+        "permissions",
+        "properties/permissions"
+       ],
+       "x-enum-evidence": "Both literals are in shipped clients, on the same route. Neither was seen accepted or rejected."
+      },
+      "description": "Two spellings are in use for the same idea and no client sends both: the PowerShell module and cli-microsoft365 send `permissions`, the admin centre sends `properties/permissions`. Which the service accepts is untested here."
+     },
+     {
+      "name": "refreshCache",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "true"
+      },
+      "description": "The admin centre appends `refreshCache=true` when it wants to bypass a cached answer, and omits the parameter entirely otherwise. That the service caches this read at all is only inferable from the client's having the switch."
+     },
+     {
       "name": "api-version",
       "in": "query",
       "required": true,
@@ -101,15 +258,270 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Environment"
+        }
+       }
+      }
      }
     },
-    "x-source": "provider"
+    "x-source": "ppac-spa",
+    "x-corroborated-by": [
+     "ps-admin",
+     "provider"
+    ]
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/approvalRequests": {
+   "get": {
+    "operationId": "approvals_listRequests",
+    "tags": [
+     "Approvals"
+    ],
+    "summary": "List Requests",
+    "description": "Approval requests assigned to a principal -- the approver's side of the approvals feature. The companion `approvals` route is the requester's side.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "properties/assignedTo/id eq '00000000-0000-0000-0000-000000000000'"
+      },
+      "description": "The client always sends an assignment filter. Note the OData shape: slash-separated property paths, where the Power Apps routes on the sibling host use flat property names in the same position."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "properties/approval"
+      },
+      "description": "The client expands the approval itself, and reads `properties.approval.title` off the result. Without the expansion the title is not there."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The approval requests.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ApprovalList"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/approvals": {
+   "get": {
+    "operationId": "approvals_list",
+    "tags": [
+     "Approvals"
+    ],
+    "summary": "List",
+    "description": "Approvals a principal owns.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "properties/owner/id eq '00000000-0000-0000-0000-000000000000' and properties/status eq 'Pending'"
+      },
+      "description": "The client composes owner and status together. The status half is a hardcoded `Pending` in the cmdlet, which is why that client cannot list completed approvals; the parameter itself is not so limited as far as anything here shows."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "properties/requestSummary"
+      },
+      "description": "The client expands the request summary."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The approvals.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ApprovalList"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/approvals/{approvalId}/approvalResponses": {
+   "post": {
+    "operationId": "approvals_respond",
+    "tags": [
+     "Approvals"
+    ],
+    "summary": "Respond",
+    "description": "Approves or denies an approval. Approving and denying are the same route with the same body shape; only `properties.response` differs, so there is no separate deny operation to look for.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "approvalId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The approval's identifier."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ApprovalResponse"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result. The client discards the body without reading it, so nothing is known about what comes back."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/deploymentstageruns": {
+   "get": {
+    "operationId": "environments_listDeploymentStageRuns",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "List Deployment Stage Runs",
+    "description": "Pipeline deployment-stage runs for an environment: the history behind the admin centre's pipelines view, including approval state.\n\nThe query is Dataverse-shaped rather than ARM-shaped -- lowercase attribute names, `$select` of columns such as `approvalcomments` and `approvalstatus`, and filters over integer option-set values rather than strings. It reads like a Dataverse table surfaced through this host.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "$select",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "approvalcomments,approvalstatus"
+      },
+      "description": "Columns to return, lowercase Dataverse attribute names."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "starttime gt 2026-01-01T00:00:00.000Z"
+      },
+      "description": "The admin centre composes up to three clauses: a fixed operation clause `((operation ne 200000201) or (operation eq 200000201 and operationstatus eq 200000003))`, an optional `starttime gt {iso8601}`, and an optional `operationstatus eq {code}`. The numbers are option-set values; what they name is not recoverable from the bundle."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "deploymentstage"
+      },
+      "description": "The admin centre expands the stage."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The deployment stage runs."
+     }
+    },
+    "x-notes": [
+     "Two things separate this route from its neighbours and both are visible in the bundle rather than on the wire. It is built from a **different host constant** -- the admin centre calls it `flowV2` where every other route here uses `flow` -- so it may not be served by the host in this spec's `servers` block at all. And the reconstructed URL carries **no `api-version`**, where every sibling requires one."
+    ],
+    "x-source": "ppac-spa"
    }
   },
   "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows": {
@@ -136,17 +548,49 @@
       "required": true,
       "schema": {
        "type": "string",
-       "default": "2016-11-01"
+       "default": "2016-11-01",
+       "x-observed-values": [
+        "2016-11-01",
+        "2016-11-01-beta"
+       ]
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version. This route is the one place two versions are witnessed: shipped clients send `2016-11-01`, while one Microsoft sample calls the same route on `2016-11-01-beta`. What the beta version changes is not known."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "cli-microsoft365 appends a filter here when narrowing the list."
+     },
+     {
+      "name": "include",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "cli-microsoft365 appends an include clause here; the only value seen on any flow list is `softDeletedFlows`, on the admin list."
      }
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The flows.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FlowList"
+        }
+       }
+      }
      }
     },
-    "x-source": "provider"
+    "x-source": "ps-admin",
+    "x-corroborated-by": [
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}": {
@@ -156,7 +600,7 @@
      "Flows"
     ],
     "summary": "Read",
-    "description": "One flow, including its definition.",
+    "description": "One flow, including its definition.\n\nThe admin form is the same operation with `scopes/admin/` inserted after the resource provider. It is a separate path here because OpenAPI has no way to say \"optional segment\", which is what it is in the client: a `--asAdmin` switch that concatenates the segment or an empty string.",
     "parameters": [
      {
       "name": "environmentName",
@@ -177,6 +621,16 @@
       "description": "The flow's name, which is its GUID rather than its display name."
      },
      {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "swagger,properties.connectionreferences.apidefinition,plan"
+      },
+      "description": "cli-microsoft365 asks for everything at once here, and the list is worth copying: `swagger`, `properties.connectionreferences.apidefinition`, `properties.definitionsummary.operations.apioperation`, `operationDefinition`, `plan`, `properties.throttleData`, `properties.estimatedsuspensiondata` and `properties.licenseData`. Throttle, suspension and licence data are only reachable through this parameter -- none of it is in the plain read."
+     },
+     {
       "name": "api-version",
       "in": "query",
       "required": true,
@@ -184,15 +638,25 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The flow.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Flow"
+        }
+       }
+      }
      }
     },
-    "x-source": "provider"
+    "x-source": "ps-admin",
+    "x-corroborated-by": [
+     "provider"
+    ]
    },
    "delete": {
     "operationId": "flows_delete",
@@ -200,7 +664,7 @@
      "Flows"
     ],
     "summary": "Delete",
-    "description": "Deletes a flow. Recoverable through the admin restore route for a period afterwards.",
+    "description": "Deletes a flow. Recoverable through the admin restore route for a period afterwards.\n\nThe admin form is the same operation with `scopes/admin/` inserted after the resource provider. It is a separate path here because OpenAPI has no way to say \"optional segment\", which is what it is in the client: a `--asAdmin` switch that concatenates the segment or an empty string.",
     "parameters": [
      {
       "name": "environmentName",
@@ -228,7 +692,7 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
@@ -236,7 +700,128 @@
       "description": "The result."
      }
     },
-    "x-source": "provider"
+    "x-source": "ps-admin",
+    "x-corroborated-by": [
+     "provider"
+    ]
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/associateBillingContext": {
+   "post": {
+    "operationId": "flows_associateBillingContext",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Associate Billing Context",
+    "description": "Attaches a flow to a Power App.\n\nThe name is the interesting part: attaching a flow to an app is modelled as a **billing** link rather than an ownership or packaging one. The cmdlet that calls it is named after app context, and the route is named after who pays.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BillingContextLink"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-notes": [
+     "`contextLinkType` is a hardcoded literal in the client -- it sends `unifiedApp` and offers no way to send anything else. Whether the field is an extension point or a constant the service also insists on is unknown."
+    ],
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/dissociateBillingContext": {
+   "post": {
+    "operationId": "flows_dissociateBillingContext",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Dissociate Billing Context",
+    "description": "Detaches a flow from a Power App.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BillingContextLink"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-notes": [
+     "The body is **identical** to the associate call, hardcoded `unifiedApp` and all: the direction is carried entirely by which route is called, not by anything in the payload."
+    ],
+    "x-source": "ps-admin"
    }
   },
   "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/exportToARMTemplate": {
@@ -274,14 +859,25 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The template.",
+      "content": {
+       "application/octet-stream": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
      }
     },
+    "x-notes": [
+     "The client reads this response as bytes, not as JSON: it is fetched with `responseType: arraybuffer` and written straight to a file. The content is ARM-template JSON, so the octet-stream here is the client's handling rather than a proven `Content-Type` -- which header the service actually sends was not observed."
+    ],
     "x-source": "provider"
    }
   },
@@ -292,7 +888,7 @@
      "Permissions"
     ],
     "summary": "Modify",
-    "description": "Grants and revokes access in a single body, as elsewhere in this family of APIs.",
+    "description": "Grants and revokes access in a single body, as elsewhere in this family of APIs.\n\nThe admin form is the same operation with `scopes/admin/` inserted after the resource provider. It is a separate path here because OpenAPI has no way to say \"optional segment\", which is what it is in the client: a `--asAdmin` switch that concatenates the segment or an empty string.",
     "parameters": [
      {
       "name": "environmentName",
@@ -320,7 +916,7 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "requestBody": {
@@ -328,7 +924,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "type": "object"
+        "$ref": "#/components/schemas/ModifyPermissionsRequest"
        }
       }
      }
@@ -338,7 +934,69 @@
       "description": "The result."
      }
     },
-    "x-source": "provider"
+    "x-notes": [
+     "The admin centre calls this same operation from its managed-environment page, and its version of the body carries `principal.email` and `principal.tenantId` alongside the id and type, with `roleName` hardcoded to `CanEdit`. Its base URL is assembled from a constant in a module that is missing from the mined bundles, so that call corroborates the body and not the route, and the grade here rests on the two clients whose routes are legible."
+    ],
+    "x-source": "ps-admin",
+    "x-corroborated-by": [
+     "provider"
+    ]
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/owners": {
+   "get": {
+    "operationId": "flows_listOwners",
+    "tags": [
+     "Permissions"
+    ],
+    "summary": "List Owners",
+    "description": "The owner roles on a flow. Not a synonym for `permissions`: it is a different route, on a different api-version, returning a fuller principal -- `email` and `displayName` as well as the id and type.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version. This route is the exception, and the only one: no other flow route in any client mined here is called on anything but `2016-11-01`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The owner roles.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FlowOwnerList"
+        }
+       }
+      }
+     }
+    },
+    "x-notes": [
+     "**The client's URL for this route is malformed.** The route literal in the PowerShell module ends with a stray apostrophe after the api-version placeholder, and it is inside the quoted string, so the character is sent as part of the query. Anyone reproducing that client's behaviour byte for byte will send a trailing `'` -- and the fact that the cmdlet is shipped and used suggests the service tolerates it, though nothing here confirms that."
+    ],
+    "x-source": "ps-admin"
    }
   },
   "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/permissions": {
@@ -348,7 +1006,7 @@
      "Permissions"
     ],
     "summary": "List",
-    "description": "Who can see or edit a flow, and in what role.",
+    "description": "Who can see or edit a flow, and in what role.\n\nThe admin form is the same operation with `scopes/admin/` inserted after the resource provider. It is a separate path here because OpenAPI has no way to say \"optional segment\", which is what it is in the client: a `--asAdmin` switch that concatenates the segment or an empty string.",
     "parameters": [
      {
       "name": "environmentName",
@@ -376,15 +1034,71 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The permissions.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FlowPermissionList"
+        }
+       }
+      }
      }
     },
     "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/regenerateAccessKey": {
+   "post": {
+    "operationId": "flows_regenerateAccessKey",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Regenerate Access Key",
+    "description": "Rotates the access key in a flow's trigger URL, which invalidates every URL handed out before it. The one operation here with an irreversible blast radius beyond the flow itself: anything holding an old trigger URL stops working.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result. The client sends no body and reads none."
+     }
+    },
+    "x-notes": [
+     "Sent with no request body at all."
+    ],
+    "x-source": "ps-admin"
    }
   },
   "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/runs": {
@@ -422,15 +1136,29 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The runs.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RunList"
+        }
+       }
+      }
      }
     },
-    "x-source": "provider"
+    "x-notes": [
+     "cli-microsoft365 builds this URL with the same optional `scopes/admin/` segment it uses on the flow read, so an admin-scope form of this route probably exists. It is not given its own path here because the mined record's route template does not carry the alternation -- the admin form appears only inside the quoted source line -- and no client was seen calling it.",
+     "The PowerShell module reads `Value` once and stops, so its flow-run list silently truncates at the first page. The capitalised `Value` is the module's own property access, not necessarily the wire spelling."
+    ],
+    "x-source": "ps-admin",
+    "x-corroborated-by": [
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/runs/{runName}": {
@@ -440,7 +1168,7 @@
      "Runs"
     ],
     "summary": "Read",
-    "description": "One run, including its status and outputs.",
+    "description": "One run, including its status and the links to its trigger inputs and outputs.",
     "parameters": [
      {
       "name": "environmentName",
@@ -477,12 +1205,19 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The run.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Run"
+        }
+       }
+      }
      }
     },
     "x-source": "provider"
@@ -532,7 +1267,7 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
@@ -550,7 +1285,7 @@
      "Flows"
     ],
     "summary": "Start",
-    "description": "Turns a flow back on.",
+    "description": "Turns a flow back on.\n\nThe admin form is the same operation with `scopes/admin/` inserted after the resource provider. It is a separate path here because OpenAPI has no way to say \"optional segment\", which is what it is in the client: a `--asAdmin` switch that concatenates the segment or an empty string.",
     "parameters": [
      {
       "name": "environmentName",
@@ -578,7 +1313,7 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
@@ -586,7 +1321,13 @@
       "description": "The result."
      }
     },
-    "x-source": "provider"
+    "x-notes": [
+     "Sent with no request body."
+    ],
+    "x-source": "ps-admin",
+    "x-corroborated-by": [
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/stop": {
@@ -596,7 +1337,7 @@
      "Flows"
     ],
     "summary": "Stop",
-    "description": "Turns a flow off. It keeps its definition and history and stops responding to triggers.",
+    "description": "Turns a flow off. It keeps its definition and history and stops responding to triggers.\n\nThe admin form is the same operation with `scopes/admin/` inserted after the resource provider. It is a separate path here because OpenAPI has no way to say \"optional segment\", which is what it is in the client: a `--asAdmin` switch that concatenates the segment or an empty string.",
     "parameters": [
      {
       "name": "environmentName",
@@ -624,7 +1365,7 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
@@ -632,7 +1373,13 @@
       "description": "The result."
      }
     },
-    "x-source": "provider"
+    "x-notes": [
+     "Sent with no request body."
+    ],
+    "x-source": "ps-admin",
+    "x-corroborated-by": [
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.ProcessSimple/environments/{environmentName}/flows/{flowName}/triggers": {
@@ -670,12 +1417,19 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The triggers. The only field a client reads is `name`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TriggerList"
+        }
+       }
+      }
      }
     },
     "x-source": "provider"
@@ -734,12 +1488,377 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
      "200": {
       "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/environments/{environmentName}/operations": {
+   "get": {
+    "operationId": "environments_listOperations",
+    "tags": [
+     "Environments"
+    ],
+    "summary": "List Operations",
+    "description": "Long-running operations in an environment, as the admin centre's agent and DLP pages read them.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01-beta"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version. The admin centre pins the `-beta` version on this route specifically, while calling its neighbours on the plain one."
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 250
+      },
+      "description": "The admin centre always sends `250` and never pages beyond it."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The operations."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/getPowerPlatformRequestReport": {
+   "post": {
+    "operationId": "service_getPowerPlatformRequestReport",
+    "tags": [
+     "Service"
+    ],
+    "summary": "Get Power Platform Request Report",
+    "description": "Requests the tenant's Power Platform request (API call) consumption report.\n\nIt is tenant-wide and hangs directly off the resource provider: no environment segment, no admin scope, nothing between the provider and the verb.\n\nThe two-step shape matters more than the route. The POST does not return the report -- it returns a pre-signed download URL, which the client then fetches with no `Authorization` header at all. The report leaves through a second, unauthenticated request.",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "A pre-signed link to the report.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RequestReport"
+        }
+       }
+      }
+     }
+    },
+    "x-notes": [
+     "POSTed with no body.",
+     "The response field is `DownloadLink`, PascalCase, which no other response shape in this spec uses -- worth knowing before a case-sensitive parser silently reads null.",
+     "The follow-up download is the only fetch in the calling module that bypasses the API client entirely, because the raw bytes are wanted rather than a parsed object."
+    ],
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/scopes/admin/environments/{environmentName}/flows/{flowName}": {
+   "get": {
+    "operationId": "flows_getAdmin",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Read (Admin Scope)",
+    "description": "One flow, read as an administrator. This is the elevated form of the user-scope route, reaching flows the caller does not own. It is a separate path rather than a parameter because the client toggles a path segment, which OpenAPI cannot express as optional.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "swagger,plan,properties.licenseData"
+      },
+      "description": "The same expansion list the user-scope read accepts."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The flow.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Flow"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "provider"
+   },
+   "delete": {
+    "operationId": "flows_deleteAdmin",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Delete (Admin Scope)",
+    "description": "Deletes a flow as an administrator, including one the caller does not own. This is the elevated form of the user-scope route, reaching flows the caller does not own. It is a separate path rather than a parameter because the client toggles a path segment, which OpenAPI cannot express as optional.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-notes": [
+     "The admin centre spells the provider segment `/Providers/Microsoft.ProcessSimple/...` with a capital P on this one route, where every other route in every client mined here spells it lowercase. Either the routing is case-insensitive or one of these is wrong; nothing here settles which, and the lowercase form is used in this spec because it is what the other clients and the rest of this route family send."
+    ],
+    "x-source": "ppac-spa",
+    "x-corroborated-by": [
+     "provider"
+    ]
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/scopes/admin/environments/{environmentName}/flows/{flowName}/modifyPermissions": {
+   "post": {
+    "operationId": "flows_modifyPermissionsAdmin",
+    "tags": [
+     "Permissions"
+    ],
+    "summary": "Modify (Admin Scope)",
+    "description": "Grants and revokes access on a flow the caller does not own. This is the elevated form of the user-scope route, reaching flows the caller does not own. It is a separate path rather than a parameter because the client toggles a path segment, which OpenAPI cannot express as optional.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ModifyPermissionsRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/scopes/admin/environments/{environmentName}/flows/{flowName}/modifyowners": {
+   "post": {
+    "operationId": "flows_modifyOwners",
+    "tags": [
+     "Permissions"
+    ],
+    "summary": "Modify Owners (Admin Scope)",
+    "description": "Grants owner roles on a flow.\n\nTwo asymmetries are worth knowing before pairing this with anything. It exists **only** on the admin scope, while its natural counterpart -- revoking, through `modifyPermissions` -- is called on the user scope by the same module: granting an owner needs administrator reach, removing one does not.\n\nAnd the segment is `modifyowners`, all lowercase, beside `modifyPermissions` on the same resource. A client that camel-cases by rule will miss it.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ModifyOwnersRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ps-admin"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/scopes/admin/environments/{environmentName}/flows/{flowName}/permissions": {
+   "get": {
+    "operationId": "flows_listPermissionsAdmin",
+    "tags": [
+     "Permissions"
+    ],
+    "summary": "List (Admin Scope)",
+    "description": "Who can see or edit a flow, read as an administrator. This is the elevated form of the user-scope route, reaching flows the caller does not own. It is a separate path rather than a parameter because the client toggles a path segment, which OpenAPI cannot express as optional.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The permissions.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FlowPermissionList"
+        }
+       }
+      }
      }
     },
     "x-source": "provider"
@@ -780,7 +1899,99 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/scopes/admin/environments/{environmentName}/flows/{flowName}/start": {
+   "post": {
+    "operationId": "flows_startAdmin",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Start (Admin Scope)",
+    "description": "Turns a flow back on as an administrator. This is the elevated form of the user-scope route, reaching flows the caller does not own. It is a separate path rather than a parameter because the client toggles a path segment, which OpenAPI cannot express as optional.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "provider"
+   }
+  },
+  "/providers/Microsoft.ProcessSimple/scopes/admin/environments/{environmentName}/flows/{flowName}/stop": {
+   "post": {
+    "operationId": "flows_stopAdmin",
+    "tags": [
+     "Flows"
+    ],
+    "summary": "Stop (Admin Scope)",
+    "description": "Turns a flow off as an administrator. This is the elevated form of the user-scope route, reaching flows the caller does not own. It is a separate path rather than a parameter because the client toggles a path segment, which OpenAPI cannot express as optional.",
+    "parameters": [
+     {
+      "name": "environmentName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's name, which is its GUID. The literal alias `~default` selects the tenant default environment."
+     },
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The flow's name, which is its GUID rather than its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01"
+      },
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
      }
     ],
     "responses": {
@@ -817,14 +2028,47 @@
        "type": "string",
        "default": "2016-11-01"
       },
-      "description": "The API version. Shipped clients send `2016-11-01`; the admin flow list uses a `/v2/` path segment instead of a newer version."
+      "description": "The API version. Most shipped clients send `2016-11-01`; the owners route defaults to `2017-06-01`, and the admin centre pins `2016-11-01-beta` on the environment operations list. The admin flow list uses a `/v2/` path segment rather than a newer version."
+     },
+     {
+      "name": "include",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "example": "softDeletedFlows",
+       "x-observed-values": [
+        "softDeletedFlows"
+       ],
+       "x-enum-evidence": "The only value any client mined here sends."
+      },
+      "description": "`softDeletedFlows` adds flows in the recycle bin, which report `properties.state` as `Deleted`. This route plus this parameter is how the recycle bin is listed; there is no separate recycle-bin route."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "cli-microsoft365 appends a filter here when narrowing the list."
      }
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The flows, including soft-deleted ones when asked for.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FlowList"
+        }
+       }
+      }
      }
     },
+    "x-notes": [
+     "A third-party client catalogues an admin flow list **without** the `/v2/` segment -- `scopes/admin/environments/{environmentName}/flows` on `2016-11-01`. It is a catalogue entry rather than a call site: that client was not seen invoking it. It is recorded here rather than given its own path, because two clients agree on the `/v2/` form and only an uncalled table entry suggests the other."
+    ],
     "x-source": "provider"
    }
   }
@@ -844,6 +2088,861 @@
     }
    }
   },
-  "schemas": {}
+  "schemas": {
+   "ApprovalList": {
+    "type": "object",
+    "description": "Approvals or approval requests. Only `value` and, on a request, `properties.approval.title` are proven to be read by the PowerShell module; the rest of the item shape is unwitnessed and deliberately left open.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "ApprovalResponse": {
+    "type": "object",
+    "description": "The body a client sends to answer an approval. Three of its fields are literals the client fills in rather than choices: `properties.stage` is always `Basic`, `properties.status` is always `Committed` -- the client declares the response committed rather than letting the service decide -- and `properties.owner.type` is always `NotSpecified`.",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "properties": {
+      "type": "object",
+      "properties": {
+       "stage": {
+        "type": "string",
+        "example": "Basic"
+       },
+       "status": {
+        "type": "string",
+        "example": "Committed"
+       },
+       "creationDate": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "owner": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string"
+         },
+         "type": {
+          "type": "string",
+          "example": "NotSpecified"
+         },
+         "tenantId": {
+          "type": "string"
+         }
+        }
+       },
+       "response": {
+        "type": "string",
+        "description": "The decision. This single field is the whole difference between approving and denying: both go to the same route with the same body.",
+        "x-observed-values": [
+         "Approve",
+         "Reject"
+        ],
+        "x-enum-evidence": "Both literals are in the module's source, one per cmdlet."
+       },
+       "comments": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "BatchRequest": {
+    "type": "object",
+    "description": "A batch of sub-requests. The admin centre builds this through a `batchOf` helper whose own module is not in the mined bundles, so the name of the array property could not be recovered -- only the shape of the entries inside it.",
+    "additionalProperties": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/BatchSubRequest"
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "BatchResponseItem": {
+    "type": "object",
+    "description": "One sub-response. The admin centre reads two success fields and, on failure, a code and the inner HTTP status -- so a batch reports per-entry failure in the body rather than through the outer status.",
+    "properties": {
+     "properties": {
+      "type": "object",
+      "properties": {
+       "workflowEntityId": {
+        "type": "string",
+        "description": "The flow's Dataverse workflow row id, which is not the same identifier as the flow name used in the route."
+       },
+       "sharingType": {
+        "type": "string"
+       }
+      }
+     },
+     "error": {
+      "type": "object",
+      "properties": {
+       "code": {
+        "type": "string",
+        "x-observed-values": [
+         "InsufficientCdsPermissions",
+         "EnvironmentAccessDenied",
+         "ConnectionAuthorizationFailed",
+         "XrmApplyUserFailed",
+         "FlowNotFound",
+         "XrmWorkflowNotFound"
+        ],
+        "x-enum-evidence": "The set the admin centre's monitoring page branches on. Every one of them is a permission or lookup failure reported inside a 'successful' batch. Read from the bundle, not from a reply."
+       },
+       "response": {
+        "type": "object",
+        "properties": {
+         "status": {
+          "type": "integer"
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "BatchSubRequest": {
+    "type": "object",
+    "description": "One sub-request inside a batch.",
+    "properties": {
+     "method": {
+      "type": "string",
+      "example": "GET"
+     },
+     "url": {
+      "type": "string",
+      "description": "Host-relative, and addressed under the same resource provider as the rest of this spec.",
+      "example": "/providers/Microsoft.ProcessSimple/environments/00000000-0000-0000-0000-000000000000/flows/00000000-0000-0000-0000-000000000000"
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "BillingContextLink": {
+    "type": "object",
+    "description": "The body shared by associate and dissociate. Identical in both directions, hardcoded literal included.",
+    "required": [
+     "contextLinkType",
+     "contextLinkId"
+    ],
+    "properties": {
+     "contextLinkType": {
+      "type": "string",
+      "description": "A hardcoded literal in the client, not a choice: it sends `unifiedApp` and nothing else. Whether the service accepts any other value is unknown.",
+      "example": "unifiedApp",
+      "x-observed-values": [
+       "unifiedApp"
+      ],
+      "x-enum-evidence": "The only literal in the module's source; no other value appears in any client mined here."
+     },
+     "contextLinkId": {
+      "type": "string",
+      "description": "The Power App's name, which is its GUID."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "ContentLink": {
+    "type": "object",
+    "description": "A pointer to run content held outside this service. The `uri` addresses the underlying Logic Apps workflow host directly and carries its own pre-signed query string (`se`, `sp`, `sv`, `sig`), so it is fetched without this API's bearer token and expires on its own schedule. No example value is given here because a real one is a credential.",
+    "properties": {
+     "uri": {
+      "type": "string"
+     },
+     "contentVersion": {
+      "type": "string",
+      "description": "base64 MD5."
+     },
+     "contentSize": {
+      "type": "integer"
+     },
+     "contentHash": {
+      "type": "object",
+      "properties": {
+       "algorithm": {
+        "type": "string",
+        "example": "md5"
+       },
+       "value": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "x-source": "provider"
+   },
+   "Environment": {
+    "type": "object",
+    "description": "An environment as the flow service reports it. Shape read from a client rather than from a reply: nothing in this spec has been observed on the wire, so this is what a working client expects to find, not what the service is known to send.\n\nThe fields here come from cli-microsoft365's own test fixtures for its environment commands; the PowerShell module reads a strict subset of the same names (`name`, `location`, `properties.displayName`, `properties.isDefault`, `properties.createdTime`, `properties.lastModifiedTime`), which is independent corroboration of that subset and silence about the rest.",
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "The environment's id. The tenant default is named `Default-{tenantId}`.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "location": {
+      "type": "string",
+      "description": "The environment's geography.",
+      "example": "europe"
+     },
+     "type": {
+      "type": "string",
+      "example": "Microsoft.ProcessSimple/environments"
+     },
+     "id": {
+      "type": "string",
+      "example": "/providers/Microsoft.ProcessSimple/environments/00000000-0000-0000-0000-000000000000"
+     },
+     "properties": {
+      "type": "object",
+      "properties": {
+       "displayName": {
+        "type": "string",
+        "example": "Contoso (default)"
+       },
+       "createdTime": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "createdBy": {
+        "type": "object",
+        "description": "The principal that created the environment. A platform-created default environment reports the literal `SYSTEM` rather than a user.",
+        "properties": {
+         "id": {
+          "type": "string",
+          "example": "SYSTEM"
+         },
+         "displayName": {
+          "type": "string",
+          "example": "SYSTEM"
+         },
+         "type": {
+          "type": "string",
+          "example": "NotSpecified"
+         },
+         "userPrincipalName": {
+          "type": "string"
+         }
+        }
+       },
+       "lastModifiedTime": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "lastModifiedBy": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string"
+         },
+         "displayName": {
+          "type": "string"
+         },
+         "type": {
+          "type": "string"
+         },
+         "userPrincipalName": {
+          "type": "string"
+         }
+        }
+       },
+       "provisioningState": {
+        "type": "string",
+        "example": "Succeeded"
+       },
+       "creationType": {
+        "type": "string",
+        "example": "DefaultTenant"
+       },
+       "environmentSku": {
+        "type": "string",
+        "example": "Default"
+       },
+       "environmentType": {
+        "type": "string",
+        "example": "Production"
+       },
+       "isDefault": {
+        "type": "boolean",
+        "description": "True for the one environment `~default` resolves to."
+       },
+       "azureRegionHint": {
+        "type": "string",
+        "example": "westeurope"
+       },
+       "runtimeEndpoints": {
+        "type": "object",
+        "description": "Per-service regional hosts for this environment, keyed by resource provider -- `microsoft.BusinessAppPlatform`, `microsoft.CommonDataModel`, `microsoft.PowerApps` and `microsoft.Flow`. The `microsoft.Flow` value is the regional form of this spec's own host, which is the closest thing here to an answer on whether the regional prefixes are real; it is still a field a client expects rather than one seen returned.",
+        "additionalProperties": {
+         "type": "string"
+        },
+        "example": {
+         "microsoft.Flow": "https://europe.api.flow.microsoft.com"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "provider"
+   },
+   "EnvironmentList": {
+    "type": "object",
+    "description": "A page of environments.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Environment"
+      }
+     },
+     "nextLink": {
+      "type": "string",
+      "description": "Absent rather than null when there is no next page."
+     }
+    },
+    "x-source": "provider"
+   },
+   "Flow": {
+    "type": "object",
+    "description": "A flow. Shape read from a client rather than from a reply: nothing in this spec has been observed on the wire, so this is what a working client expects to find, not what the service is known to send.\n\nThe enabled/disabled distinction is not a boolean on the wire: the PowerShell module derives it by comparing `properties.state` against the literal `Started`.",
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "The flow's GUID.",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "id": {
+      "type": "string",
+      "example": "/providers/Microsoft.ProcessSimple/environments/00000000-0000-0000-0000-000000000000/flows/00000000-0000-0000-0000-000000000000"
+     },
+     "type": {
+      "type": "string",
+      "example": "Microsoft.ProcessSimple/environments/flows"
+     },
+     "properties": {
+      "type": "object",
+      "properties": {
+       "apiId": {
+        "type": "string",
+        "description": "Always the Logic Flows connector: a flow is addressed here as a PowerApps API instance.",
+        "example": "/providers/Microsoft.PowerApps/apis/shared_logicflows"
+       },
+       "displayName": {
+        "type": "string"
+       },
+       "description": {
+        "type": "string"
+       },
+       "userType": {
+        "type": "string",
+        "example": "Owner"
+       },
+       "definition": {
+        "type": "object",
+        "description": "The workflow definition, in the Logic Apps 2016-06-01 workflow definition language: `$schema`, `contentVersion`, `parameters` (including `$authentication` and `$connections`), `triggers` and `actions`."
+       },
+       "state": {
+        "type": "string",
+        "description": "`Started` means enabled. `Deleted` is what a soft-deleted flow reports in the admin list when `include=softDeletedFlows` is set.",
+        "x-observed-values": [
+         "Started",
+         "Stopped",
+         "Suspended",
+         "Deleted"
+        ],
+        "x-enum-evidence": "`Started` and `Deleted` appear in cli-microsoft365's fixtures; `Stopped` and `Suspended` are the values its and the PowerShell module's code branches on. None was seen returned by the service."
+       },
+       "createdTime": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "lastModifiedTime": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "flowSuspensionReason": {
+        "type": "string",
+        "example": "None"
+       },
+       "environment": {
+        "type": "object",
+        "properties": {
+         "name": {
+          "type": "string"
+         },
+         "type": {
+          "type": "string"
+         },
+         "id": {
+          "type": "string"
+         }
+        }
+       },
+       "definitionSummary": {
+        "type": "object",
+        "description": "Triggers and actions reduced to their types, so a list can be rendered without the whole definition.",
+        "properties": {
+         "triggers": {
+          "type": "array",
+          "items": {
+           "type": "object"
+          }
+         },
+         "actions": {
+          "type": "array",
+          "items": {
+           "type": "object"
+          }
+         }
+        }
+       },
+       "creator": {
+        "type": "object",
+        "properties": {
+         "tenantId": {
+          "type": "string"
+         },
+         "objectId": {
+          "type": "string"
+         },
+         "userId": {
+          "type": "string"
+         },
+         "userType": {
+          "type": "string",
+          "example": "ActiveDirectory"
+         }
+        }
+       },
+       "flowFailureAlertSubscribed": {
+        "type": "boolean"
+       },
+       "isManaged": {
+        "type": "boolean",
+        "description": "True for a flow that arrived in a managed solution."
+       },
+       "machineDescriptionData": {
+        "type": "object",
+        "description": "Desktop-flow machine metadata; empty for cloud flows."
+       },
+       "flowOpenAiData": {
+        "type": "object",
+        "description": "Whether the flow is treated as consequential when an AI agent invokes it, and whether an administrator has overridden that.",
+        "properties": {
+         "isConsequential": {
+          "type": "boolean"
+         },
+         "isConsequentialFlagOverwritten": {
+          "type": "boolean"
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "provider"
+   },
+   "FlowList": {
+    "type": "object",
+    "description": "A page of flows.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Flow"
+      }
+     },
+     "nextLink": {
+      "type": "string",
+      "description": "Absent rather than null when there is no next page. The PowerShell module does not follow it at all and returns only the first page."
+     }
+    },
+    "x-source": "provider"
+   },
+   "FlowOwnerList": {
+    "type": "object",
+    "description": "The owner roles on a flow, as the PowerShell module reads them. It is a distinct route from `permissions` and returns a richer principal: `email` and `displayName` as well as the id and type. Shape read from a client rather than from a reply: nothing in this spec has been observed on the wire, so this is what a working client expects to find, not what the service is known to send.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string"
+        },
+        "name": {
+         "type": "string"
+        },
+        "properties": {
+         "type": "object",
+         "properties": {
+          "roleName": {
+           "type": "string"
+          },
+          "principal": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "email": {
+             "type": "string"
+            },
+            "displayName": {
+             "type": "string"
+            },
+            "type": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "FlowPermission": {
+    "type": "object",
+    "description": "One principal's access to one flow. Shape read from a client rather than from a reply: nothing in this spec has been observed on the wire, so this is what a working client expects to find, not what the service is known to send.",
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "The permission's own GUID."
+     },
+     "id": {
+      "type": "string",
+      "example": "/providers/Microsoft.ProcessSimple/environments/00000000-0000-0000-0000-000000000000/flows/00000000-0000-0000-0000-000000000000/permissions/00000000-0000-0000-0000-000000000000"
+     },
+     "type": {
+      "type": "string",
+      "description": "Note the leading slash: the client fixtures carry `/providers/Microsoft.ProcessSimple/environments/flows/permissions` here, which is not the unprefixed form the flow and run resources use.",
+      "example": "/providers/Microsoft.ProcessSimple/environments/flows/permissions"
+     },
+     "properties": {
+      "type": "object",
+      "properties": {
+       "roleName": {
+        "type": "string",
+        "x-observed-values": [
+         "Owner",
+         "CanEdit",
+         "CanView"
+        ],
+        "x-enum-evidence": "`Owner` and `CanEdit` appear in cli-microsoft365's fixtures; the admin centre hardcodes `CanEdit` when it grants co-ownership. `CanView` is the read role the same clients accept as input. None was seen returned by the service."
+       },
+       "permissionType": {
+        "type": "string",
+        "example": "Principal"
+       },
+       "principal": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string"
+         },
+         "type": {
+          "type": "string",
+          "example": "User"
+         },
+         "email": {
+          "type": "string"
+         },
+         "displayName": {
+          "type": "string"
+         },
+         "tenantId": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "provider"
+   },
+   "FlowPermissionList": {
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/FlowPermission"
+      }
+     },
+     "nextLink": {
+      "type": "string"
+     }
+    },
+    "x-source": "provider"
+   },
+   "MigrateFlowsRequest": {
+    "type": "object",
+    "description": "The flows to move into the solution.",
+    "properties": {
+     "flowsToMigrate": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "Flow names. An array even when there is one flow: the client wraps a single name rather than offering a scalar form."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "ModifyOwnersRequest": {
+    "type": "object",
+    "description": "The owner-grant body. Its `put` entries carry a richer principal than `modifyPermissions` does -- `email` and `displayName` as well as id and type.",
+    "properties": {
+     "put": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "properties": {
+         "type": "object",
+         "properties": {
+          "roleName": {
+           "type": "string"
+          },
+          "principal": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "email": {
+             "type": "string"
+            },
+            "displayName": {
+             "type": "string"
+            },
+            "type": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "ModifyPermissionsRequest": {
+    "type": "object",
+    "description": "Grants and revokes in one body. `put` adds or updates roles, `delete` removes them by permission id. Clients send one or the other rather than both: cli-microsoft365 sends only `put` when adding an owner and only `delete` when removing one, and the PowerShell module sends only `delete`.",
+    "properties": {
+     "put": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "properties": {
+         "type": "object",
+         "properties": {
+          "roleName": {
+           "type": "string",
+           "example": "CanEdit"
+          },
+          "principal": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string",
+             "description": "The principal's object id."
+            },
+            "type": {
+             "type": "string",
+             "example": "User"
+            },
+            "email": {
+             "type": "string"
+            },
+            "tenantId": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "delete": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "description": "The full resource id of the permission to remove, not the principal's id."
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "RequestReport": {
+    "type": "object",
+    "description": "Not the report. A pre-signed URL to it, in a PascalCase field that breaks with every other response shape in this spec.",
+    "properties": {
+     "DownloadLink": {
+      "type": "string",
+      "description": "Fetched with no `Authorization` header -- the URL carries its own signature. The client reads the raw bytes rather than parsing them."
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "Run": {
+    "type": "object",
+    "description": "One execution of a flow. Shape read from a client rather than from a reply: nothing in this spec has been observed on the wire, so this is what a working client expects to find, not what the service is known to send.",
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "The run id, which is not a GUID: it is a long numeric string with a trailing scale-unit suffix.",
+      "example": "08580000000000000000000000000000CU00"
+     },
+     "id": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string",
+      "example": "Microsoft.ProcessSimple/environments/flows/runs"
+     },
+     "properties": {
+      "type": "object",
+      "properties": {
+       "startTime": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "endTime": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "status": {
+        "type": "string",
+        "x-observed-values": [
+         "Succeeded",
+         "Failed",
+         "Running",
+         "Cancelled"
+        ],
+        "x-enum-evidence": "`Succeeded` appears in cli-microsoft365's fixtures; the rest are the values its commands and the PowerShell module branch on. None was seen returned by the service."
+       },
+       "correlation": {
+        "type": "object",
+        "properties": {
+         "clientTrackingId": {
+          "type": "string"
+         }
+        }
+       },
+       "trigger": {
+        "type": "object",
+        "description": "The firing that started the run, including links to its inputs and outputs.",
+        "properties": {
+         "name": {
+          "type": "string",
+          "description": "The trigger's name from the flow definition."
+         },
+         "inputsLink": {
+          "$ref": "#/components/schemas/ContentLink"
+         },
+         "outputsLink": {
+          "$ref": "#/components/schemas/ContentLink"
+         },
+         "startTime": {
+          "type": "string",
+          "format": "date-time"
+         },
+         "endTime": {
+          "type": "string",
+          "format": "date-time"
+         },
+         "scheduledTime": {
+          "type": "string",
+          "format": "date-time"
+         },
+         "correlation": {
+          "type": "object",
+          "properties": {
+           "clientTrackingId": {
+            "type": "string"
+           }
+          }
+         },
+         "code": {
+          "type": "string",
+          "example": "OK"
+         },
+         "status": {
+          "type": "string",
+          "example": "Succeeded"
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-source": "provider"
+   },
+   "RunList": {
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Run"
+      }
+     },
+     "nextLink": {
+      "type": "string",
+      "description": "Absent rather than null when there is no next page."
+     }
+    },
+    "x-source": "provider"
+   },
+   "TriggerList": {
+    "type": "object",
+    "description": "A flow's triggers. The only field a client reads is `name`, which is what the resubmit route needs; nothing else about the item shape is witnessed.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "name": {
+         "type": "string",
+         "example": "manual"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "provider"
+   }
+  }
  }
 }

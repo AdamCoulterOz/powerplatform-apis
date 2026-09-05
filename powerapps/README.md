@@ -17,12 +17,14 @@ The two also compose. The Terraform provider's `powerplatform_connectors` data s
 
 ## How the spec was derived
 
-Two sources, in order.
+Four sources, weakest to strongest, and every operation says which one it rests on in its `x-source`.
 
 1. **The Terraform provider's client library** ([`internal/clients/powerapps`](https://github.com/microsoft/terraform-provider-power-platform/tree/main/internal/clients/powerapps)) — the starting inventory. It contains exactly two operations: the per-environment app list and the connector catalogue with its `~Default` fallback. Its unit tests pin the exact URLs.
-2. **Live probes** — everything else. Two operations is not a useful spec, so [`scripts/probe.py`](scripts/probe.py) was pointed at a real production tenant to verify those two properly and to find the adjacent read-only surface around them.
+2. **Live probes** — [`scripts/probe.py`](scripts/probe.py) against a real production tenant. Two operations is not a useful spec, so the probe verified those two properly and mapped the adjacent read-only surface around them.
+3. **Microsoft's PowerShell modules** — `Microsoft.PowerApps.PowerShell` ships as readable script, so its routes, methods, default `api-version` values *and its response readers* are quoted rather than inferred. It is the source of the write surface, which the probe deliberately never touched, and of most of the operations added since.
+4. **The admin centre's own bundles and third-party clients** — the Power Platform admin centre's JavaScript, the `cli-microsoft365` command set and a recorded HTTP cassette. These contribute routes the vendor script does not reach, response samples for objects the probe tenant did not contain, and the migration table described [below](#the-parp--power-platform-api-migration-table).
 
-**Every operation in [`oas/openapi.json`](oas/openapi.json) was confirmed with a real 200.** Nothing is in the document because a URL looked plausible. Routes that clearly exist but could never be exercised are listed [below](#probed-but-not-in-the-spec) rather than guessed at.
+**10 of the 36 operations were confirmed with a real 200**; they carry `x-probe-verified: true`. The rest are client-derived: a shipped client proves a route exists in the client, and that is a weaker claim, so nothing else carries that flag. Nothing is in the document because a URL looked plausible — a route with no witness stays out, and a witnessed route with no witnessed method stays in the migration table rather than becoming an operation.
 
 Like `bapi`, and unlike [`ppapi`](../ppapi), there is no upstream reference to regenerate from: `oas/openapi.json` is **owned directly**. There is no enrichment file.
 
@@ -45,10 +47,14 @@ It authenticates from the logged-in `az` session, issues only GETs, sleeps betwe
 
 ## Conventions
 
-- 10 operations over 10 paths, 32 schemas, tagged by logical resource (Canvas App, Connector, Connection, Environment, Gateway), OpenAPI 3.0.3.
+- 36 operations over 31 paths, 45 schemas, tagged by logical resource (Canvas App, Connector, Connection, Environment, Gateway, Notification), OpenAPI 3.0.3.
 - `api-version` defaults are per operation: `2023-06-01` for the admin app list, `2019-05-01` for connectors, `2016-11-01` for everything else. The service enumerates all 25 versions it accepts in its own `InvalidApiVersion` 400, and that list is `info.x-api-versions` and the `enum` on every `api-version` parameter. Versions appear to be routing labels rather than contracts here — the app list answers identically on `2016-11-01`, `2023-06-01` and `2025-04-01`.
 - `required` is empty everywhere. There is no write operation on this surface to test optionality against, so field-presence counts from the live catalogue are stated in schema descriptions instead of guessed at as `required`.
-- `x-probe-verified: true` marks what was confirmed against the live service. The app schemas carry `x-probe-verified: false` — see below.
+- `x-probe-verified: true` marks what was confirmed against the live service, and appears on 10 operations. The app schemas carry `x-probe-verified: false` — see below.
+- `x-source` carries the evidence grade: 10 `live`, 18 `ps-admin`, 4 `ppac-spa`, 4 `provider`. Where more than one source witnesses the same path *and method*, the strongest is `x-source` and the rest are listed in `x-corroborated-by` — 13 operations carry one. A source that witnesses only the path, or only a different method on it, is recorded in `x-notes` instead, because it is not evidence for the operation.
+- One route is often addressable three ways, and clients build the path rather than hard-coding it: `/providers/Microsoft.PowerApps` + optionally `/scopes/admin` + optionally `/environments/{environmentId}` + the resource path. Only the forms actually witnessed are written out; the rule is stated in `info.description`.
+- Path parameters were normalised: `{appName}` for the app segment and `{environmentId}` for the environment segment throughout. The document previously used `{appId}` and `{environmentName}` in some places, which made templated siblings disagree at the same position — not a legal path set, and every operation added since would have had to pick a side.
+- `required` is now non-empty on the write bodies, because the PowerShell module shows which fields it always sends. On read responses it is still empty, for the reason above.
 
 ## What live probing corrected
 
@@ -82,20 +88,33 @@ That last one is the surprise: the larger list is the *smaller* payload per conn
 
 **The gateway object.** Same story, smaller: `gateways_list` returns 200 with an empty `value` on a tenant with no gateways installed, so `GatewayList.value` is left open.
 
-**Everything mutating.** No write operation exists on this boundary in the provider, and none was attempted. This is a read-only spec.
+**Everything mutating.** No write was ever attempted here. The 12 write bodies now in the document come entirely from reading Microsoft's PowerShell module and two third-party clients — what a client *sends*, not what the service accepts. A field a client never sets is not documented as optional; it is simply absent.
 
-### Probed but not in the spec
+### What the probe said about routes now documented from clients
 
-These routes demonstrably exist — they answer with a typed JSON error rather than the empty-body 404 an unrouted path gives — but no 200 was ever obtained from them, so they are excluded rather than guessed:
+The probe could not obtain a 200 from these, but each answered with a **typed JSON error** rather than the empty-body 404 an unrouted path gives — which on this host is itself evidence the route exists. They are now in the spec on client evidence, with the probe result as corroboration:
 
-| route | observed |
+| route | probe observed |
 |---|---|
 | `GET /providers/Microsoft.PowerApps/apps/{appName}` | 404 `ApplicationNotFound` |
-| `GET /providers/Microsoft.PowerApps/apps/{appName}/connections` | 404 `ApplicationNotFound` |
 | `GET /providers/Microsoft.PowerApps/apps/{appName}/permissions` | 403 `Forbidden` |
 
-Confirmed *not* to exist (empty-body 404): `scopes/admin/apps`, `scopes/admin/apps/{app}`, `scopes/admin/environments/{env}/apps/{app}`, `scopes/admin/environments`, `scopes/admin/user`, `scopes/admin/environments/{env}/permissions`, `environments/{env}/permissions`, `environments/{env}/apis`, `apis/{api}/apiOperations`, `connectionReferences`, `connectorPermissions`.
+`GET /providers/Microsoft.PowerApps/apps/{appName}/connections` answered 404 `ApplicationNotFound` too, but no client here calls it, so it stays out — the probe proves the route, and nothing proves the method is useful or what it returns.
+
+### An unresolved disagreement
+
+The probe recorded `scopes/admin/environments/{env}/apps/{app}` as **confirmed absent** — an empty-body 404, which on this host means no such route. Two third-party clients call exactly that path, one of them pinning the full URL in its tests. The route is in the spec on the clients' evidence, and both observations are recorded in the operation's `x-notes` rather than one being quietly dropped. A caller who gets an empty-body 404 from it should read that as the probe's result reproducing, not as a bad app id.
+
+Also confirmed *not* to exist by the probe (empty-body 404), and still absent from the spec: `scopes/admin/apps`, `scopes/admin/apps/{app}`, `scopes/admin/environments`, `scopes/admin/user`, `scopes/admin/environments/{env}/permissions`, `environments/{env}/permissions`, `environments/{env}/apis`, `apis/{api}/apiOperations`, `connectionReferences`, `connectorPermissions`.
+
+### The PARP → Power Platform API migration table
+
+The admin centre ships a route table that rewrites legacy `api.powerapps.com` paths onto the Power Platform API, gated by a `deprecateLegacyPARP` flag. It is the service's own statement of which of these routes are being retired and what replaces each one, so it is recorded verbatim in `info.x-ppapi-migration` — 72 routes, each with its replacement path and which of the two Power Platform API hosts (tenant-scoped or environment-scoped) serves it.
+
+It is deliberately **not** turned into operations. The table names paths and targets; for all but three entries it does not name an HTTP method, and inventing one would turn a strong fact — this route exists and is being replaced by that one — into a guess. The three that do name a method (`displayName`, `publishedSettings`, `unpublishedSettings`, all POST) are in `paths`.
+
+The table is also the evidence behind two claims elsewhere in the document: that the maker and admin-scope connector lists are one handler (both rewrite to the same `/connectivity/connectors`), and that a legacy path still answering today is a migration state rather than an accident.
 
 ## Status
 
-Spec written and validated; every operation live-verified against a production tenant on 2026-08-27. App and gateway item schemas await a tenant that actually has apps and gateways.
+Spec written and validated. 10 operations are live-verified against a production tenant (2026-08-27); the other 26 rest on Microsoft's PowerShell module, the admin centre's bundles and third-party clients, and have not been executed. The app item schema is now populated from a recorded third-party sample and still carries `x-probe-verified: false`; the gateway item schema awaits a tenant with a gateway installed. Nothing on the write surface has been executed by anyone here.

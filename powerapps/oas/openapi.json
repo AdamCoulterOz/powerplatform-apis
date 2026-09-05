@@ -3,7 +3,7 @@
  "info": {
   "title": "PowerApps API",
   "version": "2023-06-01",
-  "description": "The PowerApps API serves the maker and admin surface for canvas apps and connectors \u2014 listing apps in an environment, reading connector metadata and definitions, and inspecting connections, environments and gateways.\n\nConnector paths require an environment `$filter`; app paths accept a narrower, non-OData filter grammar. The service accepts a wide range of `api-version` values that largely behave as routing labels rather than distinct contracts.\n\nUnofficial and reverse-engineered \u2014 see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/powerapps) for how it was derived and which parts are verified.",
+  "description": "The PowerApps API serves the maker and admin surface for canvas apps and connectors \u2014 listing apps in an environment, reading connector metadata and definitions, and inspecting connections, environments and gateways.\n\nConnector paths require an environment `$filter`; app paths accept a narrower, non-OData filter grammar. The service accepts a wide range of `api-version` values that largely behave as routing labels rather than distinct contracts.\n\nUnofficial and reverse-engineered \u2014 see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/powerapps) for how it was derived and which parts are verified.\n\nOne app or connector route is commonly addressable three ways, and clients build the path rather than hard-coding it: `/providers/Microsoft.PowerApps` + optionally `/scopes/admin` + optionally `/environments/{environmentId}` + the resource path. The admin scope reads across a tenant without being shared on the resource; the environment segment narrows the same call. Not every combination exists for every resource, so only the forms actually witnessed are written out under `paths`.\n\n`info.x-ppapi-migration` carries the admin centre's own table of legacy routes on this host and their Power Platform API replacements \u2014 including many routes whose HTTP method no client here reveals.",
   "x-api-versions": [
    "2015-02-01",
    "2015-03-01",
@@ -31,7 +31,310 @@
    "2025-03-01",
    "2025-04-01"
   ],
-  "x-probe-tenant": "Probed 2026-08-27 against a production tenant with 14 environments, 21 connections, 1710 catalogue connectors and 0 canvas apps. All probes were read-only GETs; nothing was created or modified."
+  "x-probe-tenant": "Probed 2026-08-27 against a production tenant with 14 environments, 21 connections, 1710 catalogue connectors and 0 canvas apps. All probes were read-only GETs; nothing was created or modified.",
+  "x-ppapi-migration": {
+   "description": "The admin centre ships a route table that rewrites legacy `api.powerapps.com` paths onto the Power Platform API, and turns the rewrite on with a `deprecateLegacyPARP` flag. It is the service's own statement of which of these routes are being retired and what replaces each one, so it is recorded verbatim rather than turned into operations: the table names paths and targets, and for all but three entries it does not name a method, which is why most of these paths do not appear under `paths`.",
+   "replacementHosts": {
+    "Environment": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+    "Tenant": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com"
+   },
+   "note": "`namespace` says which of those two hosts serves the replacement; see spec:ppapi for the host construction. A path listed here still answers on api.powerapps.com today \u2014 the flag controls which one the admin centre calls, not which one exists.",
+   "routeCount": 72,
+   "routes": {
+    "/providers/Microsoft.PowerApps/apis": {
+     "to": "/connectivity/connectors",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apis/{apiName}": {
+     "to": "/connectivity/connectors/{apiName}",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apis/{apiName}/connections": {
+     "to": "/connectivity/connectors/{apiName}/connections",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apis/{apiName}/connections/{connectionId}": {
+     "to": "/connectivity/connectors/{apiName}/connections/{connectionId}",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apis/{apiName}/connections/{connectionId}/confirmConsentCode": {
+     "to": "/connectivity/connectors/{apiName}/connections/{connectionId}/confirmConsentCode",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apis/{apiName}/connections/{connectionId}/getConsentLink": {
+     "to": "/connectivity/connectors/{apiName}/connections/{connectionId}/getConsentLink",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apis/{apiName}/connections/{connectionId}/revokeGatewayAccess": {
+     "to": "/connectivity/connectors/{apiName}/connections/{connectionId}/revokeGatewayAccess",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apis/{apiName}/connections/{connectionId}/usages": {
+     "to": "/powerapps/apis/{apiName}/connections/{connectionId}/usages",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apis/{apiName}/modifyPermissions": {
+     "to": "/connectivity/connectors/{apiName}/modifyPermissions",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apis/{apiName}/permissions": {
+     "to": "/connectivity/connectors/{apiName}/permissions",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps": {
+     "to": "/powerapps/apps",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/acquireLease": {
+     "to": "/powerapps/apps/{appId}/acquireLease",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/connections": {
+     "to": "/powerapps/apps/{appId}/connections",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/createTeamsAppPackage": {
+     "to": "/powerapps/apps/{appId}/createTeamsAppPackage",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/displayName": {
+     "to": "/powerapps/apps/{appId}/updateDisplayName",
+     "namespace": "Environment",
+     "method": "POST"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/listPackage": {
+     "to": "/powerapps/apps/{appId}/listPackage",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/makeSolutionAware": {
+     "to": "/powerapps/apps/{appId}/makeSolutionAware",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/modifyPermissions": {
+     "to": "/powerapps/apps/{appId}/modifyPermissions",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/permissions": {
+     "to": "/powerapps/apps/{appId}/permissions",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/publish": {
+     "to": "/powerapps/apps/{appId}/publish",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/publishedSettings": {
+     "to": "/powerapps/apps/{appId}/updatePublishedSettings",
+     "namespace": "Environment",
+     "method": "POST"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/releaseLease": {
+     "to": "/powerapps/apps/{appId}/releaseLease",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/sessions/{sessionId}/endSession": {
+     "to": "/powerapps/apps/{appId}/sessions/{sessionId}/endSession",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/startSession": {
+     "to": "/powerapps/apps/{appId}/startSession",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/unpublishedSettings": {
+     "to": "/powerapps/apps/{appId}/updateUnpublishedSettings",
+     "namespace": "Environment",
+     "method": "POST"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/versions": {
+     "to": "/powerapps/apps/{appId}/versions",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/versions/{versionString}": {
+     "to": "/powerapps/apps/{appId}/versions/{versionString}",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/apps/{appId}/versions/{versionString}/promote": {
+     "to": "/powerapps/apps/{appId}/versions/{versionString}/promote",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/connections": {
+     "to": "/connectivity/connections",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/downgradeOpenApiContract": {
+     "to": "/connectivity/downgradeOpenConnectorContract",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/environments/{environmentId}/apis/{apiName}/connections/firstParty": {
+     "to": "/connectivity/connectors/{apiName}/connections/firstParty",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/environments/{environmentId}/apps/{appId}/makeSolutionAware": {
+     "to": "/powerapps/apps/{appId}/makeSolutionAware",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/environments/{environmentId}/policyTemplates": {
+     "to": "/connectivity/policyTemplates",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/environments/{environmentId}/solutions/{solutionId}/apps": {
+     "to": "/powerapps/solutions/{solutionId}/apps",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/environments/{environmentId}/solutions/{solutionId}/makeApisSolutionAware": {
+     "to": "/connectivity/solutions/{solutionId}/makeConnectorsSolutionAware",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/environments/{environmentId}/validateAppDisplayName": {
+     "to": "/powerapps/validateAppDisplayName",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/gatewayClusters": {
+     "to": "/connectivity/gatewayClusters",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/gatewayClusters/{anchorGatewayId}/status": {
+     "to": "/connectivity/gatewayClusters/{anchorGatewayId}/status",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/gatewayClusters/{gatewayClusterId}": {
+     "to": "/connectivity/gatewayClusters/{gatewayClusterId}",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/gateways": {
+     "to": "/connectivity/gateways",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/gateways/{gatewayId}": {
+     "to": "/connectivity/gateways/{gatewayId}",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/gateways/{gatewayId}/listCapabilities": {
+     "to": "/connectivity/gateways/{gatewayId}/listCapabilities",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/gateways/{gatewayId}/modifyPermissions": {
+     "to": "/connectivity/gateways/{gatewayId}/modifyPermissions",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/gateways/{gatewayId}/permissions": {
+     "to": "/connectivity/gateways/{gatewayId}/permissions",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/gateways/{gatewayId}/permissions/{permissionName}": {
+     "to": "/connectivity/gateways/{gatewayId}/permissions/{permissionName}",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/gateways/{gatewayName}/maxPermission": {
+     "to": "/connectivity/gateways/{gatewayName}/maxPermission",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/globalApps": {
+     "to": "/powerapps/globalApps",
+     "namespace": "Tenant"
+    },
+    "/providers/Microsoft.PowerApps/mobileapps/{mobileAppRecordId}/triggerBuild": {
+     "to": "/powerapps/mobileapps/{mobileAppRecordId}/triggerBuild",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/objectIds/{objectId}/features": {
+     "to": "/powerapps/features",
+     "namespace": "Tenant"
+    },
+    "/providers/Microsoft.PowerApps/objectIds/{objectId}/generateResourceStorage": {
+     "to": "/powerapps/generateResourceStorage",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/objectIds/{objectId}/notifications": {
+     "to": "/powerapps/notifications",
+     "namespace": "Tenant"
+    },
+    "/providers/Microsoft.PowerApps/objectIds/{objectId}/notifications/{notificationId}": {
+     "to": "/powerapps/notifications/{notificationId}",
+     "namespace": "Tenant"
+    },
+    "/providers/Microsoft.PowerApps/objectIds/{objectId}/notifications/{notificationId}/setLastSeen": {
+     "to": "/powerapps/notifications/{notificationId}/setLastSeen",
+     "namespace": "Tenant"
+    },
+    "/providers/Microsoft.PowerApps/objectIds/{objectId}/userSettings/{settingGroup}": {
+     "to": "/powerapps/userSettings/{settingGroup}",
+     "namespace": "Tenant"
+    },
+    "/providers/Microsoft.PowerApps/objectIds/{objectId}/validateApiSwagger": {
+     "to": "/connectivity/objectIds/{objectId}/validateConnectorSwagger",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/objectIds/{objectId}/validateApiSwaggerToWadl": {
+     "to": "/connectivity/objectIds/{objectId}/validateConnectorSwaggerToWadl",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apis": {
+     "to": "/connectivity/connectors",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apis/{apiName}/connections": {
+     "to": "/connectivity/connectors/{apiName}/connections",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apis/{apiName}/connections/{connectionName}": {
+     "to": "/connectivity/connectors/{apiName}/connections/{connectionId}",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps": {
+     "to": "/powerapps/apps",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps/{appId}/connections": {
+     "to": "/powerapps/apps/{appId}/connections",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps/{appId}/modifyPermissions": {
+     "to": "/powerapps/apps/{appId}/modifyPermissions",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps/{appId}/permissions": {
+     "to": "/powerapps/apps/{appId}/permissions",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/connections": {
+     "to": "/connectivity/connections",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/objectIds/{objectId}/appPermissions": {
+     "to": "/powerapps/objectIds/{objectId}/appPermissions",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/service/apis/{apiName}/connections/{connectionId}/modifyPermissionsForServicePrincipal": {
+     "to": "/connectivity/connectors/{apiName}/connections/{connectionId}/modifyPermissionsForServicePrincipal",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/service/environments/{environmentId}/getTokenLink": {
+     "to": "/connectivity/getTokenLink",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/service/gatewayClusters": {
+     "to": "/connectivity/gatewayClusters",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/service/gatewayClusters/{anchorGatewayId}/status": {
+     "to": "/connectivity/gatewayClusters/{anchorGatewayId}/status",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/service/gatewayClusters/{gatewayClusterId}": {
+     "to": "/connectivity/gatewayClusters/{gatewayClusterId}",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/service/gateways": {
+     "to": "/connectivity/gateways",
+     "namespace": "Environment"
+    },
+    "/providers/Microsoft.PowerApps/scopes/service/gateways/{gatewayName}/maxPermission": {
+     "to": "/connectivity/gateways/{gatewayName}/maxPermission",
+     "namespace": "Environment"
+    }
+   },
+   "x-source": "ppac-spa"
+  }
  },
  "servers": [
   {
@@ -65,6 +368,10 @@
   {
    "name": "Gateway",
    "description": "On-premises data gateways, which let cloud connectors reach data behind a corporate firewall."
+  },
+  {
+   "name": "Notification",
+   "description": "In-product notifications the Power Apps surfaces raise for a user \u2014 the message centre behind the bell icon, not Entra or Graph notifications."
   }
  ],
  "paths": {
@@ -197,7 +504,13 @@
       }
      }
     },
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-corroborated-by": [
+     "ppac-spa",
+     "ps-admin",
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/apis/{apiName}": {
@@ -309,7 +622,104 @@
       }
      }
     },
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-corroborated-by": [
+     "ps-admin",
+     "provider"
+    ]
+   },
+   "delete": {
+    "operationId": "connectors_delete",
+    "tags": [
+     "Connector"
+    ],
+    "summary": "Delete",
+    "description": "Deletes a custom connector. Same path as the connector read, and the PowerShell module defaults it to a different `api-version` than the read does.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The connector's `name`, e.g. `shared_office365users`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": true,
+      "description": "The environment scope, and mandatory on the connector and connection paths \u2014 omitting it is a 400 `MissingEnvironmentFilter`, not an unfiltered list.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Deleted."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     },
+     {
+      "note": "A DELETE that still requires the environment `$filter` in its query string.",
+      "source": "ps-admin"
+     }
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/apis/{apiName}/connections": {
@@ -410,7 +820,8 @@
       }
      }
     },
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-source": "live"
    }
   },
   "/providers/Microsoft.PowerApps/apps": {
@@ -511,88 +922,12 @@
       }
      }
     },
-    "x-probe-verified": true
-   }
-  },
-  "/providers/Microsoft.PowerApps/apps/{appId}/displayName": {
-   "post": {
-    "operationId": "displayNameSet_post",
-    "tags": [
-     "Canvas App"
-    ],
-    "summary": "Display Name Set",
-    "description": "Renames an app. A POST rather than a PATCH, and the name is the whole body.",
-    "parameters": [
-     {
-      "name": "appId",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string"
-      },
-      "description": "The `appId`."
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The result."
-     }
-    },
-    "x-source": "ppac-spa"
-   }
-  },
-  "/providers/Microsoft.PowerApps/apps/{appId}/publishedSettings": {
-   "post": {
-    "operationId": "publishedSettingsSet_post",
-    "tags": [
-     "Canvas App"
-    ],
-    "summary": "Published Settings Set",
-    "description": "Writes the settings of the published version of an app.",
-    "parameters": [
-     {
-      "name": "appId",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string"
-      },
-      "description": "The `appId`."
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The result."
-     }
-    },
-    "x-source": "ppac-spa"
-   }
-  },
-  "/providers/Microsoft.PowerApps/apps/{appId}/unpublishedSettings": {
-   "post": {
-    "operationId": "unpublishedSettingsSet_post",
-    "tags": [
-     "Canvas App"
-    ],
-    "summary": "Unpublished Settings Set",
-    "description": "Writes settings that take effect only when the app is next published, so published and unpublished settings are two separate stores.",
-    "parameters": [
-     {
-      "name": "appId",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string"
-      },
-      "description": "The `appId`."
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "The result."
-     }
-    },
-    "x-source": "ppac-spa"
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-corroborated-by": [
+     "ps-admin",
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/apps/{appName}": {
@@ -621,14 +956,43 @@
        "type": "string"
       },
       "description": "The API version."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "`unpublishedAppDefinition` is the expansion the PowerShell module asks for."
      }
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The app. A bare app object, **not** a `value` envelope \u2014 the list and the single read differ here.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/App"
+        }
+       }
+      }
      }
     },
-    "x-source": "provider"
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Route and method are quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred. Its default `api-version` is `2016-11-01`, and its reader proves the response is a bare object.",
+      "source": "ps-admin"
+     },
+     {
+      "note": "Corroborated by a third-party CLI (same route, `2016-11-01`) and by this repo's own probe, which got a 404 `ApplicationNotFound` \u2014 a typed error body, which on this host means the route exists and the resource does not.",
+      "source": "provider"
+     }
+    ],
+    "x-corroborated-by": [
+     "provider"
+    ]
    },
    "delete": {
     "operationId": "delete_delete",
@@ -662,7 +1026,16 @@
       "description": "The result."
      }
     },
-    "x-source": "provider"
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred. Its default `api-version` is `2017-06-01` \u2014 a different default from the GET on the same path, which uses `2016-11-01`.",
+      "source": "ps-admin"
+     }
+    ],
+    "x-corroborated-by": [
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/apps/{appName}/modifyPermissions": {
@@ -698,7 +1071,26 @@
       "description": "The result."
      }
     },
-    "x-source": "provider"
+    "x-source": "ps-admin",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ModifyPermissionsRequest"
+       }
+      }
+     }
+    },
+    "x-notes": [
+     {
+      "note": "Grant and revoke are the same route in the PowerShell module and carry **different default api-versions** \u2014 `2016-11-01` granting, `2017-06-01` revoking \u2014 which is a client inconsistency, not a service one.",
+      "source": "ps-admin"
+     }
+    ],
+    "x-corroborated-by": [
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/apps/{appName}/permissions": {
@@ -731,10 +1123,30 @@
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The role assignments on the app.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PermissionList"
+        }
+       }
+      }
      }
     },
-    "x-source": "provider"
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "`properties.principal.type` selects which shape the PowerShell module emits, over the literals `Tenant`, `User` and `Group` \u2014 so a tenant-wide share is reported as a principal type, not as a separate field.",
+      "source": "ps-admin"
+     },
+     {
+      "note": "The probe reached this route and got 403 `Forbidden`: a typed error, so the route exists; the body shape here is the module's and a third-party CLI's, not the probe's.",
+      "source": "provider"
+     }
+    ],
+    "x-corroborated-by": [
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/connections": {
@@ -826,7 +1238,12 @@
       }
      }
     },
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-corroborated-by": [
+     "ppac-spa",
+     "ps-admin"
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/environments": {
@@ -910,7 +1327,13 @@
       }
      }
     },
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-corroborated-by": [
+     "ppac-spa",
+     "ps-admin",
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/environments/{environmentId}": {
@@ -1002,7 +1425,12 @@
       }
      }
     },
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-corroborated-by": [
+     "ppac-spa",
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/gateways": {
@@ -1074,7 +1502,8 @@
       }
      }
     },
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-source": "live"
    }
   },
   "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apis": {
@@ -1143,10 +1572,23 @@
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The connectors available in the environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ConnectorList"
+        }
+       }
+      }
      }
     },
-    "x-source": "ppac-spa"
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Shape taken from the maker-scope connector list rather than guessed: the admin centre's own migration table rewrites this path and `/providers/Microsoft.PowerApps/apis` to the *same* Power Platform API target, `/connectivity/connectors`, so they are two addressings of one handler.",
+      "source": "ppac-spa"
+     }
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps": {
@@ -1289,7 +1731,12 @@
       }
      }
     },
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-corroborated-by": [
+     "ppac-spa",
+     "provider"
+    ]
    }
   },
   "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/connections": {
@@ -1382,10 +1829,328 @@
       }
      }
     },
-    "x-probe-verified": true
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-corroborated-by": [
+     "provider"
+    ],
+    "x-notes": [
+     {
+      "note": "A recorded HTTP cassette from a third-party client independently returns this route's body, and every key in it is already in `ConnectionProperties` \u2014 the cassette adds no field the probe missed, which is the useful result: it corroborates the schema rather than extending it.",
+      "source": "provider"
+     }
+    ]
    }
   },
-  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentName}/apps/{appName}": {
+  "/providers/Microsoft.PowerApps/apps/{appName}/displayName": {
+   "post": {
+    "operationId": "displayNameSet_post",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Display Name Set",
+    "description": "Renames an app. A POST rather than a PATCH, and the name is the whole body.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "displayName": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-notes": [
+     {
+      "note": "The body is `{ \"displayName\": ... }`. The PowerShell module sends it as a **PUT** to the same path (documented alongside), while the admin centre's own route table registers the path as POST; both methods are recorded rather than one being chosen.",
+      "source": "ps-admin"
+     }
+    ],
+    "x-corroborated-by": [
+     "ps-admin"
+    ]
+   },
+   "put": {
+    "operationId": "displayNameSet_put",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Display Name Set (PUT)",
+    "description": "Renames an app. The PowerShell module's spelling of the rename: same path and body as the POST the admin centre registers, different method.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "displayName": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Renamed."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred. Whether the service accepts both methods, or whether one of the two clients is wrong, was not tested.",
+      "source": "ps-admin"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps/{appName}/publishedSettings": {
+   "post": {
+    "operationId": "publishedSettingsSet_post",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Published Settings Set",
+    "description": "Writes the settings of the published version of an app.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AppSettingsRequest"
+       }
+      }
+     }
+    },
+    "x-notes": [
+     {
+      "note": "The PowerShell module spells the last segment all-lowercase (`publishedsettings`) and uses PUT; the admin centre bundle spells it `publishedSettings` and registers it as POST. Only one spelling is carried in `paths`; whether the service is case-sensitive here was not tested.",
+      "source": "ps-admin"
+     }
+    ]
+   },
+   "put": {
+    "operationId": "publishedSettingsSet_put",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Published Settings Set (PUT)",
+    "description": "Writes one setting on the published app. The PowerShell module sends PUT and spells the segment all-lowercase (`publishedsettings`); the path here keeps the admin centre's spelling.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AppSettingsRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Written."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps/{appName}/unpublishedSettings": {
+   "post": {
+    "operationId": "unpublishedSettingsSet_post",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Unpublished Settings Set",
+    "description": "Writes settings that take effect only when the app is next published, so published and unpublished settings are two separate stores.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The result."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "No request body is documented because none was witnessed: the admin centre's route table names the path and method but not its payload, and the PowerShell module has no unpublished-settings cmdlet. The published-settings sibling takes a caller-named key/value pair; that is a resemblance, not evidence.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps/{appName}": {
    "get": {
     "operationId": "readAdminScope_get",
     "tags": [
@@ -1395,13 +2160,13 @@
     "description": "Reads an app as a tenant administrator, without needing to be shared on it.",
     "parameters": [
      {
-      "name": "environmentName",
+      "name": "environmentId",
       "in": "path",
       "required": true,
       "schema": {
        "type": "string"
       },
-      "description": "The `environmentName`."
+      "description": "The environment's `name` \u2014 a GUID, or `Default-<tenantId>` for the tenant default. `~Default` is accepted as a server-side alias."
      },
      {
       "name": "appName",
@@ -1424,10 +2189,23 @@
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The app, as an administrator.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/App"
+        }
+       }
+      }
      }
     },
-    "x-source": "provider"
+    "x-source": "provider",
+    "x-notes": [
+     {
+      "note": "This repo's probe recorded this route as **confirmed absent** \u2014 an empty-body 404, which on this host means no such route \u2014 while two third-party clients call it with `api-version` `2016-11-01` and `2017-08-01` and one pins the exact URL in its tests. Both observations are kept: the route is documented on the clients' evidence, and a caller who gets an empty-body 404 should read that as the probe's result reproducing, not as a bad app id.",
+      "source": "provider"
+     }
+    ]
    },
    "delete": {
     "operationId": "deleteAdminScope_delete",
@@ -1438,13 +2216,13 @@
     "description": "Deletes an app as a tenant administrator.",
     "parameters": [
      {
-      "name": "environmentName",
+      "name": "environmentId",
       "in": "path",
       "required": true,
       "schema": {
        "type": "string"
       },
-      "description": "The `environmentName`."
+      "description": "The environment's `name` \u2014 a GUID, or `Default-<tenantId>` for the tenant default. `~Default` is accepted as a server-side alias."
      },
      {
       "name": "appName",
@@ -1470,7 +2248,1315 @@
       "description": "The result."
      }
     },
-    "x-source": "provider"
+    "x-source": "provider",
+    "x-notes": [
+     {
+      "note": "This repo's probe recorded this route as **confirmed absent** \u2014 an empty-body 404, which on this host means no such route \u2014 while two third-party clients call it with `api-version` `2016-11-01` and `2017-08-01` and one pins the exact URL in its tests. Both observations are kept: the route is documented on the clients' evidence, and a caller who gets an empty-body 404 should read that as the probe's result reproducing, not as a bad app id.",
+      "source": "provider"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/apis/{apiName}/permissions": {
+   "get": {
+    "operationId": "connectorPermissions_list",
+    "tags": [
+     "Connector"
+    ],
+    "summary": "Permissions List",
+    "description": "Who can use a custom connector and in what role.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The connector's `name`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": true,
+      "description": "The environment scope, and mandatory on the connector and connection paths \u2014 omitting it is a 400 `MissingEnvironmentFilter`, not an unfiltered list.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The role assignments on the connector.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PermissionList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/apis/{apiName}/modifyPermissions": {
+   "post": {
+    "operationId": "connectorPermissions_modify",
+    "tags": [
+     "Connector"
+    ],
+    "summary": "Permissions Modify",
+    "description": "Grants or revokes access to a custom connector, with grants and revocations in one body.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The connector's `name`."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": true,
+      "description": "The environment scope, and mandatory on the connector and connection paths \u2014 omitting it is a 400 `MissingEnvironmentFilter`, not an unfiltered list.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ModifyPermissionsRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Applied."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     },
+     {
+      "note": "Sharing a connector tenant-wide sets `principal.email` to a single space character, where the connection equivalent uses an empty string.",
+      "source": "ps-admin"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/apis/{apiName}/connections/{connectionId}": {
+   "delete": {
+    "operationId": "connections_delete",
+    "tags": [
+     "Connection"
+    ],
+    "summary": "Delete",
+    "description": "Deletes one connection instance.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The connector's `name`."
+     },
+     {
+      "name": "connectionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The connection's `name` \u2014 a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": true,
+      "description": "The environment scope, and mandatory on the connector and connection paths \u2014 omitting it is a 400 `MissingEnvironmentFilter`, not an unfiltered list.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Deleted."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     },
+     {
+      "note": "The admin centre's migration table registers the same path, which corroborates the route but not the method.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/apis/{apiName}/connections/{connectionId}/permissions": {
+   "get": {
+    "operationId": "connectionPermissions_list",
+    "tags": [
+     "Connection"
+    ],
+    "summary": "Permissions List",
+    "description": "Who can use a connection and in what role.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The connector's `name`."
+     },
+     {
+      "name": "connectionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The connection's `name` \u2014 a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": true,
+      "description": "The environment scope, and mandatory on the connector and connection paths \u2014 omitting it is a 400 `MissingEnvironmentFilter`, not an unfiltered list.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The role assignments on the connection.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PermissionList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/apis/{apiName}/connections/{connectionId}/modifyPermissions": {
+   "post": {
+    "operationId": "connectionPermissions_modify",
+    "tags": [
+     "Connection"
+    ],
+    "summary": "Permissions Modify",
+    "description": "Grants or revokes access to a connection.",
+    "parameters": [
+     {
+      "name": "apiName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The connector's `name`."
+     },
+     {
+      "name": "connectionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The connection's `name` \u2014 a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": true,
+      "description": "The environment scope, and mandatory on the connector and connection paths \u2014 omitting it is a 400 `MissingEnvironmentFilter`, not an unfiltered list.",
+      "schema": {
+       "type": "string",
+       "example": "environment eq '00000000-0000-0000-0000-000000000000'"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ModifyPermissionsRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Applied."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     },
+     {
+      "note": "Sharing a connection tenant-wide puts the **tenant id** in `principal.id` with an empty `email`.",
+      "source": "ps-admin"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps/{appName}/publish": {
+   "post": {
+    "operationId": "apps_publish",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Publish",
+    "description": "Publishes the app's newest saved version, making it the one players run.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EmptyRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Published."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps/{appName}/versions": {
+   "get": {
+    "operationId": "appVersions_list",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Versions List",
+    "description": "Every saved version of an app, with which one is live.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The app's versions.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AppVersionList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/apps/{appName}/versions/{appVersionName}/promote": {
+   "post": {
+    "operationId": "appVersions_promote",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Version Promote",
+    "description": "Makes an older version the live one. Restoring a version is modelled server-side as promoting it \u2014 there is no restore route.",
+    "parameters": [
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     },
+     {
+      "name": "appVersionName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The version's `name`, from the versions list."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EmptyRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Promoted."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/environments/{environmentId}/apps/{appName}/makeSolutionAware": {
+   "post": {
+    "operationId": "apps_makeSolutionAware",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Make Solution Aware",
+    "description": "Brings an existing app into a Dataverse solution, so it can be exported and deployed with the rest of that solution's components.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's `name`."
+     },
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2018-10-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "solutionId": {
+          "type": "string",
+          "description": "The target Dataverse solution."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The app is now a solution component."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred. It is the only route in that module defaulting to `api-version` `2018-10-01`.",
+      "source": "ps-admin"
+     },
+     {
+      "note": "The admin centre's migration table registers the same path (and an `/apps/{appId}/makeSolutionAware` form without the environment segment), corroborating the route.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps/{appName}/modifyAppOwner": {
+   "post": {
+    "operationId": "appOwner_modify",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Owner Modify (Admin Scope)",
+    "description": "Reassigns an app's owner as a tenant administrator, and says what role the previous owner keeps. Admin scope only: there is no maker-scope form of this route.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's `name`."
+     },
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2022-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "roleForOldAppOwner": {
+          "type": "string",
+          "description": "What the previous owner is left with \u2014 `CanView`, `CanEdit`, or omitted to remove them."
+         },
+         "newAppOwner": {
+          "type": "string",
+          "description": "Entra object id of the new owner."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Ownership reassigned."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "provider",
+    "x-notes": [
+     {
+      "note": "Two independent third-party clients build this URL with `api-version` `2022-11-01`; the two field names come from one of them. No vendor artefact witnesses this route.",
+      "source": "provider"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/scopes/admin/environments/{environmentId}/apps/{appName}/setPowerAppConnectionDirectConsentBypass": {
+   "post": {
+    "operationId": "consentBypass_set",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Connection Consent Bypass Set (Admin Scope)",
+    "description": "Turns off the per-user connection consent prompt for one app, so players are not asked to approve its connections. An administrator decision, and admin scope only.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's `name`."
+     },
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2021-02-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "bypassconsent": {
+          "type": "boolean",
+          "description": "All-lowercase on the wire, unlike the camelCase fields elsewhere on this host."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Applied. No body."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "provider",
+    "x-notes": [
+     {
+      "note": "Two independent third-party clients build this URL with `api-version` `2021-02-01`; one of them asserts a 204 in its tests.",
+      "source": "provider"
+     }
+    ]
+   }
+  },
+  "/environments/{environmentId}/apps/{appName}": {
+   "get": {
+    "operationId": "appRootScope_get",
+    "tags": [
+     "Canvas App"
+    ],
+    "summary": "Read (Host Root)",
+    "description": "Reads one app from a route at the host root, with **no** `/providers/Microsoft.PowerApps` prefix \u2014 the only such route witnessed on this host. What it returns, and how it differs from the provider-prefixed read, was not established.",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's `name`."
+     },
+     {
+      "name": "appName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The app id. A GUID: the app's `name`, not its display name."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2016-11-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The app. Body shape not witnessed."
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred. Its reader was not traced, so no response schema is claimed here.",
+      "source": "ps-admin"
+     }
+    ]
+   }
+  },
+  "/providers/Microsoft.PowerApps/objectIds/{objectId}/notifications": {
+   "get": {
+    "operationId": "notifications_list",
+    "tags": [
+     "Notification"
+    ],
+    "summary": "List",
+    "description": "In-product notifications addressed to one directory object.",
+    "parameters": [
+     {
+      "name": "objectId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Entra object id of the recipient. The PowerShell module never exposes this as a parameter \u2014 it substitutes the signed-in user's own id, so reading another principal's notifications is untested."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "description": "Required. `default` here is the value the source client sends, not a service default; the enum is the full set the service accepts.",
+      "schema": {
+       "type": "string",
+       "default": "2017-06-01",
+       "enum": [
+        "2015-02-01",
+        "2015-03-01",
+        "2015-08-01",
+        "2016-01-01",
+        "2016-02-01",
+        "2016-04-01",
+        "2016-05-01",
+        "2016-07-01",
+        "2016-11-01",
+        "2017-02-01",
+        "2017-04-01",
+        "2017-05-01",
+        "2017-06-01",
+        "2017-07-01",
+        "2017-08-01",
+        "2018-10-01",
+        "2019-05-01",
+        "2020-02-01",
+        "2020-06-01",
+        "2020-07-01",
+        "2021-02-01",
+        "2022-11-01",
+        "2023-06-01",
+        "2025-03-01",
+        "2025-04-01"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The notifications.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/NotificationList"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "`InvalidAuthenticationToken`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-source": "ps-admin",
+    "x-notes": [
+     {
+      "note": "Quoted from Microsoft.PowerApps.PowerShell (the maker module that ships alongside Microsoft.PowerApps.Administration.PowerShell); route, method and default `api-version` are quoted from the module's readable script, not inferred.",
+      "source": "ps-admin"
+     },
+     {
+      "note": "The admin centre's migration table registers the same path and rewrites it to the tenant-scoped Power Platform API's `/powerapps/notifications`.",
+      "source": "ppac-spa"
+     }
+    ]
    }
   }
  },
@@ -1600,9 +3686,18 @@
      },
      "properties": {
       "$ref": "#/components/schemas/AppProperties"
+     },
+     "tags": {
+      "$ref": "#/components/schemas/AppTags"
      }
     },
-    "x-probe-verified": false
+    "x-probe-verified": false,
+    "x-notes": [
+     {
+      "note": "`tags` is a sibling of `properties`, not nested inside it.",
+      "source": "provider"
+     }
+    ]
    },
    "AppProperties": {
     "type": "object",
@@ -1648,9 +3743,89 @@
      },
      "environment": {
       "$ref": "#/components/schemas/AppEnvironmentRef"
+     },
+     "appVersion": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The published version, identified by its timestamp rather than a number."
+     },
+     "lastDraftVersion": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The newest saved version, published or not."
+     },
+     "lifeCycleId": {
+      "type": "string",
+      "description": "`Published` on an app with a live version.",
+      "x-enum-evidence": "Only `Published` was seen in a recorded sample; `AppVersion.lifeCycleId` on the versions route also uses `Draft`."
+     },
+     "status": {
+      "type": "string",
+      "description": "`Ready` in the recorded sample."
+     },
+     "createdByClientVersion": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ClientVersion"
+       }
+      ],
+      "description": "Studio build that created the app."
+     },
+     "minClientVersion": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ClientVersion"
+       }
+      ],
+      "description": "Oldest player build that can run it."
+     },
+     "description": {
+      "type": "string"
+     },
+     "commitMessage": {
+      "type": "string",
+      "description": "The maker's note on the last publish."
+     },
+     "backgroundColor": {
+      "type": "string",
+      "example": "rgba(37, 62, 143, 1)"
+     },
+     "backgroundImageUri": {
+      "type": "string"
+     },
+     "appUris": {
+      "$ref": "#/components/schemas/AppUris"
+     },
+     "sharedGroupsCount": {
+      "type": "integer"
+     },
+     "sharedUsersCount": {
+      "type": "integer",
+      "description": "A count only \u2014 the principals themselves come from the app's `permissions` route."
+     },
+     "appOpenProtocolUri": {
+      "type": "string",
+      "description": "`ms-apps:///providers/Microsoft.PowerApps/apps/<appId>`, for the desktop and mobile players."
+     },
+     "appOpenUri": {
+      "type": "string",
+      "description": "The browser play URL, tenant-qualified."
+     },
+     "connectionReferences": {
+      "type": "object",
+      "description": "The connectors the app binds to, keyed by connection id. This is what makes an app's connector dependencies readable without opening the `.msapp`.",
+      "additionalProperties": {
+       "$ref": "#/components/schemas/ConnectionReference"
+      }
      }
     },
-    "x-probe-verified": false
+    "x-probe-verified": false,
+    "x-notes": [
+     {
+      "note": "The probe tenant held no canvas apps, so nothing below `App` was observed here. `displayName`, the principal fields and the timestamps come from the Terraform provider's DTOs; everything added since \u2014 tags, versioning, client versions, `appUris`, the counts, the open URIs and `connectionReferences` \u2014 comes from a recorded response sample in a third-party CLI's test fixtures.",
+      "source": "provider"
+     }
+    ]
    },
    "AppEnvironmentRef": {
     "type": "object",
@@ -2845,6 +5020,337 @@
      }
     },
     "x-probe-verified": false
+   },
+   "AppTags": {
+    "type": "object",
+    "description": "Maker-authored and studio-authored tags, all values stringified \u2014 booleans arrive as `\"true\"`/`\"false\"` and numbers as decimal strings. Observed keys: `primaryDeviceWidth`, `primaryDeviceHeight`, `sienaVersion`, `deviceCapabilities`, `supportsPortrait`, `supportsLandscape`, `primaryFormFactor`, `publisherVersion`, `minimumRequiredApiVersion`, `hasComponent`, `hasUnlockedComponent`. The key set is open, and `$filter` on the app list matches against a `tagname`/`tagvalue` pair here.",
+    "additionalProperties": {
+     "type": "string"
+    },
+    "x-source": "provider"
+   },
+   "ClientVersion": {
+    "type": "object",
+    "description": "A Power Apps Studio build number, exploded into the .NET `Version` fields rather than sent as a string.",
+    "properties": {
+     "major": {
+      "type": "integer"
+     },
+     "minor": {
+      "type": "integer"
+     },
+     "build": {
+      "type": "integer"
+     },
+     "revision": {
+      "type": "integer"
+     },
+     "majorRevision": {
+      "type": "integer"
+     },
+     "minorRevision": {
+      "type": "integer"
+     }
+    },
+    "x-source": "provider"
+   },
+   "AppUris": {
+    "type": "object",
+    "description": "Storage URIs for the app document and its images. The URIs carry a time-limited SAS query string, so treat them as credentials and do not log them.",
+    "properties": {
+     "documentUri": {
+      "type": "object",
+      "properties": {
+       "value": {
+        "type": "string",
+        "description": "Primary-region `.msapp` URI, SAS-signed."
+       },
+       "readonlyValue": {
+        "type": "string",
+        "description": "Secondary-region replica of the same document."
+       }
+      }
+     },
+     "imageUris": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "x-source": "provider"
+   },
+   "ConnectionReference": {
+    "type": "object",
+    "description": "One connector the app binds to, keyed in `connectionReferences` by connection id.",
+    "properties": {
+     "id": {
+      "type": "string",
+      "description": "Connector resource path. Lower-cased here (`/providers/microsoft.powerapps/apis/...`) where the connector catalogue returns it capitalised.",
+      "example": "/providers/microsoft.powerapps/apis/shared_office365users"
+     },
+     "displayName": {
+      "type": "string"
+     },
+     "iconUri": {
+      "type": "string"
+     },
+     "dataSources": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "dependencies": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "dependents": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "isOnPremiseConnection": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": true,
+    "x-source": "provider"
+   },
+   "PermissionList": {
+    "type": "object",
+    "description": "Role assignments on one resource, in a `value` envelope. The same shape serves apps, connectors and connections.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Permission"
+      }
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "Permission": {
+    "type": "object",
+    "description": "One role assignment.",
+    "properties": {
+     "name": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000"
+     },
+     "id": {
+      "type": "string",
+      "example": "/providers/Microsoft.PowerApps/apps/00000000-0000-0000-0000-000000000000/permissions/00000000-0000-0000-0000-000000000000"
+     },
+     "type": {
+      "type": "string",
+      "example": "Microsoft.PowerApps/apps/permissions"
+     },
+     "properties": {
+      "type": "object",
+      "properties": {
+       "roleName": {
+        "type": "string",
+        "description": "`CanView`, `CanViewWithShare`, `CanEdit` and `Owner` are the values the PowerShell module writes; a read may return others."
+       },
+       "principal": {
+        "$ref": "#/components/schemas/Principal"
+       },
+       "scope": {
+        "type": "string",
+        "description": "The resource path the assignment applies to. The PowerShell module recovers the app and environment names by splitting this string, so it is the only place a per-app read states its own environment."
+       },
+       "notifyShareTargetOption": {
+        "type": "string",
+        "description": "Echoes the share-notification choice; `NotSpecified` when the grant did not set one."
+       },
+       "inviteGuestToTenant": {
+        "type": "boolean"
+       },
+       "createdOn": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "createdBy": {
+        "type": "string"
+       }
+      },
+      "additionalProperties": true
+     }
+    },
+    "additionalProperties": true,
+    "x-notes": [
+     {
+      "note": "`roleName`, `scope` and the `principal` sub-fields are read by the PowerShell module; `notifyShareTargetOption`, `inviteGuestToTenant`, `createdOn` and `createdBy` come from a third-party client's recorded app-permission sample and were not seen on the connector or connection variants.",
+      "source": "ps-admin"
+     }
+    ],
+    "x-source": "ps-admin"
+   },
+   "ModifyPermissionsRequest": {
+    "type": "object",
+    "description": "Grant and revoke in one envelope: `put` adds or changes assignments, `delete` removes them by id, and a client that only grants sends an empty `delete` (and vice versa). Every `modifyPermissions` route on this host \u2014 app, connector and connection \u2014 takes this body.",
+    "properties": {
+     "delete": {
+      "type": "array",
+      "description": "Assignments to remove, by permission id alone.",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "put": {
+      "type": "array",
+      "description": "Assignments to add or change.",
+      "items": {
+       "type": "object",
+       "properties": {
+        "properties": {
+         "type": "object",
+         "properties": {
+          "roleName": {
+           "type": "string"
+          },
+          "capabilities": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "NotifyShareTargetOption": {
+           "type": "string",
+           "description": "Capitalised here and lower-cased (`notifyShareTargetOption`) on the read \u2014 the request and response spell the same field differently."
+          },
+          "principal": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "email": {
+             "type": "string"
+            },
+            "type": {
+             "type": "string"
+            },
+            "tenantId": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-notes": [
+     {
+      "note": "Tenant-wide sharing is expressed through `principal`, and inconsistently: sharing a connection sets `principal.id` to the tenant id with `email` empty; sharing a connector sets `email` to a single space; sharing an app sends the four-character string `\"null\"` in `principal.id`, and a user share sends `\"null\"` in `tenantId`. A client that sends a real JSON null instead is not reproducing what the module sends.",
+      "source": "ps-admin"
+     }
+    ],
+    "x-source": "ps-admin"
+   },
+   "AppVersionList": {
+    "type": "object",
+    "description": "The saved versions of one app, newest first, in a `value` envelope.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/AppVersion"
+      }
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "AppVersion": {
+    "type": "object",
+    "properties": {
+     "properties": {
+      "type": "object",
+      "properties": {
+       "lifeCycleId": {
+        "type": "string",
+        "description": "Which version is live. Exactly one version is `Published`; the rest are `Draft`.",
+        "enum": [
+         "Draft",
+         "Published"
+        ],
+        "x-enum-evidence": "Both values are compared as literals in the PowerShell module; the set may be larger."
+       },
+       "AppVersion": {
+        "type": "string",
+        "description": "PascalCase where its siblings are camelCase \u2014 the wire field really is spelled this way."
+       }
+      },
+      "additionalProperties": true
+     }
+    },
+    "additionalProperties": true,
+    "x-source": "ps-admin"
+   },
+   "NotificationList": {
+    "type": "object",
+    "description": "In-product notifications for one directory object. The envelope key is spelled `Value` with a capital V by the reader; PowerShell is case-insensitive, so which case the service actually sends is not established here.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Notification"
+      }
+     }
+    },
+    "x-source": "ps-admin"
+   },
+   "Notification": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "id": {
+      "type": "string"
+     },
+     "properties": {
+      "type": "object",
+      "properties": {
+       "category": {
+        "type": "string"
+       },
+       "content": {
+        "type": "string"
+       },
+       "createdTime": {
+        "type": "string",
+        "format": "date-time"
+       }
+      },
+      "additionalProperties": true
+     }
+    },
+    "additionalProperties": true,
+    "x-source": "ps-admin"
+   },
+   "AppSettingsRequest": {
+    "type": "object",
+    "description": "A single setting, sent as one dynamic key/value pair whose **key is caller-supplied** \u2014 there is no fixed field name to document. The PowerShell module builds the body as `@{ $AppSettingName = $AppSettingValue }`, so the schema is open by construction rather than because the fields are unknown.",
+    "additionalProperties": true,
+    "x-source": "ps-admin"
+   },
+   "EmptyRequest": {
+    "type": "object",
+    "description": "An explicitly empty JSON object. The route takes no input, but the client sends `{}` and a bodyless POST was not tried.",
+    "x-source": "ps-admin"
    }
   }
  }

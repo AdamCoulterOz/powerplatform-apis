@@ -493,7 +493,14 @@
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "Copilot usage aggregates under `copilotHubData`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CopilotUsageResponse"
+        }
+       }
+      }
      }
     },
     "x-source": "ppac-spa"
@@ -578,7 +585,14 @@
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The app-access rows. The admin centre reads `.Data` and writes it straight out as CSV.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AppAccessReportResponse"
+        }
+       }
+      }
      }
     },
     "x-source": "ppac-spa",
@@ -652,7 +666,14 @@
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The metric label catalogue, in the `Data` envelope.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DataEnvelope"
+        }
+       }
+      }
      }
     },
     "x-source": "ppac-spa"
@@ -729,7 +750,14 @@
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The usage rows. The admin centre reads `.Data` and writes it straight out as CSV.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TmUsageReportResponse"
+        }
+       }
+      }
      }
     },
     "x-source": "ppac-spa",
@@ -828,7 +856,14 @@
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "Metric values over time, in the `Data` envelope.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DataEnvelope"
+        }
+       }
+      }
      }
     },
     "x-source": "ppac-spa",
@@ -866,7 +901,17 @@
      "405": {
       "$ref": "#/components/responses/MethodNotAllowed"
      }
-    }
+    },
+    "x-source": "live",
+    "x-corroborated-by": [
+     "ppac-spa"
+    ],
+    "x-notes": [
+     {
+      "note": "The admin centre's bundle calls this same route, so the probe and the shipped client agree on it independently.",
+      "source": "ppac-spa"
+     }
+    ]
    }
   },
   "/api/v1/metrics/diagnosticlogs": {
@@ -938,7 +983,8 @@
           "type": "string"
          },
          "limit": {
-          "type": "string"
+          "type": "integer",
+          "description": "Defaults to 100 when the caller supplies nothing."
          }
         }
        }
@@ -947,13 +993,24 @@
     },
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The log rows, under `logs`.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DiagnosticLogsResponse"
+        }
+       }
+      }
      }
     },
     "x-source": "ppac-spa",
     "x-notes": [
      {
       "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     },
+     {
+      "note": "The path is assembled as `/api/v1` + (`` | `/admin`) + `/metrics/...`, the segment chosen from the caller's role at request time, so both `/api/v1/metrics/...` and `/api/v1/admin/metrics/...` are live routes for this handler. Only the non-admin form is spelled out under `paths`; prepend `/admin` after `/api/v1` for the admin form.",
       "source": "ppac-spa"
      }
     ]
@@ -1041,10 +1098,12 @@
           "type": "string"
          },
          "limit": {
-          "type": "string"
+          "type": "integer",
+          "description": "Defaults to 100 when the caller supplies nothing."
          },
          "offset": {
-          "type": "string"
+          "type": "integer",
+          "description": "The client always sends 0."
          },
          "preAggregateName": {
           "type": "string"
@@ -1053,7 +1112,8 @@
           "type": "string"
          },
          "excludeToday": {
-          "type": "string"
+          "type": "boolean",
+          "description": "The client always sends `true`: today's partial aggregate is excluded."
          },
          "includePreviousMetricValue": {
           "type": "string"
@@ -1071,13 +1131,24 @@
     },
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The latest values, grouped by the requested dimension.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MetricsLatestResponse"
+        }
+       }
+      }
      }
     },
     "x-source": "ppac-spa",
     "x-notes": [
      {
       "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
+      "source": "ppac-spa"
+     },
+     {
+      "note": "The path is assembled as `/api/v1` + (`` | `/admin`) + `/metrics/...`, the segment chosen from the caller's role at request time, so both `/api/v1/metrics/...` and `/api/v1/admin/metrics/...` are live routes for this handler. Only the non-admin form is spelled out under `paths`; prepend `/admin` after `/api/v1` for the admin form.",
       "source": "ppac-spa"
      }
     ]
@@ -1197,6 +1268,10 @@
      {
       "note": "Path reconstructed from concatenated fragments in the minified bundle rather than read from a single string literal, so the segments are certain and their assembly is inferred.",
       "source": "ppac-spa"
+     },
+     {
+      "note": "The path is assembled as `/api/v1` + (`` | `/admin`) + `/metrics/...`, the segment chosen from the caller's role at request time, so both `/api/v1/metrics/...` and `/api/v1/admin/metrics/...` are live routes for this handler. Only the non-admin form is spelled out under `paths`; prepend `/admin` after `/api/v1` for the admin form.",
+      "source": "ppac-spa"
      }
     ]
    }
@@ -1252,7 +1327,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "type": "object"
+        "$ref": "#/components/schemas/SinkConnectionCreateV1Request"
        }
       }
      }
@@ -1359,7 +1434,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "type": "object"
+        "$ref": "#/components/schemas/InventoryTagMap"
        }
       }
      }
@@ -1394,7 +1469,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "type": "object"
+        "$ref": "#/components/schemas/InventoryTagMap"
        }
       }
      }
@@ -1429,14 +1504,30 @@
     ],
     "responses": {
      "200": {
-      "description": "The recorded consent."
+      "description": "The consent setting, in a `value` array.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TenantSettingResponse"
+        }
+       }
+      }
      },
      "204": {
       "description": "No consent has been recorded for the tenant. Not an error."
      }
     },
     "x-probe-verified": true,
-    "x-source": "live"
+    "x-source": "live",
+    "x-notes": [
+     {
+      "note": "The route was reached live, but the probe tenant's body was not recorded. The response schema here is the generic tenant-settings shape read from the admin centre bundle, which addresses this route as `{settingKey}` = `tenantconsent`.",
+      "source": "ppac-spa"
+     }
+    ],
+    "x-corroborated-by": [
+     "ppac-spa"
+    ]
    }
   },
   "/api/v1/tenants/{tenantId}/{settingKey}": {
@@ -1469,7 +1560,14 @@
     ],
     "responses": {
      "200": {
-      "description": "The result."
+      "description": "The setting, in a `value` array.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TenantSettingResponse"
+        }
+       }
+      }
      }
     },
     "x-source": "ppac-spa"
@@ -1544,7 +1642,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "type": "object"
+        "$ref": "#/components/schemas/TenantSettingUpdateRequest"
        }
       }
      }
@@ -1634,7 +1732,17 @@
      "405": {
       "$ref": "#/components/responses/MethodNotAllowed"
      }
-    }
+    },
+    "x-source": "live",
+    "x-corroborated-by": [
+     "ppac-spa"
+    ],
+    "x-notes": [
+     {
+      "note": "The admin centre's bundle calls this same route, so the probe and the shipped client agree on it independently.",
+      "source": "ppac-spa"
+     }
+    ]
    }
   },
   "/api/v2/sinks/{sinkType}/connections": {
@@ -1661,7 +1769,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "type": "object"
+        "$ref": "#/components/schemas/SinkConnectionCreateV2Request"
        }
       }
      }
@@ -1798,7 +1906,8 @@
      "401": {
       "$ref": "#/components/responses/Unauthorized"
      }
-    }
+    },
+    "x-source": "live"
    }
   },
   "/v1/tenants/{tenantId}/environmentGroup/{environmentGroupId}/environment/{environmentId}/rules": {
@@ -2332,6 +2441,370 @@
       "example": "australia"
      }
     }
+   },
+   "DataEnvelope": {
+    "type": "object",
+    "description": "The envelope every `/api/v1/cds/*` report returns. The key is `Data` with a capital D, unlike the `value` envelope the csanalytics surface uses, and there is no paging alongside it. Row shape varies by report; where the admin centre reads named fields those rows have their own schema.",
+    "properties": {
+     "Data": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": true
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "TmUsageReportResponse": {
+    "type": "object",
+    "description": "The team-member usage report, in the same `Data` envelope as the other CDS reports.",
+    "properties": {
+     "Data": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TmUsageRow"
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "TmUsageRow": {
+    "type": "object",
+    "description": "One team-member usage row. Read from the admin centre bundle at the *consumer*: only the fields the client touches are listed, so the service may return more. Nothing here was seen on the wire. These five fields are the CSV columns the admin centre writes out of the response.",
+    "properties": {
+     "time": {
+      "type": "string"
+     },
+     "azureActiveDirectoryObjectId": {
+      "type": "string",
+      "description": "Entra object id of the acting user."
+     },
+     "operationName": {
+      "type": "string"
+     },
+     "entityType": {
+      "type": "string"
+     },
+     "appName": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": true,
+    "x-source": "ppac-spa"
+   },
+   "AppAccessReportResponse": {
+    "type": "object",
+    "description": "The app-access report (`GreenlandReport` on the wire), in the `Data` envelope.",
+    "properties": {
+     "Data": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/AppAccessRow"
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "AppAccessRow": {
+    "type": "object",
+    "description": "One app-access row. Read from the admin centre bundle at the *consumer*: only the fields the client touches are listed, so the service may return more. Nothing here was seen on the wire. These five fields are the CSV columns the admin centre writes out of the response.",
+    "properties": {
+     "timestamp": {
+      "type": "string"
+     },
+     "orgName": {
+      "type": "string"
+     },
+     "applicationName": {
+      "type": "string"
+     },
+     "orgId": {
+      "type": "string"
+     },
+     "userId": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": true,
+    "x-source": "ppac-spa"
+   },
+   "CopilotUsageResponse": {
+    "type": "object",
+    "description": "Copilot usage aggregates. The envelope key is `copilotHubData`, not `Data` \u2014 this route breaks the convention its `/api/v1/cds/*` siblings follow.",
+    "properties": {
+     "copilotHubData": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "description": "One aggregate row. Read from the admin centre bundle at the *consumer*: only the fields the client touches are listed, so the service may return more. Nothing here was seen on the wire.",
+       "properties": {
+        "aggregationDate": {
+         "type": "string"
+        },
+        "lastUpdated": {
+         "type": "string"
+        }
+       },
+       "additionalProperties": true
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "MetricsLatestResponse": {
+    "type": "object",
+    "description": "The latest values for one metric, grouped by the dimension named in the request's `groupByDimensionKey`.",
+    "properties": {
+     "metricGroups": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/MetricGroup"
+      }
+     },
+     "lastRefreshed": {
+      "type": "string",
+      "description": "When the aggregation behind these values last ran. The service serves pre-aggregated data, so this trails the request time."
+     },
+     "totalCount": {
+      "type": "integer",
+      "description": "Total groups available, for paging with the request's `limit`/`offset`."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "MetricGroup": {
+    "type": "object",
+    "properties": {
+     "dimensionValue": {
+      "type": "string",
+      "description": "The value of the grouping dimension."
+     },
+     "metrics": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/MetricValue"
+      }
+     }
+    },
+    "additionalProperties": true,
+    "x-source": "ppac-spa"
+   },
+   "MetricValue": {
+    "type": "object",
+    "description": "One measured value. Read from the admin centre bundle at the *consumer*: only the fields the client touches are listed, so the service may return more. Nothing here was seen on the wire.",
+    "properties": {
+     "metricValue": {
+      "description": "The measurement. Type not determined \u2014 the client renders it without coercing it."
+     },
+     "previousMetricValue": {
+      "description": "The comparison value, returned only when the request set `includePreviousMetricValue`."
+     },
+     "sessionCount": {
+      "description": "Sessions behind the measurement, where the metric is session-based."
+     }
+    },
+    "additionalProperties": true,
+    "x-source": "ppac-spa"
+   },
+   "DiagnosticLogsResponse": {
+    "type": "object",
+    "description": "Diagnostic log rows, under a `logs` key. Row shape was not read from the bundle.",
+    "properties": {
+     "logs": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": true
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "TenantSettingResponse": {
+    "type": "object",
+    "description": "A tenant setting read. The envelope is a `value` array even for a single-key read, so a caller wanting one setting still indexes into a list.",
+    "properties": {
+     "value": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/TenantSetting"
+      }
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "TenantSetting": {
+    "type": "object",
+    "properties": {
+     "settingKey": {
+      "type": "string",
+      "description": "Echoes the key from the path. `tenantconsent` is the only value observed as a literal anywhere in the admin centre bundles."
+     },
+     "settingProperties": {
+      "type": "object",
+      "properties": {
+       "state": {
+        "type": "string",
+        "description": "The setting's value. Lower-case words, not booleans.",
+        "enum": [
+         "on",
+         "off"
+        ],
+        "x-enum-evidence": "Both values appear as literals in the admin centre bundle; the set may be larger."
+       }
+      },
+      "additionalProperties": true
+     }
+    },
+    "additionalProperties": true,
+    "x-source": "ppac-spa"
+   },
+   "SinkConnectionCreateV1Request": {
+    "type": "object",
+    "description": "The v1 create body. The sink is addressed by its Azure resource coordinates, and the environments it feeds travel in the same call.",
+    "properties": {
+     "source": {
+      "type": "string",
+      "description": "The telemetry source being exported."
+     },
+     "environments": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/SinkConnectionEnvironmentRef"
+      }
+     },
+     "sink": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "description": "Full ARM resource id of the sink."
+       },
+       "subscriptionId": {
+        "type": "string"
+       },
+       "resourceGroupName": {
+        "type": "string"
+       },
+       "resourceName": {
+        "type": "string"
+       },
+       "key": {
+        "type": "string",
+        "description": "Application Insights instrumentation key, sent in plain text."
+       }
+      }
+     },
+     "packageName": {
+      "type": "string"
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "SinkConnectionCreateV2Request": {
+    "type": "object",
+    "description": "The v2 create body: the v1 shape plus `scenarios`, `resourceProvider`, and two sink fields the client attaches only when a feature check passes.",
+    "properties": {
+     "source": {
+      "type": "string"
+     },
+     "environments": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/SinkConnectionEnvironmentRef"
+      }
+     },
+     "sink": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string"
+       },
+       "subscriptionId": {
+        "type": "string"
+       },
+       "resourceGroupName": {
+        "type": "string"
+       },
+       "resourceName": {
+        "type": "string"
+       },
+       "key": {
+        "type": "string",
+        "description": "Application Insights instrumentation key, sent in plain text."
+       },
+       "vnetEnabled": {
+        "description": "Attached by `Object.assign` after the body is built, so it is present only on the VNet-enabled path."
+       },
+       "connectionString": {
+        "type": "string",
+        "description": "Attached the same way as `vnetEnabled`, and only alongside it."
+       }
+      }
+     },
+     "packageName": {
+      "type": "string"
+     },
+     "scenarios": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "Defaults to `[\"default\"]` when the caller selects none."
+     },
+     "resourceProvider": {
+      "type": "string",
+      "description": "Space-containing strings rather than identifiers.",
+      "enum": [
+       "cloud flow",
+       "customer service",
+       "dataverse",
+       "power apps"
+      ],
+      "x-enum-evidence": "The four branches of the ternary that computes this field in the admin centre bundle; a fifth branch yields a value the bundle holds in a variable, so the set may be larger."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "SinkConnectionEnvironmentRef": {
+    "type": "object",
+    "description": "One environment fed into the sink. The client sends a single-element array.",
+    "properties": {
+     "environmentId": {
+      "type": "string"
+     },
+     "organizationId": {
+      "type": "string"
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "InventoryTagMap": {
+    "type": "object",
+    "description": "A map of **normalised** resource type to resource ids \u2014 `microsoft.powerplatform/environments` becomes `environments`, `microsoft.copilotstudio/agents` becomes `copilotstudio` \u2014 rather than a map keyed by the full ARM type. The key set is open: the client normalises whatever types the page is showing.",
+    "additionalProperties": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "TenantSettingUpdateRequest": {
+    "type": "object",
+    "description": "The setting write body. The acting user travels in the body, not inferred from the token.",
+    "properties": {
+     "userId": {
+      "type": "string",
+      "description": "The acting user's object id, stringified by the client."
+     },
+     "consentState": {
+      "type": "string",
+      "description": "The new value. Named for the consent setting even on the generic route."
+     }
+    },
+    "x-source": "ppac-spa"
    }
   }
  }

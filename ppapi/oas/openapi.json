@@ -60,10 +60,1076 @@
    {
     "note": "**11 documented routes do not resolve, and the cause is not the caller.** All 51 parameterless GET routes were swept twice against `api.powerplatform.com` at `2024-10-01` -- once as an interactive user and once as an app-only service principal -- and **every `RouteNotFound` was identical across both**. Not one flipped. Principal type is eliminated, leaving three candidates: a licence gate, a tenant feature flag, or a gateway older than the documentation.\n\n`/analytics/advisor/chat/conversations`, `/governance/lockboxPolicies`, `/governance/tenantRuleBasedPolicies`, `/notificationservice/notifications`, `/notificationservice/notifications/metadata`, `/powerapps/environment`, `/powerapps/features`, `/powerapps/globalApps`, `/powerapps/plans`, `/workflowsagent/conversationTranscripts`, and `/environmentmanagement/provisioning/create` -- which the sweep did not cover, is documented with the same request body as the primary provisioning route, and simply is not there.\n\n**The sweep returned 16 absences and 6 of them are explained rather than unexplained.** Those routes are declared in this spec on a different host and answer there: `/connectivity/connections` on the environment-scoped host; `/connectivity/connectors` on the environment-scoped host; `/plex/environmentRegion` on the environment-scoped host; `/plex/networkUsage` on the environment-scoped host; `/plex/networkUsage/environmentHistoricalUsage` on the environment-scoped host; `/plex/networkUsage/subnetHistoricalUsage` on the tenant-island host (il- prefixed).\n\n**Asking the wrong host returns the same status as a route that does not exist.** So a route-existence sweep against a single host systematically overcounts absences on this API, and a correct sweep has to take the host per route from this spec's `servers` blocks rather than picking one. That makes the corpus a precondition for the sweep rather than a product of it -- worth stating, because the dependency is invisible until the counts disagree.",
     "source": "live"
+   },
+   {
+    "note": "**There are two generations of the Power Automate API, and the first-party client reaches the second by rewriting the first.** The maker portal still authors legacy `api.flow.microsoft.com/providers/Microsoft.ProcessSimple/...` URLs, then converts them in a request interceptor before they leave the browser: collapse `//` to `/`; decide the namespace (`Environment` if the path contains `environments/` and does not end with it, else `Tenant`); delete the segment pair starting at `providers/`; for `Environment`, also delete the segment pair starting at `environments/`, so the environment id moves into the hostname; prefix `/powerautomate`; and force `api-version=1`. So `/providers/Microsoft.ProcessSimple/environments/{environmentId}/flows` becomes `{environment host}/powerautomate/flows?api-version=1`.\n\nThe gate is `isPPAPIFlowEnabled`, and in the shipped settings object it is hard-coded true -- the legacy branch, which would send `api-version=2016-11-01-beta` to the flow host, is dead code in the current client. A live sweep of the maker portal on 2026-09-05 confirms it: not one call went to `api.flow.microsoft.com`.\n\nNeither generation supersedes the other in this corpus. The `flow` spec keeps documenting `api.flow.microsoft.com` and `Microsoft.ProcessSimple`, which the Power Platform CLI, the PowerShell admin module and third-party clients still call; the `/powerautomate/` family here is what the first-party portal calls. A path that looks unfamiliar in one is usually the other one's spelling of the same resource -- the mapping is mechanical, and it is the rule above.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**A capture of this API shows hosts the client never wrote.** Every first-party call in the maker portals is authored against a placeholder hostname -- the literal `ppapi`, or a resource-provider key such as `PowerPlatformAPI`, `PowerPlatformAPIEnvironmentLevel`, `PowerPlatformAPIPAuto`, `PowerPlatformAPITenantLevel` or `PowerPlatformAPITenantIslandLevel` -- and the shell HTTP client looks that name up in a per-cloud service registry, attaches the right token, and substitutes the real host at request time. The Power Automate client reaches the same substitution through `ppapiDiscovery.getEnvironmentEndpoint(environmentName)`.\n\nThe tenant id gets the same treatment: the bundles write the literal sentinel `/tenants/~tenant` and a request handler replaces it with the caller's own tenant id on the way out. So a URL literal in a bundle is a routing instruction, not an address, and a recorded request is an address whose derivation is no longer visible. The two sources answer different questions and neither is sufficient alone.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**A fourth host exists: the tenant island.** `il-{head}.{tail}.tenant.api.powerplatform.com` is built from the tenant id by exactly the same rule as the tenant host, with an `il-` prefix, and it does not mirror the tenant host -- it serves a different set of namespaces. The client routes a family to it when that family's routing entry is marked `TenantIsland`: `/resourcequery/`, and the tenant-scoped forms of `/connectivity/`, `/processmining/`, `/copilotflows/`, `/copilotgovernance/` and `/maven/`. Confirmed live for `POST /resourcequery/resources/query`; the remaining families are the client's declaration and have not been observed on that host.",
+    "source": "live"
+   },
+   {
+    "note": "Three blocks alongside these notes are generated from the shipped bundles rather than written by hand, and are evidence rather than description. `x-ppapi-host-routing` is the client's own family-to-host table -- the rule behind this spec's `servers` list. `x-ppapi-legacy-route-map` is its first-generation-to-second-generation path map, which is why one resource has two spellings across this corpus. `x-ppapi-unbound-routes` inventories the routes whose HTTP verb could not be tied to a call site: they are listed and not published, because a guessed verb is indistinguishable from an observed one once it is written into a spec.",
+    "source": "ppac-spa"
    }
   ],
   "x-source-builds": {
-   "pac-cli": "Microsoft.PowerPlatform.Management 2.0.3503.299 (nuget.org), decompiled with Kiota abstractions 1.22.1 as reference. Earlier pac-cli claims in this spec were taken from 2.0.3399.248, the build bundled in pac CLI 2.11.2, which is two releases older and predates macro regions entirely -- a negative from that build is blindness, not evidence. Re-checked against 2.0.3503.299: 210 operations over 175 paths, 469 models, nothing in the SDK that this spec lacks."
+   "pac-cli": "Microsoft.PowerPlatform.Management 2.0.3503.299 (nuget.org), decompiled with Kiota abstractions 1.22.1 as reference. Earlier pac-cli claims in this spec were taken from 2.0.3399.248, the build bundled in pac CLI 2.11.2, which is two releases older and predates macro regions entirely -- a negative from that build is blindness, not evidence. Re-checked against 2.0.3503.299: 210 operations over 175 paths, 469 models, nothing in the SDK that this spec lacks.",
+   "ppac-spa": "The four first-party maker portal bundles, downloaded 2026-09-05 from content.powerapps.com and mined from the complete chunk sets: powerapps 0.0.20260827.1-2608.3-prod (6f4ab889a113); powerautomate 0.0.20260820.1-2608.4-prod (418af890cf4e); powerpages 0.0.20260901.3-2608.3-prod (ff37ba73119e); copilotstudio 0.0.20260903.1-26.08.30-prod (ec26134a99cf). Source maps are referenced by every bundle and are not retrievable -- the host serves an expired certificate and a stopped-app 403 -- so these claims rest on minified code."
+  },
+  "x-ppapi-host-routing": {
+   "description": "The rule behind this spec's several `servers`. The admin centre and maker portals never assemble a Power Platform API hostname inline: every request URL is written against a placeholder host, and a per-family routing table decides which real host it is swapped for. Each family entry carries a `ppapiNamespace` with one of four values -- `Environment`, `Tenant`, `TenantIsland`, `Token` -- and that value, not the path, selects the host. When the namespace is `Environment` the environment id is lifted out of the path and encoded into the hostname, which is why so many operations here carry no `/environments/{id}` segment. `Token` means the route is served wherever the caller's token already points and the client does not rewrite the host at all. Reproduced verbatim from the shipped bundles; the `match` patterns are the client's own, parameterised.",
+   "source": "ppac-spa",
+   "ruleCount": 51,
+   "byNamespace": {
+    "Environment": [
+     {
+      "match": "/analytics/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/analytics/"
+     },
+     {
+      "match": "/appagents/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/appagents/"
+     },
+     {
+      "match": "/appframework/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/appframework/"
+     },
+     {
+      "match": "/connectivity/tenants/{tenantId}/environments/{environmentId}/discoveraiplugins{rest}",
+      "gatewayPrefix": "/connectivity/discoveraiplugins"
+     },
+     {
+      "match": "/connectivity/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/connectivity/"
+     },
+     {
+      "match": "/copilotflows/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/copilotflows/"
+     },
+     {
+      "match": "/copilotgovernance/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/copilotgovernance/"
+     },
+     {
+      "match": "/copilotstudio/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/copilotstudio/"
+     },
+     {
+      "match": "/copilotstudiocua/{rest}",
+      "gatewayPrefix": "/copilotstudiocua/"
+     },
+     {
+      "match": "/dynamics/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/dynamics/"
+     },
+     {
+      "match": "/governance/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/governance/"
+     },
+     {
+      "match": "/intelligenceservice/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/intelligenceservice/"
+     },
+     {
+      "match": "/monitoringhub/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/monitoringhub/"
+     },
+     {
+      "match": "/ping/tenants/{tenantId}/environments/{environmentId}/pingEnvironmentEndpoint{rest}",
+      "gatewayPrefix": "/gateway/cluster"
+     },
+     {
+      "match": "/powerapps/mobileapps/{rest}",
+      "gatewayPrefix": "/powerapps/mobileapps/"
+     },
+     {
+      "match": "/powerapps/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/powerapps/"
+     },
+     {
+      "match": "/powerautomate/cua/{rest}",
+      "gatewayPrefix": "/powerautomate/cua/"
+     },
+     {
+      "match": "/powerautomate/providers/{providerName}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/powerautomate/"
+     },
+     {
+      "match": "/powerautomate/providers/{providerName}/{rest}",
+      "gatewayPrefix": "/powerautomate/"
+     },
+     {
+      "match": "/powerautomate/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/powerautomate/"
+     },
+     {
+      "match": "/powervirtualagents/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/powervirtualagents/"
+     },
+     {
+      "match": "/powervirtualagents/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/powervirtualagents/"
+     },
+     {
+      "match": "/processmining/tenants/{tenantId}/environments/{environmentId}/{rest}",
+      "gatewayPrefix": "/processmining/"
+     }
+    ],
+    "Tenant": [
+     {
+      "match": "/analytics/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/analytics/"
+     },
+     {
+      "match": "/appmanagement/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/appmanagement/"
+     },
+     {
+      "match": "/appmanagement/{rest}",
+      "gatewayPrefix": "/appmanagement/"
+     },
+     {
+      "match": "/governance/tenants/{tenantId}/(environments/[^/]+/provisionDataverseOperationStatus/[^/?]+.*)",
+      "gatewayPrefix": "/governance/"
+     },
+     {
+      "match": "/governance/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/governance/"
+     },
+     {
+      "match": "/monitoringhub/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/monitoringhub/"
+     },
+     {
+      "match": "/ping/tenants/{tenantId}/pingTenantEndpoint{rest}",
+      "gatewayPrefix": "/gateway/cluster"
+     },
+     {
+      "match": "/powerapps/channels/notifications/subscribe",
+      "gatewayPrefix": "/powerapps/channels/notifications/subscribe"
+     },
+     {
+      "match": "/powerapps/notifications/setStatus",
+      "gatewayPrefix": "/powerapps/notifications/setStatus"
+     },
+     {
+      "match": "/powerapps/notifications/{rest}",
+      "gatewayPrefix": "/powerapps/notifications/"
+     },
+     {
+      "match": "/powerapps/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/powerapps/"
+     },
+     {
+      "match": "/powerautomate/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/powerautomate/"
+     },
+     {
+      "match": "/support/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/support/"
+     }
+    ],
+    "TenantIsland": [
+     {
+      "match": "/connectivity/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/connectivity/"
+     },
+     {
+      "match": "/copilotflows/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/copilotflows/"
+     },
+     {
+      "match": "/copilotgovernance/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/copilotgovernance/"
+     },
+     {
+      "match": "/maven/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/maven/"
+     },
+     {
+      "match": "/processmining/tenants/{tenantId}/{rest}",
+      "gatewayPrefix": "/processmining/"
+     }
+    ],
+    "Token": [
+     {
+      "match": "/authorization/environmentGroups/{environmentGroupName}/roleAssignments",
+      "gatewayPrefix": "/authorization/environmentGroups/:environmentGroupName/roleAssignments"
+     },
+     {
+      "match": "/authorization/environmentGroups/{environmentGroupName}/roleAssignments/{roleAssignmentId}",
+      "gatewayPrefix": "/authorization/environmentGroups/:environmentGroupName/roleAssignments/:roleAssignmentId"
+     },
+     {
+      "match": "/authorization/environments/{environmentId}/roleAssignments",
+      "gatewayPrefix": "/authorization/environments/:environmentName/roleAssignments"
+     },
+     {
+      "match": "/authorization/environments/{environmentId}/roleAssignments/{roleAssignmentId}",
+      "gatewayPrefix": "/authorization/environments/:environmentName/roleAssignments/:roleAssignmentId"
+     },
+     {
+      "match": "/authorization/listRoleAssignments",
+      "gatewayPrefix": "/authorization/listRoleAssignments"
+     },
+     {
+      "match": "/authorization/roleAssignments",
+      "gatewayPrefix": "/authorization/roleAssignments"
+     },
+     {
+      "match": "/authorization/roleAssignments/{roleAssignmentId}",
+      "gatewayPrefix": "/authorization/roleAssignments/:roleAssignmentId"
+     },
+     {
+      "match": "/environmentmanagement/{rest}",
+      "gatewayPrefix": "/environmentmanagement/"
+     },
+     {
+      "match": "/powerapps/apps/{appId}/locate",
+      "gatewayPrefix": "/powerapps/apps/:appId/locate"
+     },
+     {
+      "match": "/powerpages/environments/{environmentId}/websites/{siteId}",
+      "gatewayPrefix": "/powerpages/"
+     }
+    ]
+   }
+  },
+  "x-ppapi-legacy-route-map": {
+   "description": "The client's own table mapping first-generation resource-provider routes onto their Power Platform API equivalents, read out of the shipped bundles. It is the reason two descriptions of the same resource exist across this corpus: `/providers/Microsoft.PowerApps/...` on `api.powerapps.com` and `/powerapps/...` here address one service. The table entries carry no HTTP verb -- they are a path rewrite applied to whatever request the client was already making -- so nothing here is published as an operation on its own.",
+   "source": "ppac-spa",
+   "mappingCount": 74,
+   "mappings": [
+    {
+     "gen2": "/connectivity/connections",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/connections",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/connections"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apis"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/connections",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apis/:apiName/connections"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/firstParty",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/environments/:environmentName/apis/:apiName/connections/firstParty"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionId}",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/connections/:connectionId",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apis/:apiName/connections/:connectionName"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionId}/confirmConsentCode",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/connections/:connectionId/confirmConsentCode"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionId}/getConsentLink",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/connections/:connectionId/getConsentLink"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionId}/modifyPermissions",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/connections/:connectionId/modifyPermissions",
+      "/providers/Microsoft.PowerApps/scopes/service/apis/:apiName/connections/:connectionId/modifyPermissions",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apis/:apiName/connections/:connectionName/modifyPermissions"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionId}/modifyPermissionsForServicePrincipal",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/scopes/service/apis/:apiName/connections/:connectionId/modifyPermissionsForServicePrincipal"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionId}/permissions",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/connections/:connectionId/permissions",
+      "/providers/Microsoft.PowerApps/scopes/service/apis/:apiName/connections/:connectionId/permissions",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apis/:apiName/connections/:connectionName/permissions"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionId}/permissions/{permissionId}",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/connections/:connectionId/permissions/:permissionId",
+      "/providers/Microsoft.PowerApps/scopes/service/apis/:apiName/connections/:connectionId/permissions/:permissionId"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionId}/revokeGatewayAccess",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/connections/:connectionId/revokeGatewayAccess"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionId}/transferConnection",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/connections/:connectionId/transferConnection",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apis/:apiName/connections/:connectionName/transferConnection"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionName}/addAadAppToConnectionAcl",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/environments/:environmentName/apis/:apiName/connections/:connectionName/addAadAppToConnectionAcl",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apis/:apiName/connections/:connectionName/addAadAppToConnectionAcl"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/connections/{connectionName}/removeAadAppToConnectionAcl",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/environments/:environmentName/apis/:apiName/connections/:connectionName/removeAadAppToConnectionAcl",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apis/:apiName/connections/:connectionName/removeAadAppToConnectionAcl"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/modifyPermissions",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/modifyPermissions"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/connectors/{apiName}/permissions",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/permissions"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/downgradeOpenConnectorContract",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/downgradeOpenApiContract"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/gatewayClusters",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/gatewayClusters",
+      "/providers/Microsoft.PowerApps/scopes/service/gatewayClusters"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/gatewayClusters/{anchorGatewayId}/status",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/gatewayClusters/:anchorGatewayId/status",
+      "/providers/Microsoft.PowerApps/scopes/service/gatewayClusters/:anchorGatewayId/status"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/gatewayClusters/{gatewayClusterId}",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/gatewayClusters/:gatewayClusterId",
+      "/providers/Microsoft.PowerApps/scopes/service/gatewayClusters/:gatewayClusterId"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/gateways",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/gateways",
+      "/providers/Microsoft.PowerApps/scopes/service/gateways"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/gateways/{gatewayId}",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/gateways/:gatewayId"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/gateways/{gatewayId}/listCapabilities",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/gateways/:gatewayId/listCapabilities"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/gateways/{gatewayId}/modifyPermissions",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/gateways/:gatewayId/modifyPermissions"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/gateways/{gatewayId}/permissions",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/gateways/:gatewayId/permissions"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/gateways/{gatewayId}/permissions/{permissionName}",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/gateways/:gatewayId/permissions/:permissionName"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/gateways/{gatewayName}/maxPermission",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/gateways/:gatewayName/maxPermission",
+      "/providers/Microsoft.PowerApps/scopes/service/gateways/:gatewayName/maxPermission"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/getTokenLink",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/scopes/service/environments/:environmentName/getTokenLink"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/objectIds/{objectId}/validateConnectorSwagger",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/objectIds/:objectId/validateApiSwagger"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/objectIds/{objectId}/validateConnectorSwaggerToWadl",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/objectIds/:objectId/validateApiSwaggerToWadl"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/policyTemplates",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/environments/:environmentName/policyTemplates"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/connectivity/solutions/{solutionId}/makeConnectorsSolutionAware",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/environments/:environmentName/solutions/:solutionId/makeApisSolutionAware"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apis/{apiName}/connections/{connectionId}/usages",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apis/:apiName/connections/:connectionId/usages"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId",
+      "/environments/:environmentName/apps/:appId",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apps/:appId"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/acquireLease",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/acquireLease"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/connections",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/connections",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apps/:appId/connections"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/createTeamsAppPackage",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/createTeamsAppPackage",
+      "/environments/:environmentName/apps/:appId/createTeamsAppPackage"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/listPackage",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/listPackage"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/makeSolutionAware",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/environments/:environmentName/apps/:appId/makeSolutionAware"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/modifyPermissions",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/modifyPermissions",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apps/:appId/modifyPermissions"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/permissions",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/permissions",
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/apps/:appId/permissions"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/publish",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/publish"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/releaseLease",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/releaseLease"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/sessions/{sessionId}/endSession",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/sessions/:sessionId/endSession"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/startSession",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/startSession"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/updateDisplayName",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/displayName"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/updatePublishedSettings",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/publishedSettings"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/updateUnpublishedSettings",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/unpublishedSettings"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/versions",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/versions"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/versions/{versionString}",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/versions/:versionString"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/apps/{appId}/versions/{versionString}/promote",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/apps/:appId/versions/:versionString/promote"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/curatedApps",
+     "legacy": [
+      "/curatedApps"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/features",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/objectIds/:objectId/features"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/generateResourceStorage",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/objectIds/:objectId/generateResourceStorage"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/globalApps",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/globalApps"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/groups/{groupid}/createEnvironment",
+     "legacy": [
+      "/groups/:groupid/createEnvironment"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/mobileapps/{mobileAppRecordId}/triggerBuild",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/mobileapps/:mobileAppRecordId/triggerBuild"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/modifyOrganizationAppPermissions",
+     "legacy": [
+      "/environments/:environmentName/organizationalApps"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/notifications",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/objectIds/:objectId/notifications"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/notifications/{notificationId}",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/objectIds/:objectId/notifications/:notificationId"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/notifications/{notificationId}/setLastSeen",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/objectIds/:objectId/notifications/:notificationId/setLastSeen"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/objectIds/{objectId}/appPermissions",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/scopes/admin/environments/:environmentName/objectIds/:objectId/appPermissions"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/saveappmodule",
+     "legacy": [
+      "/environments/:environmentName/saveappmodule"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/solutions/{solutionId}/apps",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/environments/:environmentName/solutions/:solutionId/apps"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/teamsPackages/{packageId}/acquire",
+     "legacy": [
+      "/teamsPackages/:packageId/acquire"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/teamsPackages/{packageId}/operations/{operationId}/arguments",
+     "legacy": [
+      "/teamsPackages/:packageId/operations/:operationId/arguments"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/teamsPackages/{packageId}/operations/{operationId}/parameters",
+     "legacy": [
+      "/teamsPackages/:packageId/operations/:operationId/parameters"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/unifiedApps",
+     "legacy": [
+      "/apps"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/userSettings/{settingGroup}",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/objectIds/:objectId/userSettings/:settingGroup"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/validateAppDisplayName",
+     "legacy": [
+      "/providers/Microsoft.PowerApps/environments/:environmentName/validateAppDisplayName"
+     ],
+     "ppapiNamespace": "Environment",
+     "host": "Environment"
+    },
+    {
+     "gen2": "/powerapps/waitlists/{waitlistNameString}/checkEligibility",
+     "legacy": [
+      "/waitlists/:waitlistNameString/checkEligibility"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    },
+    {
+     "gen2": "/powerapps/waitlists/{waitlistNameString}/join",
+     "legacy": [
+      "/waitlists/:waitlistNameString/join"
+     ],
+     "ppapiNamespace": "Tenant",
+     "host": "Tenant"
+    }
+   ]
+  },
+  "x-ppapi-unbound-routes": {
+   "description": "Routes the shipped bundles address but for which no HTTP verb could be tied to the call site. They are inventoried rather than published as operations: a route with a guessed verb reads exactly like one that was observed, and the difference is the whole point of grading this corpus. Paths already published under some verb are omitted, as are the family-level routing patterns and the legacy rewrite table, which are recorded separately above. Read this as the shape of what is still missing, not as a call list.",
+   "source": "ppac-spa",
+   "routeCount": 46,
+   "routes": [
+    {
+     "path": "/analytics/tenants/{tenantId}/actions/{param}",
+     "host": "Environment"
+    },
+    {
+     "path": "/analytics/tenants/{tenantId}/advisorrecommendations/{param}/resources",
+     "host": "Environment"
+    },
+    {
+     "path": "/analytics/{param}/chat/messages/stream",
+     "host": "Environment"
+    },
+    {
+     "path": "/appagents/tenants/{tenantId}/environments/{environmentId}/apps",
+     "host": "Environment"
+    },
+    {
+     "path": "/appframework/tenants/{tenantId}/environments/{environmentId}/apps/{appId}",
+     "host": "Environment"
+    },
+    {
+     "path": "/appframework/tenants/{tenantId}/environments/{environmentId}/apps/{appId}/setAppQuarantineState",
+     "host": "Environment"
+    },
+    {
+     "path": "/appmanagement/tenants/{tenantId}/environments/{environmentId}/InstancePackages/{param}(Lcid='{value}')",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/connectivity/tenants/{tenantId}/environments/{environmentId}",
+     "host": "Environment"
+    },
+    {
+     "path": "/connectivity/tenants/{tenantId}/environments/{environmentId}/aiprovider/{param}/notification",
+     "host": "Environment",
+     "apiVersion": "2022-03-01-preview"
+    },
+    {
+     "path": "/connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/shared_office365",
+     "host": "Environment"
+    },
+    {
+     "path": "/connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/{connectorName}/connections/{connectionName}/modifyPermissions",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/{connectorName}/connections/{connectionName}/permissions",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/connectivity/tenants/{tenantId}/environments/{environmentId}/discoveraiplugins",
+     "host": "Environment"
+    },
+    {
+     "path": "/connectivity/tenants/{tenantId}/environments/{environmentId}/openaiplugins",
+     "host": "Environment"
+    },
+    {
+     "path": "/copilotstudio/tenants/{tenantId}/environments/{environmentId}/bots/{botId}/api/botAdminOperations",
+     "host": "Environment"
+    },
+    {
+     "path": "/copilotstudio/tenants/{tenantId}/environments/{environmentId}/bots/{botId}/api/botQuarantine/SetAsQuarantined",
+     "host": "Environment"
+    },
+    {
+     "path": "/copilotstudio/tenants/{tenantId}/environments/{environmentId}/bots/{botId}/api/botQuarantine/SetAsUnquarantined",
+     "host": "Environment"
+    },
+    {
+     "path": "/copilotstudiocua/cua",
+     "host": "Environment"
+    },
+    {
+     "path": "/governance/tenants/{tenantId}/environmentRoutingOperationStatus/{param}",
+     "host": "Environment"
+    },
+    {
+     "path": "/governance/tenants/{tenantId}/environments/{environmentId}/configurations/{param}",
+     "host": "Environment"
+    },
+    {
+     "path": "/governance/tenants/{tenantId}/environments/{environmentId}/provisionDataverseOperationStatus/{param}",
+     "host": "Environment"
+    },
+    {
+     "path": "/governance/tenants/{tenantId}/userRoutingEnvironment",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/monitoringhub/tenants/{guid}/environments/{environmentId}{param}/metrics/resourceType/{param}/resourceSubType/{param}/timeseries",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/ping/tenants/{tenantId}/environments/{environmentId}/pingEnvironmentEndpoint",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/ping/tenants/{tenantId}/pingTenantEndpoint",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/powerapps/mobileapps/{param}/pollAndDownloadBuild",
+     "host": "Environment",
+     "apiVersion": "2024-10-01"
+    },
+    {
+     "path": "/powerapps/mobileapps/{param}/triggerBuild",
+     "host": "Environment",
+     "apiVersion": "2024-10-01"
+    },
+    {
+     "path": "/powerapps/notifications/setStatus",
+     "host": "Environment"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/allowedThirdPartyApps{param}",
+     "host": "Environment",
+     "apiVersion": "2024-10-01"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/checkUserConsent",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/enroll",
+     "host": "Environment"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/environments/{environmentId}",
+     "host": "Environment"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/environments/{environmentId}/apps",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/environments/{environmentId}/apps/{appId}/setAppQuarantineState",
+     "host": "Environment"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/environments/{environmentId}/apps/{appId}/versions",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/environments/{environmentId}/features",
+     "host": "Environment",
+     "apiVersion": "2022-03-01-preview"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/environments/{environmentId}/userSettings/{param}",
+     "host": "Environment"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/plans",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/powerapps/tenants/{tenantId}/recordUserConsent",
+     "host": "Environment",
+     "apiVersion": "1"
+    },
+    {
+     "path": "/powerautomate/cua",
+     "host": "Environment"
+    },
+    {
+     "path": "/powerautomate/tenants/{tenantId}/environments/{environmentId}",
+     "host": "Environment"
+    },
+    {
+     "path": "/powervirtualagents/environments/{environmentId}",
+     "host": "Environment"
+    },
+    {
+     "path": "/processmining/tenants/{tenantId}/environments/{environmentId}",
+     "host": "Environment"
+    },
+    {
+     "path": "/processminingworkload/resolveEndpoint",
+     "host": "Global"
+    },
+    {
+     "path": "/processminingworkload/resolveEndpoint",
+     "host": "api.test.powerplatform.com"
+    },
+    {
+     "path": "/{param}&api-version=1",
+     "host": "Environment"
+    }
+   ]
   }
  },
  "servers": [
@@ -98,6 +1164,20 @@
      "description": "The last 2 characters of the environment id with its hyphens removed."
     }
    }
+  },
+  {
+   "url": "https://il-{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+   "description": "Tenant **island** endpoint. The same host as the tenant endpoint with an `il-` prefix, built from the tenant id by the same rule, and it serves a different set of namespaces rather than the same ones on a second address. The admin centre's client selects it for any route whose family is marked `TenantIsland` — `/resourcequery/`, and the tenant-scoped forms of `/connectivity/`, `/processmining/`, `/copilotflows/`, `/copilotgovernance/` and `/maven/`. Confirmed live for `/resourcequery/resources/query`.",
+   "variables": {
+    "tenantIdHead": {
+     "default": "000000000000000000000000000000",
+     "description": "The first 30 characters of the tenant id with its hyphens removed."
+    },
+    "tenantIdTail": {
+     "default": "ab",
+     "description": "The last 2 characters of the tenant id with its hyphens removed."
+    }
+   }
   }
  ],
  "security": [
@@ -123,6 +1203,10 @@
   {
    "name": "Application Package",
    "description": "Tenant and environment app install"
+  },
+  {
+   "name": "Approval",
+   "description": "Approval requests and the saved views over them. Declared against the legacy `Microsoft.ProcessSimple` resource provider and served here after the client's own path rewrite, so the resource type in a payload still names the old provider."
   },
   {
    "name": "Async Operation",
@@ -303,6 +1387,10 @@
   {
    "name": "Tenant Capacity",
    "description": "Capacity; Storage warnings; Thresholds"
+  },
+  {
+   "name": "Usage",
+   "description": "Tenant-wide product usage, served on the tenant host as both a time series and a flat per-period list. The list form addresses its period as an OData function call inside the path segment rather than as query parameters."
   },
   {
    "name": "User",
@@ -2605,6 +3693,254 @@
     "x-source": "ppac-spa"
    }
   },
+  "/appmanagement/tenants/{tenantId}/environments/{environmentId}/AvailablePackages({applicationPackageId})/Microsoft.Crm.Cloud.Pes.Tps.UserInstallPackage()": {
+   "post": {
+    "operationId": "appmanagement_installAvailablePackage",
+    "tags": [
+     "Application Management"
+    ],
+    "summary": "Package Install",
+    "description": "Installs one available package into an environment. An OData action bound to a keyed entity: the package id is the entity key in parentheses and the action itself takes no arguments.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The tenant id."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The environment id."
+     },
+     {
+      "name": "applicationPackageId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The application package id. Unquoted in the path here, unlike the sibling function's arguments."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "Empty. The client sends `{}`.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Accepted. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "appmanagement/packages",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/appmanagement/tenants/{tenantId}/environments/{environmentId}/AvailablePackages/Microsoft.Crm.Cloud.Pes.Tps.UserGetAvailableInstancePackages(Lcid={lcid},InstanceCountryCode={instanceCountryCode},CrmVersion={crmVersion})": {
+   "get": {
+    "operationId": "appmanagement_getAvailableInstancePackages",
+    "tags": [
+     "Application Management"
+    ],
+    "summary": "Available Packages List",
+    "description": "Lists the application packages that can be installed into one environment, narrowed to the environment's language, country and Dataverse version. An OData function call: the three arguments sit inside the path segment, quoted, rather than in the query string.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The tenant id."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The environment id."
+     },
+     {
+      "name": "lcid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The locale id, quoted in the path — for example `'1033'`."
+     },
+     {
+      "name": "instanceCountryCode",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's country code, quoted in the path."
+     },
+     {
+      "name": "crmVersion",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment's Dataverse version, quoted in the path."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The available packages. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "appmanagement/packages",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/appmanagement/tenants/{tenantId}/environments/{environmentId}/AvailablePackages/Microsoft.Crm.Cloud.Pes.Tps.UserGetManifestFile(ApplicationPackageId={applicationPackageId})": {
+   "get": {
+    "operationId": "appmanagement_getPackageManifestFile",
+    "tags": [
+     "Application Management"
+    ],
+    "summary": "Package Manifest Read",
+    "description": "Returns one available package's manifest. Unlike its sibling, the argument here is unquoted in the path — the client concatenates the id straight in.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The tenant id."
+     },
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The environment id."
+     },
+     {
+      "name": "applicationPackageId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The application package id. Unquoted in the path here, unlike the sibling function's arguments."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The manifest. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "appmanagement/packages",
+    "x-source": "ppac-spa"
+   }
+  },
   "/appmanagement/tenants/{tenantId}/environments/{environmentId}/InstancePackages/Microsoft.Crm.Cloud.Pes.Tps.UserGetInstancePackages(Lcid='1033')": {
    "get": {
     "operationId": "appmanagementTenantsEnvironmentsInstancePackagesMicrosoftCrmCloudPesTpsUserGetInstancePackagesLcid1033_get",
@@ -4382,6 +5718,59 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/connectivity/connectors/get-connector-by-id"
     }
+   }
+  },
+  "/connectivity/tenants/{tenantId}/defaultAIEnvironment": {
+   "get": {
+    "operationId": "connectivity_getDefaultAiEnvironment",
+    "tags": [
+     "Connectivity"
+    ],
+    "summary": "Default AI Environment Read",
+    "description": "Returns the environment the tenant has nominated for AI workloads. Copilot Studio reads it to decide where a new agent's connections are created; the client treats any failure as \"no default\" rather than as an error.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The tenant id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The default AI environment. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "connectivity/environments",
+    "x-source": "ppac-spa"
    }
   },
   "/connectivity/tenants/{tenantId}/environments/{environmentId}/connections OR /connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/{connectorId}/connections": {
@@ -11901,40 +13290,43 @@
      "Governance"
     ],
     "summary": "Lockbox Policies List",
-    "description": "Read from the admin centre's own client. Rule-based policies, lockbox, tenant isolation and the policy engine internally called *Quartz*.",
+    "description": "Lists the tenant's customer-lockbox policies -- the standing approval rules that decide whether Microsoft support may be granted access to environment data, and who must approve it.",
     "parameters": [
      {
       "name": "productType",
       "in": "query",
       "required": false,
       "schema": {
-       "type": "string"
+       "type": "string",
+       "default": "CDS"
       },
-      "description": "`productType`."
+      "description": "The product the policies apply to. The admin centre sends `CDS`."
      },
      {
       "name": "api-version",
       "in": "query",
-      "required": false,
+      "required": true,
       "schema": {
-       "type": "string"
+       "type": "string",
+       "default": "2021-10-01-preview"
       },
-      "description": "`api-version`."
+      "description": "The API version. Send `2021-10-01-preview` on this route."
      }
     ],
     "responses": {
      "200": {
-      "description": "Fields the admin centre reads from this response: `value`, `value[0]`.",
+      "description": "The lockbox policies, in an OData `value` envelope. The item shape was not recorded.",
       "content": {
        "application/json": {
         "schema": {
          "type": "object",
          "properties": {
           "value": {
-           "type": "string"
-          },
-          "value[0]": {
-           "type": "string"
+           "type": "array",
+           "items": {
+            "type": "object"
+           },
+           "description": "The policies."
           }
          }
         }
@@ -11942,7 +13334,21 @@
       }
      }
     },
-    "x-source": "ppac-spa"
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "x-ms-namespace": "governance/lockbox",
+    "x-probe-verified": true
    },
    "post": {
     "operationId": "governanceLockboxPolicies_postX",
@@ -13633,6 +15039,70 @@
     "x-source": "ppac-spa"
    }
   },
+  "/governance/tenants/{tenantId}/environmentRouting/failures": {
+   "post": {
+    "operationId": "governance_reportEnvironmentRoutingFailure",
+    "tags": [
+     "Governance"
+    ],
+    "summary": "Environment Routing Failure Report",
+    "description": "Reports a failure that occurred while environment routing provisioned or cleaned up a developer environment. A write the client makes on its own behalf: nothing a user did is being recorded, and the response is not read.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "tenantId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The tenant id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The failure to record. The client sends `environmentId`, `userId` and a `failureType`, and its cleanup reporter adds `eventName`, `eventData`, `message`, `response`, `cleanUpReasonErrorMessage`, `cleanupData` and `error`.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Recorded. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "governance/environment-routing",
+    "x-source": "ppac-spa"
+   }
+  },
   "/governance/tenants/{tenantId}/ruleBasedPolicies": {
    "post": {
     "operationId": "governanceTenantsRuleBasedPolicies_postX",
@@ -14108,6 +15578,66 @@
      }
     },
     "x-source": "ppac-spa"
+   }
+  },
+  "/licensing/BillingPolicies/getEnvironmentMap": {
+   "post": {
+    "operationId": "licensing_getBillingPolicyEnvironmentMap",
+    "tags": [
+     "Billing Policy"
+    ],
+    "summary": "Environment Map Read",
+    "description": "Returns which environments are attached to which billing policies, in one call. **A POST that reads.** The admin centre calls it once for the whole tenant instead of walking `billingPolicies/{billingPolicyId}/environments` per policy.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The query. The body was not captured.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The policy-to-environment map. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "licensing/billing-policy",
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-notes": [
+     {
+      "note": "The observed request spells the segment **`BillingPolicies`, with a capital B**, and sends a bare `api-version=1`. The documented sibling routes in this namespace spell it `billingPolicies`; both spellings are recorded here as observed rather than reconciled, because only the capital form has been seen on the wire and only the lower-case form is documented.",
+      "source": "live"
+     }
+    ]
    }
   },
   "/licensing/FinOpsLicensing/GetLicenseSummaryV2": {
@@ -15254,6 +16784,49 @@
     }
    }
   },
+  "/licensing/autoClaimPolicies": {
+   "get": {
+    "operationId": "licensing_listAutoClaimPolicies",
+    "tags": [
+     "Licensing (PPAPI)"
+    ],
+    "summary": "Auto-Claim Policies List",
+    "description": "Lists the tenant's licence auto-claim policies — the rules that hand a user a licence the first time they need one, rather than requiring an admin to assign it.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The auto-claim policies. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "licensing/auto-claim-policy",
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
   "/licensing/billingPolicies": {
    "post": {
     "operationId": "licensing_createBillingPolicy",
@@ -15382,6 +16955,12 @@
      }
     },
     "x-ms-namespace": "licensing/billing-policy",
+    "x-notes": [
+     {
+      "note": "The admin centre calls this resource with a **capital `B`** -- `GET /licensing/BillingPolicies` -- and a bare `api-version=1`, where the documentation spells the segment `billingPolicies` and declares a dated version. Both spellings are recorded in this spec as each source gives them rather than reconciled: only the capital form has been seen answering, and only the lower-case form is documented. The one sub-route observed under the capital form, `POST /licensing/BillingPolicies/getEnvironmentMap`, is published at the spelling it was seen at.",
+      "source": "live"
+     }
+    ],
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/licensing/billing-policy/list-billing-policies"
     }
@@ -16325,6 +17904,13 @@
      }
     },
     "x-ms-namespace": "licensing/entitlement-insight",
+    "x-notes": [
+     {
+      "note": "`entitlementId` is a name from a small closed set, not a generated id. The values seen on the wire in this tenant are `File`, `Log`, `Database`, `AppPass`, `CloudFlowRuns`, `PAUnattendedRPA`, `PAAttendedRPA`, `PowerPagesAuthenticated`, `PowerPagesAnonymous`, `MCSMessages`, `W365APAYGO` and `RecycleBin`. The admin centre's storage pages address this route as `/licensing/entitlements/RecycleBin/resources`, which is this operation and not a separate one.",
+      "source": "live"
+     }
+    ],
+    "x-probe-verified": true,
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/licensing/entitlement-insight/get-tenant-resources-across-environments"
     }
@@ -16676,6 +18262,74 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/licensing/entitlement-insight/get-tenant-resource-consumption-by-user"
     }
+   }
+  },
+  "/licensing/environments/entitlements/{entitlementType}": {
+   "get": {
+    "operationId": "licensing_listEnvironmentEntitlementsByType",
+    "tags": [
+     "Entitlement"
+    ],
+    "summary": "Environment Entitlements List (By Type)",
+    "description": "Lists one entitlement type's position across every environment in the tenant. The documented `GET /licensing/environments/{environmentId}/entitlements` inverts the same data: one environment, every type.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "entitlementType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "Database"
+      },
+      "description": "The entitlement type. `Database`, `File` and `Log` were observed; the tenant-level entitlement ids seen elsewhere in this namespace are a wider set."
+     },
+     {
+      "name": "searchRequest",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "A search term applied to the environment list."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The entitlement's position per environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/EnvironmentEntitlementResponseModel"
+         }
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "licensing/entitlement",
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-notes": [
+     {
+      "note": "No `api-version` was sent on the observed calls, which every other route in this namespace requires. Recorded as observed; whether the gateway defaults one or the route is exempt was not established.",
+      "source": "live"
+     }
+    ]
    }
   },
   "/licensing/environments/{environmentId}/allocations": {
@@ -17043,6 +18697,65 @@
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/licensing/resource-threshold/upsert-resource-threshold"
     }
+   }
+  },
+  "/licensing/governance/query": {
+   "post": {
+    "operationId": "licensing_queryEnvironmentGovernance",
+    "tags": [
+     "Licensing (PPAPI)"
+    ],
+    "summary": "Environment Governance Query",
+    "description": "Returns the data-retention and cleanup posture of a named set of environments — recycle bin state, retention jobs and the last refresh — which is what the capacity pages use to explain reclaimable storage. **A POST that reads.**",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [],
+    "requestBody": {
+     "required": true,
+     "description": "The environments to report on.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "environmentIds": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          },
+          "description": "The environment ids to report on."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The governance posture per environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LicensingGovernanceQueryResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "licensing/governance",
+    "x-probe-verified": true,
+    "x-source": "live"
    }
   },
   "/licensing/isvContracts": {
@@ -19820,6 +21533,453 @@
     ]
    }
   },
+  "/powerautomate": {
+   "post": {
+    "operationId": "powerautomate_batch",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Batch",
+    "description": "Runs several flow reads as one request against the family root. The client uses it to fan out per-environment flow listings without a request each.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The batched requests. Each entry carries `httpMethod` and `relativeUrl`.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "requests": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          },
+          "description": "The batched requests, each with an `httpMethod` and a `relativeUrl`."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The batched responses. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/batch",
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "The path is the family root with nothing after it. That is a consequence of the rewrite rather than a designed route: the client posts to the resource-provider endpoint itself, and stripping `providers/Microsoft.ProcessSimple` leaves `/powerautomate` alone.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/powerautomate/GETMYFLOWSUSPENSIONSTATUS": {
+   "post": {
+    "operationId": "powerautomate_getMyFlowSuspensionStatus",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Flow Suspension Status Read",
+    "description": "Reports whether the calling maker's flows have been suspended. **A POST that reads.** The maker portal calls it on load to decide whether to show the suspension banner.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The caller's suspension status. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-notes": [
+     {
+      "note": "The path segment is upper case — `GETMYFLOWSUSPENSIONSTATUS`, not `getMyFlowSuspensionStatus`. That is how it appears in the request line, and how the client writes it; it is not a transcription artefact. Every other segment in this family is camel case.",
+      "source": "live"
+     }
+    ]
+   }
+  },
+  "/powerautomate/agentNodes/conversations/{conversationId}/hitl/{rfiId}": {
+   "delete": {
+    "operationId": "powerautomate_stopAgentNodeConversation",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Agent Conversation Stop",
+    "description": "Ends an agent conversation's outstanding request for input. The client names the operation `stopAgentNodeConversation`, so the delete stops a conversation rather than removing a stored record.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "conversationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The agent conversation id."
+     },
+     {
+      "name": "rfiId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The request-for-input id within the conversation."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Stopped. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/agent-nodes",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/agentnodes/status/workflows/{workflowName}/hitl": {
+   "get": {
+    "operationId": "powerautomate_listWorkflowHumanInTheLoopRequests",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Human-in-the-Loop Requests List",
+    "description": "Lists one workflow's runs that are paused waiting for a human decision. Part of the desktop-flow AI surface, which the client calls `DesktopFlowAIApi`.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "workflowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The Dataverse workflow id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The paused runs. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/agent-nodes",
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "The first segment is lower case here (`agentnodes`) and camel case on the sibling delete route (`agentNodes/conversations/...`). Both spellings are literal in the same client file, so the family is not internally consistent and a caller should not normalise either one.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/powerautomate/approvalViews": {
+   "get": {
+    "operationId": "powerautomate_listApprovalViews",
+    "tags": [
+     "Approval"
+    ],
+    "summary": "Approval Views List",
+    "description": "Lists the approval views available to the caller — the saved queries behind the approvals inbox.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData filter over the views. The client builds `properties/isActive eq '{isActive}'` and `properties/userRole eq '{userRole}'`; note both values are quoted, including the boolean."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The approval views. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/approvals",
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-notes": [
+     {
+      "note": "The underlying resource type is still `/providers/Microsoft.ProcessSimple/approvals/approvalView`: the client declares approvals against the legacy resource provider and the rewriter moves them onto this host. The resource type string is not rewritten with the path.",
+      "source": "live"
+     }
+    ]
+   }
+  },
+  "/powerautomate/approvalViews/{approvalViewId}": {
+   "get": {
+    "operationId": "powerautomate_getApprovalView",
+    "tags": [
+     "Approval"
+    ],
+    "summary": "Approval View Read",
+    "description": "Reads one approval view.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "approvalViewId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The approval view id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The approval view. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/approvals",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/environments": {
+   "get": {
+    "operationId": "powerautomate_listEnvironments",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Environments List",
+    "description": "Lists the environments Power Automate will serve for the calling user. Served on the tenant host, unlike the single-environment read, which is served on the environment host.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environments. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/environments",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/environments/{environmentId}": {
+   "get": {
+    "operationId": "powerautomate_getEnvironment",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Environment Read (Environment Host)",
+    "description": "Reads the Power Automate view of one environment: the flow service's own record of it, rather than BAPI's.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The environment id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The environment. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/environments",
+    "x-probe-verified": true,
+    "x-source": "live",
+    "x-notes": [
+     {
+      "note": "This route keeps its `environments/{environmentId}` segment **while being served on the environment host, which already names the same environment**. Every other observed route in this family has the id lifted out of the path by the client's rewriter, so the id appears twice here and nowhere else. Observed that way on the wire, not reconstructed.",
+      "source": "live"
+     }
+    ]
+   }
+  },
   "/powerautomate/environments/{environmentId}/cloudFlows": {
    "get": {
     "operationId": "powerautomate_listCloudFlows",
@@ -20188,6 +22348,1925 @@
     }
    }
   },
+  "/powerautomate/flows": {
+   "get": {
+    "operationId": "powerautomate_listFlows",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Flows List",
+    "description": "Lists the cloud flows in the environment the host names. This is the maker portal's flow list, and the second-generation replacement for `GET /providers/Microsoft.ProcessSimple/environments/{environmentId}/flows` on `api.flow.microsoft.com`.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData filter over the flow collection."
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Maximum flows to return."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching flows. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-probe-verified": true,
+    "x-source": "live"
+   },
+   "post": {
+    "operationId": "powerautomate_createFlow",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Flow Create",
+    "description": "Creates a cloud flow in the environment the host names.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The flow definition. The shape was not recorded.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The created flow. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}": {
+   "get": {
+    "operationId": "powerautomate_getFlow",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Flow Read",
+    "description": "Reads one cloud flow.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     },
+     {
+      "name": "$expand",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Inline related data."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The flow. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   },
+   "patch": {
+    "operationId": "powerautomate_updateFlow",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Flow Update",
+    "description": "Updates one cloud flow in place.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The properties to change. The shape was not recorded.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The updated flow. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   },
+   "delete": {
+    "operationId": "powerautomate_deleteFlow",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Flow Delete",
+    "description": "Deletes one cloud flow.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Deleted. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/analytics/errors/dailyErrors": {
+   "post": {
+    "operationId": "powerautomate_getFlowDailyErrorAnalytics",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Error Analytics Read",
+    "description": "Returns the flow's failure counts bucketed by day. **A POST that reads** — the window travels in the body. A sibling route replaces the last segment with a breakdown name; the client's breakdowns are `ByStatusCode`, `ByActionOrTrigger` and `BySource`, uppercased in telemetry but sent in the path as declared.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The reporting window. The client sends `startTime` and `endTime`.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "startTime": {
+          "type": "string",
+          "description": "Start of the reporting window."
+         },
+         "endTime": {
+          "type": "string",
+          "description": "End of the reporting window."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The daily failure counts. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/analytics",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/analytics/runs/dailyRuns": {
+   "post": {
+    "operationId": "powerautomate_getFlowDailyRunAnalytics",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Run Analytics Read",
+    "description": "Returns the flow's run counts bucketed by day. **A POST that reads** — the window travels in the body.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The reporting window. The client sends `startTime` and `endTime`.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "startTime": {
+          "type": "string",
+          "description": "Start of the reporting window."
+         },
+         "endTime": {
+          "type": "string",
+          "description": "End of the reporting window."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The daily run counts. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/analytics",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/billingContexts": {
+   "put": {
+    "operationId": "powerautomate_setFlowBillingContext",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Billing Context Set",
+    "description": "Sets which billing context a flow's consumption is charged to. Replaces the whole assignment rather than patching it.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The billing contexts to assign. The client sends a single `value` property.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "value": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          },
+          "description": "The billing contexts to assign to the flow."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Assigned. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/billing",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/consumptionTrends": {
+   "get": {
+    "operationId": "powerautomate_getFlowConsumptionTrends",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Consumption Trends Read",
+    "description": "Returns the flow's consumption over time, which is what the licensing pages plot against a flow's entitlement.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The consumption trend. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/analytics",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/exportRuns": {
+   "post": {
+    "operationId": "powerautomate_exportFlowRuns",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Runs Export",
+    "description": "Starts an export of the flow's run history.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The export request. The client sends `statusFilter`.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "statusFilter": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          },
+          "description": "The run statuses to include in the export."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Accepted. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flow-runs",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/exportToArmTemplate": {
+   "post": {
+    "operationId": "powerautomate_exportFlowToArmTemplate",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "ARM Template Export",
+    "description": "Renders one flow as an ARM template, which is the package format the legacy export/import path uses.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The export options. The shape was not recorded.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The template. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/generateConvertedNativeCDSFlow": {
+   "post": {
+    "operationId": "powerautomate_generateConvertedNativeCdsFlow",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Native Dataverse Conversion",
+    "description": "Produces the Dataverse-native equivalent of a non-solution flow — the conversion step behind moving a flow into a solution.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The conversion request. The shape was not recorded.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The converted flow. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/install": {
+   "post": {
+    "operationId": "powerautomate_installFlow",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Flow Install",
+    "description": "Installs a flow into the environment from a template or package.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The install request. The shape was not recorded.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The installed flow. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/overcapusage": {
+   "get": {
+    "operationId": "powerautomate_getFlowOverCapUsage",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Over-Cap Usage Read",
+    "description": "Reports how far one flow has run past its request cap, which is the per-flow view of the tenant-wide `runOverageFlowUsages` list.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The over-cap usage. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/analytics",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/primeCache": {
+   "post": {
+    "operationId": "powerautomate_primeFlowCache",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Cache Prime",
+    "description": "Warms the service's cache for one flow. The client fires it ahead of a designer open rather than in response to a user action, so a caller has no result to wait for.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Accepted. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/runs": {
+   "get": {
+    "operationId": "powerautomate_listRunsForFlow",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Runs List",
+    "description": "Lists the runs of one flow. The run-history page pages through this.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData filter over the runs. The client filters on run status; the statuses it knows are `NotSpecified`, `Succeeded`, `Running`, `Failed`, `Cancelled` and `Aborted`."
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Maximum runs to return."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching runs. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flow-runs",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/runs/abort": {
+   "post": {
+    "operationId": "powerautomate_abortFlowRuns",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Runs Abort",
+    "description": "Aborts the flow's running executions as a group, as against `cancel`, which names a single run.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Accepted. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flow-runs",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/runs/{runName}/cancel": {
+   "post": {
+    "operationId": "powerautomate_cancelFlowRun",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Run Cancel",
+    "description": "Cancels one in-progress run.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "runName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The run id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Accepted. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flow-runs",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/triggers/{triggerName}": {
+   "get": {
+    "operationId": "powerautomate_getFlowTrigger",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Trigger Read",
+    "description": "Reads one of a flow's triggers. The client URL-encodes the trigger name, so it is a display-facing name rather than an id.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "triggerName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The trigger name. The client URL-encodes it."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The trigger. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/usage": {
+   "post": {
+    "operationId": "powerautomate_getFlowUsage",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Usage Read",
+    "description": "Returns one flow's usage. **A POST that reads**.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The usage query. The shape was not recorded.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The usage. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/analytics",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/flows/{flowName}/validateExportRunsByEvent": {
+   "post": {
+    "operationId": "powerautomate_validateFlowRunExport",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Runs Export Validate",
+    "description": "Checks whether a run-history export would be accepted before `exportRuns` is called.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "flowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The flow id. Named `flowName` by the service; the value is a GUID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The export request to validate. The shape was not recorded.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The validation result. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flow-runs",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/galleries/public/templates": {
+   "get": {
+    "operationId": "powerautomate_listPublicGalleryTemplates",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Public Gallery Templates List",
+    "description": "Lists the public flow templates the maker portal offers on the create page.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The templates. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/galleries",
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
+  "/powerautomate/installedFirstPartyDynamicsApps": {
+   "get": {
+    "operationId": "powerautomate_listInstalledFirstPartyDynamicsApps",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "First-Party Dynamics Apps List",
+    "description": "Lists the first-party Dynamics 365 applications installed in the environment, which is what decides whether a flow template that depends on one can be offered.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The installed applications. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/prepareFlowOperations": {
+   "post": {
+    "operationId": "powerautomate_prepareFlowOperations",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Flow Operations Prepare",
+    "description": "Prepares a batch of flow operations before they are applied — the pre-flight the maker portal runs before a bulk action on a selection of flows.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The operations to prepare. The shape was not recorded.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The prepared operations. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/runOverageFlowUsages": {
+   "get": {
+    "operationId": "powerautomate_listRunOverageFlowUsages",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Run Overage Usages List",
+    "description": "Lists the environment's flows that have run past their request cap. The per-flow view of the same fact is `overcapusage` on the flow itself.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The over-cap flows. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/analytics",
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
+  "/powerautomate/savings/type/{savingsType}/target/{targetId}": {
+   "put": {
+    "operationId": "powerautomate_registerSavings",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Savings Register",
+    "description": "Registers a savings estimate against one target. The client lower-cases the target type into the path and upper-cases the same value into its telemetry name, so the path segment is case-normalised by the caller rather than by the service.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "savingsType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The savings target type, lower-cased by the client before it is put in the path."
+     },
+     {
+      "name": "targetId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The savings target id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Registered. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/savings",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/savings/type/{savingsType}/target/{targetId}/check": {
+   "post": {
+    "operationId": "powerautomate_checkSavingsRegistration",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Savings Registration Check",
+    "description": "Reports whether a savings registration already exists for one target.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "savingsType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The savings target type, lower-cased by the client before it is put in the path."
+     },
+     {
+      "name": "targetId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The savings target id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The registration state. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/savings",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/savings/type/{savingsType}/target/{targetId}/reset": {
+   "post": {
+    "operationId": "powerautomate_resetSavings",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Savings Reset",
+    "description": "Clears a target's savings registration.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "savingsType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The savings target type, lower-cased by the client before it is put in the path."
+     },
+     {
+      "name": "targetId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The savings target id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Reset. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/savings",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/servicePlans": {
+   "get": {
+    "operationId": "powerautomate_listServicePlans",
+    "tags": [
+     "Service Plan"
+    ],
+    "summary": "Service Plans List",
+    "description": "Lists the Power Automate service plans available to the tenant.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The service plans. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/service-plans",
+    "x-source": "ppac-spa"
+   },
+   "post": {
+    "operationId": "powerautomate_createServicePlan",
+    "tags": [
+     "Service Plan"
+    ],
+    "summary": "Service Plan Create",
+    "description": "Creates a service plan.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The plan to create. The shape was not recorded.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The created plan. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/service-plans",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/servicePlans/{licenseId}/renew": {
+   "post": {
+    "operationId": "powerautomate_renewServicePlan",
+    "tags": [
+     "Service Plan"
+    ],
+    "summary": "Service Plan Renew",
+    "description": "Renews one service plan. The client's declaration writes the path with a trailing slash; the id it substitutes is a licence id, not a plan id.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "licenseId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The licence id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Renewed. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/service-plans",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/smartinsightsregister": {
+   "put": {
+    "operationId": "powerautomate_registerUserToSmartInsights",
+    "tags": [
+     "Power Automate (PPAPI)"
+    ],
+    "summary": "Smart Insights Register",
+    "description": "Enrols the calling user in smart insights. Idempotent by construction: it is a `PUT` with no body and no id in the path, so the caller is the resource.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Registered. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/savings",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/solutions/{solutionId}/flows": {
+   "post": {
+    "operationId": "powerautomate_createSolutionFlow",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Solution Flow Create",
+    "description": "Creates a flow inside a solution, as against the environment-level `POST /powerautomate/flows`, which creates a non-solution flow.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "solutionId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The solution id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "The flow definition. The shape was not recorded.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The created flow. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
+    "x-source": "ppac-spa"
+   }
+  },
   "/powerautomate/tenants/{tenantId}/environments/{environmentId}/apis/{apiId}/connections/{connectionId}/{action}": {
    "post": {
     "operationId": "powerautomateTenantsEnvironmentsApisConnections_post",
@@ -20272,6 +24351,112 @@
       "description": "The result."
      }
     },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/workQueues/{workQueueId}/items/export": {
+   "post": {
+    "operationId": "powerautomate_exportWorkQueueItems",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Work Queue Items Export",
+    "description": "Starts an export of one work queue's items.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "workQueueId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The work queue id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Accepted. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/work-queues",
+    "x-source": "ppac-spa"
+   }
+  },
+  "/powerautomate/workflows/{workflowName}/associableFlows": {
+   "get": {
+    "operationId": "powerautomate_listAssociableFlows",
+    "tags": [
+     "Cloud Flow"
+    ],
+    "summary": "Associable Flows List",
+    "description": "Lists the flows that may be attached to one Dataverse workflow record.",
+    "servers": [
+     {
+      "url": "https://{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+      "variables": {
+       "environmentIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "environmentIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "workflowName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "example": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "The Dataverse workflow id."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "1"
+      },
+      "description": "The API version. Send `1` on this route."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The associable flows. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "powerautomate/flows",
     "x-source": "ppac-spa"
    }
   },
@@ -23622,6 +27807,13 @@
      }
     },
     "x-ms-namespace": "resourcequery/resource-query",
+    "x-notes": [
+     {
+      "note": "Served on the **tenant island** host, `il-{head}.{tail}.tenant.api.powerplatform.com`, not on the plain tenant host -- the `il-` prefix is the whole difference and the id encoding is identical. Observed with `api-version=2022-03-01-preview`, a request of `{Options:{Top,Skip,SkipToken}, TableName:\"PowerPlatformResources\", Clauses:[…]}` and a response of `{totalRecords, count, resultTruncated, skipToken, data[], facets[]}`. The `type` values seen in `data[]` are `microsoft.powerapps/modeldrivenapps`, `microsoft.powerplatform/environments`, `microsoft.powerautomate/cloudflows` and `microsoft.copilotstudio/agents`, so one query spans products rather than one resource kind.",
+      "source": "live"
+     }
+    ],
+    "x-probe-verified": true,
     "requestBody": {
      "required": true,
      "content": {
@@ -23712,6 +27904,453 @@
      }
     },
     "x-source": "ppac-spa"
+   }
+  },
+  "/usage/CopilotStudioTimeSeries": {
+   "get": {
+    "operationId": "usage_getCopilotStudioTimeSeries",
+    "tags": [
+     "Usage"
+    ],
+    "summary": "Copilot Studio Time Series Read",
+    "description": "Returns Copilot Studio usage as a time series over the tenant. The admin centre's usage charts read this; the sibling `CopilotStudioUsage(from,to)` returns the same period as a flat list rather than a series.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "timeGrain",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The bucket size. `Day` was observed."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData filter over the series."
+     },
+     {
+      "name": "$orderby",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData ordering. The admin centre sends `Date asc`."
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Maximum points to return."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The usage series. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "usage/time-series",
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
+  "/usage/CopilotStudioUsage(from={from},to={to})": {
+   "get": {
+    "operationId": "usage_getCopilotStudioUsage",
+    "tags": [
+     "Usage"
+    ],
+    "summary": "Copilot Studio Usage Read",
+    "description": "Returns Copilot Studio usage over an explicit date range. **The range is an OData function call in the path**, not a pair of query parameters: the resource is addressed as `CopilotStudioUsage(from=…,to=…)` and the OData system options are then applied to its result.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "from",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "2026-01-01"
+      },
+      "description": "Start of the range, `YYYY-MM-DD`. Part of the function call in the path segment, not a query parameter."
+     },
+     {
+      "name": "to",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "2026-01-31"
+      },
+      "description": "End of the range, `YYYY-MM-DD`. Part of the function call in the path segment, not a query parameter."
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Maximum rows to return."
+     },
+     {
+      "name": "$orderby",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData ordering."
+     },
+     {
+      "name": "$count",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Include the total row count. The admin centre sends `true`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The usage rows. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "usage/usage",
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
+  "/usage/PowerAppsTimeSeries": {
+   "get": {
+    "operationId": "usage_getPowerAppsTimeSeries",
+    "tags": [
+     "Usage"
+    ],
+    "summary": "Power Apps Time Series Read",
+    "description": "Returns Power Apps usage as a time series over the tenant. The admin centre's usage charts read this; the sibling `PowerAppsUsage(from,to)` returns the same period as a flat list rather than a series.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "timeGrain",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The bucket size. `Day` was observed."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData filter over the series."
+     },
+     {
+      "name": "$orderby",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData ordering. The admin centre sends `Date asc`."
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Maximum points to return."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The usage series. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "usage/time-series",
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
+  "/usage/PowerAppsUsage(from={from},to={to})": {
+   "get": {
+    "operationId": "usage_getPowerAppsUsage",
+    "tags": [
+     "Usage"
+    ],
+    "summary": "Power Apps Usage Read",
+    "description": "Returns Power Apps usage over an explicit date range. **The range is an OData function call in the path**, not a pair of query parameters: the resource is addressed as `PowerAppsUsage(from=…,to=…)` and the OData system options are then applied to its result.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "from",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "2026-01-01"
+      },
+      "description": "Start of the range, `YYYY-MM-DD`. Part of the function call in the path segment, not a query parameter."
+     },
+     {
+      "name": "to",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "2026-01-31"
+      },
+      "description": "End of the range, `YYYY-MM-DD`. Part of the function call in the path segment, not a query parameter."
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Maximum rows to return."
+     },
+     {
+      "name": "$orderby",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData ordering."
+     },
+     {
+      "name": "$count",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Include the total row count. The admin centre sends `true`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The usage rows. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "usage/usage",
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
+  "/usage/PowerAutomateTimeSeries": {
+   "get": {
+    "operationId": "usage_getPowerAutomateTimeSeries",
+    "tags": [
+     "Usage"
+    ],
+    "summary": "Power Automate Time Series Read",
+    "description": "Returns Power Automate usage as a time series over the tenant. The admin centre's usage charts read this; the sibling `PowerAutomateUsage(from,to)` returns the same period as a flat list rather than a series.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "timeGrain",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The bucket size. `Day` was observed."
+     },
+     {
+      "name": "$filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData filter over the series."
+     },
+     {
+      "name": "$orderby",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData ordering. The admin centre sends `Date asc`."
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Maximum points to return."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The usage series. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "usage/time-series",
+    "x-probe-verified": true,
+    "x-source": "live"
+   }
+  },
+  "/usage/PowerAutomateUsage(from={from},to={to})": {
+   "get": {
+    "operationId": "usage_getPowerAutomateUsage",
+    "tags": [
+     "Usage"
+    ],
+    "summary": "Power Automate Usage Read",
+    "description": "Returns Power Automate usage over an explicit date range. **The range is an OData function call in the path**, not a pair of query parameters: the resource is addressed as `PowerAutomateUsage(from=…,to=…)` and the OData system options are then applied to its result.",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
+    "parameters": [
+     {
+      "name": "from",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "2026-01-01"
+      },
+      "description": "Start of the range, `YYYY-MM-DD`. Part of the function call in the path segment, not a query parameter."
+     },
+     {
+      "name": "to",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "2026-01-31"
+      },
+      "description": "End of the range, `YYYY-MM-DD`. Part of the function call in the path segment, not a query parameter."
+     },
+     {
+      "name": "$top",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Maximum rows to return."
+     },
+     {
+      "name": "$orderby",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "OData ordering."
+     },
+     {
+      "name": "$count",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Include the total row count. The admin centre sends `true`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The usage rows. No response body was recorded."
+     }
+    },
+    "x-ms-namespace": "usage/usage",
+    "x-probe-verified": true,
+    "x-source": "live"
    }
   },
   "/usermanagement/environments/{environmentId}/plugins": {
@@ -26494,7 +31133,21 @@
       "description": "The desired ISV contract status."
      }
     },
-    "type": "object"
+    "type": "object",
+    "x-notes": [
+     {
+      "note": "The live response carries three properties this model does not declare: `type` (observed value `TenantOwned`), `environmentIds[]`, and `payGoEntitlements[]` of `{entitlementId, productCategory, payAsYouGoState, value}`. The entitlement ids seen are `File`, `Log`, `Database`, `AppPass`, `CloudFlowRuns`, `PAUnattendedRPA`, `PAAttendedRPA`, `PowerPagesAuthenticated`, `PowerPagesAnonymous`, `MCSMessages` and `W365APAYGO`.",
+      "source": "live"
+     },
+     {
+      "note": "**An enabled pay-as-you-go entitlement reports `value` as `1.7976931348623157E+308`** -- `Double.MaxValue`, used as a sentinel for \"no limit\". It is a real number in the JSON, so a generated client that binds it to a decimal overflows on a perfectly ordinary policy, and one that binds it to a double will render an unlimited entitlement as a very large quota.",
+      "source": "live"
+     },
+     {
+      "note": "`billingInstrument.id` is a full ARM resource id of the form `/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.PowerPlatform/accounts/{accountName}`, so the policy points at an Azure account rather than merely naming one.",
+      "source": "live"
+     }
+    ]
    },
    "BillingPolicyResponseModelResponseWithOdataContinuation": {
     "properties": {
@@ -28893,6 +33546,43 @@
     },
     "type": "object"
    },
+   "EnvironmentGovernancePosture": {
+    "type": "object",
+    "description": "One environment's data-retention and cleanup posture. Property names are as observed; types beyond the obvious counts and flags were not established from a single response.",
+    "properties": {
+     "environmentId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The environment id."
+     },
+     "recurringBulkDeleteJobCount": {
+      "type": "integer",
+      "description": "How many recurring bulk-delete jobs the environment has."
+     },
+     "recurringRetentionJobCount": {
+      "type": "integer",
+      "description": "How many recurring retention jobs the environment has."
+     },
+     "longTermRetention": {
+      "description": "The environment's long-term retention configuration."
+     },
+     "systemJobCleanup": {
+      "description": "The environment's system-job cleanup configuration."
+     },
+     "recycleBinEnabled": {
+      "type": "boolean",
+      "description": "Whether the recycle bin is on."
+     },
+     "recycleBinCleanupIntervalInDays": {
+      "type": "integer",
+      "description": "How long the recycle bin retains a deleted record."
+     },
+     "lastRefreshedDate": {
+      "type": "string",
+      "description": "When these figures were last recomputed."
+     }
+    }
+   },
    "EnvironmentGroup": {
     "properties": {
      "childrenGroupIds": {
@@ -30830,6 +35520,33 @@
      }
     },
     "type": "object"
+   },
+   "LicensingGovernanceQueryResponse": {
+    "type": "object",
+    "description": "The result of `POST /licensing/governance/query`. Observed on the wire; the double envelope (`value.value`) is the service's, not a transcription artefact.",
+    "properties": {
+     "statusCode": {
+      "type": "integer",
+      "description": "The service's own status code, repeated inside a 200 body."
+     },
+     "isErrorResult": {
+      "type": "boolean",
+      "description": "Whether the call failed, reported in the body rather than by the HTTP status."
+     },
+     "value": {
+      "type": "object",
+      "description": "The envelope around the rows.",
+      "properties": {
+       "value": {
+        "type": "array",
+        "description": "One row per requested environment.",
+        "items": {
+         "$ref": "#/components/schemas/EnvironmentGovernancePosture"
+        }
+       }
+      }
+     }
+    }
    },
    "LicensingPrincipal": {
     "properties": {

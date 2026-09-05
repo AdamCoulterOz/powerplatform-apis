@@ -8,7 +8,7 @@ This is the `ppapi` folder of the [powerplatform-apis](..) monorepo; the spec br
 
 - `docs/` is the mirror itself, laid out to match the site: `{namespace}/{group}.md` for each operation group overview and `{namespace}/{group}/{operation}.md` for each operation, plus `index.md` and `whats-new-changed.md`. Links between pages are rewritten to work locally; links out of the corpus point back at learn.microsoft.com.
 - `catalogue/` is a machine-readable index of every documented operation (JSON and CSV): namespace, group, operation, method, path, api-version, preview flag, introduction date where the changelog announced it, and a logical-resource grouping that maps Microsoft's namespaces onto the resources they actually manage. It indexes the mirror, so the 25 operations that exist only in the spec are absent from it by design.
-- `oas/openapi.json` is a single OpenAPI 3.0.3 spec: 335 operations over 290 paths and 436 schemas, reverse-engineered from the docs and then corrected and extended against two further sources (see [Sources and how they are graded](#sources-and-how-they-are-graded)). One spec, not one per namespace: the namespaces are transport and org-chart artifacts, and the resources people actually manage span them. Tags group operations by logical resource (the same taxonomy as the catalogue, plus seven resources the docs never describe) and each operation carries `x-ms-namespace` recording where Microsoft filed it. The Learn pages are generated from an internal OpenAPI, so the tables invert cleanly. Treat the unverified majority as a map, not a contract.
+- `oas/openapi.json` is a single OpenAPI 3.0.3 spec: 393 operations over 344 paths and 438 schemas, reverse-engineered from the docs and then corrected and extended against four further sources (see [Sources and how they are graded](#sources-and-how-they-are-graded)). One spec, not one per namespace: the namespaces are transport and org-chart artifacts, and the resources people actually manage span them. Tags group operations by logical resource (the same taxonomy as the catalogue, plus seven resources the docs never describe) and each operation carries `x-ms-namespace` recording where Microsoft filed it. The Learn pages are generated from an internal OpenAPI, so the tables invert cleanly. Treat the unverified majority as a map, not a contract.
 - `enrichment.json` is the hand-maintained layer over the generated spec, and the only place to edit: `oas.py` rebuilds `oas/openapi.json` from `docs/` on every run, so a change made in the spec itself is lost on the next mirror commit. Its sections:
   - `info` overrides the spec description; `servers` declares the host forms (see [Hosts](#hosts)); `securityScheme` merges into the OAuth2 scheme.
   - `operations`, keyed `namespace/group/slug`, curates a docs-derived operation: a clean `summary`, optional `tags`, `description` and `x-probe-verified`; `parameters` patches a parameter by name (deep-merging into its `schema`, so a wrong default or a missing enum is corrected without restating the type) or appends one the docs never listed; `responses` adds or corrects response bodies, headers and status codes; `requestBody` supplies one the docs omit; and `notes` records a doc-vs-reality discrepancy, which comes out as `x-notes` (see [Notes](#notes)). A note is a plain string, graded by the entry's own `x-source`, or `{"note": ..., "source": ...}` when it is graded differently — a live-verified operation can still carry a finding only the CLI attests to.
@@ -20,7 +20,7 @@ This is the `ppapi` folder of the [powerplatform-apis](..) monorepo; the spec br
   `oas.py` applies all of it at generate time and warns about keys that no longer match, so docs renames surface in the daily run. New operations that have no entry get a mechanical cleanup of Microsoft's title.
 - `scripts/` regenerates everything: `fetch.py` (stdlib only), then `catalogue.py`, then `oas.py`. `pac_extract.py` is separate: it mines the Power Platform CLI's own client and diffs it against the spec, and never writes the spec itself.
 
-**4. The Terraform provider's client**, `microsoft/terraform-provider-power-platform`. A third party's working
+**5. The Terraform provider's client**, `microsoft/terraform-provider-power-platform`. A third party's working
 client: the weakest warrant here, and sometimes the only witness. Content sourced from it carries
 `x-source: provider` and never `x-probe-verified` — it is evidence that an operation *exists and is used*, and
 says nothing about what the service returns.
@@ -61,27 +61,32 @@ element, so the duplication is gone.
 
 ## Hosts
 
-The API answers on three host forms, and which one an operation is served from is part of its contract. All three are in `servers`, and every operation added from recorded traffic names the one it was observed on.
+The API answers on four host forms, and which one an operation is served from is part of its contract. All four are in `servers`, and every operation added from recorded traffic names the one it was observed on.
 
 - `https://api.powerplatform.com` — the global endpoint. Everything the docs describe is reachable here; the gateway routes to the tenant's own cluster.
 - `https://{head}.{tail}.tenant.api.powerplatform.com` — tenant-scoped.
 - `https://{head}.{tail}.environment.api.powerplatform.com` — environment-scoped.
+- `https://il-{head}.{tail}.tenant.api.powerplatform.com` — the tenant **island**. Same id encoding as the tenant host with an `il-` prefix, and it is not a second address for the same surface: it serves a different set of namespaces. Confirmed live for `POST /resourcequery/resources/query`.
 
 The tenant and environment hosts are derived from an id alone; there is no region or scale unit in them. Remove the hyphens from the tenant or environment id to get 32 hex characters, then split: the first 30 are the first DNS label, the last 2 are the second. Environment `00000000-0000-0000-0000-0000000000ab` is therefore `https://000000000000000000000000000000.ab.environment.api.powerplatform.com`. Because the host already identifies the scope, these paths carry no id segment — `/connectivity/connections` on the environment host is the same resource as `/connectivity/environments/{environmentId}/connections` on the global host, and `/powerapps/environment` is singular with no id at all.
+
+Which host serves a path is not a property of the path. The admin centre and maker portals write every request against a *placeholder* hostname and let a per-family routing table swap in the real one, keyed on a `ppapiNamespace` of `Environment`, `Tenant`, `TenantIsland` or `Token`. That table is reproduced under `info.x-ppapi-host-routing`, and it is the rule this `servers` list describes. It also explains the missing id segments: when the namespace is `Environment` the client lifts the environment id out of the path and into the hostname.
 
 `POST /powerapps/apps/{appName}/locate` on the global host is the bootstrap: given only an app id it returns the tenant, environment and geography needed to build the right host for everything after. `GET /gateway/cluster` confirms which stamp a host resolved to.
 
 ## Sources and how they are graded
 
-Three sources, in descending order of authority. Where they disagree the higher one wins, and the disagreement is recorded rather than smoothed over — there are 36 operations carrying `x-notes` for exactly this reason.
+Five sources, in descending order of authority. Where they disagree the higher one wins, and the disagreement is recorded rather than smoothed over — there are 47 operations carrying `x-notes` for exactly this reason.
 
-**1. Recorded first-party traffic** — HAR captures of the Power Platform admin centre and the Power Apps maker portal driving this API on a real tenant. This is an observation of the running service, which beats any description of it. **34 of 240 operations** and **30 of 434 schemas** carry `x-probe-verified: true`; 25 of those operations appear in no other source at all, across seven resources Microsoft does not document (user settings, feature gates, notifications, service plans, gateway clusters, Copilot governance settings, governance configurations).
+**1. Recorded first-party traffic** — HAR captures of the Power Platform admin centre and the Power Apps maker portal driving this API on a real tenant. This is an observation of the running service, which beats any description of it. **53 of 393 operations** and **30 of 438 schemas** carry `x-probe-verified: true`, across resources Microsoft does not document at all (user settings, feature gates, notifications, service plans, gateway clusters, Copilot governance settings, governance configurations, tenant usage, and the second-generation Power Automate surface below).
 
 The tokens the recorded clients presented also settle authentication: the audience is `https://api.powerplatform.com` on all three hosts, and the 87 granular delegated permissions seen in real tokens are listed under `x-delegated-scopes` on the security scheme. Which scope each operation requires is *not* recorded there — a token shows what was granted, not what was needed.
 
-**2. `Microsoft.PowerPlatform.Management`**, the Kiota-generated client, mined by `scripts/pac_extract.py` from **2.0.3503.299** on nuget.org — not the build bundled in the `pac` CLI, which is two releases behind and predates macro regions entirely, so a negative from it is blindness rather than evidence (`info.x-source-builds` records which build these claims rest on). Kiota generates from OpenAPI, so this assembly and the Learn pages are two machine projections of the same internal document — and the client is much the less lossy one, because it carries RFC 6570 URL templates, request and response types, discriminated unions and enum members rather than prose tables. It carries no descriptions at all, though: decompilation strips XML doc comments, so it can say what the shape is and never what it means. Content sourced only from it carries `x-source: pac-cli` and never `x-probe-verified`: a shipped client is strong structural evidence, but the build can be older than the service. **6 operations** and **59 schemas** are marked this way.
+**2. The first-party maker portal and admin centre bundles** — the shipped JavaScript for `make.powerapps.com`, `make.powerautomate.com`, `make.powerpages.microsoft.com` and `copilotstudio.microsoft.com`, mined from the complete chunk sets. A bundle holds every route the client *can* call, including branches no session exercises, so its coverage is wider than any capture while its confirmation is weaker; it is also the only artefact that shows how a request is *built*, which a capture cannot. Content from it carries `x-source: ppac-spa` and never `x-probe-verified`. **118 operations** are marked this way. Three generated blocks on `info` carry what does not fit on an operation: `x-ppapi-host-routing` (the family-to-host table), `x-ppapi-legacy-route-map` (74 first-generation-to-second-generation path rewrites) and `x-ppapi-unbound-routes` (46 routes seen in the client whose HTTP verb could not be tied to a call site — inventoried rather than published, because a guessed verb is indistinguishable from an observed one once it is in a spec). `info.x-source-builds` records the exact builds.
 
-**3. The docs mirror** in `docs/`, parsed by `oas.py`. Everything not marked otherwise comes from here, and that is still most of the file. Treat the unmarked majority as a map, not a contract.
+**3. `Microsoft.PowerPlatform.Management`**, the Kiota-generated client, mined by `scripts/pac_extract.py` from **2.0.3503.299** on nuget.org — not the build bundled in the `pac` CLI, which is two releases behind and predates macro regions entirely, so a negative from it is blindness rather than evidence (`info.x-source-builds` records which build these claims rest on). Kiota generates from OpenAPI, so this assembly and the Learn pages are two machine projections of the same internal document — and the client is much the less lossy one, because it carries RFC 6570 URL templates, request and response types, discriminated unions and enum members rather than prose tables. It carries no descriptions at all, though: decompilation strips XML doc comments, so it can say what the shape is and never what it means. Content sourced only from it carries `x-source: pac-cli` and never `x-probe-verified`: a shipped client is strong structural evidence, but the build can be older than the service. **6 operations** and **59 schemas** are marked this way.
+
+**4. The docs mirror** in `docs/`, parsed by `oas.py`. Everything not marked otherwise comes from here, and that is still most of the file. Treat the unmarked majority as a map, not a contract.
 
 ### Why the docs are still the base, and the client is not
 
@@ -90,6 +95,22 @@ The client is the better description of the surface it covers. It does not cover
 A note on a figure that has been quoted the other way: the assembly holds 244 distinct URL templates, which looks like far more than 148 paths. It is not. There are 237 request-builder classes, and only 148 of them ever issue an HTTP verb — the other 89 are fluent-API navigation nodes such as `{+baseurl}/analytics`, which exist so `client.Analytics.AdvisorRecommendations` can be written and address nothing on their own. (Each builder also declares its template twice, once per constructor, so counting raw template literals gives 475.) Any per-namespace count taken from template literals rather than from `RequestInformation(Method.…)` call sites overstates the surface by roughly a factor of two.
 
 So the client is applied as enrichment rather than as the base: `pac_extract.py --check` diffs it against the generated spec after every mirror run, and what it finds is written into `enrichment.json` by hand. As of the last run that diff is down to the deliberate disagreements listed below.
+
+### Two generations of Power Automate, and why both are in the corpus
+
+The `/powerautomate/` family here is the second generation of the Power Automate API, and the first-party
+client reaches it by rewriting the first. The maker portal still authors legacy
+`api.flow.microsoft.com/providers/Microsoft.ProcessSimple/...` URLs and converts them in a request
+interceptor: strip `providers/Microsoft.ProcessSimple`, lift `environments/{id}` out of the path and into
+the hostname, prefix `/powerautomate`, force `api-version=1`. The gate is `isPPAPIFlowEnabled`, hard-coded
+true in the shipped settings, so the legacy branch is dead code in the current client — a live sweep of the
+maker portal on 2026-09-05 recorded not one call to `api.flow.microsoft.com`.
+
+Neither generation supersedes the other in this corpus. The [`flow`](../flow) spec keeps documenting
+`api.flow.microsoft.com` and `Microsoft.ProcessSimple`, which the CLI, the PowerShell admin module and
+third-party clients still call. A path that looks unfamiliar in one spec is usually the other one's spelling
+of the same resource, and the mapping is mechanical: it is the rule above, recorded in full under
+`info.x-notes`.
 
 ### Where the sources contradict each other
 

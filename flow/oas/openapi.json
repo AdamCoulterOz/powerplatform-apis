@@ -20,6 +20,10 @@
    {
     "note": "**`~default` is a value, not a route.** Clients substitute the literal `~default` for the environment name to mean the tenant default environment, so it is documented as a value of `environmentName` rather than as a path of its own.",
     "source": "ps-admin"
+   },
+   {
+    "note": "**A first-party rewrite of this surface exists, and it is not this host.** The current Power Automate maker portal does not call `api.flow.microsoft.com` at all. Its bundle authors legacy `Microsoft.ProcessSimple` URLs and rewrites them in an interceptor: strip `providers/Microsoft.ProcessSimple`, lift `environments/{id}` out of the path and into the hostname, prefix `/powerautomate`, and force `api-version=1`. The result is the `/powerautomate/` family on the environment-scoped Power Platform API host, documented in spec:ppapi. The rewrite is gated by `isPPAPIFlowEnabled`, which is hard-coded true in the shipped settings, so for that client the routes in THIS spec are dead code.\n\nThis spec is still the right description for everyone else: the Power Platform CLI, the `Microsoft.PowerApps.Administration.PowerShell` module and the third-party clients mined here all call `api.flow.microsoft.com` with the `Microsoft.ProcessSimple` provider paths. Neither surface supersedes the other in the corpus — they are two generations that are both live, and which one a caller gets depends on which client it is.",
+    "source": "ppac-spa"
    }
   ]
  },

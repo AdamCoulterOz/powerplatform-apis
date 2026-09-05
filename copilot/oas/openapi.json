@@ -2,8 +2,231 @@
  "openapi": "3.0.3",
  "info": {
   "title": "Copilot Studio Bot Management API",
-  "version": "2022-01-15",
-  "description": "The Copilot Studio API reads and writes an agent's Application Insights configuration \u2014 the connection string and the switches controlling which telemetry the agent emits.\n\nThe host is the environment's own `PowerVirtualAgents` gateway, resolved from the environment record; the `x-cci-tenantid` header is mandatory. There is no list endpoint: enumerate agents through the Dataverse `bots` table to obtain a `botId`.\n\nAccess is gated on a per-user Copilot Studio licence \u2014 Power Platform tenant-admin rights alone are refused.\n\nUnofficial and reverse-engineered \u2014 see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/copilot) for how it was derived and which parts are verified."
+  "version": "2022-01-15 + botauthoring/v1 + botmanagement/v1|v2 + chatbotmanagement (four coexisting route families; see info.x-versioning)",
+  "description": "The management and authoring surface behind **Copilot Studio** (formerly Power Virtual Agents): an agent's Application Insights configuration, and the dialogs, intents, variable types, fallback, bot provisioning, content, connectors and extensions the authoring client reads and writes.\n\n**This spec covers more than one deployment, and says which is which per operation.** The Application Insights operations were probed live against the environment's own `PowerVirtualAgents` gateway (`pvaRuntimeHost`), whose host must be looked up from the environment record. Everything else was read out of the Copilot Studio maker portal's JavaScript, where the host is a variable injected into the API client at construction and never appears as a literal. Those routes carry their own `servers` entry, and nothing here claims the two hosts are the same machine -- see `info.x-host-families`.\n\nThere is no list endpoint on the gateway surface: enumerate agents through the Dataverse `bots` table to obtain a `botId`. Access to the gateway surface is gated on a per-user Copilot Studio licence -- Power Platform tenant-admin rights alone are refused.\n\nUnofficial and reverse-engineered -- see the [README](https://github.com/AdamCoulterOz/powerplatform-apis/tree/main/copilot) for how it was derived and which parts are verified.",
+  "x-versioning": {
+   "description": "Four route families coexist on this boundary, and they do not share a versioning scheme. The date form and the v1/v2 forms are not the same surface and are not assumed to be.",
+   "families": [
+    {
+     "prefix": "/api/botmanagement/2022-01-15/",
+     "versionStyle": "ISO date as a path segment",
+     "host": "pvaRuntimeHost",
+     "operations": 2,
+     "evidence": "Probed live. `2022-01-15` is part of the route: an `?api-version=` query string is ignored, and a different date in the path is not a route at all."
+    },
+    {
+     "prefix": "/api/botauthoring/v1/",
+     "versionStyle": "major-version path segment",
+     "host": "botApiHost",
+     "operations": 27,
+     "evidence": "Read from the copilotstudio maker bundle (`main.cb28c5f0.js`, build 0.0.20260903.1-26.08.30-prod, downloaded 2026-09-05). Served by nswag-generated TypeScript clients: `http.fetch(url, options)` with the verb in the options literal."
+    },
+    {
+     "prefix": "/api/botmanagement/v1/ and /api/botmanagement/v2/",
+     "versionStyle": "major-version path segment",
+     "host": "botApiHost for v1 `feedback`, v1 `.../connectors`, v1 `.../copilot` and all of v2; copilotStudioRegionalHost for v1 `aibuilder-models`, `copilot-plugins` and `content/botcomponents`",
+     "operations": 13,
+     "evidence": "Read from the bundle. The same `/api/botmanagement/v1/environments/{environmentId}/...` prefix appears on BOTH injected hosts in the same chunk, which is the sharpest single reason not to collapse the two servers."
+    },
+    {
+     "prefix": "/chatbotmanagement/tenants/{tenantId}/environments/{environmentId}/bots/{botId}/api/",
+     "versionStyle": "none -- unversioned, and tenant-scoped in the path rather than environment-scoped",
+     "host": "botApiHost",
+     "operations": 2,
+     "evidence": "Read from the bundle. The only family here that puts a tenant id in the path; the gateway family puts it in the `x-cci-tenantid` header instead."
+    }
+   ],
+   "migrationInFlight": {
+    "flag": "BotManagementEndpointMigration2026",
+    "whatItGates": "The bundle reads `getConfig().BotManagementEndpointMigration2026.params.isEnabled` into a field named `convergedAgentEndpointEnabled`, and uses it to pick a `convergedEndpointApiClient`. So the client can already choose between the endpoint it has been using and a converged one.",
+    "evidence": "r.convergedAgentEndpointEnabled=i.k.getConfig().BotManagementEndpointMigration2026.params.isEnabled,r.convergedEndpointApiClient=P(r.should",
+    "whyItMatters": "This is the most likely explanation for why several endpoint families coexist on this boundary at once: a date-versioned gateway route, v1 and v2 route families on an injected host, and an unversioned `chatbotmanagement` family. A reader should expect this layout to change, and should not treat the split as settled architecture.",
+    "notEstablished": "Which family is the 'converged' one, what the converged client's base URL is, and whether the flag is on for any tenant. The flag name and the two field names above are the whole of the evidence."
+   }
+  },
+  "x-host-families": {
+   "description": "Three distinct hosts appear in this spec. Nothing here composes one from another, and no operation is assigned to a host the evidence did not put it on.",
+   "hosts": [
+    {
+     "server": "pvaRuntimeHost",
+     "what": "The environment's own PowerVirtualAgents gateway, `powervamg.<scale-unit>.gateway.prod.island.powerapps.com`. Opaque per environment; read it from BAPI's `properties.runtimeEndpoints[\"microsoft.PowerVirtualAgents\"]`.",
+     "howKnown": "Probed live against a real environment. See the server description for the lookup."
+    },
+    {
+     "server": "botApiHost",
+     "what": "The `baseUrl` the generated Copilot Studio API clients are constructed with. 38 of the 42 bundle routes here are built against it.",
+     "howKnown": "Not known. The extract's coverage caveat names it as one of two hosts that could not be reduced to a literal or a derivation rule -- injected at client construction from runtime region discovery."
+    },
+    {
+     "server": "copilotStudioRegionalHost",
+     "what": "The `regionUrl` a second client is constructed with; 4 routes are built against it. Concrete hosts for the family are observed (`powerva.microsoft.com` and siblings), but no route was confirmed against one.",
+     "howKnown": "Not known per route. Same caveat as `botApiHost`; the difference is that candidate values exist."
+    }
+   ],
+   "openQuestion": {
+    "question": "Is `botApiHost` the same deployment as `pvaRuntimeHost`?",
+    "forSame": [
+     "Both serve a path family rooted at `/api/botmanagement/`. The gateway answers `/api/botmanagement/2022-01-15/environments/{environmentId}/bots/{botId}/...`; the bundle calls `/api/botmanagement/v1/environments/{environmentId}/bots/{botId}/...` and `/api/botmanagement/v2/environments/{environmentId}/bots`. Same shape, same segment names, one segment different.",
+     "Both carry `CCI`-prefixed headers unique to this boundary: the gateway requires `x-cci-tenantid`, and every `botauthoring` call sets a header whose bundle key is `_X-CCI-Routing-BotId`."
+    ],
+    "forDifferent": [
+     "The extract's own reading of these clients says they are 'served from a regional host injected into the client', which describes the `powerva.microsoft.com` family rather than a per-environment `powervamg.*` gateway.",
+     "The gateway host is per environment and the environment id is also in the path; a regional host would serve many environments. Both patterns put the environment id in the path, so the path shape does not settle it."
+    ],
+    "resolution": "Unresolved, and deliberately left so. The two are modelled as separate `servers` entries. Sending a `botauthoring` request to a resolved `pvaRuntimeHost` is the one-request experiment that would settle it; it was not run, because nothing in this spec was executed."
+   }
+  },
+  "x-adjacent-routes": {
+   "description": "Routes the Copilot Studio bundle calls that are NOT modelled here, because they belong to other boundaries in this corpus. Listed so a reader who mines the same bundle can see they were considered and placed, not missed.",
+   "routes": [
+    {
+     "host": "api.powerapps.com",
+     "path": "/powervirtualagent/listBots",
+     "apiVersion": "2020-06-01",
+     "method": "not established",
+     "belongsTo": "spec:powerapps",
+     "why": "A bot LIST, on the PowerApps RP host rather than on any Copilot Studio host. Supports `$search`, `$top`, `$orderby` and follows a `nextLink`. Worth flagging because this spec's gateway surface has no list endpoint at all and directs callers to the Dataverse `bots` table instead; this is a third route to the same question, on a fourth host. It does not contradict the probed finding that `GET .../bots` 404s on `pvaRuntimeHost` -- different service."
+    },
+    {
+     "host": "api.powerapps.com",
+     "path": "/providers/Microsoft.PowerApps/objectIds/{objectId}/features",
+     "apiVersion": "2020-06-01",
+     "method": "not established",
+     "belongsTo": "spec:powerapps",
+     "why": "Per-user allow-list features; read alongside the BAPI equivalent on the same screen."
+    },
+    {
+     "host": "api.powerapps.com",
+     "path": "/providers/Microsoft.PowerApps/objectIds/{objectId}/userSettings/{settingName}",
+     "apiVersion": "not established",
+     "method": "not established",
+     "belongsTo": "spec:powerapps",
+     "why": "Per-user settings."
+    },
+    {
+     "host": "api.powerapps.com",
+     "path": "/providers/Microsoft.PowerApps/environments/{environmentId}/apps/{appId}/components",
+     "apiVersion": "not established",
+     "method": "not established",
+     "belongsTo": "spec:powerapps",
+     "why": "Canvas app components."
+    },
+    {
+     "host": "api.powerapps.com",
+     "path": "/refreshCuratedApps",
+     "apiVersion": "2021-02-01",
+     "method": "POST",
+     "belongsTo": "spec:powerapps",
+     "why": "Returns 204 on success. Not a Copilot Studio resource."
+    },
+    {
+     "host": "api.bap.microsoft.com",
+     "path": "/api/providers/Microsoft.BusinessAppPlatform/objectIds/{objectId}/features",
+     "apiVersion": "2019-05-01",
+     "method": "not established",
+     "belongsTo": "spec:bapi",
+     "why": "The BAPI half of the same allow-list read."
+    },
+    {
+     "host": "{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "path": "/connectivity/tenants/{tenantId}/defaultAIEnvironment",
+     "apiVersion": "1",
+     "method": "GET",
+     "belongsTo": "spec:ppapi",
+     "why": "Power Platform API connectivity family, reached through the `ppapi` placeholder host. Copilot Studio calls it; it is not a Copilot Studio route."
+    },
+    {
+     "host": "{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "path": "/connectivity/tenants/{tenantId}/environments/{environmentId}/discoveraiplugins",
+     "apiVersion": "2022-03-01-preview",
+     "method": "POST",
+     "belongsTo": "spec:ppapi",
+     "why": "Same family. The verb is in the same object literal as the url (`{url: ..., method: \"POST\"}`), so it is bound even though the extract emitted it as null."
+    },
+    {
+     "host": "{environmentIdHead}.{environmentIdTail}.environment.api.powerplatform.com",
+     "path": "/connectivity/tenants/{tenantId}/environments/{environmentId}/connectors/{connectorName}/connections",
+     "apiVersion": "1",
+     "method": "GET and PUT",
+     "belongsTo": "spec:ppapi",
+     "why": "Connection management for the `shared_computeroperator` connector. The bundle writes the literal sentinel `/tenants/~tenant` and a request handler substitutes the real tenant id before the request leaves the browser."
+    },
+    {
+     "host": "{organizationHost}",
+     "path": "/api/data/v9.0/PublishAppModule(), /api/data/v9.0/RetrieveSetting(...), /api/data/v9.0/webresourceset({id})",
+     "apiVersion": "v9.0",
+     "method": "GET for webresourceset; not established for the others",
+     "belongsTo": "spec:dataverse",
+     "why": "Dataverse Web API, reached through the `cds-org` placeholder host."
+    },
+    {
+     "host": "mss.office.com",
+     "path": "/api/v3/user/copilot/eligibility",
+     "apiVersion": "not established",
+     "method": "GET",
+     "belongsTo": "no spec in this corpus",
+     "why": "An Office/Microsoft 365 eligibility check, authenticated with a token the bundle labels `OLYMPUS`. A different product's service entirely."
+    },
+    {
+     "host": "slack.botframework.com",
+     "path": "/api/Events/{botId}",
+     "apiVersion": "not established",
+     "method": "not established",
+     "belongsTo": "no spec in this corpus",
+     "why": "Bot Framework's Slack channel endpoint. The bundle does not call it -- it composes the string for the maker to paste into Slack's own configuration. A displayed URL, not a route this client uses."
+    }
+   ]
+  },
+  "x-notes": [
+   {
+    "note": "**Everything added beyond the two Application Insights operations is read from a shipped client, not observed.** It comes from the copilotstudio maker bundle (`main.cb28c5f0.js`, build 0.0.20260903.1-26.08.30-prod, downloaded 2026-09-05). A bundle contains every route the client *can* call, including branches no session exercised, so the coverage is wider than a capture and the confirmation is weaker. Nothing added here is marked `x-probe-verified`, no request was sent, and no response body is described.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**No response body is described anywhere in the added surface, and that is a data limit rather than an omission.** The extract records `responseFieldsRead: []` for all 57 Copilot Studio records without exception, so there is no evidence of a single response field on any of these routes. Each added `200` says so in its description rather than carrying an invented schema.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Three verbs were bound here that the extract emitted as `null`, and one was corrected.** The extract binds a method only when it sits at the same call site as the url; these four go through `transformOptions({method: ...})` before `http.fetch`, which its binder does not follow. Bound from the evidence string: `GET /api/botmanagement/v2/content/defaultTemplate`, `DELETE .../viral-signup/clear`, `GET .../api/directline/token`. Corrected: `.../viral-signup/create/status` is recorded as POST, but its evidence reads `transformOptions({method:\"GET\",headers:{Accept:\"application/json\"}})` in the same statement chain as the url -- GET is used here, and the disagreement is recorded on the operation. Records whose evidence carries no method literal at all were left out of `paths` entirely and are listed in `info.x-adjacent-routes`.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**`etag` is a query parameter on this boundary, not an `If-Match` header.** Five routes take concurrency tokens that way: `DELETE /intents/{id}`, `DELETE /variabletypes/{id}`, `PUT /intents/updateStatus`, `PUT /intents/upsert`, `PUT /intents/clone`. A client written to the HTTP convention will send `If-Match` and be ignored.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Two headers are written with a leading underscore, and their wire spelling is not established.** Every `botauthoring/v1` call sets header keys spelled exactly `_X-CCI-Routing-BotId` and `_x-ms-solution-unique-name` in the options literal, then passes the literal through `transformOptions()` before `http.fetch`. `transformOptions` is not in the extract, so whether the underscore survives to the wire cannot be read from this evidence. They are declared here under the bundle's spelling, because that is what is actually evidenced; a caller should expect the un-prefixed forms to be what the service reads, given that the probed gateway surface on this same boundary requires a plain `x-cci-tenantid`.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Query parameters are all optional here, and that is the honest reading of a generated client rather than a shrug.** The nswag clients raise two distinct errors: `The parameter 'x' must be defined` (the caller must pass it, but passing `null` skips appending it to the URL) and `The parameter 'x' cannot be null` (the caller may omit it entirely). Both end up optional *on the wire*, which is what an OpenAPI `required` describes, so none is marked required. Which of the two forms each parameter takes is stated in its description where it was read.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**The extract lists `Accept` among `requestBodyFields` on a dozen records. It is not a body field.** The binder picked up the `Accept` key from the headers object in the same options literal as the body. Body fields are modelled here only where the evidence shows them being serialised -- `connectorIds`/`skipCache`, `aiModelIds`, `pluginLookupId`, and the `category` property the feedback client validates before sending. Everywhere else the body is declared as an unconstrained object with its shape stated as unknown.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Two POSTs carry no body at all.** `POST .../bots/{botId}/provisioningStatus` and `POST /api/botauthoring/v1/fallback` are both written as `{method:\"POST\",headers:{Accept:\"application/json\"}}` with no `body` key -- POST used as an RPC-style read and an RPC-style add. Neither declares a `requestBody` here.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**The declared `security` scope was established for the gateway operations only.** The Copilot Studio first-party audience `96ff4394-9197-43aa-b393-6a41652e21f8` is what the probed Application Insights operations accept. The bundle routes acquire their token inside `transformOptions()`, which the extract does not contain, so the audience for `botApiHost` and `copilotStudioRegionalHost` is not established -- the document-level `security` should be read as a default that has been confirmed for two operations and assumed for the rest.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "**Path parameter names are reproduced as the extract wrote them, inconsistencies included.** `/dialogs/{id}` and `/dialogs/{dialogId}/variables` name the same identifier two ways; `/environments/{environmentId}/bots/{cdsBotId}/auth/...` calls the bot id `cdsBotId` where the botmanagement family calls it `botId`. Normalising them would have made the spec tidier and the evidence less traceable.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "Live Power Platform admin centre capture shows Copilot Studio agents as resource-query rows carrying `componentsCounts.knowledgeByType`, `channels[]`, `orchestration`, `authentication`, `isWebSearchEnabledForKnowledge`, `sharedWithViewers` and `sharedWithEditors`. Those are read models served by a different service, and no route in this spec manages them -- no bundle route in the Copilot Studio chunk set reads or writes any of those fields. They are recorded here only so a reader who has seen them in the admin centre knows they were checked against this surface and do not belong to it.",
+    "source": "ppac-spa"
+   },
+   {
+    "note": "Bundle strings are third-party minified JavaScript and were handled as data. The extract's own note says no string read as an instruction directed at the extractor, and none encountered while writing this spec did either.",
+    "source": "ppac-spa"
+   }
+  ]
  },
  "servers": [
   {
@@ -28,6 +251,54 @@
   {
    "name": "Application Insights Configuration",
    "description": "The Application Insights telemetry wiring of a single Copilot Studio bot: the destination Application Insights resource, and which classes of conversation data - message activities, topic actions, and the user-entered content inside them - are exported to it. This is the observability configuration a maker sets to make conversations analysable and failures debuggable, and the same settings decide how much end-user text leaves the environment."
+  },
+  {
+   "name": "Dialogs",
+   "description": "A *dialog* is what the Copilot Studio authoring canvas calls a topic: the node graph that runs when a trigger fires. The `botauthoring/v1` client reads, lists, clones, validates and upserts them, and reads the variables a dialog declares. `systemDialogs` are the built-ins an agent gets without an author writing them."
+  },
+  {
+   "name": "Intents",
+   "description": "The trigger side of a topic: the phrases and conditions that decide which dialog runs. Separately addressable from the dialog itself, with its own clone, search, list and upsert routes, plus a status route that turns triggering on and off without editing the intent. `systemIntents` are the built-ins."
+  },
+  {
+   "name": "Variable Types",
+   "description": "Author-defined types that agent variables can take -- the third editable authoring resource alongside dialogs and intents, with the same list/clone/upsert/delete shape."
+  },
+  {
+   "name": "Fallback",
+   "description": "The single fallback behaviour of an agent: what happens when no intent matches. Modelled as a resource with no id -- one per agent, selected by the routing header rather than by a path segment -- which is why `GET`, `POST` and `DELETE` all address the same bare path."
+  },
+  {
+   "name": "Bots",
+   "description": "Creating an agent and watching it provision, on the `botmanagement/v2` family, plus the v1 route the client calls `openAIApi`. These are the lifecycle operations the maker portal drives; note that neither this family nor the gateway family offers a bot LIST -- see `info.x-adjacent-routes`."
+  },
+  {
+   "name": "Bot Authentication",
+   "description": "What an agent's authentication connection is depended upon by. One route, asking whether a named connection on a bot has dependent content, optionally counting released content as well as draft."
+  },
+  {
+   "name": "Bot Content",
+   "description": "The agent's authored content as a document rather than as individual resources: bot components read and written in bulk, and the default template new agents start from. This is the family that speaks `application/json+yaml` as well as JSON."
+  },
+  {
+   "name": "Connectors",
+   "description": "Connector definitions an agent can call, and the authoring-time intellisense over them. Both are POSTs that read rather than write -- the connector-id list travels in the body because it is a batch lookup, not a query."
+  },
+  {
+   "name": "Extensions",
+   "description": "Things an agent can be extended with that are neither dialogs nor connectors: Copilot plugins, and AI Builder models. Both are batch lookups by id, POSTed to a regional host rather than to the client's base URL."
+  },
+  {
+   "name": "Viral Signup",
+   "description": "The self-service trial provisioning job for an environment -- 'viral' being Microsoft's term for a user-initiated signup that provisions capacity without an admin. A three-route job resource: begin, poll, clear."
+  },
+  {
+   "name": "Direct Line",
+   "description": "A Direct Line token for talking to the agent's runtime, which is what the authoring canvas's test pane needs. The one route on the `chatbotmanagement` family that is about conversing with an agent rather than authoring one."
+  },
+  {
+   "name": "Feedback",
+   "description": "Maker feedback from the authoring product, posted to the bot-management service. Included because it is a real route on this host, not because it manages anything."
   }
  ],
  "paths": {
@@ -179,6 +450,2182 @@
      }
     }
    }
+  },
+  "/api/botauthoring/v1/dialogs": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "get": {
+    "operationId": "dialogs_list",
+    "tags": [
+     "Dialogs"
+    ],
+    "summary": "List",
+    "description": "Lists the agent's dialogs. Which agent is decided by the `_X-CCI-Routing-BotId` header, not by the path -- there is no bot id anywhere in this route. Paged with `skip`/`count` and shaped with bare `filter`/`orderBy` expressions.",
+    "parameters": [
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Offset into the result set. Client-side contract is 'must be defined' -- the caller has to pass it, though passing `null` omits it from the URL."
+     },
+     {
+      "name": "count",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Page size, not a total. Same 'must be defined' contract as `skip`."
+     },
+     {
+      "name": "filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Filter expression. Note the bare name: this is `filter=`, not OData's `$filter=`, and the expression grammar is not established."
+     },
+     {
+      "name": "orderBy",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Sort expression. Again bare -- `orderBy=`, not `$orderby=`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/dialogs/actionNodeFromFlow": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "get": {
+    "operationId": "dialogs_actionNodeFromFlow",
+    "tags": [
+     "Dialogs"
+    ],
+    "summary": "Action node from flow",
+    "description": "Builds the canvas action node that calls a given Power Automate flow, so the authoring client can drop a flow into a dialog without knowing the flow's own schema. Takes the flow id and returns the node; a read, despite reading like a generator.",
+    "parameters": [
+     {
+      "name": "flowId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The Power Automate flow to build an action node for. Client-side contract is 'must be defined'."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/dialogs/clone": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "post": {
+    "operationId": "dialogs_clone",
+    "tags": [
+     "Dialogs"
+    ],
+    "summary": "Clone",
+    "description": "Copies a dialog. The dialog to copy travels in the body rather than as the `flowId` query parameter the client also builds onto this URL -- both are present in the evidence, and what the service does with each is not established.",
+    "parameters": [
+     {
+      "name": "flowId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Present on the built URL for this route. The name suggests a Power Automate flow rather than a dialog, which does not obviously fit a clone; it is recorded because the client sets it, not because its role here is understood."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/dialogs/systemDialogs": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "get": {
+    "operationId": "dialogs_listSystem",
+    "tags": [
+     "Dialogs"
+    ],
+    "summary": "List system dialogs",
+    "description": "Lists the built-in dialogs an agent has without an author creating them -- greetings, escalation, end-of-conversation and the like. Client method `getSystemDialogs`. Unpaged: no `skip`/`count` here, unlike the author-owned list.",
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/dialogs/upsert": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "put": {
+    "operationId": "dialogs_upsert",
+    "tags": [
+     "Dialogs"
+    ],
+    "summary": "Upsert",
+    "description": "Creates or replaces a dialog. Upsert-by-body rather than `PUT /dialogs/{id}`: the identity is inside the payload, so there is no id in the path and no separate create route.",
+    "parameters": [
+     {
+      "name": "flowId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Built onto the URL by the client, as on `clone`. Its role on an upsert is not established."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/dialogs/validate": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "get": {
+    "operationId": "dialogs_validate",
+    "tags": [
+     "Dialogs"
+    ],
+    "summary": "Validate",
+    "description": "Validates the agent's dialogs -- the errors-and-warnings pass the authoring canvas runs. A GET with no parameters at all beyond the two routing headers, so it validates everything the routing header's agent owns.",
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/dialogs/validate/dialogList": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "post": {
+    "operationId": "dialogs_validateList",
+    "tags": [
+     "Dialogs"
+    ],
+    "summary": "Validate a list of dialogs",
+    "description": "Validates a caller-supplied subset of dialogs rather than all of them. A POST because the list travels in the body; this is a read that writes nothing.",
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/dialogs/{dialogId}/variables": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    },
+    {
+     "$ref": "#/components/parameters/csDialogId"
+    }
+   ],
+   "get": {
+    "operationId": "dialogs_listVariables",
+    "tags": [
+     "Dialogs"
+    ],
+    "summary": "List variables",
+    "description": "The variables a dialog declares. `useCDS` selects where the answer is read from, which is the interesting part: the same question has a Dataverse-backed answer and another one, and the caller picks.",
+    "parameters": [
+     {
+      "name": "versionNumber",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Which stored version of the dialog to read variables from. Client-side contract is 'must be defined'."
+     },
+     {
+      "name": "useCDS",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Read the variables from Dataverse (CDS) rather than from the service's own store. Client-side contract is 'cannot be null', so it may be omitted entirely; what the service defaults to when it is absent is not established."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/dialogs/{id}": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    },
+    {
+     "$ref": "#/components/parameters/csDialogIdShort"
+    }
+   ],
+   "get": {
+    "operationId": "dialogs_read",
+    "tags": [
+     "Dialogs"
+    ],
+    "summary": "Read",
+    "description": "Reads one dialog at a given version. There is no `DELETE` or `PUT` on this path in the bundle -- deletion of a dialog is not a route the client calls, and replacement goes through `upsert`.",
+    "parameters": [
+     {
+      "name": "versionNumber",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Which stored version to read. Client-side contract is 'must be defined', so the client always decides a version rather than letting the service pick."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/environments/{environmentId}/bots/{cdsBotId}/auth/{connectionName}/dependencies": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    },
+    {
+     "$ref": "#/components/parameters/csCdsBotId"
+    },
+    {
+     "$ref": "#/components/parameters/csConnectionName"
+    }
+   ],
+   "get": {
+    "operationId": "botAuth_listConnectionDependencies",
+    "tags": [
+     "Bot Authentication"
+    ],
+    "summary": "List connection dependencies",
+    "description": "What depends on one authentication connection of an agent -- the read behind 'this connection is in use, are you sure?'. The only `botauthoring` route that carries an environment id and a bot id in the path, and correspondingly the only one that sets the routing header but not the solution header.",
+    "parameters": [
+     {
+      "name": "checkReleasedContent",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Also count dependencies in released (published) content, not only in the draft the maker is editing. Client-side contract is 'cannot be null', so it may be omitted."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/fallback": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    }
+   ],
+   "get": {
+    "operationId": "fallback_read",
+    "tags": [
+     "Fallback"
+    ],
+    "summary": "Read",
+    "description": "Reads the agent's fallback behaviour. A singleton resource: no id in the path, selected entirely by the routing header. Client method `get`.",
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     },
+     "204": {
+      "description": "Also treated as success. This client's shared result handler accepts exactly `200` and `204` and turns every other status into an error by reading the body as text -- so there is no evidence of any other status being meaningful on this family, and no evidence of an error envelope either."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "post": {
+    "operationId": "fallback_add",
+    "tags": [
+     "Fallback"
+    ],
+    "summary": "Add",
+    "description": "Turns fallback on. Client method `add`, and notably a **POST with no body** -- the options literal carries only `method` and `headers`. Nothing about which fallback, or what it does, is configurable through this call.",
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     },
+     "204": {
+      "description": "Also treated as success. This client's shared result handler accepts exactly `200` and `204` and turns every other status into an error by reading the body as text -- so there is no evidence of any other status being meaningful on this family, and no evidence of an error envelope either."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "delete": {
+    "operationId": "fallback_delete",
+    "tags": [
+     "Fallback"
+    ],
+    "summary": "Delete",
+    "description": "Turns fallback off. Client method `delete`, and the only route on this family that sets no `Accept` header, consistent with it expecting the `204` its result handler also accepts.",
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     },
+     "204": {
+      "description": "Also treated as success. This client's shared result handler accepts exactly `200` and `204` and turns every other status into an error by reading the body as text -- so there is no evidence of any other status being meaningful on this family, and no evidence of an error envelope either."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/intents": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "get": {
+    "operationId": "intents_list",
+    "tags": [
+     "Intents"
+    ],
+    "summary": "List",
+    "description": "Lists the agent's intents, paged and filtered the same way dialogs are. Selected by the routing header rather than by a path segment.",
+    "parameters": [
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Offset into the result set. Client-side contract is 'must be defined' -- the caller has to pass it, though passing `null` omits it from the URL."
+     },
+     {
+      "name": "count",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Page size, not a total. Same 'must be defined' contract as `skip`."
+     },
+     {
+      "name": "filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Filter expression. Note the bare name: this is `filter=`, not OData's `$filter=`, and the expression grammar is not established."
+     },
+     {
+      "name": "orderBy",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Sort expression. Again bare -- `orderBy=`, not `$orderby=`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/intents/clone": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "post": {
+    "operationId": "intents_clone",
+    "tags": [
+     "Intents"
+    ],
+    "summary": "Clone",
+    "description": "Copies an intent, with the source named by the `intentId` query parameter and the new intent's content in the body.",
+    "parameters": [
+     {
+      "name": "intentId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The intent to copy. Client-side contract is 'must be defined'."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   },
+   "put": {
+    "operationId": "intents_cloneReplace",
+    "tags": [
+     "Intents"
+    ],
+    "summary": "Clone (PUT)",
+    "description": "The same path with a different verb and **no body at all** -- `{method:\"PUT\",headers:{...}}` with `intentId` as the only input. Two verbs on one path doing recognisably different things is unusual enough to state plainly; which one the client calls when is not established, and neither is what distinguishes them.",
+    "parameters": [
+     {
+      "name": "intentId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The intent to copy. Client-side contract is 'must be defined'."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "The POST and PUT forms of this path are two separate call sites in the bundle, both verb-bound at their own site. They are not a mis-bind: the POST serialises a body and the PUT does not.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/botauthoring/v1/intents/search": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "get": {
+    "operationId": "intents_search",
+    "tags": [
+     "Intents"
+    ],
+    "summary": "Search",
+    "description": "Full-text search over intents, with `searchBy` selecting what is searched. Takes the list route's whole parameter set on top of its own, so a search is a filtered, sorted, paged list.",
+    "parameters": [
+     {
+      "name": "searchText",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The text to search for."
+     },
+     {
+      "name": "searchBy",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Which facet of an intent to match against. The value set is not established -- no candidate literals appear near the call site."
+     },
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Offset into the result set. Client-side contract is 'must be defined' -- the caller has to pass it, though passing `null` omits it from the URL."
+     },
+     {
+      "name": "count",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Page size, not a total. Same 'must be defined' contract as `skip`."
+     },
+     {
+      "name": "filter",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Filter expression. Note the bare name: this is `filter=`, not OData's `$filter=`, and the expression grammar is not established."
+     },
+     {
+      "name": "orderBy",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Sort expression. Again bare -- `orderBy=`, not `$orderby=`."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/intents/systemIntents": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "get": {
+    "operationId": "intents_listSystem",
+    "tags": [
+     "Intents"
+    ],
+    "summary": "List system intents",
+    "description": "The built-in intents, mirroring `systemDialogs`. Client method `getSystemIntents`; unpaged.",
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/intents/updateStatus": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "put": {
+    "operationId": "intents_updateStatus",
+    "tags": [
+     "Intents"
+    ],
+    "summary": "Update status",
+    "description": "Enables or disables triggering for one intent without touching its content -- everything travels in the query string and there is no body. This is the route behind the on/off switch in the topic list.",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The intent whose status changes. Client-side contract is 'must be defined'."
+     },
+     {
+      "name": "isTriggeringEnabled",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Whether the intent may fire."
+     },
+     {
+      "name": "etag",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Concurrency token -- **a query parameter, not an `If-Match` header**. A client written to the HTTP convention will send `If-Match` and have it ignored."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/intents/upsert": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "put": {
+    "operationId": "intents_upsert",
+    "tags": [
+     "Intents"
+    ],
+    "summary": "Upsert",
+    "description": "Creates or replaces an intent, with the identity inside the body. `starterDialogMessage` lets the same call seed the intent's dialog with a first message, so creating a trigger and creating something for it to say are one round trip.",
+    "parameters": [
+     {
+      "name": "etag",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Concurrency token, as a query parameter."
+     },
+     {
+      "name": "starterDialogMessage",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "A message to seed the intent's starter dialog with."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/intents/upsertDetails": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "put": {
+    "operationId": "intents_upsertDetails",
+    "tags": [
+     "Intents"
+    ],
+    "summary": "Upsert details",
+    "description": "A second upsert route that takes the starter dialog's whole content rather than a single message. Distinct from `upsert` in the bundle, not an alias for it, and it takes no `etag`.",
+    "parameters": [
+     {
+      "name": "starterDialogMessage",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "A message to seed the starter dialog with."
+     },
+     {
+      "name": "starterDialogContent",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The starter dialog's content, as a string on the query string rather than in the body. Whether it is serialised JSON or a canvas format is not established."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/intents/upsertList": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "put": {
+    "operationId": "intents_upsertBatch",
+    "tags": [
+     "Intents"
+    ],
+    "summary": "Upsert many",
+    "description": "Batch upsert: a list of intents in one body, with no query parameters and no `etag`. Whether the batch is atomic is not established.",
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/intents/{id}": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    },
+    {
+     "$ref": "#/components/parameters/csIntentId"
+    }
+   ],
+   "delete": {
+    "operationId": "intents_delete",
+    "tags": [
+     "Intents"
+    ],
+    "summary": "Delete",
+    "description": "Deletes an intent. The only verb the bundle uses on this path -- reading a single intent by id is not a route this client calls.",
+    "parameters": [
+     {
+      "name": "etag",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Concurrency token, as a query parameter. Client-side contract here is the looser 'may be null' form, so a delete without one is something the client is willing to send."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/variabletypes": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "get": {
+    "operationId": "variableTypes_list",
+    "tags": [
+     "Variable Types"
+    ],
+    "summary": "List",
+    "description": "Lists author-defined variable types. Paged and sorted, but **not filtered** -- there is no `filter` parameter on this route where dialogs and intents both have one.",
+    "parameters": [
+     {
+      "name": "skip",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Offset into the result set. Client-side contract is 'must be defined' -- the caller has to pass it, though passing `null` omits it from the URL."
+     },
+     {
+      "name": "count",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Page size, not a total. Same 'must be defined' contract as `skip`."
+     },
+     {
+      "name": "orderBy",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Sort expression. Client-side contract is 'cannot be null', so it may be omitted -- looser than the dialogs and intents lists, which require the caller to decide."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/variabletypes/clone": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "post": {
+    "operationId": "variableTypes_clone",
+    "tags": [
+     "Variable Types"
+    ],
+    "summary": "Clone",
+    "description": "Copies a variable type. Unlike the dialog and intent clones this takes no query parameter at all: the source is in the body.",
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/variabletypes/upsert": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    }
+   ],
+   "put": {
+    "operationId": "variableTypes_upsert",
+    "tags": [
+     "Variable Types"
+    ],
+    "summary": "Upsert",
+    "description": "Creates or replaces a variable type, identity in the body, no `etag`.",
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botauthoring/v1/variabletypes/{id}": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/cciRoutingBotId"
+    },
+    {
+     "$ref": "#/components/parameters/solutionUniqueName"
+    },
+    {
+     "$ref": "#/components/parameters/csVariableTypeId"
+    }
+   ],
+   "delete": {
+    "operationId": "variableTypes_delete",
+    "tags": [
+     "Variable Types"
+    ],
+    "summary": "Delete",
+    "description": "Deletes a variable type. Sets neither `Accept` nor `Content-Type`, consistent with expecting an empty response.",
+    "parameters": [
+     {
+      "name": "etag",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Concurrency token, as a query parameter."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botmanagement/v1/environments/{environmentId}/bots/{botId}/copilot": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    },
+    {
+     "$ref": "#/components/parameters/csBotId"
+    }
+   ],
+   "post": {
+    "operationId": "bots_openAIApi",
+    "tags": [
+     "Bots"
+    ],
+    "summary": "Copilot (openAIApi)",
+    "description": "The client method is named `openAIApi` and the route segment is `copilot`; the body is an opaque payload the caller assembles. On the evidence available this is the agent's own generative call -- a request that goes to a model on the agent's behalf -- but nothing in the extract names the payload's fields or the response's, so the description stops there rather than guessing at a contract.",
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Named on evidence that is a method name and a path segment and nothing else. `openAIApi` is the client's word, not the service's.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/botmanagement/v1/environments/{environmentId}/connectors": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    }
+   ],
+   "post": {
+    "operationId": "connectors_getDefinitions",
+    "tags": [
+     "Connectors"
+    ],
+    "summary": "Get connector definitions",
+    "description": "Batch-reads connector definitions by id. A POST that reads: the id list is a request body because it is a batch, not because anything is written. Client method `getConnectorDefinitions`.",
+    "requestBody": {
+     "required": true,
+     "description": "The two fields here ARE evidenced -- the bundle serialises `{connectorIds: t, skipCache: n}` inline, unlike the opaque bodies elsewhere in this spec.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "connectorIds": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          },
+          "description": "The connectors to fetch definitions for. Element format is not established."
+         },
+         "skipCache": {
+          "type": "boolean",
+          "description": "Bypass the service's cached definitions. The existence of a server-side cache the caller can bypass is worth knowing: a definition just changed may otherwise come back stale."
+         }
+        },
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botmanagement/v1/feedback": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "post": {
+    "operationId": "feedback_send",
+    "tags": [
+     "Feedback"
+    ],
+    "summary": "Send",
+    "description": "Posts maker feedback from the authoring product. No environment or bot in the path -- the only route in this spec with neither.",
+    "requestBody": {
+     "required": true,
+     "description": "The client validates the argument before sending and throws `Feedback should be an object with property category` if it fails, so `category` is evidenced as required by the client. Nothing else about the shape is.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "category": {
+          "type": "string",
+          "description": "Feedback category. The client refuses to send a body without it; the accepted values are not established."
+         }
+        },
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botmanagement/v2/content/defaultTemplate": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "get": {
+    "operationId": "botContent_readDefaultTemplate",
+    "tags": [
+     "Bot Content"
+    ],
+    "summary": "Read default template",
+    "description": "The content a newly created agent starts from, for a given template version and locale. Not scoped to an environment or a bot -- it is the product's own starting content, which is why it sits under `/content/` rather than under an agent.",
+    "parameters": [
+     {
+      "name": "templateVersion",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Which template version to fetch."
+     },
+     {
+      "name": "locale",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The locale to fetch the template in, stringified by the client from whatever it holds."
+     },
+     {
+      "name": "addonContext.IsOmnichannelEnabled",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Appended only when the client has a value for it -- the one conditional parameter here. A dotted parameter name carrying a nested context flag, which suggests an `addonContext.*` family of which this is the only member observed."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Both the verb and the query parameters were read out of the evidence string rather than from the extract's own fields: it emitted this record with `method: null` and `queryParams: []` because the client builds a `URLSearchParams` and passes the options through `transformOptions({method:\"GET\", ...})`, which the extract's binder does not follow. The url and the method literal are in the same statement chain.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/botmanagement/v2/environments/{environmentId}/bots": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    }
+   ],
+   "post": {
+    "operationId": "bots_beginCreate",
+    "tags": [
+     "Bots"
+    ],
+    "summary": "Begin create",
+    "description": "Creates an agent. The client method is `beginCreateBot` and there is a separate `provisioningStatus` route to poll, so this is asynchronous -- a 2xx here means provisioning started, not that an agent exists.",
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botmanagement/v2/environments/{environmentId}/bots/{botId}/provisioningStatus": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    },
+    {
+     "$ref": "#/components/parameters/csBotId"
+    }
+   ],
+   "post": {
+    "operationId": "bots_readProvisioningStatus",
+    "tags": [
+     "Bots"
+    ],
+    "summary": "Read provisioning status",
+    "description": "Polls whether a created agent has finished provisioning. **A POST with no body** -- `{method:\"POST\",headers:{Accept:\"application/json\"}}` -- so it is a read wearing a write's verb, and a caching layer or a retry policy that treats POST as unsafe will get this wrong. Client method `getV2BotProvisioningStatus`.",
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botmanagement/v2/environments/{environmentId}/viral-signup/clear": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    }
+   ],
+   "delete": {
+    "operationId": "viralSignup_clear",
+    "tags": [
+     "Viral Signup"
+    ],
+    "summary": "Clear job",
+    "description": "Clears the environment's trial-signup job, so a new one can be started. Client method `clearJob`.",
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Verb bound here from the evidence string; the extract emitted this record with `method: null`. The url and `transformOptions({method:\"DELETE\",headers:{}})` are consecutive assignments feeding the same `http.fetch`.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/botmanagement/v2/environments/{environmentId}/viral-signup/create": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    }
+   ],
+   "post": {
+    "operationId": "viralSignup_beginCreate",
+    "tags": [
+     "Viral Signup"
+    ],
+    "summary": "Begin create",
+    "description": "Starts self-service trial provisioning for an environment. Client method `beginCreate`; asynchronous, with `create/status` to poll and `clear` to abandon.",
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botmanagement/v2/environments/{environmentId}/viral-signup/create/status": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    }
+   ],
+   "get": {
+    "operationId": "viralSignup_readStatus",
+    "tags": [
+     "Viral Signup"
+    ],
+    "summary": "Read create status",
+    "description": "Polls the trial-provisioning job. Client method `getStatus`.",
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "**The extract and its own evidence disagree on this verb, and the evidence wins.** The record is emitted as `method: \"POST\"` with confidence `method-bound`, but the quoted evidence reads `var t=this.baseUrl+\"/api/botmanagement/v2/environments/\".concat(e,\"/viral-signup/create/status\"),n=yield this.transformOptions({method:\"GET\",headers:{Accept:\"application/json\"}}),r=yield this.http.fetch(t,n)` -- one statement chain, url and method together, and the method literal is GET. GET is used here. Anyone reconciling this spec against the extract should expect the mismatch.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/chatbotmanagement/tenants/{tenantId}/environments/{environmentId}/bots/{botId}/api/connectorintellisense/{param}": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csTenantId"
+    },
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    },
+    {
+     "$ref": "#/components/parameters/csBotId"
+    },
+    {
+     "$ref": "#/components/parameters/csIntellisenseParam"
+    }
+   ],
+   "post": {
+    "operationId": "connectors_intellisense",
+    "tags": [
+     "Connectors"
+    ],
+    "summary": "Connector intellisense",
+    "description": "Authoring-time intellisense over a connector: the completions the canvas offers while a maker wires a connector action up. Note the route family -- tenant id in the path, no version segment, and `/api/` in the middle rather than at the front.",
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "The client treats **any** status at or above 300 as an empty answer -- `if(s.status>=300) return null` -- rather than raising. A failure on this route is therefore indistinguishable from 'no completions' at the call site, which is a reasonable choice for intellisense and a trap for anything else reusing the route.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/chatbotmanagement/tenants/{tenantId}/environments/{environmentId}/bots/{botId}/api/directline/token": {
+   "servers": [
+    {
+     "url": "https://{botApiHost}",
+     "description": "The base URL the generated bot API clients are constructed with. Every one of these routes is written in the bundle as `this.baseUrl + \"/api/...\"`, and `baseUrl` is supplied by whoever constructs the client -- it is never a literal anywhere in the chunk set. See `info.x-host-families` for what is and is not established about it.",
+     "variables": {
+      "botApiHost": {
+       "default": "unresolved.invalid",
+       "description": "Not derivable from the client. The extract's own coverage note names this as one of two hosts that could not be reduced to a literal or a derivation rule: it is injected into the API client at construction time from runtime region discovery. The default here is deliberately a host in the reserved `.invalid` TLD rather than a plausible-looking name, because there is no honest candidate: unlike `copilotStudioRegionalHost` below, not one concrete value for it was observed. Do not assume it equals `pvaRuntimeHost` -- see `info.x-host-families`."
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csTenantId"
+    },
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    },
+    {
+     "$ref": "#/components/parameters/csBotId"
+    }
+   ],
+   "get": {
+    "operationId": "directLine_readToken",
+    "tags": [
+     "Direct Line"
+    ],
+    "summary": "Read token",
+    "description": "Mints a Direct Line token for conversing with the agent -- what the authoring canvas's test pane needs before it can say anything. `skipCache` is appended only when the caller supplies it, so tokens are cached somewhere by default and a caller that has just changed the agent may want to bypass that.",
+    "parameters": [
+     {
+      "name": "skipCache",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Bypass the cached token. Appended to the query string only when the client has a value; omitted entirely otherwise."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Verb bound here from the evidence string; the extract emitted this record with `method: null`. The url is assigned, optionally extended with the query string, and then passed to `this.transformOptions({method:\"GET\",headers:{Accept:\"application/json\"}}).then(e=>this.http.fetch(i,e))` -- same chain, same statement.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/botmanagement/v1/environments/{environmentId}/aibuilder-models": {
+   "servers": [
+    {
+     "url": "https://{copilotStudioRegionalHost}",
+     "description": "A *different* injected host from `botApiHost`: these routes are built against `this.regionUrl`, and the two variables appear side by side in one chunk (`154.5b10c83d.chunk.js`) on clients that also use `this.baseUrl`. Two names in one file is why they are modelled as two servers rather than collapsed into one.",
+     "variables": {
+      "copilotStudioRegionalHost": {
+       "default": "powerva.microsoft.com",
+       "description": "A regional Copilot Studio service host, resolved at runtime and injected into the client as `regionUrl`. Unlike `botApiHost`, concrete values for this family do appear in the bundle, so the default is one of them rather than a placeholder -- but no route here was executed against any of them, and which host serves which cloud or which geography is not established. `x-observed-values` lists the family as the extract reports it.",
+       "x-observed-values": [
+        "powerva.microsoft.com",
+        "web.powerva.microsoft.com",
+        "gcc/high.powerva.microsoft.us",
+        "powerva.appsplatform.us",
+        "powerva.powervirtualagents.cn",
+        "copilotstudio.microsoft.com"
+       ],
+       "x-notes": [
+        {
+         "note": "`gcc/high.powerva.microsoft.us` is reproduced exactly as the extract writes it -- a single compressed entry standing for the two US government hosts. It is left uncompressed here rather than split into `gcc.` and `high.` forms, because splitting it would turn a quotation into an inference.",
+         "source": "ppac-spa"
+        }
+       ]
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    }
+   ],
+   "post": {
+    "operationId": "extensions_getAIBuilderModels",
+    "tags": [
+     "Extensions"
+    ],
+    "summary": "Get AI Builder models",
+    "description": "Batch-reads AI Builder models by id, so the authoring canvas can show what an agent may call. Client method `getAIBuilderPrompts` -- the method says prompts and the route says models, and which the payload actually carries is not established.\n\n**On the regional host**, not on `botApiHost`: this route is built against `this.regionUrl` in the same chunk where neighbouring routes use `this.baseUrl`.",
+    "requestBody": {
+     "required": true,
+     "description": "`{aiModelIds: t}` is serialised inline by the client, so the field is evidenced.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "aiModelIds": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          },
+          "description": "The AI Builder models to fetch. Element format is not established."
+         }
+        },
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
+  },
+  "/api/botmanagement/v1/environments/{environmentId}/bots/{botId}/content/botcomponents": {
+   "servers": [
+    {
+     "url": "https://{copilotStudioRegionalHost}",
+     "description": "A *different* injected host from `botApiHost`: these routes are built against `this.regionUrl`, and the two variables appear side by side in one chunk (`154.5b10c83d.chunk.js`) on clients that also use `this.baseUrl`. Two names in one file is why they are modelled as two servers rather than collapsed into one.",
+     "variables": {
+      "copilotStudioRegionalHost": {
+       "default": "powerva.microsoft.com",
+       "description": "A regional Copilot Studio service host, resolved at runtime and injected into the client as `regionUrl`. Unlike `botApiHost`, concrete values for this family do appear in the bundle, so the default is one of them rather than a placeholder -- but no route here was executed against any of them, and which host serves which cloud or which geography is not established. `x-observed-values` lists the family as the extract reports it.",
+       "x-observed-values": [
+        "powerva.microsoft.com",
+        "web.powerva.microsoft.com",
+        "gcc/high.powerva.microsoft.us",
+        "powerva.appsplatform.us",
+        "powerva.powervirtualagents.cn",
+        "copilotstudio.microsoft.com"
+       ],
+       "x-notes": [
+        {
+         "note": "`gcc/high.powerva.microsoft.us` is reproduced exactly as the extract writes it -- a single compressed entry standing for the two US government hosts. It is left uncompressed here rather than split into `gcc.` and `high.` forms, because splitting it would turn a quotation into an inference.",
+         "source": "ppac-spa"
+        }
+       ]
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    },
+    {
+     "$ref": "#/components/parameters/csBotId"
+    }
+   ],
+   "post": {
+    "operationId": "botContent_readComponents",
+    "tags": [
+     "Bot Content"
+    ],
+    "summary": "Read components",
+    "description": "Reads the agent's components in bulk. A POST that reads -- the selector travels in the body.\n\n**This route speaks YAML as well as JSON.** On one branch the client sets `Accept: application/json+yaml` together with a header whose bundle constant is `XMSComputeBotComponentProperties`, set to the string `\"true\"`; on the other it sends the plain JSON headers. So the same route returns two different representations depending on what the caller asks for, and the YAML branch is the one that also asks the service to compute component properties.",
+    "requestBody": {
+     "required": true,
+     "description": "Sent as `JSON.stringify(...)` of a value the bundle does not construct inline, so the field set is not established. Declared as an unconstrained object rather than guessed at.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "The wire spelling of the `XMSComputeBotComponentProperties` header is not in the extract -- the bundle references it through a constants object (`a.d.XMSComputeBotComponentProperties`) whose values are not quoted. It is not declared as a parameter here for that reason. `application/json+yaml` IS a literal in the evidence.",
+      "source": "ppac-spa"
+     },
+     {
+      "note": "`application/json+yaml` is not a registered media type and not the conventional `application/yaml` or `text/yaml`; it is reproduced exactly as the bundle writes it.",
+      "source": "ppac-spa"
+     }
+    ]
+   },
+   "put": {
+    "operationId": "botContent_writeComponents",
+    "tags": [
+     "Bot Content"
+    ],
+    "summary": "Write components",
+    "description": "Replaces the agent's components in bulk -- the write half of the same route, and the only bulk-authoring write in this spec.\n\nThe YAML branch here sets **both** `Content-Type: application/json+yaml` and `Accept: application/json+yaml`, alongside the same compute-properties header, so a caller can send YAML content and get YAML back. The JSON branch sends the plain headers.",
+    "requestBody": {
+     "required": true,
+     "description": "Opaque on both branches. The media type is the interesting part: `application/json+yaml` is a literal `Content-Type` in the evidence, so this route accepts a YAML representation of bot components as well as a JSON one. The YAML variant's schema is `type: string` only because nothing here establishes its structure.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      },
+      "application/json+yaml": {
+       "schema": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa",
+    "x-notes": [
+     {
+      "note": "Same caveat as the read: the compute-properties header's wire name is not quoted in the bundle, so it is described rather than declared.",
+      "source": "ppac-spa"
+     }
+    ]
+   }
+  },
+  "/api/botmanagement/v1/environments/{environmentId}/copilot-plugins": {
+   "servers": [
+    {
+     "url": "https://{copilotStudioRegionalHost}",
+     "description": "A *different* injected host from `botApiHost`: these routes are built against `this.regionUrl`, and the two variables appear side by side in one chunk (`154.5b10c83d.chunk.js`) on clients that also use `this.baseUrl`. Two names in one file is why they are modelled as two servers rather than collapsed into one.",
+     "variables": {
+      "copilotStudioRegionalHost": {
+       "default": "powerva.microsoft.com",
+       "description": "A regional Copilot Studio service host, resolved at runtime and injected into the client as `regionUrl`. Unlike `botApiHost`, concrete values for this family do appear in the bundle, so the default is one of them rather than a placeholder -- but no route here was executed against any of them, and which host serves which cloud or which geography is not established. `x-observed-values` lists the family as the extract reports it.",
+       "x-observed-values": [
+        "powerva.microsoft.com",
+        "web.powerva.microsoft.com",
+        "gcc/high.powerva.microsoft.us",
+        "powerva.appsplatform.us",
+        "powerva.powervirtualagents.cn",
+        "copilotstudio.microsoft.com"
+       ],
+       "x-notes": [
+        {
+         "note": "`gcc/high.powerva.microsoft.us` is reproduced exactly as the extract writes it -- a single compressed entry standing for the two US government hosts. It is left uncompressed here rather than split into `gcc.` and `high.` forms, because splitting it would turn a quotation into an inference.",
+         "source": "ppac-spa"
+        }
+       ]
+      }
+     }
+    }
+   ],
+   "parameters": [
+    {
+     "$ref": "#/components/parameters/csEnvironmentId"
+    }
+   ],
+   "post": {
+    "operationId": "extensions_getPlugins",
+    "tags": [
+     "Extensions"
+    ],
+    "summary": "Get plugins",
+    "description": "Reads Copilot plugin definitions for an environment. Client method `getPlugins`. On the regional host, like `aibuilder-models` and `content/botcomponents`.",
+    "requestBody": {
+     "required": true,
+     "description": "`{pluginLookupId: t}` is serialised inline, so the field is evidenced. Note the singular: one id per call, unlike the `connectorIds`/`aiModelIds` batch lookups beside it.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "pluginLookupId": {
+          "type": "string",
+          "description": "The plugin to look up. Singular -- this is not a batch route."
+         }
+        },
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The call succeeded. **Shape unestablished:** the extract records `responseFieldsRead: []` for every Copilot Studio record without exception, and nothing here was executed, so there is no evidence of a single response field on this route and none is invented."
+     }
+    },
+    "x-source": "ppac-spa"
+   }
   }
  },
  "components": {
@@ -322,6 +2769,124 @@
       "description": "Correlation and tracing context for a support case. Explicitly null in every observed response, so no `type` is asserted."
      }
     }
+   }
+  },
+  "parameters": {
+   "cciRoutingBotId": {
+    "name": "_X-CCI-Routing-BotId",
+    "in": "header",
+    "required": false,
+    "schema": {
+     "type": "string"
+    },
+    "description": "Which agent the call is about. The `botauthoring/v1` routes carry no bot id in the path -- dialogs, intents, variable types and fallback are all addressed as if there were only one agent, and this header is what selects it. The client sets it on every call, falling back to the empty string when it has no id.\n\n**The leading underscore is what the bundle writes**, verbatim: `\"_X-CCI-Routing-BotId\"`. The options literal is then passed through `transformOptions()`, which is not in the extract, so whether the underscore reaches the wire is unestablished. Expect the un-prefixed `X-CCI-Routing-BotId` to be the real header name, on the strength of the probed `x-cci-tenantid` on this same boundary."
+   },
+   "solutionUniqueName": {
+    "name": "_x-ms-solution-unique-name",
+    "in": "header",
+    "required": false,
+    "schema": {
+     "type": "string"
+    },
+    "description": "Scopes the call to one Dataverse solution, so authoring resources resolve within the solution the maker is working in rather than across the whole environment. Set on every `botauthoring/v1` route except the two that take a bot id in the path, again defaulting to the empty string.\n\nThe leading underscore is the bundle's literal spelling; see `_X-CCI-Routing-BotId` for why it may not be the wire name."
+   },
+   "csEnvironmentId": {
+    "name": "environmentId",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "description": "Power Platform environment id. On these routes it is a path segment; the tenant id is not present at all, unlike the `chatbotmanagement` family."
+   },
+   "csBotId": {
+    "name": "botId",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "description": "The agent's id -- the primary key of its row in the environment's Dataverse `bot` table. This API family has no list endpoint; enumerate through the Dataverse Web API (`GET https://{dataverseHost}/api/data/v9.2/bots?$select=botid,name`) or see `info.x-adjacent-routes` for the PowerApps-hosted `listBots` route."
+   },
+   "csTenantId": {
+    "name": "tenantId",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "description": "Entra tenant id. The `chatbotmanagement` family is the only one here that puts it in the path; the probed gateway family sends it in the `x-cci-tenantid` header instead."
+   },
+   "csCdsBotId": {
+    "name": "cdsBotId",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string",
+     "format": "uuid",
+     "example": "00000000-0000-0000-0000-000000000000"
+    },
+    "description": "The agent's id, spelled `cdsBotId` on this route and `botId` on every other -- the extract's spelling is kept rather than normalised. Same Dataverse `bot` primary key."
+   },
+   "csConnectionName": {
+    "name": "connectionName",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string"
+    },
+    "description": "The name of the authentication connection on the agent whose dependencies are being read. A connection name, not a GUID."
+   },
+   "csDialogId": {
+    "name": "dialogId",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string"
+    },
+    "description": "The dialog whose variables are read. Spelled `dialogId` here and `id` on `GET /api/botauthoring/v1/dialogs/{id}`; both name the same thing."
+   },
+   "csDialogIdShort": {
+    "name": "id",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string"
+    },
+    "description": "The dialog to read. Note that `clone`, `upsert`, `validate`, `systemDialogs` and `actionNodeFromFlow` are sibling literal segments at this position, so a dialog id that collides with one of those words is not addressable here."
+   },
+   "csIntentId": {
+    "name": "id",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string"
+    },
+    "description": "The intent to delete. As with dialogs, several sibling segments at this position are literals (`clone`, `search`, `systemIntents`, `updateStatus`, `upsert`, `upsertDetails`, `upsertList`)."
+   },
+   "csVariableTypeId": {
+    "name": "id",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string"
+    },
+    "description": "The variable type to delete."
+   },
+   "csIntellisenseParam": {
+    "name": "param",
+    "in": "path",
+    "required": true,
+    "schema": {
+     "type": "string"
+    },
+    "description": "**Unnamed in the evidence.** The client method takes it as its first positional argument and concatenates it onto `/api/connectorintellisense/`; the minified parameter name carries no meaning and nothing in the surrounding code names the value. It is left as `param` rather than given an invented name."
    }
   }
  }

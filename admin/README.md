@@ -68,7 +68,7 @@ az account get-access-token --scope 065d9450-1e87-434e-ac2f-69af271549ed/.defaul
 
 ## Conventions
 
-- 3 operations over 3 paths, 5 schemas, tagged by logical resource (Organization, Release Wave Feature), OpenAPI 3.0.3.
+- 21 operations over 21 paths, 5 schemas, tagged by logical resource (Organization, Release Wave Feature), OpenAPI 3.0.3.
 - **No `api-version` parameter anywhere.** This surface has none.
 - Nothing is marked `required` on response schemas; every field documented was present on every object observed, but the service's own optionality is unverified.
 - `x-probe-verified: true` marks what was confirmed live. The enable mutation carries `false`: it is irreversible — `CanBeReset` is `false` on every wave feature, and there is no disable operation — so only its failure paths were exercised. Its request shape comes from the provider client and its unit tests.

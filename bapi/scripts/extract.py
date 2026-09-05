@@ -288,26 +288,61 @@ def normalize(path: str) -> str:
     return re.sub(r"\{[^}]+\}", "{}", path)
 
 
+def is_provider_claim(op: dict) -> bool:
+    """Whether the spec attributes this operation to the provider.
+
+    This used to be "anything not hand-marked x-provider-unsourced", which was a
+    remembered fact rather than a derived one, and it went stale the moment the
+    spec outgrew its seed: 64 operations arrived from the PowerShell module, the
+    admin centre bundles and live traffic, nobody marked them, and the audit
+    reported all of them as operations the provider had "no longer". A check that
+    is permanently red is a check nobody reads.
+
+    The spec already records where each operation came from. x-source names the
+    STRONGEST source, so any grade other than "provider" means something better
+    than the provider witnesses it -- that is not a provider claim. bapi's
+    baseline was seeded from the provider by this script and carries no x-source,
+    so an ungraded operation still counts as a provider claim. The explicit
+    marker is kept and still wins, for the cases where that baseline assumption
+    is wrong."""
+    if op.get("x-provider-unsourced"):
+        return False
+    return op.get("x-source", "provider") == "provider"
+
+
 def check(provider: pathlib.Path) -> int:
     spec_path = pathlib.Path(__file__).resolve().parent.parent / "oas" / "openapi.json"
     spec = json.loads(spec_path.read_text(encoding="utf-8"))
     inventory = extract(provider)
 
     extracted = {(o["method"].lower(), normalize(o["path"])) for o in inventory["operations"]}
-    documented = set()
+    documented = set()      # every operation the spec describes, whatever its source
+    claimed = set()         # the subset the spec attributes to the provider
     for p, item in spec.get("paths", {}).items():
         for verb, op in item.items():
-            if verb in ("get", "put", "post", "patch", "delete") and not op.get("x-provider-unsourced"):
-                documented.add((verb, normalize(p)))
+            if verb not in ("get", "put", "post", "patch", "delete"):
+                continue
+            documented.add((verb, normalize(p)))
+            if is_provider_claim(op):
+                claimed.add((verb, normalize(p)))
 
+    # The two questions are not symmetric, and answering them with one set was
+    # the second defect. "Is anything the provider calls undocumented?" is about
+    # the WHOLE spec -- an operation the provider has and ps-admin also witnesses
+    # is graded ps-admin, and asking it of the provider-attributed subset alone
+    # would report it missing while it sits in the file. "Does the spec attribute
+    # something to the provider that the provider no longer has?" is about the
+    # attributed subset only.
     missing = sorted(extracted - documented)
-    stale = sorted(documented - extracted)
+    stale = sorted(claimed - extracted)
     for verb, p in missing:
         print(f"MISSING from spec: {verb.upper()} {p}")
     for verb, p in stale:
         print(f"STALE in spec (no longer in provider): {verb.upper()} {p}")
     if not missing and not stale:
-        print(f"in sync: {len(documented)} provider-sourced operations")
+        print(f"in sync: {len(documented)} operations documented, "
+              f"{len(claimed)} attributed to the provider, "
+              f"{len(extracted)} found in the checkout")
     return 1 if (missing or stale) else 0
 
 

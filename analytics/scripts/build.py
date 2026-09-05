@@ -666,13 +666,56 @@ def spec() -> dict:
     }
 
 
+def _operations(doc: dict) -> set:
+    """Every (path, method) the document declares."""
+    verbs = {"get", "put", "post", "delete", "patch", "head", "options"}
+    return {(p, m) for p, item in doc.get("paths", {}).items()
+            for m in item if m in verbs}
+
+
 def main() -> None:
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                        "oas", "openapi.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    with open(out, "w", encoding="utf-8") as handle:
-        json.dump(spec(), handle, indent=1, ensure_ascii=False)
+    fresh = spec()
+
+    # Refuse to regress the published spec.
+    #
+    # This script used to open the output "w" and dump into it, which truncated
+    # the file BEFORE the new content existed: a raise inside spec() left a
+    # half-written spec, and a successful run silently deleted anything the file
+    # had gained since. That is not hypothetical -- the spec had been enriched
+    # from mined evidence to 29 operations while this emitter still knew about
+    # three, so the next run would have dropped 26 of them and reported success.
+    #
+    # An emitter that only ever adds is safe to run. One that would remove is
+    # out of date with the file it owns, and it must say so rather than win.
+    if os.path.exists(out):
+        try:
+            with open(out, encoding="utf-8") as handle:
+                published = json.load(handle)
+        except (OSError, ValueError) as exc:
+            raise SystemExit(f"{out} exists but could not be read ({exc}); "
+                             f"refusing to overwrite a file this script cannot compare against")
+        lost = _operations(published) - _operations(fresh)
+        if lost:
+            listed = "\n".join(f"  {m.upper():7}{p}" for p, m in sorted(lost))
+            raise SystemExit(
+                f"refusing to write {out}: it would drop "
+                f"{len(lost)} operation(s) the published spec already carries:\n"
+                f"{listed}\n"
+                f"Those came from mined evidence this emitter does not know about. "
+                f"Teach it those operations, or move the hand-authored surface into "
+                f"an enrichment file this script merges, as ppapi/enrichment.json does. "
+                f"Do not delete them to make this run pass.")
+
+    # Write via a temp file and rename, so a failure mid-write cannot leave a
+    # truncated spec where a valid one was.
+    tmp = out + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as handle:
+        json.dump(fresh, handle, indent=1, ensure_ascii=False)
         handle.write("\n")
+    os.replace(tmp, out)
     print(f"wrote {out}")
 
 

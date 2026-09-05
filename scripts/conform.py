@@ -18,7 +18,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # The evidence grades. In the extracted design a corpus declares its own
 # vocabulary and this becomes agreement-with-declaration; until then the
 # triple lives here, in one place, so generalising it is one edit.
-def _declared_grades() -> set:
+def _declared_grades() -> list:
     """The grade vocabulary, read from the catalogue rather than remembered here.
 
     This was a literal, and it was the one assertion in this checker that could
@@ -28,11 +28,14 @@ def _declared_grades() -> set:
     import json as _json, pathlib as _pl
     raw = _json.loads((_pl.Path(__file__).resolve().parent.parent / "specs.json").read_text())
     if isinstance(raw, dict) and raw.get("grades"):
-        return {g["id"] for g in raw["grades"]}
-    return {"live", "pac-cli", "provider"}
+        return [g["id"] for g in raw["grades"]]
+    return ["live", "pac-cli", "provider"]
 
 
-GRADES = _declared_grades()
+# Declared strongest first, so position IS strength. Both forms derive from the
+# one declaration: the set for membership, the list for comparing two grades.
+GRADE_ORDER = _declared_grades()
+GRADES = set(GRADE_ORDER)
 
 
 def stale(value, known) -> str:
@@ -95,6 +98,35 @@ def check(spec: str, doc: dict) -> None:
                 fail(spec, path, "x-source " + stale(shown, GRADES))
     walk(doc, "", grade)
 
+    # 1b. x-corroborated-by: the weaker sources that independently witness the
+    # same operation. It carries grade ids, so it goes stale exactly as x-source
+    # would, and nothing rendered it -- a typo here was invisible where the same
+    # typo in x-source failed. Validating it is also what earns it document scope
+    # in the policed set below.
+    def corroborated(n, path):
+        if not (isinstance(n, dict) and "x-corroborated-by" in n):
+            return
+        v = n["x-corroborated-by"]
+        if not isinstance(v, list) or not v:
+            fail(spec, path, "x-corroborated-by must be a non-empty list of grade ids")
+            return
+        if len(set(v)) != len(v):
+            fail(spec, path, "x-corroborated-by repeats a grade; each source witnesses once")
+        primary = n.get("x-source")
+        for g in v:
+            if not isinstance(g, str) or g not in GRADES:
+                fail(spec, path, "x-corroborated-by " + stale(g, GRADES))
+            elif g == primary:
+                fail(spec, path,
+                     f"x-corroborated-by repeats x-source ({g}); it lists the OTHER "
+                     f"sources that witness this operation, not the strongest one")
+            elif primary in GRADES and GRADE_ORDER.index(g) < GRADE_ORDER.index(primary):
+                fail(spec, path,
+                     f"x-corroborated-by lists {g}, which is stronger than x-source "
+                     f"({primary}); if {g} witnesses this operation it IS the source, "
+                     f"and grading it lower understates the evidence")
+    walk(doc, "", corroborated)
+
     # 2. x-notes: a string, or {note, source} with a known grade.
     def notes(n, path):
         if not (isinstance(n, dict) and "x-notes" in n):
@@ -143,7 +175,7 @@ def check(spec: str, doc: dict) -> None:
     # This set is DERIVED from the checks above rather than listed: an extension
     # earns document scope by being validated, so adding a check extends it and
     # there is no second place to update.
-    policed = {"x-source", "x-notes"}   # == the keys checks 1 and 2 walk
+    policed = {"x-source", "x-corroborated-by", "x-notes"}  # == the keys checks 1, 1b and 2 walk
     for scope in ("", "/info"):
         holder = doc if scope == "" else doc.get("info", {})
         for k in holder:
@@ -282,6 +314,42 @@ def check_catalogue(entries: list, cat: dict) -> None:
         fail("specs.json", "default", f"default {default!r} names no spec in the catalogue")
 
 
+def check_readme_counts(spec: str, doc: dict) -> None:
+    """A README that states its spec's size must state the true size.
+
+    The count is prose, so nothing regenerated it and nothing compared it: four
+    READMEs had drifted, one by a factor of seven, while every one of them read
+    as confidently as the accurate ones. A reader has no way to tell a current
+    count from a stale one, which makes the stale ones worse than no count.
+
+    Only READMEs that volunteer a count are checked, and only where the line says
+    it is describing the spec -- the line must also name `oas/openapi.json` or
+    `OpenAPI 3.0.3`. A README may legitimately count something else in
+    the same words: ppapi's says the .NET client "has 174 operations over 148
+    paths against the spec's 240 over 205", where the first pair describes the
+    CLIENT and is true. A check that forced every such phrase to match the spec
+    would have corrupted that sentence to make itself pass.
+
+    Saying nothing stays legal; saying something wrong about the spec does not."""
+    readme = ROOT / spec / "README.md"
+    if not readme.exists():
+        return
+    verbs = {"get", "put", "post", "delete", "patch", "head", "options"}
+    ops = sum(1 for item in doc.get("paths", {}).values() for m in item if m in verbs)
+    paths = len(doc.get("paths", {}))
+    count = re.compile(r"(\d+)\s+operations?\s+(?:over|across)\s+(\d+)\s+paths?",
+                       re.IGNORECASE)
+    about_spec = re.compile(r"oas/openapi\.json|OpenAPI 3\.0\.3", re.IGNORECASE)
+    for lineno, line in enumerate(readme.read_text().splitlines(), 1):
+        if not about_spec.search(line):
+            continue
+        for claimed_ops, claimed_paths in count.findall(line):
+            if (int(claimed_ops), int(claimed_paths)) != (ops, paths):
+                fail(spec, f"README.md:{lineno}",
+                     f"README says {claimed_ops} operations over {claimed_paths} paths; "
+                     f"the spec has {ops} over {paths}")
+
+
 def main() -> int:
     entries, cat = catalogue()
     check_catalogue(entries, cat)
@@ -296,6 +364,7 @@ def main() -> int:
 
     for spec, doc in corpus.items():
         check(spec, doc)
+        check_readme_counts(spec, doc)
         check_links(spec, doc, corpus)
 
     if failures:

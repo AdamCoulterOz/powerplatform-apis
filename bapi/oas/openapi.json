@@ -7631,7 +7631,7 @@
    },
    "ExtendedSettings": {
     "type": "object",
-    "description": "The Managed Environments settings. **Every value here is a string, including the booleans and the numbers** — `\"true\"`, `\"false\"`, `\"-1\"`. That is how the service returns them, and how it expects them on the way in.",
+    "description": "The Managed Environments settings. **Every value here is transmitted as a string, including the booleans, the integers and the timestamp** — `\"true\"`, `\"false\"`, `\"-1\"`. That is how the service returns them and how it expects them back.\n\n**The wire form is a string; the type is not.** These are `T.ToString()` renderings, and both ends almost certainly hold them as native values either side of serialisation — so recording only `type: string` would throw away what a client needs to round-trip them. Each property therefore carries `x-logical-type` naming what the string is a rendering of (`boolean`, `integer`, `enum`, `array<string>`, `date-time`), alongside the `type: string` and `enum`/`pattern` that describe the wire. A generated client should parse to the logical type on the way in and render back to a string on the way out.",
     "x-probe-verified": true,
     "properties": {
      "excludeEnvironmentFromAnalysis": {
@@ -7640,7 +7640,8 @@
       "enum": [
        "true",
        "false"
-      ]
+      ],
+      "x-logical-type": "boolean"
      },
      "includeOnHomepageInsights": {
       "type": "string",
@@ -7648,7 +7649,8 @@
       "enum": [
        "true",
        "false"
-      ]
+      ],
+      "x-logical-type": "boolean"
      },
      "isGroupSharingDisabled": {
       "type": "string",
@@ -7656,7 +7658,8 @@
       "enum": [
        "true",
        "false"
-      ]
+      ],
+      "x-logical-type": "boolean"
      },
      "limitSharingMode": {
       "type": "string",
@@ -7664,12 +7667,15 @@
       "enum": [
        "noLimit",
        "excludeSharingToSecurityGroups"
-      ]
+      ],
+      "x-logical-type": "enum"
      },
      "maxLimitUserSharing": {
       "type": "string",
-      "description": "Cap on how many individual users a canvas app may be shared with, as a decimal string. `\"-1\"` means no cap, and is the only valid value when `isGroupSharingDisabled` is `\"false\"`.",
-      "example": "-1"
+      "description": "Cap on how many individual users a canvas app may be shared with, as a decimal string. `\"-1\"` means no cap, and is the only valid value when `isGroupSharingDisabled` is `\"false\"`. Serialised as the decimal rendering of an integer; `\"-1\"` means no limit.",
+      "example": "-1",
+      "x-logical-type": "integer",
+      "pattern": "^-?\\d+$"
      },
      "solutionCheckerMode": {
       "type": "string",
@@ -7678,12 +7684,14 @@
        "none",
        "warn",
        "block"
-      ]
+      ],
+      "x-logical-type": "enum"
      },
      "solutionCheckerRuleOverrides": {
       "type": "string",
-      "description": "Comma-separated solution-checker rule ids to exempt (for example `meta-remove-dup-reg,web-use-async`); empty string exempts nothing.",
-      "example": ""
+      "description": "Comma-separated solution-checker rule ids to exempt (for example `meta-remove-dup-reg,web-use-async`); empty string exempts nothing. Serialised as a single string; an empty string means no overrides.",
+      "example": "",
+      "x-logical-type": "array<string>"
      },
      "suppressValidationEmails": {
       "type": "string",
@@ -7691,7 +7699,8 @@
       "enum": [
        "true",
        "false"
-      ]
+      ],
+      "x-logical-type": "boolean"
      },
      "disableAiGeneratedDescriptions": {
       "type": "string",
@@ -7699,7 +7708,8 @@
       "enum": [
        "true",
        "false"
-      ]
+      ],
+      "x-logical-type": "boolean"
      },
      "solutionCloudFlows-limitSharingMode": {
       "type": "string",
@@ -7707,12 +7717,15 @@
       "enum": [
        "noLimit",
        "disableSharing"
-      ]
+      ],
+      "x-logical-type": "enum"
      },
      "solutionCloudFlows-maxLimitUserSharing": {
       "type": "string",
-      "description": "Cap on individual users a solution-aware cloud flow may be shared with. `\"-1\"` means no cap.",
-      "example": "-1"
+      "description": "Cap on individual users a solution-aware cloud flow may be shared with. `\"-1\"` means no cap. Serialised as the decimal rendering of an integer; `\"-1\"` means no limit.",
+      "example": "-1",
+      "x-logical-type": "integer",
+      "pattern": "^-?\\d+$"
      },
      "bot-authoringSharingDisabled": {
       "type": "string",
@@ -7720,7 +7733,8 @@
       "enum": [
        "true",
        "false"
-      ]
+      ],
+      "x-logical-type": "boolean"
      },
      "bot-limitSharingMode": {
       "type": "string",
@@ -7728,19 +7742,23 @@
       "enum": [
        "noLimit",
        "disableSharing"
-      ]
+      ],
+      "x-logical-type": "enum"
      },
      "bot-maxLimitUserSharing": {
       "type": "string",
-      "description": "Cap on individual users a Copilot agent may be shared with. `\"-1\"` means no cap.",
-      "example": "-1"
+      "description": "Cap on individual users a Copilot agent may be shared with. `\"-1\"` means no cap. Serialised as the decimal rendering of an integer; `\"-1\"` means no limit.",
+      "example": "-1",
+      "x-logical-type": "integer",
+      "pattern": "^-?\\d+$"
      },
      "powerPolicyLastModified": {
       "type": "string",
       "format": "date-time",
       "description": "When these settings last changed. Service-populated; sending it has no effect.",
       "readOnly": true,
-      "example": "2026-08-18T16:05:00.068Z"
+      "example": "2026-08-18T16:05:00.068Z",
+      "x-logical-type": "date-time"
      }
     },
     "x-notes": [

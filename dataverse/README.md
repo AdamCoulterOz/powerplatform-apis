@@ -130,6 +130,18 @@ The corrections and additions the HAR capture produced, over and above what prob
 - **`/api/nosql/audit/isreadenabled` and `/api/search/v1.0/status` are not OData.** They sit on the same host under the same token with no version segment and no envelope; the first answers a bare `true`/`false` literal.
 - **The api-version segments disagree between clients.** The portal calls `datalakefolders` on `v9.2` while the provider pins `v9.1`; `GetOrgDbOrgSetting` was seen on both `v9.0` and `v9.2`. Where the recordings saw only one segment, the path pins it and `x-observed-api-versions` says so.
 
+## The 2026-09-05 live sweep
+
+A later read-only capture, driven through the admin centre's environment pages on a commercial tenant in the Australia geo, with request and response both recorded. It confirmed a stretch of this spec on the wire rather than adding much to it: fourteen operations carry `x-source: "live"` from it and nothing else had its grade touched.
+
+- **Two entity sets the admin centre addresses by name were missing here**: `applicationusers` and `savedqueries`. Both are added with their routes and the usual query options, and **no response schema** — the routes were observed, the bodies were not, and this spec does not guess column sets.
+- **`RetrieveUsersPrivilegesThroughTeams` carries its arguments inline in the URL**, captured verbatim as `(ExcludeOrgDisabledPrivileges=true,IncludeSetupUserFiltering=true)` — inside the parentheses, not as query options beside them. A bundle yields the function's name and nothing about how its arguments are carried; only a call does.
+- **`issytemgenerated` is confirmed on the wire**, read as attribute metadata on `role`. It is recorded as an `x-observed-value` on `attributeLogicalName` precisely so a later reader treats it as data rather than as a typo to correct.
+- **The service accepts a doubled slash after the host.** The admin centre concatenates an organization host that already ends in `/` with a path that starts with one, producing `//api/data/v9.0/...`, and both forms were seen answering against the same organization in one session.
+- **The Dataverse side is keyed by the organization id, not the environment id.** The admin centre's own sub-pages show it: `/environments/{organizationId}/securityroles` uses the organization id alone, and the users page carries both, in the order `/environments/{organizationId}/{environmentId}/users`. A caller holding only an environment id cannot address this API.
+- **`/api/nosql/` is a separate root on the same host**, not a branch of the Web API. It is kept in this spec because it shares the host, the token and the audience — and its description now says outright that it does not share the protocol.
+- Several entity-set reads were seen on the **`v9.0`** segment where this spec pins `v9.2` in the path. Those operations carry the mark with a note saying so: the evidence is for the operation, not for the segment it is written under.
+
 ## What the CLI added
 
 Structural facts no amount of probing this tenant would have produced, because they are about services and messages the provider never calls:
@@ -176,4 +188,4 @@ The capture also contains Dataverse calls that are **not** in this spec's scope,
 
 ## Status
 
-Spec validates as OpenAPI 3.0.3; 76 operations over 59 paths, 98 schemas. 64 operations carry `x-probe-verified: true`; the six SDK-derived additions carry `x-source: pac-cli` and claim nothing. Rendered by the browser at the repo root.
+Spec validates as OpenAPI 3.0.3; 91 operations over 73 paths, 98 schemas. 66 operations carry `x-probe-verified: true`; the six SDK-derived additions carry `x-source: pac-cli` and claim nothing. Rendered by the browser at the repo root.

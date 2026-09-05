@@ -17,6 +17,14 @@
    {
     "note": "**Collection-valued relationships are unverified.** This spec routes them through the `$ref` collection rather than `@odata.bind`, and associate/disassociate is documented on that basis, but nobody has read the metadata for a collection-valued relationship or exercised one. Treat that half as unconfirmed rather than as confirmed-correct -- the single-valued half was wrong for months on an assumption that looked equally safe.",
     "source": "provider"
+   },
+   {
+    "note": "**The service accepts a doubled slash after the host.** The admin centre builds Dataverse URLs by concatenating an organization host that already carries a trailing slash with a path that starts with one, producing `https://{organizationId}.crm{N}.dynamics.com//api/data/v9.0/...`. Both the single- and double-slash forms were seen against the same organization in one session during a read-only admin-centre sweep on 2026-09-05, against a commercial tenant in the Australia geo, and both answered. Worth knowing in two directions: a client need not panic about normalising, and a log or a proxy rule that matches on `/api/data/` must not assume exactly one leading slash.",
+    "source": "live"
+   },
+   {
+    "note": "**The organization id and the environment id are different keys, and the Dataverse side is keyed by the organization id.** The admin centre's own environment sub-pages show it: `/environments/{organizationId}/securityroles` uses the organization id alone, while the users page carries both, in the order `/environments/{organizationId}/{environmentId}/users?geo={Geo}`. A caller holding only an environment id cannot address this API \u2014 resolve the organization, its host and its id from the admin APIs first (see spec:bapi).",
+    "source": "live"
    }
   ]
  },
@@ -205,7 +213,8 @@
      "429": {
       "$ref": "#/components/responses/429"
      }
-    }
+    },
+    "x-source": "live"
    }
   },
   "/api/data/v9.0/GetFeatureEnabledState": {
@@ -259,7 +268,8 @@
      "429": {
       "$ref": "#/components/responses/429"
      }
-    }
+    },
+    "x-source": "live"
    }
   },
   "/api/data/v9.0/GetPreferredSolution": {
@@ -539,6 +549,58 @@
     }
    }
   },
+  "/api/data/v9.0/applicationusers": {
+   "get": {
+    "operationId": "users_listApplicationUsers",
+    "tags": [
+     "Users and Roles"
+    ],
+    "summary": "Application Users List",
+    "description": "Lists the environment's application users \u2014 the rows behind service-principal access.\n\nThis is a table of its own, not a projection of `systemusers`. The admin centre reads it directly when painting an environment's app-user list, rather than filtering the user table, so a client that only knows `systemusers` is looking at a different set.\n\n**No response shape is described here.** The route was observed on the wire; the body was not captured, and the columns are not asserted.",
+    "x-source": "live",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "x-notes": [
+     {
+      "note": "Observed during a read-only admin-centre sweep on 2026-09-05, against a commercial tenant in the Australia geo, on the `v9.0` segment. The generic collection read (`records_query`) reaches the same table; this entry exists to record that the admin centre addresses it by name.",
+      "source": "live"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/orderby"
+     },
+     {
+      "$ref": "#/components/parameters/top"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching rows, in the usual OData collection envelope. **No schema is described for this response**: the route was observed, the body was not recorded, and this spec does not guess column sets. Read the environment's own `$metadata` for the authoritative shape."
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
   "/api/data/v9.0/businessunits({businessUnitId})": {
    "get": {
     "operationId": "users_readBusinessUnit",
@@ -634,7 +696,11 @@
      "501": {
       "$ref": "#/components/responses/501"
      }
-    }
+    },
+    "x-source": "live",
+    "x-observed-api-versions": [
+     "v9.0"
+    ]
    }
   },
   "/api/data/v9.0/organizations({organizationId})": {
@@ -722,6 +788,58 @@
      },
      "412": {
       "$ref": "#/components/responses/412"
+     },
+     "429": {
+      "$ref": "#/components/responses/429"
+     }
+    }
+   }
+  },
+  "/api/data/v9.0/savedqueries": {
+   "get": {
+    "operationId": "records_listSavedQueries",
+    "tags": [
+     "Records"
+    ],
+    "summary": "System Views List",
+    "description": "Lists saved queries \u2014 the system views defined on the environment's tables.\n\nSaved queries are the organization-owned views, as against `userqueries`, which are personal. The admin centre reads them when it needs a table's view list.\n\n**No response shape is described here.** The route was observed on the wire; the body was not captured, and the columns are not asserted.",
+    "x-source": "live",
+    "x-probe-verified": true,
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "x-notes": [
+     {
+      "note": "Observed during a read-only admin-centre sweep on 2026-09-05, against a commercial tenant in the Australia geo, on the `v9.0` segment. Distinct from the `savedQuery` query option elsewhere in this spec, which *applies* a saved query to a collection read rather than listing the definitions.",
+      "source": "live"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "#/components/parameters/select"
+     },
+     {
+      "$ref": "#/components/parameters/filter"
+     },
+     {
+      "$ref": "#/components/parameters/orderby"
+     },
+     {
+      "$ref": "#/components/parameters/top"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching rows, in the usual OData collection envelope. **No schema is described for this response**: the route was observed, the body was not recorded, and this spec does not guess column sets. Read the environment's own `$metadata` for the authoritative shape."
+     },
+     "400": {
+      "$ref": "#/components/responses/400"
+     },
+     "401": {
+      "$ref": "#/components/responses/401"
+     },
+     "403": {
+      "$ref": "#/components/responses/403"
      },
      "429": {
       "$ref": "#/components/responses/429"
@@ -892,7 +1010,8 @@
      "429": {
       "$ref": "#/components/responses/429"
      }
-    }
+    },
+    "x-source": "live"
    }
   },
   "/api/data/v9.0/systemusers({systemUserId})/Microsoft.Dynamics.CRM.RetrieveUsersPrivilegesThroughTeams(ExcludeOrgDisabledPrivileges={ExcludeOrgDisabledPrivileges},IncludeSetupUserFiltering={IncludeSetupUserFiltering})": {
@@ -944,7 +1063,14 @@
      "429": {
       "$ref": "#/components/responses/429"
      }
-    }
+    },
+    "x-source": "live",
+    "x-notes": [
+     {
+      "note": "The inline named parameters are an observation, not a reading of the function's signature. Captured verbatim during a read-only admin-centre sweep on 2026-09-05, against a commercial tenant in the Australia geo, as `...RetrieveUsersPrivilegesThroughTeams(ExcludeOrgDisabledPrivileges=true,IncludeSetupUserFiltering=true)` \u2014 inside the parentheses on the URL, not as query options beside it. A client bundle yields the function's name and nothing about how its arguments are carried; only a call does.",
+      "source": "live"
+     }
+    ]
    }
   },
   "/api/data/v9.0/teammemberships": {
@@ -1066,7 +1192,8 @@
      "501": {
       "$ref": "#/components/responses/501"
      }
-    }
+    },
+    "x-source": "live"
    }
   },
   "/api/data/v9.1/entityanalyticsconfigs": {
@@ -1546,7 +1673,17 @@
      "501": {
       "$ref": "#/components/responses/501"
      }
-    }
+    },
+    "x-source": "live",
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "x-notes": [
+     {
+      "note": "Seen live on the **`v9.0`** segment while this spec pins `v9.2` in the path. The entity set and the method are what was observed; the segment is the caller's choice, as the `apiVersion` parameter on the version-templated routes in this spec sets out. Read the mark as evidence for the operation, not for the version segment it happens to be written under here.",
+      "source": "live"
+     }
+    ]
    }
   },
   "/api/data/v9.2/environmentvariabledefinitions": {
@@ -2324,7 +2461,17 @@
      "501": {
       "$ref": "#/components/responses/501"
      }
-    }
+    },
+    "x-source": "live",
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "x-notes": [
+     {
+      "note": "Seen live on the **`v9.0`** segment while this spec pins `v9.2` in the path. The entity set and the method are what was observed; the segment is the caller's choice, as the `apiVersion` parameter on the version-templated routes in this spec sets out. Read the mark as evidence for the operation, not for the version segment it happens to be written under here.",
+      "source": "live"
+     }
+    ]
    }
   },
   "/api/data/v9.2/settingdefinitions": {
@@ -2654,7 +2801,17 @@
      "501": {
       "$ref": "#/components/responses/501"
      }
-    }
+    },
+    "x-source": "live",
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "x-notes": [
+     {
+      "note": "Seen live on the **`v9.0`** segment while this spec pins `v9.2` in the path. The entity set and the method are what was observed; the segment is the caller's choice, as the `apiVersion` parameter on the version-templated routes in this spec sets out. Read the mark as evidence for the operation, not for the version segment it happens to be written under here.",
+      "source": "live"
+     }
+    ]
    },
    "post": {
     "operationId": "users_createApplicationUser",
@@ -3188,7 +3345,17 @@
      "501": {
       "$ref": "#/components/responses/501"
      }
-    }
+    },
+    "x-source": "live",
+    "x-observed-api-versions": [
+     "v9.0"
+    ],
+    "x-notes": [
+     {
+      "note": "Read live for `businessunit` during a read-only admin-centre sweep on 2026-09-05, against a commercial tenant in the Australia geo.",
+      "source": "live"
+     }
+    ]
    }
   },
   "/api/data/{apiVersion}/EntityDefinitions(LogicalName='{logicalName}')/Attributes": {
@@ -3264,6 +3431,10 @@
      {
       "note": "An `api-version` query parameter is accepted alongside the path's own version segment and may disagree with it: `v9.0` in the path with `api-version=9.1` in the query still succeeds. The route ignores the query parameter, so it cannot be used to select a version.",
       "source": "live"
+     },
+     {
+      "note": "Two attribute reads were captured during a read-only admin-centre sweep on 2026-09-05, against a commercial tenant in the Australia geo: `EntityDefinitions(LogicalName='systemuser')/Attributes(LogicalName='systemmanagedusertype')` and `EntityDefinitions(LogicalName='role')/Attributes(LogicalName='issytemgenerated')`. The second is the platform's real spelling \u2014 see the parameter below.",
+      "source": "live"
      }
     ],
     "x-probe-verified": true,
@@ -3317,7 +3488,8 @@
      "429": {
       "$ref": "#/components/responses/429"
      }
-    }
+    },
+    "x-source": "live"
    }
   },
   "/api/data/{apiVersion}/EntityDefinitions(LogicalName='{tableName}')": {
@@ -4888,7 +5060,7 @@
      "Organization Settings"
     ],
     "summary": "Audit Read Access Read",
-    "description": "Reports whether read auditing is active for this environment.\n\nIt sits beside the Web API on the same host and the same token, under `/api/nosql/` rather than `/api/data/{version}/`; there is no version segment, no envelope, and the body is the bare JSON literal `true` or `false` with `Content-Type: application/json; charset=utf-8`.\n\nIt is the effective answer, not the stored one: the `organization` row's `isreadauditenabled` says what was configured, while this reports whether the audit store is actually serving reads \u2014 which is also false while the master audit switch is off.",
+    "description": "Reports whether read auditing is active for this environment.\n\n**`/api/nosql/` is a separate root from `/api/data/v9.x`, served on the same organization host and accepting the same token.** It is not a branch of the Web API and not OData: there is no version segment, no `$metadata`, no envelope, and the body is the bare JSON literal `true` or `false` with `Content-Type: application/json; charset=utf-8`. It is documented in this spec because it shares the host, the token and the audience, not because it shares the protocol \u2014 a client must reach it with a plain HTTP call rather than through its OData layer.\n\nIt is the effective answer, not the stored one: the `organization` row's `isreadauditenabled` says what was configured, while this reports whether the audit store is actually serving reads \u2014 which is also false while the master audit switch is off.",
     "x-notes": [
      {
       "note": "Not an OData endpoint, despite sharing the Web API's host and token. There is no version segment, no envelope, and `OData-Version` is absent from the response, so an OData client library cannot be pointed at it.",
@@ -4917,7 +5089,8 @@
      "429": {
       "$ref": "#/components/responses/429"
      }
-    }
+    },
+    "x-source": "live"
    }
   },
   "/api/search/v1.0/status": {
@@ -5323,11 +5496,16 @@
     "name": "attributeLogicalName",
     "in": "path",
     "required": true,
-    "description": "Logical name of the column, always lower case. Platform columns are occasionally misspelled and the misspelling is the real name \u2014 `role` carries `issytemgenerated`, not `issystemgenerated`.",
+    "description": "Logical name of the column, always lower case. Platform columns are occasionally misspelled and the misspelling is the real name \u2014 `role` carries `issytemgenerated`, not `issystemgenerated`, and that spelling has been confirmed on the wire rather than transcribed.",
     "schema": {
      "type": "string",
      "pattern": "^[a-z0-9_]+$",
-     "example": "issytemgenerated"
+     "example": "issytemgenerated",
+     "x-observed-values": [
+      "systemmanagedusertype",
+      "issytemgenerated"
+     ],
+     "x-enum-evidence": "Both were read off live metadata requests during a read-only admin-centre sweep on 2026-09-05, against a commercial tenant in the Australia geo. `issytemgenerated` is reproduced exactly as the platform spells it \u2014 the second `s` is genuinely absent. It is recorded as an observed value so that a later reader treats it as data rather than as a typo to correct: `issystemgenerated` is not the column's name. The set is of course open; every column on every table is a legal value here."
     }
    },
    "retrieveAllSettings": {

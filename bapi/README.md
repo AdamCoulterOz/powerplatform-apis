@@ -35,6 +35,23 @@ Two things worth knowing about mining this kind of capture. `OPTIONS` entries ar
 
 The HARs themselves are full of tenant data and are not in this repo. As with probing, only shapes came out; every example in the spec is a neutral placeholder.
 
+## The 2026-09-05 live sweep
+
+A second, later capture: a read-only sweep of the admin centre driven through its left nav on a commercial tenant in the Australia geo, with an XHR interceptor recording request *and* response. Twenty-eight distinct endpoints over sixty-seven calls on the tenant pass, plus an environment-scoped pass of a hundred and seventy-three calls. Nothing mutating was performed, and no raw bodies were written to disk — only shapes and value sets came out.
+
+Nine BAPI operations carry `x-source: "live"` from it, and they are the only nine: `tenant`, `locations`, `environmentLocations`, the admin-scope environment list and read, `lastActivity`, `lifecycleOperations`, `listTenantSettings` and `t2tmigrations`. Nothing outside that set had its grade touched.
+
+What it settled that a client bundle could not:
+
+- **`environmentLocations` is a route of its own**, called with `api-version=2020-06-01` where `/locations` is called with `2021-04-01`. Both answered in the same session, so the older one is not a leftover. It is the one new path this capture added; its response body was not recorded, so it is documented with no response schema rather than an assumed `LocationList`.
+- **Several tenant settings are tri-state strings, not booleans.** `enableManagedAppsCliPreview` came back `"DefaultOff"` and its sibling `enableManagedAppsMcsPreview` `"DefaultOn"`; the `powerPages` members and `catalogSettings.powerCatalogAudienceSetting` came back `"All"`. A bundle gives you the key and lets you assume the type; only a response corrects the assumption. Each is recorded as `x-observed-values` on the property.
+- **`listTenantSettings` returns roughly sixty leaf settings** across seventeen groups under `powerPlatform`. Three of them — `gccCommercialSettings`, `businessResearchAgent`, `securitySettings` — came back empty on a commercial tenant and stay undescribed.
+- **`$expand` on the environment list takes `properties.parentEnvironmentGroup` with a dot**, alongside `properties/copilotPolicies` with a slash. That is a third member for the dot/slash split already recorded there, and it lands on the dot side. `$top` and `$select` were seen on the same route and are now documented.
+- **`api-version=2016-11-01` is still in active use** by the admin centre on the environment list, beside `2021-04-01`.
+- **`t2tmigrations` was confirmed through a client defect.** The admin centre requested `t2tmigrations/undefined/get` — the literal string, a JavaScript value interpolated unchecked — and got a 400. That fixes the route, the method and the failure shape and says nothing at all about the success body, which no capture has ever reached. The 200 stays undescribed.
+- **The Dataverse host suffix is served, not derived.** `linkedEnvironmentMetadata.hostNameSuffix` came back `crm6.dynamics.com` on an environment in the Australia geo, confirming that it must be read out of the environment record.
+- **The `extendedSettings` key set was confirmed against a live environment record** — all fourteen keys the spec describes, `powerPolicyLastModified` aside.
+
 ## Probing
 
 `probe.py` is the other half. A client only models what it needs, so the seeded spec listed a fraction of each response, marked nothing `required`, and guessed at optionality. The harness calls the real service to settle those questions:
@@ -51,7 +68,7 @@ It authenticates through the logged-in `az` CLI. No tenant id is hardcoded: ids 
 
 ## Conventions
 
-- 47 operations over 35 paths, tagged by logical resource (Environments, DLP Policies, Tenant, …), OpenAPI 3.0.3.
+- 103 operations over 75 paths, tagged by logical resource (Environments, DLP Policies, Tenant, …), OpenAPI 3.0.3.
 - `api-version` defaults are per operation (2019-10-01 → 2023-06-01); the `PowerPlatform.Governance` paths take no api-version at all. The version is not always cosmetic: `locations/{location}/templates` returns a *different response shape* either side of 2021-04-01, and the environment PATCH is pinned to 2021-04-01 because newer versions turn Managed Environments on as a side effect.
 - Contracts live in the schema, not the prose: `enum` for every closed set observed, `format`/`pattern` for real constraints, `example` for id and hostname shapes, `default` on api-version.
 - `required` appears only where a request was actually rejected without the field. On responses it means nothing: BAPI omits members rather than nulling them, and which members appear varies with SKU, Dataverse linkage and `$expand`.

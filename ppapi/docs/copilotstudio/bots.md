@@ -54,15 +54,15 @@ platformId: 813dc9ec-5e1f-dc7a-b553-1c08780e1803
 
 | [Delete Copilot Agent](bots/delete-copilot-agent.md) | Delete a bot in Copilot Studio. |
 | --- | --- |
-| [Download Maker Evaluation Snapshot](bots/download-maker-evaluation-snapshot.md) | Download maker evaluation snapshot. |
-| [Get Bot Quarantine Status](bots/get-bot-quarantine-status.md) | Get bot quarantine status. |
-| [Get Connector Consent Bypass](bots/get-connector-consent-bypass.md) | Get connector consent bypass. |
-| [Get Maker Evaluation Test Run](bots/get-maker-evaluation-test-run.md) | Get maker evaluation test run by ID. |
-| [Get Maker Evaluation Test Set](bots/get-maker-evaluation-test-set.md) | Get maker evaluation test set by ID. |
-| [List Maker Evaluation Test Runs](bots/list-maker-evaluation-test-runs.md) | List maker evaluation test runs. |
-| [List Maker Evaluation Test Sets](bots/list-maker-evaluation-test-sets.md) | List maker evaluation test sets. |
+| [Download Maker Evaluation Snapshot](bots/download-maker-evaluation-snapshot.md) | Download Maker Evaluation Snapshot. |
+| [Get Bot Quarantine Status](bots/get-bot-quarantine-status.md) | Get Bot Quarantine Status. |
+| [Get Connector Consent Bypass](bots/get-connector-consent-bypass.md) | Get Connector Consent Bypass. |
+| [Get Maker Evaluation Test Run](bots/get-maker-evaluation-test-run.md) | Get Maker Evaluation Test Run by ID. |
+| [Get Maker Evaluation Test Set](bots/get-maker-evaluation-test-set.md) | Get Maker Evaluation Test Set by ID. |
+| [List Maker Evaluation Test Runs](bots/list-maker-evaluation-test-runs.md) | List Maker Evaluation Test Runs. |
+| [List Maker Evaluation Test Sets](bots/list-maker-evaluation-test-sets.md) | List Maker Evaluation Test Sets. |
 | [Reassign Copilot Agent](bots/reassign-copilot-agent.md) | Reassign the owner of the bot. |
-| [Run Maker Evaluation Test Set](bots/run-maker-evaluation-test-set.md) | Run maker evaluation test set. |
-| [Set Bot As Quarantined](bots/set-bot-as-quarantined.md) | Set bot as quarantined. |
-| [Set Bot As Unquarantined](bots/set-bot-as-unquarantined.md) | Set bot as unquarantined. |
-| [Set Connector Consent Bypass](bots/set-connector-consent-bypass.md) | Set connector consent bypass. |
+| [Run Maker Evaluation Test Set](bots/run-maker-evaluation-test-set.md) | Run Maker Evaluation Test Set. |
+| [Set Bot As Quarantined](bots/set-bot-as-quarantined.md) | Set Bot as Quarantined. |
+| [Set Bot As Unquarantined](bots/set-bot-as-unquarantined.md) | Set Bot as Unquarantined. |
+| [Set Connector Consent Bypass](bots/set-connector-consent-bypass.md) | Set Connector Consent Bypass. |

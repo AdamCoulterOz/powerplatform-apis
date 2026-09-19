@@ -98,10 +98,10 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | --- | --- |
 | ApplicationPackage |  |
 | ApplicationPackageContinuationResponse |  |
-| ApplicationVisibility | Application visibility. |
-| CatalogVisibility | Catalog visibility for the application. |
+| ApplicationVisibility | Application visibility |
+| CatalogVisibility | Catalog visibility for the application |
 | ErrorDetails |  |
-| InstancePackageState | State of the instance package. |
+| InstancePackageState | State of the instance package |
 
 ### ApplicationPackage
 
@@ -112,8 +112,8 @@ Object
 | applicationDescription | string | Application description |
 | applicationId | string (uuid) | Application ID |
 | applicationName | string | Application name |
-| applicationVisibility | ApplicationVisibility | Application visibility. |
-| catalogVisibility | CatalogVisibility | Catalog visibility for the application. |
+| applicationVisibility | ApplicationVisibility | Application visibility |
+| catalogVisibility | CatalogVisibility | Catalog visibility for the application |
 | customHandleUpgrade | boolean | Available package custom upgrade |
 | endDateUtc | string (date-time) | End date for application package |
 | id | string (uuid) | Package or instance package ID that maps to the app package ID |
@@ -128,7 +128,7 @@ Object
 | publisherName | string | Publisher name |
 | singlePageApplicationUrl | string | Single Page Application (SPA) URL associated with the application |
 | startDateUtc | string (date-time) | Start date for application package |
-| state | InstancePackageState | State of the instance package. |
+| state | InstancePackageState | State of the instance package |
 | supportedCountries | string[] | List of supported countries/regions for the application |
 | uniqueName | string | Available package unique name or instance package unique name |
 | version | string | Available package version or instance package version |
@@ -146,7 +146,7 @@ Object
 
 Enumeration
 
-Application visibility.
+Application visibility
 
 | Value | Description |
 | --- | --- |
@@ -160,7 +160,7 @@ Application visibility.
 
 Enumeration
 
-Catalog visibility for the application.
+Catalog visibility for the application
 
 | Value | Description |
 | --- | --- |
@@ -186,7 +186,7 @@ Object
 
 Enumeration
 
-State of the instance package.
+State of the instance package
 
 | Value | Description |
 | --- | --- |

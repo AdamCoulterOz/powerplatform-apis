@@ -96,18 +96,18 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 
 | Name | Description |
 | --- | --- |
-| ApplicationVisibility | Application visibility. |
+| ApplicationVisibility | Application visibility |
 | ErrorDetails |  |
 | InstancePackage |  |
 | InstancePackageOperation |  |
-| InstancePackageState | State of the instance package. |
-| TpsInstallRequestPayload | Payload to be sent during installation of the package. |
+| InstancePackageState | State of the instance package |
+| TpsInstallRequestPayload | Payload to be sent during installation of the package |
 
 ### ApplicationVisibility
 
 Enumeration
 
-Application visibility.
+Application visibility
 
 | Value | Description |
 | --- | --- |
@@ -139,7 +139,7 @@ Object
 | applicationDescription | string | Application description associated with the instance package |
 | applicationId | string (uuid) | Application ID associated with the instance package |
 | applicationName | string | Application name associated with the instance package |
-| applicationVisibility | ApplicationVisibility | Application visibility. |
+| applicationVisibility | ApplicationVisibility | Application visibility |
 | customHandleUpgrade | boolean | Custom handle upgrade flag for the application |
 | id | string (uuid) | Instance package ID |
 | lastOperation | InstancePackageOperation |  |
@@ -165,14 +165,14 @@ Object
 | instancePackageId | string (uuid) | Instance package ID |
 | modifiedOn | string (date-time) | Date and time for modification of the instance package operation |
 | operationId | string (uuid) | Operation ID for the operation triggered on the instance package |
-| state | InstancePackageState | State of the instance package. |
+| state | InstancePackageState | State of the instance package |
 | statusMessage | string | Status message |
 
 ### InstancePackageState
 
 Enumeration
 
-State of the instance package.
+State of the instance package
 
 | Value | Description |
 | --- | --- |
@@ -193,7 +193,7 @@ State of the instance package.
 
 Object
 
-Payload to be sent during installation of the package.
+Payload to be sent during installation of the package
 
 | Name | Type | Description |
 | --- | --- | --- |

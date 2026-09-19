@@ -94,8 +94,8 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | Details |  |
 | Error |  |
 | ErrorMessage |  |
-| IpAddressEntity | Represents an IP address entry in the allow list. |
-| IpAddressType | The type of the IP address. |
+| IpAddressEntity | Represents an IP address entry in the allow list |
+| IpAddressType | The type of the IP address |
 
 ### Details
 
@@ -130,18 +130,18 @@ Object
 
 Object
 
-Represents an IP address entry in the allow list.
+Represents an IP address entry in the allow list
 
 | Name | Type | Description |
 | --- | --- | --- |
 | IpAddress | string | The IP address or CIDR range (e.g., "208.130.0.0/16") |
-| IpAddressType | IpAddressType | The type of the IP address. |
+| IpAddressType | IpAddressType | The type of the IP address |
 
 ### IpAddressType
 
 Enumeration
 
-The type of the IP address.
+The type of the IP address
 
 | Value | Description |
 | --- | --- |

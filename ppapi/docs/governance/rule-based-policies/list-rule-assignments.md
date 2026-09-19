@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - List rule-based policy assignments. Lists rule assignments for a tenant with rule set details. '
+description: 'Learn more about Power Platform API service - List rule based policy assignments. Lists rule assignments for a tenant with rule set details. '
 locale: en-us
 document_id: 26b3c950-d1dc-bfa1-c63e-759dc799f1c6
 document_version_independent_id: 523ae3ac-d989-e9dd-7216-c65acf748cb8
@@ -48,7 +48,7 @@ platformId: ebc73106-bcfd-6a06-66cd-af3471ca2b46
 - API Version:
     - 2024-10-01
 
-List rule-based policy assignments. Lists rule assignments for a tenant with rule set details.
+List rule based policy assignments. Lists rule assignments for a tenant with rule set details.
 
 ```http
 GET https://api.powerplatform.com/governance/ruleBasedPolicies/assignments?includeRuleSetCounts={includeRuleSetCounts}&api-version=2024-10-01

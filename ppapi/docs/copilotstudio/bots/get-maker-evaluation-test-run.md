@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Get maker evaluation test run by ID. Get the status and results of a specific maker evaluation test run. '
+description: 'Get Maker Evaluation Test Run by ID. Get the status and results of a specific maker evaluation test run. '
 locale: en-us
 document_id: 9218fb0c-00fc-f3ee-1327-6e825d8b799e
 document_version_independent_id: aa878208-1984-d473-b108-10df8f7ce547
@@ -48,7 +48,7 @@ platformId: e4cf9701-6ea1-deac-5417-033170f8d120
 - API Version:
     - 2024-10-01
 
-Get maker evaluation test run by ID. Get the status and results of a specific maker evaluation test run.
+Get Maker Evaluation Test Run by ID. Get the status and results of a specific maker evaluation test run.
 
 ```http
 GET https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/bots/{BotId}/api/makerevaluation/testruns/{TestRunId}?api-version=2024-10-01

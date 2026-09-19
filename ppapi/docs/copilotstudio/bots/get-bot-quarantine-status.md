@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get bot quarantine status. Retrieve the quarantine status of a bot. '
+description: 'Learn more about Power Platform API service - Get Bot Quarantine Status. Retrieve the quarantine status of a bot. '
 locale: en-us
 document_id: 93cb820b-cf7a-34fa-4e56-ececa9c5198d
 document_version_independent_id: 7dbe90ba-0683-625b-5efa-e1b5490b28a9
@@ -48,7 +48,7 @@ platformId: 8fa602b7-e0b8-604a-63b1-1103c39b7901
 - API Version:
     - 2024-10-01
 
-Get bot quarantine status. Retrieve the quarantine status of a bot.
+Get Bot Quarantine Status. Retrieve the quarantine status of a bot.
 
 ```http
 GET https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/bots/{BotId}/api/botQuarantine?api-version=2024-10-01

@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Set bot as quarantined. Set the quarantine status of a bot to true. '
+description: 'Learn more about Power Platform API service - Set Bot as Quarantined. Set the quarantine status of a bot to true. '
 locale: en-us
 document_id: f3c3769f-73ab-82bf-fc79-6f8de5e981fa
 document_version_independent_id: 6c405b1c-f45e-a9ea-9d9e-2458a6b15666
@@ -48,7 +48,7 @@ platformId: dd84829c-7d00-d1e5-5d7f-22c749aa1bb2
 - API Version:
     - 2024-10-01
 
-Set bot as quarantined. Set the quarantine status of a bot to true.
+Set Bot as Quarantined. Set the quarantine status of a bot to true.
 
 ```http
 POST https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/bots/{BotId}/api/botQuarantine/SetAsQuarantined?api-version=2024-10-01

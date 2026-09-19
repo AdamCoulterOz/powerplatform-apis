@@ -154,7 +154,7 @@ Represents the identity of a user.
 | --- | --- | --- |
 | displayName | string | The display name of the user. |
 | tenantId | string | The tenant ID of the user. |
-| type | string | The type of the user identity (for example, User). |
+| type | string | The type of the user identity (e.g., User). |
 | userId | string | The ID of the user. |
 
 ### ValidationResponse

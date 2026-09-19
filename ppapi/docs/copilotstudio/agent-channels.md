@@ -33,6 +33,10 @@ moniker_range_name:
 monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/copilotstudio/Agent-Channels.yml
+cmProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
+spProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 platformId: 61263253-b991-8cd6-7c0e-6877e66ee148
 ---
 
@@ -46,5 +50,5 @@ platformId: 61263253-b991-8cd6-7c0e-6877e66ee148
 
 ## Operations
 
-| [Download Agent Channel Manifest](agent-channels/download-agent-channel-manifest.md) | Download agent channel manifest. |
+| [Download Agent Channel Manifest](agent-channels/download-agent-channel-manifest.md) | Download Agent Channel Manifest. |
 | --- | --- |

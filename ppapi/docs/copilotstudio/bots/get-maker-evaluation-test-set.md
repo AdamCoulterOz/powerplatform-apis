@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get maker evaluation test set by ID. Get a specific test set for maker evaluation of a bot. '
+description: 'Learn more about Power Platform API service - Get Maker Evaluation Test Set by ID. Get a specific test set for maker evaluation of a bot. '
 locale: en-us
 document_id: bb0a94ee-ce4a-6def-3097-5b06c8011774
 document_version_independent_id: d90437ea-6166-4d16-337d-94f4f63beabc
@@ -48,7 +48,7 @@ platformId: c8f84df2-1adc-a539-fda9-e5e954dca7fb
 - API Version:
     - 2024-10-01
 
-Get maker evaluation test set by ID. Get a specific test set for maker evaluation of a bot.
+Get Maker Evaluation Test Set by ID. Get a specific test set for maker evaluation of a bot.
 
 ```http
 GET https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/bots/{BotId}/api/makerevaluation/testsets/{TestSetId}?api-version=2024-10-01

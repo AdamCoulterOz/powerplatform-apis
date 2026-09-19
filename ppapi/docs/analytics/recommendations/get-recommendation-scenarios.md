@@ -90,7 +90,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 
 Object
 
-The recommendation scenario.
+The recommendation scenario
 
 | Name | Type | Description |
 | --- | --- | --- |

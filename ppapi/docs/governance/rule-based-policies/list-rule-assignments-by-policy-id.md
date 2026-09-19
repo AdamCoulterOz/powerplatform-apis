@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'List rule-based policy assignments for a specific policy. Lists rule assignments for a policy with rule set details. '
+description: 'List rule based policy assignments for a specific policy. Lists rule assignments for a policy with rule set details. '
 locale: en-us
 document_id: 3d9490f0-4013-2f94-7417-d8ec52f442ad
 document_version_independent_id: 7bfd1223-6ffb-5db2-6351-09cfcbcd42f0
@@ -48,7 +48,7 @@ platformId: a8382827-91c8-8359-c14c-219c8bd63cf9
 - API Version:
     - 2024-10-01
 
-List rule-based policy assignments for a specific policy. Lists rule assignments for a policy with rule set details.
+List rule based policy assignments for a specific policy. Lists rule assignments for a policy with rule set details.
 
 ```http
 GET https://api.powerplatform.com/governance/ruleBasedPolicies/{policyId}/assignments?includeRuleSetCounts={includeRuleSetCounts}&api-version=2024-10-01

@@ -97,14 +97,14 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 
 | Name | Description |
 | --- | --- |
-| AdvisorRecommendationResource | Details of a resource included in a recommendation. |
-| AdvisorRecommendationResourceIEnumerableResponseWithContinuation | Paged list of recommendation resources. |
+| AdvisorRecommendationResource | Details of a resource included in a recommendation |
+| AdvisorRecommendationResourceIEnumerableResponseWithContinuation | Paged list of recommendation resources |
 
 ### AdvisorRecommendationResource
 
 Object
 
-Details of a resource included in a recommendation.
+Details of a resource included in a recommendation
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -126,7 +126,7 @@ Details of a resource included in a recommendation.
 
 Object
 
-Paged list of recommendation resources.
+Paged list of recommendation resources
 
 | Name | Type | Description |
 | --- | --- | --- |

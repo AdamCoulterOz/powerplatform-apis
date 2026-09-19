@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Download maker evaluation snapshot. Download the bot content snapshot associated with a specific maker evaluation test run as a ZIP file. '
+description: 'Download Maker Evaluation Snapshot. Download the bot content snapshot associated with a specific maker evaluation test run as a ZIP file. '
 locale: en-us
 document_id: 504aae26-9cec-6273-e2e3-cb3f9017883a
 document_version_independent_id: c3a9976c-485b-f097-8493-f965ecf6263c
@@ -48,7 +48,7 @@ platformId: 0ed3fdcf-539e-0531-b139-538a63a703db
 - API Version:
     - 2024-10-01
 
-Download maker evaluation snapshot. Download the bot content snapshot associated with a specific maker evaluation test run as a ZIP file.
+Download Maker Evaluation Snapshot. Download the bot content snapshot associated with a specific maker evaluation test run as a ZIP file.
 
 ```http
 GET https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/bots/{BotId}/api/makerevaluation/testruns/{TestRunId}/snapshot?api-version=2024-10-01

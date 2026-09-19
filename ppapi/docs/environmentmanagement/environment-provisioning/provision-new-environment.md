@@ -75,7 +75,7 @@ Media Types: "application/json", "text/json", "application/\*+json"
 | billingPolicy |  | CreateEnvironmentRequestBillingPolicy | Billing policy for the environment. |
 | cluster |  | CreateEnvironmentRequestCluster | Cluster configuration. |
 | connectedGroupIdForTeamsEnvironment |  | string | Microsoft 365 Group ID to be linked to the Teams environment during provisioning. This property is not applicable for non-Teams environments. |
-| databaseType |  | string | The type of database to create (for example, CommonDataService). |
+| databaseType |  | string | The type of database to create (e.g., CommonDataService). CommonDataService requires either location or macroRegion, linkedEnvironmentMetadata.baseLanguageCode, and linkedEnvironmentMetadata.currency.code. |
 | description |  | string | An optional description for the environment. |
 | finOpsMetadata |  | CreateEnvironmentRequestFinOpsMetadata | FinOps metadata for environment provisioning. |
 | governanceConfiguration |  | CreateEnvironmentRequestGovernance | Governance configuration. |
@@ -146,7 +146,7 @@ Request model for provisioning a new environment.
 | billingPolicy | CreateEnvironmentRequestBillingPolicy | Billing policy for the environment. |
 | cluster | CreateEnvironmentRequestCluster | Cluster configuration. |
 | connectedGroupIdForTeamsEnvironment | string | Microsoft 365 Group ID to be linked to the Teams environment during provisioning. This property is not applicable for non-Teams environments. |
-| databaseType | string | The type of database to create (for example, CommonDataService). |
+| databaseType | string | The type of database to create (e.g., CommonDataService). CommonDataService requires either location or macroRegion, linkedEnvironmentMetadata.baseLanguageCode, and linkedEnvironmentMetadata.currency.code. |
 | description | string | An optional description for the environment. |
 | displayName | string <br>minLength: 1 | The display name of the environment. |
 | environmentSku | EnvironmentSku | The environment SKU. |
@@ -208,7 +208,7 @@ Metadata for the linked Dataverse environment.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| baseLanguageCode | integer (int32) | The base language code (for example, 1033 for English). |
+| baseLanguageCode | integer (int32) | The base language code (e.g., 1033 for English). |
 | currency | EnvironmentRequestCurrency | Currency settings for an environment. |
 | domainName | string | The domain name. |
 | securityGroupId | string | The security group ID. |
@@ -245,7 +245,7 @@ Currency settings for an environment.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| code | string | The currency code (for example, USD). |
+| code | string | The currency code (e.g., USD). |
 | name | string | The currency name. |
 | precision | integer (int32) | The currency precision. |
 | symbol | string | The currency symbol. |
@@ -377,7 +377,7 @@ Represents the identity of a user.
 | --- | --- | --- |
 | displayName | string | The display name of the user. |
 | tenantId | string | The tenant ID of the user. |
-| type | string | The type of the user identity (for example, User). |
+| type | string | The type of the user identity (e.g., User). |
 | userId | string | The ID of the user. |
 
 ### ValidationResponse

@@ -104,9 +104,9 @@ Represents a currency available for environment provisioning.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| code | string | The currency code (for example, "USD"). |
+| code | string | The currency code (e.g. "USD"). |
 | isTenantDefault | boolean | Whether this is the tenant's default currency. |
-| symbol | string | The currency symbol (for example, "$"). |
+| symbol | string | The currency symbol (e.g. "$"). |
 
 ### EnvironmentCurrencyResourceCollection
 

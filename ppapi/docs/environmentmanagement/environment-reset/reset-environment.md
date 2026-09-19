@@ -66,8 +66,8 @@ POST https://api.powerplatform.com/environmentmanagement/environments/{environme
 | --- | --- | --- | --- | --- |
 | environmentId | path | True | string | The ID of the environment. |
 | api-version | query | True | string | The API version. |
-| ValidateOnly | query |  | boolean | When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute). |
-| ValidateProperties | query |  | string | A comma-separated list of property names to validate (for example, "property1,property2"). Applies only when validateOnly is true. |
+| ValidateOnly | query |  | boolean | When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute). |
+| ValidateProperties | query |  | string | A comma-separated list of property names to validate (e.g. "property1,property2"). Applies only when validateOnly is true. |
 
 ## Request Body
 
@@ -75,7 +75,7 @@ Media Types: "application/json", "text/json", "application/\*+json"
 
 | Name | Type | Description |
 | --- | --- | --- |
-| baseLanguageCode | integer (int32) | The base language code (for example, 1033 for English) for the environment to reset to. |
+| baseLanguageCode | integer (int32) | The base language code (e.g., 1033 for English) for the environment to reset to. |
 | currency | EnvironmentRequestCurrency | Currency settings for an environment. |
 | description | string | An optional description for the environment to reset to. |
 | displayName | string | The display name for the environment to reset to. |
@@ -126,7 +126,7 @@ Currency settings for an environment.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| code | string | The currency code (for example, USD). |
+| code | string | The currency code (e.g., USD). |
 | name | string | The currency name. |
 | precision | integer (int32) | The currency precision. |
 | symbol | string | The currency symbol. |
@@ -161,7 +161,7 @@ Request model for resetting an environment.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| baseLanguageCode | integer (int32) | The base language code (for example, 1033 for English) for the environment to reset to. |
+| baseLanguageCode | integer (int32) | The base language code (e.g., 1033 for English) for the environment to reset to. |
 | currency | EnvironmentRequestCurrency | Currency settings for an environment. |
 | description | string | An optional description for the environment to reset to. |
 | displayName | string | The display name for the environment to reset to. |

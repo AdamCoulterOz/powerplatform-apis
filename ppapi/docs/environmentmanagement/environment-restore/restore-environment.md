@@ -68,8 +68,8 @@ POST https://api.powerplatform.com/environmentmanagement/environments/{targetEnv
 | --- | --- | --- | --- | --- |
 | targetEnvironmentId | path | True | string | The ID of the target environment that will be overwritten. |
 | api-version | query | True | string | The API version. |
-| ValidateOnly | query |  | boolean | When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute). |
-| ValidateProperties | query |  | string | A comma-separated list of property names to validate (for example, "property1,property2"). Applies only when validateOnly is true. |
+| ValidateOnly | query |  | boolean | When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute). |
+| ValidateProperties | query |  | string | A comma-separated list of property names to validate (e.g. "property1,property2"). Applies only when validateOnly is true. |
 
 ## Request Body
 
@@ -77,7 +77,7 @@ Media Types: "application/json", "text/json", "application/\*+json"
 
 | Name | Required | Type | Description |
 | --- | --- | --- | --- |
-| restorePointDateTime | True | string (date-time) | The point in time to restore the environment to. Must include a timezone offset per RFC 3339 (for example, 2025-04-30T12:34:56+02:00). |
+| restorePointDateTime | True | string (date-time) | The point in time to restore the environment to. Must include a timezone offset per RFC 3339 (e.g., 2025-04-30T12:34:56+02:00). |
 | sourceEnvironmentId | True | string | The ID of the source environment from which the backup will be restored. |
 | restoreOptions |  | RestoreRequestOptions | Optional inputs for restore request. |
 
@@ -147,7 +147,7 @@ Request model for restoring an environment to a previous backup.
 | Name | Type | Description |
 | --- | --- | --- |
 | restoreOptions | RestoreRequestOptions | Optional inputs for restore request. |
-| restorePointDateTime | string (date-time) | The point in time to restore the environment to. Must include a timezone offset per RFC 3339 (for example, 2025-04-30T12:34:56+02:00). |
+| restorePointDateTime | string (date-time) | The point in time to restore the environment to. Must include a timezone offset per RFC 3339 (e.g., 2025-04-30T12:34:56+02:00). |
 | sourceEnvironmentId | string | The ID of the source environment from which the backup will be restored. |
 
 ### RestoreRequestOptions

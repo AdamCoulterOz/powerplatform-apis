@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'List rule-based policy assignments for a specific environment group. Lists rule assignments for an environment group. '
+description: 'List rule based policy assignments for a specific environment group. Lists rule assignments for an environment group. '
 locale: en-us
 document_id: 6ba5d040-6e7c-6691-363c-970c14875df5
 document_version_independent_id: 4ad099d4-34fc-3a4b-56f1-e48e9d4d9d4e
@@ -48,7 +48,7 @@ platformId: 4f8c1a5c-e463-2c2c-04b2-154effac056f
 - API Version:
     - 2024-10-01
 
-List rule-based policy assignments for a specific environment group. Lists rule assignments for an environment group.
+List rule based policy assignments for a specific environment group. Lists rule assignments for an environment group.
 
 ```http
 GET https://api.powerplatform.com/governance/ruleBasedPolicies/environmentGroups/{environmentGroupId}/assignments?includeRuleSetCounts={includeRuleSetCounts}&api-version=2024-10-01

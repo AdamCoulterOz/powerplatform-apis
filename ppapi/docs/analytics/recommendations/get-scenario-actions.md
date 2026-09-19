@@ -92,7 +92,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 
 Object
 
-The allowed action.
+The allowed action
 
 | Name | Type | Description |
 | --- | --- | --- |

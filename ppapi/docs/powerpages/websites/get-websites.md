@@ -34,13 +34,11 @@ monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/powerpages/Websites/Get-Websites.yml
 cmProducts:
-- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
 - https://microsoft-devrel.poolparty.biz/DevRelOfferingOntology/c2975bf6-bf61-46d5-8621-bc6aec151623
-- https://microsoft-devrel.poolparty.biz/DevRelOfferingOntology/1433a524-c01f-4b87-beab-670c040dea4f
+- https://authoring-docs-microsoft.poolparty.biz/devrel/c1641ec8-45f4-44f8-96be-791a543c4e4e
 spProducts:
-- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 - https://microsoft-devrel.poolparty.biz/DevRelOfferingOntology/93eba64c-cee2-4c90-a45b-c5546aae2cb8
-- https://microsoft-devrel.poolparty.biz/DevRelOfferingOntology/312f1f05-a431-4193-8a4d-e6245d5966de
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f2433524-1328-496f-9385-a27d967008a9
 platformId: c80d36de-ca5a-b7d5-aef6-97264679c214
 ---
 
@@ -103,6 +101,8 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | ErrorMessage |  |
 | ODataListWebsitesDto |  |
 | WebsiteDto |  |
+| WebsiteTemplateName | Website template name. Supported templates, their display names, and template type:<br><br><br>| Template | Display Name | Template Type |<br>| --- | --- | --- |<br>| `StarterLayout1` | Starter Layout 1 | Power Pages |<br>| `StarterLayout2` | Starter Layout 2 | Power Pages |<br>| `StarterLayout3` | Starter Layout 3 | Power Pages |<br>| `StarterLayout4` | Starter Layout 4 | Power Pages |<br>| `StarterLayout5` | Starter Layout 5 | Power Pages |<br>| `BlankPage` | Blank Page | Power Pages |<br>| `BookMeetings` | Schedule and Manage Meetings | Power Pages |<br>| `DefaultPortalTemplate` | Starter Layout 1 | Power Pages |<br>| `PowerPortals_ProgramRegistration` | Program Registration | Power Pages |<br>| `PowerPortals_BookMeeting` | Schedule and Manage Meetings | Power Pages |<br>| `FAQ` | Frequently Asked Questions | Power Pages |<br>| `ProgramRegistration` | Program Registration | Power Pages |<br>| `BuildingPermit` | Application Processing | Power Pages |<br>| `Community` | Community | Dynamics 365 |<br>| `EventPortal` | Event Portal | Dynamics 365 |<br>| `CustomerSelfServicePortal` | Customer Self Service Portal | Dynamics 365 |<br>| `EmployeeSelfServicePortal` | Employee Self Service Portal | Dynamics 365 |<br>| `PartnerPortal` | Partner Portal | Dynamics 365 |<br>| `CustomerPortal` | Customer Portal | Dynamics 365 |<br>| `FieldService` | Field Service | Dynamics 365 | |
+| --- | --- |
 
 ### Details
 
@@ -168,9 +168,62 @@ Object
 | status | enum:<br>- OperationComplete<br>- OperationFailed<br>- OperationInProgress<br>- OperationNotStarted | Website status |
 | subdomain | string | Subdomain of website |
 | suspendedWebsiteDeletingInDays | integer (int32) | Time (in days) to website deletion, if suspended |
-| templateName | enum:<br>- DefaultPortalTemplate<br>- PowerPortals\_BookMeeting<br>- PowerPortals\_ProgramRegistration | Website template name |
+| templateName | WebsiteTemplateName | Website template name. Supported templates, their display names, and template type:<br><br><br>| Template | Display Name | Template Type |<br>| --- | --- | --- |<br>| `StarterLayout1` | Starter Layout 1 | Power Pages |<br>| `StarterLayout2` | Starter Layout 2 | Power Pages |<br>| `StarterLayout3` | Starter Layout 3 | Power Pages |<br>| `StarterLayout4` | Starter Layout 4 | Power Pages |<br>| `StarterLayout5` | Starter Layout 5 | Power Pages |<br>| `BlankPage` | Blank Page | Power Pages |<br>| `BookMeetings` | Schedule and Manage Meetings | Power Pages |<br>| `DefaultPortalTemplate` | Starter Layout 1 | Power Pages |<br>| `PowerPortals_ProgramRegistration` | Program Registration | Power Pages |<br>| `PowerPortals_BookMeeting` | Schedule and Manage Meetings | Power Pages |<br>| `FAQ` | Frequently Asked Questions | Power Pages |<br>| `ProgramRegistration` | Program Registration | Power Pages |<br>| `BuildingPermit` | Application Processing | Power Pages |<br>| `Community` | Community | Dynamics 365 |<br>| `EventPortal` | Event Portal | Dynamics 365 |<br>| `CustomerSelfServicePortal` | Customer Self Service Portal | Dynamics 365 |<br>| `EmployeeSelfServicePortal` | Employee Self Service Portal | Dynamics 365 |<br>| `PartnerPortal` | Partner Portal | Dynamics 365 |<br>| `CustomerPortal` | Customer Portal | Dynamics 365 |<br>| `FieldService` | Field Service | Dynamics 365 | |
+| --- | --- | --- |
 | tenantId | string | Tenant unique identifier (ID) of the website |
 | trialExpiringInDays | integer (int32) | Time (in days) to expiration of the website |
 | type | enum:<br>- Production<br>- Trial | Application type of the website |
 | websiteRecordId | string | Dataverse record unique identifier (ID) of the website |
 | websiteUrl | string | Website URL |
+
+### WebsiteTemplateName
+
+Enumeration
+
+Website template name. Supported templates, their display names, and template type:
+
+| Template | Display Name | Template Type |
+| --- | --- | --- |
+| `StarterLayout1` | Starter Layout 1 | Power Pages |
+| `StarterLayout2` | Starter Layout 2 | Power Pages |
+| `StarterLayout3` | Starter Layout 3 | Power Pages |
+| `StarterLayout4` | Starter Layout 4 | Power Pages |
+| `StarterLayout5` | Starter Layout 5 | Power Pages |
+| `BlankPage` | Blank Page | Power Pages |
+| `BookMeetings` | Schedule and Manage Meetings | Power Pages |
+| `DefaultPortalTemplate` | Starter Layout 1 | Power Pages |
+| `PowerPortals_ProgramRegistration` | Program Registration | Power Pages |
+| `PowerPortals_BookMeeting` | Schedule and Manage Meetings | Power Pages |
+| `FAQ` | Frequently Asked Questions | Power Pages |
+| `ProgramRegistration` | Program Registration | Power Pages |
+| `BuildingPermit` | Application Processing | Power Pages |
+| `Community` | Community | Dynamics 365 |
+| `EventPortal` | Event Portal | Dynamics 365 |
+| `CustomerSelfServicePortal` | Customer Self Service Portal | Dynamics 365 |
+| `EmployeeSelfServicePortal` | Employee Self Service Portal | Dynamics 365 |
+| `PartnerPortal` | Partner Portal | Dynamics 365 |
+| `CustomerPortal` | Customer Portal | Dynamics 365 |
+| `FieldService` | Field Service | Dynamics 365 |
+
+| Value | Description |
+| --- | --- |
+| StarterLayout1 |  |
+| StarterLayout2 |  |
+| StarterLayout3 |  |
+| StarterLayout4 |  |
+| StarterLayout5 |  |
+| BlankPage |  |
+| BookMeetings |  |
+| FAQ |  |
+| ProgramRegistration |  |
+| BuildingPermit |  |
+| Community |  |
+| EventPortal |  |
+| CustomerSelfServicePortal |  |
+| EmployeeSelfServicePortal |  |
+| PartnerPortal |  |
+| CustomerPortal |  |
+| FieldService |  |
+| DefaultPortalTemplate |  |
+| PowerPortals\_ProgramRegistration |  |
+| PowerPortals\_BookMeeting |  |

@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Run maker evaluation test set. Trigger a maker evaluation test run for a specific test set. '
+description: 'Learn more about Power Platform API service - Run Maker Evaluation Test Set. Trigger a maker evaluation test run for a specific test set. '
 locale: en-us
 document_id: cb1b240b-6836-c295-0a40-f075a6594dab
 document_version_independent_id: a11d24ae-98c1-4068-86ae-5eea5627e394
@@ -48,7 +48,7 @@ platformId: 009e6d45-1f03-9f6c-2a3c-1dc9e867af0d
 - API Version:
     - 2024-10-01
 
-Run maker evaluation test set. Trigger a maker evaluation test run for a specific test set.
+Run Maker Evaluation Test Set. Trigger a maker evaluation test run for a specific test set.
 
 ```http
 POST https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/bots/{BotId}/api/makerevaluation/testsets/{TestSetId}/run?api-version=2024-10-01

@@ -68,7 +68,7 @@ POST https://api.powerplatform.com/powerpages/environments/{environmentId}/websi
 
 | Name | Type | Description |
 | --- | --- | --- |
-| IpAddresses | IpAddressEntity[] | Represents an IP address entry in the allow list. |
+| IpAddresses | IpAddressEntity[] | Represents an IP address entry in the allow list |
 
 ## Responses
 
@@ -101,8 +101,8 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | Error |  |
 | ErrorMessage |  |
 | IpAddressConfiguration |  |
-| IpAddressEntity | Represents an IP address entry in the allow list. |
-| IpAddressType | The type of the IP address. |
+| IpAddressEntity | Represents an IP address entry in the allow list |
+| IpAddressType | The type of the IP address |
 
 ### Details
 
@@ -139,24 +139,24 @@ Object
 
 | Name | Type | Description |
 | --- | --- | --- |
-| IpAddresses | IpAddressEntity[] | Represents an IP address entry in the allow list. |
+| IpAddresses | IpAddressEntity[] | Represents an IP address entry in the allow list |
 
 ### IpAddressEntity
 
 Object
 
-Represents an IP address entry in the allow list.
+Represents an IP address entry in the allow list
 
 | Name | Type | Description |
 | --- | --- | --- |
 | IpAddress | string | The IP address or CIDR range (e.g., "208.130.0.0/16") |
-| IpAddressType | IpAddressType | The type of the IP address. |
+| IpAddressType | IpAddressType | The type of the IP address |
 
 ### IpAddressType
 
 Enumeration
 
-The type of the IP address.
+The type of the IP address
 
 | Value | Description |
 | --- | --- |

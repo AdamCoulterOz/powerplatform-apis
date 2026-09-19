@@ -115,7 +115,7 @@ Object
 | Name | Type | Description |
 | --- | --- | --- |
 | allocated | integer (int32) |  |
-| autoAllocated | integer (int32) |  |
+| autoAllocated | number (double) |  |
 | currencyType | ExternalCurrencyType | Available currency type which can be allocated to environment. |
 | enforcementRules | EnforcementRule[] |  |
 

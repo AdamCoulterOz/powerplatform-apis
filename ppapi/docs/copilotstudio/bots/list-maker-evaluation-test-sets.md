@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'List maker evaluation test sets. Retrieves the list of test sets for a bot in a specified environment. '
+description: 'List Maker Evaluation Test Sets. Retrieves the list of test sets for a bot in a specified environment. '
 locale: en-us
 document_id: 66305d50-c0c6-7bc6-ea65-2939defd9794
 document_version_independent_id: 1c120c2a-b986-7261-29e9-7ff9cef89444
@@ -48,7 +48,7 @@ platformId: 0a269742-9954-d41d-f7b6-913c45494320
 - API Version:
     - 2024-10-01
 
-List maker evaluation test sets. Retrieves the list of test sets for a bot in a specified environment.
+List Maker Evaluation Test Sets. Retrieves the list of test sets for a bot in a specified environment.
 
 ```http
 GET https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/bots/{BotId}/api/makerevaluation/testsets?api-version=2024-10-01

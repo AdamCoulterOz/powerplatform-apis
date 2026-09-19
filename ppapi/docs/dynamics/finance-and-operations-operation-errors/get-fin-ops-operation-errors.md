@@ -68,7 +68,7 @@ GET https://api.powerplatform.com/dynamics/environments/{environmentId}/operatio
 | --- | --- | --- | --- | --- |
 | environmentId | path | True | string (uuid) | The unique identifier of the environment. |
 | api-version | query | True | string | The API version. |
-| maxResults | query |  | integer (int32) | The maximum number of operation errors to return. Defaults to twenty (20) and is capped at one thousand (1000). |
+| maxResults | query |  | integer (int32) | The maximum number of operation errors to return. Defaults to 20 and is capped at 1000. |
 
 ## Responses
 

@@ -106,8 +106,8 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | MatchConditions |  |
 | RuleGroupOverrides |  |
 | Rules |  |
-| WafRuleAction | Action to take for the rule. |
-| WafRuleType | WAF rule type. |
+| WafRuleAction | Action to take for the rule |
+| WafRuleType | WAF rule type |
 | WebApplicationFirewallConfiguration |  |
 
 ### CustomRule
@@ -123,7 +123,7 @@ Object
 | priority | integer (int32) | Priority of the rule |
 | rateLimitDurationInMinutes | integer (int32) | Duration in minutes for rate limiting |
 | rateLimitThreshold | integer (int32) | Threshold for rate limiting |
-| ruleType | WafRuleType | WAF rule type. |
+| ruleType | WafRuleType | WAF rule type |
 
 ### Details
 
@@ -195,7 +195,7 @@ Object
 
 | Name | Type | Description |
 | --- | --- | --- |
-| Action | WafRuleAction | Action to take for the rule. |
+| Action | WafRuleAction | Action to take for the rule |
 | EnabledState | enum:<br>- Disabled<br>- Enabled | State of the rule |
 | Exclusions | string[] | List of exclusions for the rule |
 | RuleId | string | ID of the rule |
@@ -204,7 +204,7 @@ Object
 
 Enumeration
 
-Action to take for the rule.
+Action to take for the rule
 
 | Value | Description |
 | --- | --- |
@@ -217,7 +217,7 @@ Action to take for the rule.
 
 Enumeration
 
-WAF rule type.
+WAF rule type
 
 | Value | Description |
 | --- | --- |

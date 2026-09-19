@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - List maker evaluation test runs. List all maker evaluation test runs for a bot. '
+description: 'Learn more about Power Platform API service - List Maker Evaluation Test Runs. List all maker evaluation test runs for a bot. '
 locale: en-us
 document_id: 10bf44d8-06bc-18f7-505a-5bb383b2865d
 document_version_independent_id: cf231286-277a-f49c-e8ae-2a59dde8d0b0
@@ -48,7 +48,7 @@ platformId: 78813138-94b8-8f39-e84c-8b6a0289d4fc
 - API Version:
     - 2024-10-01
 
-List maker evaluation test runs. List all maker evaluation test runs for a bot.
+List Maker Evaluation Test Runs. List all maker evaluation test runs for a bot.
 
 ```http
 GET https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/bots/{BotId}/api/makerevaluation/testruns?api-version=2024-10-01

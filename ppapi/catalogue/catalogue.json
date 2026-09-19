@@ -1,5 +1,19 @@
 [
  {
+  "logical_resource": "(unmapped)",
+  "facet": "advisor-chat",
+  "operation": "Send Advisor Chat Message",
+  "crud": "Action",
+  "method": "POST",
+  "path": "/analytics/advisor/chat/messages",
+  "api_version": "2024-10-01",
+  "preview": false,
+  "introduced": "",
+  "namespace": "analytics",
+  "group": "advisor-chat",
+  "doc": "docs/analytics/advisor-chat/send-advisor-chat-message.md"
+ },
+ {
   "logical_resource": "Advisor Recommendation",
   "facet": "Recommendations and actions",
   "operation": "Get Action Schema",
@@ -1990,6 +2004,20 @@
  {
   "logical_resource": "Power Pages Website",
   "facet": "Site admin, security, scanning",
+  "operation": "Get Affected Sites",
+  "crud": "Read",
+  "method": "GET",
+  "path": "/powerpages/environments/{environmentId}/exceptions/affectedSites",
+  "api_version": "2024-10-01",
+  "preview": false,
+  "introduced": "",
+  "namespace": "powerpages",
+  "group": "websites",
+  "doc": "docs/powerpages/websites/get-affected-sites.md"
+ },
+ {
+  "logical_resource": "Power Pages Website",
+  "facet": "Site admin, security, scanning",
   "operation": "Get Allowed Ip Addresses",
   "crud": "Read (list)",
   "method": "GET",
@@ -2014,6 +2042,20 @@
   "namespace": "powerpages",
   "group": "websites",
   "doc": "docs/powerpages/websites/get-certificates-by-portal.md"
+ },
+ {
+  "logical_resource": "Power Pages Website",
+  "facet": "Site admin, security, scanning",
+  "operation": "Get Exceptions",
+  "crud": "Read",
+  "method": "GET",
+  "path": "/powerpages/environments/{environmentId}/exceptions/list",
+  "api_version": "2024-10-01",
+  "preview": false,
+  "introduced": "",
+  "namespace": "powerpages",
+  "group": "websites",
+  "doc": "docs/powerpages/websites/get-exceptions.md"
  },
  {
   "logical_resource": "Power Pages Website",
@@ -2242,6 +2284,20 @@
  {
   "logical_resource": "Power Pages Website",
   "facet": "Site admin, security, scanning",
+  "operation": "Grant Exception",
+  "crud": "Action",
+  "method": "POST",
+  "path": "/powerpages/environments/{environmentId}/exceptions/grant",
+  "api_version": "2024-10-01",
+  "preview": false,
+  "introduced": "",
+  "namespace": "powerpages",
+  "group": "websites",
+  "doc": "docs/powerpages/websites/grant-exception.md"
+ },
+ {
+  "logical_resource": "Power Pages Website",
+  "facet": "Site admin, security, scanning",
   "operation": "Remove Allowed Ip Addresses",
   "crud": "Action",
   "method": "POST",
@@ -2266,6 +2322,20 @@
   "namespace": "powerpages",
   "group": "websites",
   "doc": "docs/powerpages/websites/restart-website.md"
+ },
+ {
+  "logical_resource": "Power Pages Website",
+  "facet": "Site admin, security, scanning",
+  "operation": "Revoke Exception",
+  "crud": "Action",
+  "method": "POST",
+  "path": "/powerpages/environments/{environmentId}/exceptions/revoke",
+  "api_version": "2024-10-01",
+  "preview": false,
+  "introduced": "",
+  "namespace": "powerpages",
+  "group": "websites",
+  "doc": "docs/powerpages/websites/revoke-exception.md"
  },
  {
   "logical_resource": "Power Pages Website",

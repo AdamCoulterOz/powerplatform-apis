@@ -66,8 +66,8 @@ POST https://api.powerplatform.com/environmentmanagement/environments/{environme
 | --- | --- | --- | --- | --- |
 | environmentId | path | True | string | The ID of the environment. |
 | api-version | query | True | string | The API version. |
-| ValidateOnly | query |  | boolean | When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute). |
-| ValidateProperties | query |  | string | A comma-separated list of property names to validate (for example, "property1,property2"). Applies only when validateOnly is true. |
+| ValidateOnly | query |  | boolean | When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute). |
+| ValidateProperties | query |  | string | A comma-separated list of property names to validate (e.g. "property1,property2"). Applies only when validateOnly is true. |
 
 ## Request Body
 

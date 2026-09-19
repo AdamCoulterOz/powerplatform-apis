@@ -107,7 +107,7 @@ Represents a language available for environment provisioning.
 | Name | Type | Description |
 | --- | --- | --- |
 | isTenantDefault | boolean | Whether this is the tenant's default language. |
-| localeId | integer (int32) | The locale identifier (LCID, for example, 1033 for English). |
+| localeId | integer (int32) | The locale identifier (LCID, e.g. 1033 for English). |
 | localizedName | string | The language name, localized for display. |
 
 ### EnvironmentLanguageResourceCollection

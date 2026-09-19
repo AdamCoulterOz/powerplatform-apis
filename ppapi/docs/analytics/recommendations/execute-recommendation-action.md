@@ -96,15 +96,15 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 
 | Name | Description |
 | --- | --- |
-| AdvisorActionRequest | The request with details to carry out an action on resource(s). |
-| AdvisorActionResponse | The response for action performed on resources. |
-| AdvisorActionResult | The result of an action performed on a resource. |
+| AdvisorActionRequest | The request with details to carry out an action on resource(s) |
+| AdvisorActionResponse | The response for action performed on resources |
+| AdvisorActionResult | The result of an action performed on a resource |
 
 ### AdvisorActionRequest
 
 Object
 
-The request with details to carry out an action on resource(s).
+The request with details to carry out an action on resource(s)
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -115,17 +115,17 @@ The request with details to carry out an action on resource(s).
 
 Object
 
-The response for action performed on resources.
+The response for action performed on resources
 
 | Name | Type | Description |
 | --- | --- | --- |
-| results | AdvisorActionResult[] | The result of an action performed on a resource. |
+| results | AdvisorActionResult[] | The result of an action performed on a resource |
 
 ### AdvisorActionResult
 
 Object
 
-The result of an action performed on a resource.
+The result of an action performed on a resource
 
 | Name | Type | Description |
 | --- | --- | --- |

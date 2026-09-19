@@ -95,26 +95,26 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 
 | Name | Description |
 | --- | --- |
-| AdvisorRecommendation | Information for a recommendation. |
-| AdvisorRecommendationDetails | Details for a recommendation. |
-| AdvisorRecommendationIEnumerableResponseWithContinuation | Paged list of recommendations. |
+| AdvisorRecommendation | Information for a recommendation |
+| AdvisorRecommendationDetails | Details for a recommendation |
+| AdvisorRecommendationIEnumerableResponseWithContinuation | Paged list of recommendations |
 
 ### AdvisorRecommendation
 
 Object
 
-Information for a recommendation.
+Information for a recommendation
 
 | Name | Type | Description |
 | --- | --- | --- |
-| details | AdvisorRecommendationDetails | Details for a recommendation. |
+| details | AdvisorRecommendationDetails | Details for a recommendation |
 | scenario | string | The recommendation name. |
 
 ### AdvisorRecommendationDetails
 
 Object
 
-Details for a recommendation.
+Details for a recommendation
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -126,7 +126,7 @@ Details for a recommendation.
 
 Object
 
-Paged list of recommendations.
+Paged list of recommendations
 
 | Name | Type | Description |
 | --- | --- | --- |

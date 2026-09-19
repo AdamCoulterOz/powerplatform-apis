@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get connector consent bypass. Get the admin connector consent bypass setting for a bot. '
+description: 'Learn more about Power Platform API service - Get Connector Consent Bypass. Get the admin connector consent bypass setting for a bot. '
 locale: en-us
 document_id: 13d98243-fea8-b424-0017-363b1277fd09
 document_version_independent_id: fa30cfd6-b130-c700-ec5b-7213806c28db
@@ -48,7 +48,7 @@ platformId: 0e8a27cf-3358-2004-9a8c-362aa6e67709
 - API Version:
     - 2024-10-01
 
-Get connector consent bypass. Get the admin connector consent bypass setting for a bot.
+Get Connector Consent Bypass. Get the admin connector consent bypass setting for a bot.
 
 ```http
 GET https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/bots/{BotId}/api/connectorConsentBypass?api-version=2024-10-01

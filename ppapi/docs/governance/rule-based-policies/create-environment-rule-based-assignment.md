@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Create environment rule-based assignment. Creates a rule-based policy assignment for an environment. '
+description: 'Create environment rule based assignment. Creates a rule-based policy assignment for an environment. '
 locale: en-us
 document_id: c7fdc8cf-081d-1d5d-be32-8c09742ae993
 document_version_independent_id: e8655666-b779-2259-3a80-263c85b195a9
@@ -48,7 +48,7 @@ platformId: 812146fe-ef48-c646-123c-578fd7d61eea
 - API Version:
     - 2024-10-01
 
-Create environment rule-based assignment. Creates a rule-based policy assignment for an environment.
+Create environment rule based assignment. Creates a rule-based policy assignment for an environment.
 
 ```http
 POST https://api.powerplatform.com/governance/ruleBasedPolicies/{policyId}/environments/{environmentId}/assignments?api-version=2024-10-01
@@ -108,7 +108,7 @@ Object
 | Name | Type | Description |
 | --- | --- | --- |
 | behaviorType | enum:<br>- Exclude<br>- Include<br>- NotSpecified | The Behavior type. |
-| resourceId | string | Resource ID; for example, the environment group ID. |
+| resourceId | string | Resource Id ex. the environment group id. |
 | resourceType | enum:<br>- Environment<br>- EnvironmentGroup<br>- NotSpecified<br>- Tenant | The Resource type. |
 
 ### PolicyAssignmentRequest

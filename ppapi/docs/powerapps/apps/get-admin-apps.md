@@ -130,13 +130,13 @@ Object
 | bypassConsent | boolean | Flag indicates bypassed API consent |
 | dataSources | string[] | List of data sources for the connection |
 | dependencies | string[] | List of dependencies for the connection |
-| dependents | string[] | List of dependent connectors for the connector |
+| dependents | string[] | List of dependant connectors for the connector |
 | displayName | string |  |
 | executionRestrictions | object | Execution restrictions for the runtime policy |
 | iconUri | string |  |
 | id | string |  |
 | isCustomApiConnection | boolean | Flag indicates custom connector |
-| isOnPremiseConnection | boolean | Flag indicates on-premises data gateway |
+| isOnPremiseConnection | boolean | Flag indicates on premise data gateway |
 | runtimePolicyName | string | String indicating the name of the runtime policy |
 | sharedConnectionId | string | String indicating the ID of the shared connection |
 

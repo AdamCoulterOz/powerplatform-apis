@@ -179,7 +179,7 @@ Object
 | id | string | The ID of the environment. |
 | protectionLevel | string | The protection level applied to the environment. |
 | retentionDetails | RetentionDetails | The retention details of the environment. |
-| scenarioName | string | The scenario name associated with the environment (for example, singleton scenario type). |
+| scenarioName | string | The scenario name associated with the environment (e.g. singleton scenario type). |
 | securityGroupId | string | The security group that controls access to the environment. |
 | state | string | The current state of the environment. |
 | tenantId | string | The ID of the tenant that the environment belongs to. |

@@ -66,7 +66,7 @@ POST https://api.powerplatform.com/powerpages/environments/{environmentId}/websi
 
 | Name | Required | Type | Description |
 | --- | --- | --- | --- |
-| dataModelVersionValue | True | boolean | value of data model version for IsNewDataModel |
+| isNewDataModel | True | boolean | Whether the portal uses the enhanced data model. |
 
 ## Responses
 
@@ -135,4 +135,4 @@ Object
 
 | Name | Type | Description |
 | --- | --- | --- |
-| dataModelVersionValue | boolean | value of data model version for IsNewDataModel |
+| isNewDataModel | boolean | Whether the portal uses the enhanced data model. |

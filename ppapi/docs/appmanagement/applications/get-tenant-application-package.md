@@ -87,8 +87,8 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 
 | Name | Description |
 | --- | --- |
-| ApplicationVisibility | Application visibility. |
-| CatalogVisibility | Catalog visibility for the application. |
+| ApplicationVisibility | Application visibility |
+| CatalogVisibility | Catalog visibility for the application |
 | ErrorDetails |  |
 | TenantApplicationPackage |  |
 | TenantApplicationPackageContinuationResponse |  |
@@ -97,7 +97,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 
 Enumeration
 
-Application visibility.
+Application visibility
 
 | Value | Description |
 | --- | --- |
@@ -111,7 +111,7 @@ Application visibility.
 
 Enumeration
 
-Catalog visibility for the application.
+Catalog visibility for the application
 
 | Value | Description |
 | --- | --- |
@@ -142,8 +142,8 @@ Object
 | applicationDescription | string | Application description |
 | applicationId | string (uuid) | Application ID |
 | applicationName | string | Application name |
-| applicationVisibility | ApplicationVisibility | Application visibility. |
-| catalogVisibility | CatalogVisibility | Catalog visibility for the application. |
+| applicationVisibility | ApplicationVisibility | Application visibility |
+| catalogVisibility | CatalogVisibility | Catalog visibility for the application |
 | lastError | ErrorDetails |  |
 | learnMoreUrl | string | Learn more URL |
 | localizedDescription | string | Localized description of the tenant application package |

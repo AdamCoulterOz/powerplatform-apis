@@ -68,18 +68,22 @@ platformId: 863c8b48-84e9-37af-7cf0-1508b84d89e6
 | [Delete Website](websites/delete-website.md) | Delete a Power Pages website. |
 | [Disable Waf](websites/disable-waf.md) | Disable web application Firewall on a Power Pages website. |
 | [Enable WAF](websites/enable-waf.md) | Enable web application firewall on a Power Pages website. |
+| [Get Affected Sites](websites/get-affected-sites.md) | Lists the websites affected by an exception scenario for a tenant. |
 | [Get Allowed Ip Addresses](websites/get-allowed-ip-addresses.md) | Get allowed IP addresses for a Power Pages website. |
 | [Get Certificates By Portal](websites/get-certificates-by-portal.md) | Get certificates associated with a website. |
+| [Get Exceptions](websites/get-exceptions.md) | Lists the admin exceptions for a tenant. |
 | [Get Security Scan Report](websites/get-security-scan-report.md) | Get deep scan report for a Power Pages website. |
 | [Get Security Scan Score](websites/get-security-scan-score.md) | Get deep scan score for a Power Pages website. |
 | [Get WAF Rules](websites/get-waf-rules.md) | Get the web application firewall rules. |
 | [Get WAF Status](websites/get-waf-status.md) | Get the web application firewall status. |
 | [Get Website By Id](websites/get-website-by-id.md) | Get the Power Pages website details by specifying its unique identifier (ID). |
 | [Get Websites](websites/get-websites.md) | List Power Pages websites. |
+| [Grant Exception](websites/grant-exception.md) | Grants an admin exception for one or more Power Pages websites in a tenant. |
 | [List Host Names For Portal](websites/list-host-names-for-portal.md) | List custom host names for a website. |
 | [List Ssl Bindings By Thumbprints](websites/list-ssl-bindings-by-thumbprints.md) | List SSL bindings for a website by hostname. |
 | [Remove Allowed Ip Addresses](websites/remove-allowed-ip-addresses.md) | Remove allowed IP addresses from a Power Pages website. |
 | [Restart Website](websites/restart-website.md) | Restart a Power Pages website. |
+| [Revoke Exception](websites/revoke-exception.md) | Revokes an admin exception for one or more Power Pages websites in a tenant. |
 | [Set Portal Bootstrap V5 Enabled](websites/set-portal-bootstrap-v5-enabled.md) | Stamp bootstrap version five (5) status as enabled for website. |
 | [Set Portal Data Model Version](websites/set-portal-data-model-version.md) | Stamp data model version for website. |
 | [Start Deep Scan](websites/start-deep-scan.md) | Start deep scan for a Power Pages website. |

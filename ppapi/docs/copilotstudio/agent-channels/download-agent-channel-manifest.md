@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Download agent channel manifest. Downloads the channel manifest package for the specified agent and channel as a zip file. Currently only the "M365" channel is '
+description: 'Download Agent Channel Manifest. Downloads the channel manifest package for the specified agent and channel as a zip file. Currently only the "M365" channel is '
 locale: en-us
 document_id: 45e06bec-03c9-3f26-9456-dd61951920f4
 document_version_independent_id: 5e2020f6-2b88-54d0-843b-fa05c038e7e6
@@ -50,7 +50,7 @@ platformId: a044637b-fe05-0847-c4e7-0224f2656741
 - API Version:
     - 2024-10-01
 
-Download agent channel manifest. Downloads the channel manifest package for the specified agent and channel as a zip file. Currently only the "M365" channel is supported.
+Download Agent Channel Manifest. Downloads the channel manifest package for the specified agent and channel as a zip file. Currently only the "M365" channel is supported.
 
 ```http
 GET https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/agents/{AgentId}/channels/{ChannelName}/download?api-version=2024-10-01

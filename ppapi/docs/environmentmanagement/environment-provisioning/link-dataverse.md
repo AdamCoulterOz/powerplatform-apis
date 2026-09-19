@@ -69,7 +69,7 @@ Media Types: "application/json", "text/json", "application/\*+json"
 
 | Name | Type | Description |
 | --- | --- | --- |
-| baseLanguageCode | integer (int32) | The base language code (for example, 1033 for English). |
+| baseLanguageCode | integer (int32) | The base language code (e.g., 1033 for English). |
 | currency | EnvironmentRequestCurrency | Currency settings for an environment. |
 | domainName | string | The domain name. |
 | securityGroupId | string | The security group ID. |
@@ -119,7 +119,7 @@ Metadata for the linked Dataverse environment.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| baseLanguageCode | integer (int32) | The base language code (for example, 1033 for English). |
+| baseLanguageCode | integer (int32) | The base language code (e.g., 1033 for English). |
 | currency | EnvironmentRequestCurrency | Currency settings for an environment. |
 | domainName | string | The domain name. |
 | securityGroupId | string | The security group ID. |
@@ -134,7 +134,7 @@ Currency settings for an environment.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| code | string | The currency code (for example, USD). |
+| code | string | The currency code (e.g., USD). |
 | name | string | The currency name. |
 | precision | integer (int32) | The currency precision. |
 | symbol | string | The currency symbol. |

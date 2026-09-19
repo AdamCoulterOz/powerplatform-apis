@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Set bot as unquarantined. Set the quarantine status of a bot to false. '
+description: 'Learn more about Power Platform API service - Set Bot as Unquarantined. Set the quarantine status of a bot to false. '
 locale: en-us
 document_id: 8da4b4c7-1954-7bac-aa92-95b73210ff03
 document_version_independent_id: 4142ae18-3a5f-5d8e-91d8-09535345da46
@@ -48,7 +48,7 @@ platformId: 568c23c4-c3f0-004e-ab4f-6c19c49a3392
 - API Version:
     - 2024-10-01
 
-Set bot as unquarantined. Set the quarantine status of a bot to false.
+Set Bot as Unquarantined. Set the quarantine status of a bot to false.
 
 ```http
 POST https://api.powerplatform.com/copilotstudio/environments/{EnvironmentId}/bots/{BotId}/api/botQuarantine/SetAsUnquarantined?api-version=2024-10-01

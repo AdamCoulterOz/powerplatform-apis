@@ -1189,6 +1189,10 @@
  ],
  "tags": [
   {
+   "name": "(unmapped)",
+   "description": "advisor-chat"
+  },
+  {
    "name": "Advisor Chat",
    "description": "A conversational assistant that answers questions about the tenant in prose, backed by whatever the service knows about it. Separate from the advisor recommendations in the same namespace, which return structured findings against specific resources, and from the solution-checker advisor on another host entirely. Preview: the surface is feature-gated in the only client known to call it."
   },
@@ -1626,12 +1630,11 @@
   },
   "/analytics/advisor/chat/messages": {
    "post": {
-    "operationId": "analytics_askAdvisor",
+    "operationId": "analytics_sendAdvisorChatMessage",
     "tags": [
-     "Advisor Chat"
+     "(unmapped)"
     ],
-    "summary": "Message Send",
-    "description": "Asks the Power Platform advisor a question about the tenant and returns its answer. Omit `conversationId` to start a new conversation; the response carries the id the service assigned, and passing it back on the next request continues the same thread with its history intact. Answers are generated, so they take seconds to minutes rather than milliseconds — pac allows five minutes before giving up, and a client should budget similarly rather than using a default HTTP timeout.\n\nThis is not the solution-checker advisor at `advisor.powerapps.com`, and it is unrelated to the advisor recommendations elsewhere in this namespace: those return structured findings about resources, this returns prose.",
+    "summary": "Send Advisor Chat Message",
     "parameters": [
      {
       "name": "api-version",
@@ -1641,53 +1644,63 @@
        "type": "string",
        "default": "2024-10-01"
       },
-      "description": "The API version. Send `2024-10-01` on this route."
+      "description": "The API version."
      }
     ],
     "responses": {
      "200": {
-      "description": "The advisor's answer.",
+      "description": "Success",
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/AdvisorChatMessage"
+         "$ref": "#/components/schemas/AdvisorChatMessageResponse"
         }
        }
       }
+     },
+     "400": {
+      "description": "Bad Request"
+     },
+     "401": {
+      "description": "Unauthorized"
+     },
+     "403": {
+      "description": "Forbidden"
+     },
+     "404": {
+      "description": "Not Found"
+     },
+     "429": {
+      "description": "Too Many Requests"
      }
     },
     "x-ms-namespace": "analytics/advisor-chat",
-    "x-source": "pac-cli",
-    "servers": [
-     {
-      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
-      "variables": {
-       "tenantIdHead": {
-        "default": "000000000000000000000000000000"
-       },
-       "tenantIdTail": {
-        "default": "ab"
-       }
-      }
-     }
-    ],
     "requestBody": {
      "required": true,
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/AdvisorChatRequest"
+        "type": "object",
+        "properties": {
+         "message": {
+          "type": "string",
+          "description": "The user message to send to the advisor chat agent"
+         },
+         "conversationId": {
+          "type": "string",
+          "description": "The conversation ID for multi-turn chat. Omit to start a new conversation"
+         }
+        },
+        "required": [
+         "message"
+        ]
        }
       }
      }
     },
-    "x-ms-preview": true,
-    "x-notes": [
-     {
-      "note": "Gated behind the `ModuleAdvisor` feature flag, and absent from the published reference for this namespace. Treat it as preview surface that can change or disappear.",
-      "source": "pac-cli"
-     }
-    ]
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/analytics/advisor-chat/send-advisor-chat-message"
+    }
    }
   },
   "/analytics/advisorRecommendations": {
@@ -8595,7 +8608,7 @@
        "type": "integer",
        "format": "int32"
       },
-      "description": "The maximum number of operation errors to return. Defaults to twenty (20) and is capped at one thousand (1000)."
+      "description": "The maximum number of operation errors to return. Defaults to 20 and is capped at 1000."
      }
     ],
     "responses": {
@@ -9571,7 +9584,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -9580,7 +9593,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -10158,7 +10171,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -10167,7 +10180,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -10234,7 +10247,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -10243,7 +10256,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -10310,7 +10323,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -10319,7 +10332,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -10386,7 +10399,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -10395,7 +10408,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -10462,7 +10475,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -10471,7 +10484,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -10555,7 +10568,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -10564,7 +10577,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -10631,7 +10644,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -10640,7 +10653,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -10883,7 +10896,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -10892,7 +10905,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -10959,7 +10972,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -10968,7 +10981,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -11006,7 +11019,7 @@
          "baseLanguageCode": {
           "type": "integer",
           "format": "int32",
-          "description": "The base language code (for example, 1033 for English) for the environment to reset to."
+          "description": "The base language code (e.g., 1033 for English) for the environment to reset to."
          },
          "currency": {
           "allOf": [
@@ -11369,7 +11382,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -11378,7 +11391,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -11455,7 +11468,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -11464,7 +11477,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -11541,7 +11554,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -11550,7 +11563,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -11730,7 +11743,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields. If validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
+      "description": "When true, validates the request without executing it. Use with validateProperties to validate only specific fields; if validateProperties is empty, the entire request is validated. Defaults to false (validate and execute)."
      },
      {
       "name": "ValidateProperties",
@@ -11739,7 +11752,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "A comma-separated list of property names to validate (for example, \"property1,property2\"). Applies only when validateOnly is true."
+      "description": "A comma-separated list of property names to validate (e.g. \"property1,property2\"). Applies only when validateOnly is true."
      }
     ],
     "responses": {
@@ -11777,7 +11790,7 @@
          "restorePointDateTime": {
           "type": "string",
           "format": "date-time",
-          "description": "The point in time to restore the environment to. Must include a timezone offset per RFC 3339 (for example, 2025-04-30T12:34:56+02:00)."
+          "description": "The point in time to restore the environment to. Must include a timezone offset per RFC 3339 (e.g., 2025-04-30T12:34:56+02:00)."
          },
          "sourceEnvironmentId": {
           "type": "string",
@@ -12035,7 +12048,7 @@
          },
          "databaseType": {
           "type": "string",
-          "description": "The type of database to create (for example, CommonDataService)."
+          "description": "The type of database to create (e.g., CommonDataService). CommonDataService requires either location or macroRegion, linkedEnvironmentMetadata.baseLanguageCode, and linkedEnvironmentMetadata.currency.code."
          },
          "description": {
           "type": "string",
@@ -12166,7 +12179,7 @@
          "baseLanguageCode": {
           "type": "integer",
           "format": "int32",
-          "description": "The base language code (for example, 1033 for English)."
+          "description": "The base language code (e.g., 1033 for English)."
          },
          "currency": {
           "allOf": [
@@ -24460,6 +24473,409 @@
     "x-source": "ppac-spa"
    }
   },
+  "/powerpages/environments/{environmentId}/exceptions/affectedSites": {
+   "get": {
+    "operationId": "powerpages_getAffectedSites",
+    "tags": [
+     "Power Pages Website"
+    ],
+    "summary": "Affected Sites Get",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment ID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     },
+     {
+      "name": "exceptionType",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The exception scenario discriminator, e.g. \"WebApiStarRetirement\"."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AffectedSitesResult"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad Request",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Unauthorized",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not Found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "powerpages/websites",
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/powerpages/websites/get-affected-sites"
+    }
+   }
+  },
+  "/powerpages/environments/{environmentId}/exceptions/grant": {
+   "post": {
+    "operationId": "powerpages_grantException",
+    "tags": [
+     "Power Pages Website"
+    ],
+    "summary": "Grant Exception",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment ID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GrantExceptionResult"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad Request",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Unauthorized",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not Found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "powerpages/websites",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "exceptionType": {
+          "allOf": [
+           {
+            "$ref": "#/components/schemas/ExceptionType"
+           }
+          ],
+          "description": "Exception scenario discriminator identifying which admin exception (\"break-glass\") scenario a grant, revoke, or query targets."
+         },
+         "portalIds": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          },
+          "description": "Websites the exception should be applied to (deduplicated server-side)."
+         },
+         "riskAcknowledged": {
+          "type": "boolean",
+          "description": "Whether the admin explicitly acknowledged the risk. Must be true to proceed."
+         }
+        }
+       }
+      }
+     }
+    },
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/powerpages/websites/grant-exception"
+    }
+   }
+  },
+  "/powerpages/environments/{environmentId}/exceptions/list": {
+   "get": {
+    "operationId": "powerpages_getExceptions",
+    "tags": [
+     "Power Pages Website"
+    ],
+    "summary": "Exceptions Get",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment ID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     },
+     {
+      "name": "exceptionType",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Optional exception scenario discriminator to filter by, e.g. \"WebApiStarRetirement\"."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/ExceptionView"
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad Request",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Unauthorized",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not Found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "powerpages/websites",
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/powerpages/websites/get-exceptions"
+    }
+   }
+  },
+  "/powerpages/environments/{environmentId}/exceptions/revoke": {
+   "post": {
+    "operationId": "powerpages_revokeException",
+    "tags": [
+     "Power Pages Website"
+    ],
+    "summary": "Revoke Exception",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The environment ID."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RevokeExceptionResult"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad Request",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Unauthorized",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not Found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorMessage"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "powerpages/websites",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "exceptionType": {
+          "allOf": [
+           {
+            "$ref": "#/components/schemas/ExceptionType"
+           }
+          ],
+          "description": "Exception scenario discriminator identifying which admin exception (\"break-glass\") scenario a grant, revoke, or query targets."
+         },
+         "portalIds": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          },
+          "description": "Websites whose exception should be revoked (deduplicated server-side)."
+         }
+        }
+       }
+      }
+     }
+    },
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/powerpages/websites/revoke-exception"
+    }
+   }
+  },
   "/powerpages/environments/{environmentId}/websites": {
    "post": {
     "operationId": "powerpages_createWebsite",
@@ -24557,13 +24973,20 @@
           "description": "Subdomain for the website URL"
          },
          "templateName": {
-          "type": "string",
-          "enum": [
-           "DefaultPortalTemplate",
-           "PowerPortals\\_ProgramRegistration",
-           "PowerPortals\\_BookMeeting"
+          "allOf": [
+           {
+            "$ref": "#/components/schemas/WebsiteTemplateName"
+           }
           ],
-          "description": "Website template name"
+          "description": "Website template name. Supported templates, their display names, and template type:<br><br><br>"
+         },
+         "---": {
+          "allOf": [
+           {
+            "$ref": "#/components/schemas/---"
+           }
+          ],
+          "description": "---"
          },
          "websiteRecordId": {
           "type": "string",
@@ -26224,7 +26647,7 @@
           "items": {
            "$ref": "#/components/schemas/IpAddressEntity"
           },
-          "description": "Represents an IP address entry in the allow list."
+          "description": "Represents an IP address entry in the allow list"
          }
         }
        }
@@ -26407,7 +26830,7 @@
           "items": {
            "$ref": "#/components/schemas/IpAddressEntity"
           },
-          "description": "Represents an IP address entry in the allow list."
+          "description": "Represents an IP address entry in the allow list"
          }
         }
        }
@@ -26922,13 +27345,13 @@
        "schema": {
         "type": "object",
         "properties": {
-         "dataModelVersionValue": {
+         "isNewDataModel": {
           "type": "boolean",
-          "description": "value of data model version for IsNewDataModel"
+          "description": "Whether the portal uses the enhanced data model."
          }
         },
         "required": [
-         "dataModelVersionValue"
+         "isNewDataModel"
         ]
        }
       }
@@ -29633,6 +30056,10 @@
    }
   },
   "schemas": {
+   "---": {
+    "type": "object",
+    "x-stub": true
+   },
    "ActionEvent": {
     "description": "One entry in the trace of an AI flow run: the trigger that started it, a model reasoning step, a connector call beginning or ending, an approval exchange, or the final output. The `type` field selects which. Events carry `previousActionIds`, so the trace is a graph rather than a flat list.",
     "oneOf": [
@@ -29835,7 +30262,7 @@
     "x-source": "pac-cli"
    },
    "AdvisorAction": {
-    "description": "The allowed action.",
+    "description": "The allowed action",
     "properties": {
      "actionName": {
       "description": "Action display name",
@@ -29849,7 +30276,7 @@
     "type": "object"
    },
    "AdvisorActionRequest": {
-    "description": "The request with details to carry out an action on resource(s).",
+    "description": "The request with details to carry out an action on resource(s)",
     "properties": {
      "actionParameters": {
       "description": "The collection of parameters to carry out the action for a resource",
@@ -29863,10 +30290,10 @@
     "type": "object"
    },
    "AdvisorActionResponse": {
-    "description": "The response for action performed on resources.",
+    "description": "The response for action performed on resources",
     "properties": {
      "results": {
-      "description": "The result of an action performed on a resource.",
+      "description": "The result of an action performed on a resource",
       "items": {
        "$ref": "#/components/schemas/AdvisorActionResult"
       },
@@ -29876,7 +30303,7 @@
     "type": "object"
    },
    "AdvisorActionResult": {
-    "description": "The result of an action performed on a resource.",
+    "description": "The result of an action performed on a resource",
     "properties": {
      "actionFinalResult": {
       "description": "Final status of the action request",
@@ -29959,6 +30386,43 @@
     },
     "x-source": "pac-cli"
    },
+   "AdvisorChatMessageRequest": {
+    "description": "The request to send a message to the advisor chat agent",
+    "properties": {
+     "conversationId": {
+      "description": "The conversation ID for multi-turn chat. Omit to start a new conversation",
+      "type": "string"
+     },
+     "message": {
+      "description": "The user message to send to the advisor chat agent",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "AdvisorChatMessageResponse": {
+    "description": "The response from the advisor chat agent",
+    "properties": {
+     "conversationId": {
+      "description": "The conversation ID to supply on the next turn to continue the conversation",
+      "type": "string"
+     },
+     "executionTimeMs": {
+      "description": "The time taken to produce the response, in milliseconds",
+      "format": "int64",
+      "type": "integer"
+     },
+     "message": {
+      "description": "The agent response message",
+      "type": "string"
+     },
+     "role": {
+      "description": "The role of the message author, always 'assistant'",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
    "AdvisorChatRequest": {
     "type": "object",
     "description": "A question put to the advisor, optionally within an existing conversation.",
@@ -29975,7 +30439,7 @@
     "x-source": "pac-cli"
    },
    "AdvisorRecommendation": {
-    "description": "Information for a recommendation.",
+    "description": "Information for a recommendation",
     "properties": {
      "details": {
       "allOf": [
@@ -29983,7 +30447,7 @@
         "$ref": "#/components/schemas/AdvisorRecommendationDetails"
        }
       ],
-      "description": "Details for a recommendation."
+      "description": "Details for a recommendation"
      },
      "scenario": {
       "description": "The recommendation name.",
@@ -29993,7 +30457,7 @@
     "type": "object"
    },
    "AdvisorRecommendationDetails": {
-    "description": "Details for a recommendation.",
+    "description": "Details for a recommendation",
     "properties": {
      "expectedNextRefreshTimestamp": {
       "description": "Time when the recommendation will be refreshed again",
@@ -30014,7 +30478,7 @@
     "type": "object"
    },
    "AdvisorRecommendationIEnumerableResponseWithContinuation": {
-    "description": "Paged list of recommendations.",
+    "description": "Paged list of recommendations",
     "properties": {
      "nextLink": {
       "description": "Link to get the next page of recommendations",
@@ -30031,7 +30495,7 @@
     "type": "object"
    },
    "AdvisorRecommendationResource": {
-    "description": "Details of a resource included in a recommendation.",
+    "description": "Details of a resource included in a recommendation",
     "properties": {
      "environmentId": {
       "description": "The environment unique ID",
@@ -30092,7 +30556,7 @@
     "type": "object"
    },
    "AdvisorRecommendationResourceIEnumerableResponseWithContinuation": {
-    "description": "Paged list of recommendation resources.",
+    "description": "Paged list of recommendation resources",
     "properties": {
      "nextLink": {
       "description": "Link to get the next page of resources",
@@ -30109,7 +30573,7 @@
     "type": "object"
    },
    "AdvisorScenario": {
-    "description": "The recommendation scenario.",
+    "description": "The recommendation scenario",
     "properties": {
      "scenario": {
       "description": "The scenario identifier",
@@ -30118,6 +30582,69 @@
      "scenarioName": {
       "description": "Scenario display name",
       "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "AffectedSite": {
+    "properties": {
+     "detail": {
+      "description": "Scenario-specific detail of why the website is affected.",
+      "type": "string"
+     },
+     "expirationDate": {
+      "description": "Expiry of the existing grant, when one exists (null otherwise).",
+      "format": "date-time",
+      "type": "string"
+     },
+     "grantStatus": {
+      "description": "Existing grant state for this website and exception type (\"None\" when no grant exists, otherwise the derived lifecycle status).",
+      "type": "string"
+     },
+     "portalId": {
+      "description": "Website unique identifier (ID).",
+      "type": "string"
+     },
+     "portalName": {
+      "description": "Friendly website name (may be null when not resolvable).",
+      "type": "string"
+     },
+     "portalUrl": {
+      "description": "Website URL (may be null when not resolvable).",
+      "type": "string"
+     },
+     "ppacUrl": {
+      "description": "Deep link to this website's settings page in the Power Platform admin center (may be null when the base URL is not configured).",
+      "type": "string"
+     },
+     "siteType": {
+      "description": "Site type (\"Production\" or \"Trial\").",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "AffectedSitesResult": {
+    "properties": {
+     "exceptionType": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ExceptionType"
+       }
+      ],
+      "description": "Exception scenario discriminator identifying which admin exception (\"break-glass\") scenario a grant, revoke, or query targets."
+     },
+     "sites": {
+      "description": "The affected websites.",
+      "items": {
+       "$ref": "#/components/schemas/AffectedSite"
+      },
+      "type": "array"
+     },
+     "totalCount": {
+      "description": "Number of affected sites.",
+      "format": "int32",
+      "type": "integer"
      }
     },
     "type": "object"
@@ -30616,7 +31143,7 @@
         "$ref": "#/components/schemas/ApplicationVisibility"
        }
       ],
-      "description": "Application visibility."
+      "description": "Application visibility"
      },
      "catalogVisibility": {
       "allOf": [
@@ -30624,7 +31151,7 @@
         "$ref": "#/components/schemas/CatalogVisibility"
        }
       ],
-      "description": "Catalog visibility for the application."
+      "description": "Catalog visibility for the application"
      },
      "customHandleUpgrade": {
       "description": "Available package custom upgrade",
@@ -30693,7 +31220,7 @@
         "$ref": "#/components/schemas/InstancePackageState"
        }
       ],
-      "description": "State of the instance package."
+      "description": "State of the instance package"
      },
      "supportedCountries": {
       "description": "List of supported countries/regions for the application",
@@ -30728,7 +31255,7 @@
     "type": "object"
    },
    "ApplicationVisibility": {
-    "description": "Application visibility.",
+    "description": "Application visibility",
     "enum": [
      "None",
      "CrmAdminCenter",
@@ -31456,7 +31983,7 @@
     "type": "object"
    },
    "CatalogVisibility": {
-    "description": "Catalog visibility for the application.",
+    "description": "Catalog visibility for the application",
     "enum": [
      "None",
      "AdminCenter",
@@ -31619,7 +32146,7 @@
       "type": "array"
      },
      "dependents": {
-      "description": "List of dependent connectors for the connector",
+      "description": "List of dependant connectors for the connector",
       "items": {
        "type": "string"
       },
@@ -31643,7 +32170,7 @@
       "type": "boolean"
      },
      "isOnPremiseConnection": {
-      "description": "Flag indicates on-premises data gateway",
+      "description": "Flag indicates on premise data gateway",
       "type": "boolean"
      },
      "runtimePolicyName": {
@@ -32335,7 +32862,7 @@
       "type": "string"
      },
      "databaseType": {
-      "description": "The type of database to create (for example, CommonDataService).",
+      "description": "The type of database to create (e.g., CommonDataService). CommonDataService requires either location or macroRegion, linkedEnvironmentMetadata.baseLanguageCode, and linkedEnvironmentMetadata.currency.code.",
       "type": "string"
      },
      "description": {
@@ -32462,7 +32989,7 @@
     "description": "Metadata for the linked Dataverse environment.",
     "properties": {
      "baseLanguageCode": {
-      "description": "The base language code (for example, 1033 for English).",
+      "description": "The base language code (e.g., 1033 for English).",
       "format": "int32",
       "type": "integer"
      },
@@ -32675,8 +33202,8 @@
       "type": "integer"
      },
      "autoAllocated": {
-      "format": "int32",
-      "type": "integer"
+      "format": "double",
+      "type": "number"
      },
      "currencyType": {
       "allOf": [
@@ -32866,7 +33393,7 @@
         "$ref": "#/components/schemas/WafRuleType"
        }
       ],
-      "description": "WAF rule type."
+      "description": "WAF rule type"
      }
     },
     "type": "object"
@@ -33344,7 +33871,7 @@
     "description": "Represents a currency available for environment provisioning.",
     "properties": {
      "code": {
-      "description": "The currency code (for example, \"USD\").",
+      "description": "The currency code (e.g. \"USD\").",
       "type": "string"
      },
      "isTenantDefault": {
@@ -33352,7 +33879,7 @@
       "type": "boolean"
      },
      "symbol": {
-      "description": "The currency symbol (for example, \"$\").",
+      "description": "The currency symbol (e.g. \"$\").",
       "type": "string"
      }
     },
@@ -33645,7 +34172,7 @@
       "type": "boolean"
      },
      "localeId": {
-      "description": "The locale identifier (LCID, for example, 1033 for English).",
+      "description": "The locale identifier (LCID, e.g. 1033 for English).",
       "format": "int32",
       "type": "integer"
      },
@@ -33874,7 +34401,7 @@
     "description": "Currency settings for an environment.",
     "properties": {
      "code": {
-      "description": "The currency code (for example, USD).",
+      "description": "The currency code (e.g., USD).",
       "type": "string"
      },
      "name": {
@@ -34025,7 +34552,7 @@
       "description": "The retention details of the environment."
      },
      "scenarioName": {
-      "description": "The scenario name associated with the environment (for example, singleton scenario type).",
+      "description": "The scenario name associated with the environment (e.g. singleton scenario type).",
       "type": "string"
      },
      "securityGroupId": {
@@ -34316,6 +34843,44 @@
      "Unknown"
     ],
     "type": "string"
+   },
+   "ExceptionType": {
+    "description": "Exception scenario discriminator identifying which admin exception (\"break-glass\") scenario a grant, revoke, or query targets.",
+    "enum": [
+     "WebApiStarRetirement"
+    ],
+    "type": "string"
+   },
+   "ExceptionView": {
+    "properties": {
+     "created": {
+      "description": "UTC time the exception was created.",
+      "format": "date-time",
+      "type": "string"
+     },
+     "exceptionType": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ExceptionType"
+       }
+      ],
+      "description": "Exception scenario discriminator identifying which admin exception (\"break-glass\") scenario a grant, revoke, or query targets."
+     },
+     "expirationDate": {
+      "description": "UTC expiry of the exception.",
+      "format": "date-time",
+      "type": "string"
+     },
+     "portalId": {
+      "description": "Website unique identifier (ID).",
+      "type": "string"
+     },
+     "status": {
+      "description": "Derived lifecycle status of the exception.",
+      "type": "string"
+     }
+    },
+    "type": "object"
    },
    "ExecutionState": {
     "description": "The current execution state indicating the progress status of a maker evaluation run.",
@@ -34905,6 +35470,63 @@
     },
     "type": "object"
    },
+   "GrantExceptionRequest": {
+    "properties": {
+     "exceptionType": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ExceptionType"
+       }
+      ],
+      "description": "Exception scenario discriminator identifying which admin exception (\"break-glass\") scenario a grant, revoke, or query targets."
+     },
+     "portalIds": {
+      "description": "Websites the exception should be applied to (deduplicated server-side).",
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "riskAcknowledged": {
+      "description": "Whether the admin explicitly acknowledged the risk. Must be true to proceed.",
+      "type": "boolean"
+     }
+    },
+    "type": "object"
+   },
+   "GrantExceptionResult": {
+    "properties": {
+     "exceptionId": {
+      "description": "Id of the audit record created for this grant request.",
+      "type": "string"
+     },
+     "exceptionType": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ExceptionType"
+       }
+      ],
+      "description": "Exception scenario discriminator identifying which admin exception (\"break-glass\") scenario a grant, revoke, or query targets."
+     },
+     "expirationDate": {
+      "description": "Effective UTC expiry applied to every accepted website in this request.",
+      "format": "date-time",
+      "type": "string"
+     },
+     "portals": {
+      "description": "Per-website outcomes.",
+      "items": {
+       "$ref": "#/components/schemas/PortalExceptionResult"
+      },
+      "type": "array"
+     },
+     "propagationOrchestrationId": {
+      "description": "Optional orchestration instance id for queued application-setting propagation.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
    "IErrorDetail": {
     "properties": {
      "code": {
@@ -34940,7 +35562,7 @@
         "$ref": "#/components/schemas/ApplicationVisibility"
        }
       ],
-      "description": "Application visibility."
+      "description": "Application visibility"
      },
      "customHandleUpgrade": {
       "description": "Custom handle upgrade flag for the application",
@@ -35033,7 +35655,7 @@
         "$ref": "#/components/schemas/InstancePackageState"
        }
       ],
-      "description": "State of the instance package."
+      "description": "State of the instance package"
      },
      "statusMessage": {
       "description": "Status message",
@@ -35079,7 +35701,7 @@
     "type": "string"
    },
    "InstancePackageState": {
-    "description": "State of the instance package.",
+    "description": "State of the instance package",
     "enum": [
      "None",
      "Installed",
@@ -35103,7 +35725,7 @@
    "IpAddressConfiguration": {
     "properties": {
      "IpAddresses": {
-      "description": "Represents an IP address entry in the allow list.",
+      "description": "Represents an IP address entry in the allow list",
       "items": {
        "$ref": "#/components/schemas/IpAddressEntity"
       },
@@ -35125,7 +35747,7 @@
         "$ref": "#/components/schemas/IpAddressType"
        }
       ],
-      "description": "The type of the IP address."
+      "description": "The type of the IP address"
      },
      "CreatedOn": {
       "type": "string",
@@ -35158,7 +35780,7 @@
     ]
    },
    "IpAddressType": {
-    "description": "The type of the IP address.",
+    "description": "The type of the IP address",
     "enum": [
      "IPv4",
      "IPv6"
@@ -36260,6 +36882,14 @@
    },
    "NewWebsiteRequest": {
     "properties": {
+     "---": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/---"
+       }
+      ],
+      "description": "---"
+     },
      "dataverseOrganizationId": {
       "description": "Dataverse organization's unique identifier (ID)",
       "format": "uuid",
@@ -36279,13 +36909,12 @@
       "type": "string"
      },
      "templateName": {
-      "description": "Website template name",
-      "enum": [
-       "DefaultPortalTemplate",
-       "PowerPortals\\_BookMeeting",
-       "PowerPortals\\_ProgramRegistration"
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/WebsiteTemplateName"
+       }
       ],
-      "type": "string"
+      "description": "Website template name. Supported templates, their display names, and template type:<br><br><br>"
      },
      "websiteRecordId": {
       "description": "Dataverse record unique identifier (ID) of the website",
@@ -36665,7 +37294,7 @@
       "type": "string"
      },
      "resourceId": {
-      "description": "Resource ID; for example, the environment group ID.",
+      "description": "Resource Id ex. the environment group id.",
       "type": "string"
      },
      "resourceType": {
@@ -36710,9 +37339,26 @@
    },
    "PortalDataModelDto": {
     "properties": {
-     "dataModelVersionValue": {
-      "description": "value of data model version for IsNewDataModel",
+     "isNewDataModel": {
+      "description": "Whether the portal uses the enhanced data model.",
       "type": "boolean"
+     }
+    },
+    "type": "object"
+   },
+   "PortalExceptionResult": {
+    "properties": {
+     "message": {
+      "description": "Optional human-readable detail (populated for non-granted outcomes).",
+      "type": "string"
+     },
+     "portalId": {
+      "description": "Website unique identifier (ID).",
+      "type": "string"
+     },
+     "status": {
+      "description": "Per-website outcome status, e.g. \"Granted\", \"Accepted\", \"AlreadyGranted\", \"NotApplicable\", \"Failed\", \"Revoked\", \"AlreadyRevoked\".",
+      "type": "string"
      }
     },
     "type": "object"
@@ -37781,7 +38427,7 @@
     "description": "Request model for resetting an environment.",
     "properties": {
      "baseLanguageCode": {
-      "description": "The base language code (for example, 1033 for English) for the environment to reset to.",
+      "description": "The base language code (e.g., 1033 for English) for the environment to reset to.",
       "format": "int32",
       "type": "integer"
      },
@@ -38076,7 +38722,7 @@
       "description": "Optional inputs for restore request."
      },
      "restorePointDateTime": {
-      "description": "The point in time to restore the environment to. Must include a timezone offset per RFC 3339 (for example, 2025-04-30T12:34:56+02:00).",
+      "description": "The point in time to restore the environment to. Must include a timezone offset per RFC 3339 (e.g., 2025-04-30T12:34:56+02:00).",
       "format": "date-time",
       "type": "string"
      },
@@ -38115,6 +38761,54 @@
      },
      "retentionPeriod": {
       "description": "The retention period of the environment.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "RevokeExceptionRequest": {
+    "properties": {
+     "exceptionType": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ExceptionType"
+       }
+      ],
+      "description": "Exception scenario discriminator identifying which admin exception (\"break-glass\") scenario a grant, revoke, or query targets."
+     },
+     "portalIds": {
+      "description": "Websites whose exception should be revoked (deduplicated server-side).",
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     }
+    },
+    "type": "object"
+   },
+   "RevokeExceptionResult": {
+    "properties": {
+     "auditId": {
+      "description": "Id of the audit record created for this revoke request.",
+      "type": "string"
+     },
+     "exceptionType": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/ExceptionType"
+       }
+      ],
+      "description": "Exception scenario discriminator identifying which admin exception (\"break-glass\") scenario a grant, revoke, or query targets."
+     },
+     "portals": {
+      "description": "Per-website outcomes.",
+      "items": {
+       "$ref": "#/components/schemas/PortalExceptionResult"
+      },
+      "type": "array"
+     },
+     "propagationOrchestrationId": {
+      "description": "Optional orchestration instance id for the queued application-setting revert propagation.",
       "type": "string"
      }
     },
@@ -38492,7 +39186,7 @@
         "$ref": "#/components/schemas/WafRuleAction"
        }
       ],
-      "description": "Action to take for the rule."
+      "description": "Action to take for the rule"
      },
      "EnabledState": {
       "description": "State of the rule",
@@ -39252,7 +39946,7 @@
         "$ref": "#/components/schemas/ApplicationVisibility"
        }
       ],
-      "description": "Application visibility."
+      "description": "Application visibility"
      },
      "catalogVisibility": {
       "allOf": [
@@ -39260,7 +39954,7 @@
         "$ref": "#/components/schemas/CatalogVisibility"
        }
       ],
-      "description": "Catalog visibility for the application."
+      "description": "Catalog visibility for the application"
      },
      "lastError": {
       "$ref": "#/components/schemas/ErrorDetails"
@@ -39932,7 +40626,7 @@
     "type": "object"
    },
    "TpsInstallRequestPayload": {
-    "description": "Payload to be sent during installation of the package.",
+    "description": "Payload to be sent during installation of the package",
     "properties": {
      "payloadValue": {
       "type": "string"
@@ -40019,7 +40713,7 @@
       "type": "string"
      },
      "type": {
-      "description": "The type of the user identity (for example, User).",
+      "description": "The type of the user identity (e.g., User).",
       "type": "string"
      },
      "userId": {
@@ -40228,7 +40922,7 @@
     "type": "object"
    },
    "WafRuleAction": {
-    "description": "Action to take for the rule.",
+    "description": "Action to take for the rule",
     "enum": [
      "Allow",
      "Block",
@@ -40238,7 +40932,7 @@
     "type": "string"
    },
    "WafRuleType": {
-    "description": "WAF rule type.",
+    "description": "WAF rule type",
     "enum": [
      "MatchRule",
      "RateLimitRule"
@@ -40318,6 +41012,14 @@
    },
    "WebsiteDto": {
     "properties": {
+     "---": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/---"
+       }
+      ],
+      "description": "---"
+     },
      "applicationUserAadAppId": {
       "description": "Entra ID (formerly Azure Active Directory) object unique identifier (ID)",
       "type": "string"
@@ -40424,13 +41126,12 @@
       "type": "integer"
      },
      "templateName": {
-      "description": "Website template name",
-      "enum": [
-       "DefaultPortalTemplate",
-       "PowerPortals\\_BookMeeting",
-       "PowerPortals\\_ProgramRegistration"
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/WebsiteTemplateName"
+       }
       ],
-      "type": "string"
+      "description": "Website template name. Supported templates, their display names, and template type:<br><br><br>"
      },
      "tenantId": {
       "description": "Tenant unique identifier (ID) of the website",
@@ -40459,6 +41160,32 @@
      }
     },
     "type": "object"
+   },
+   "WebsiteTemplateName": {
+    "description": "Website template name. Supported templates, their display names, and template type:",
+    "enum": [
+     "`StarterLayout1`",
+     "`StarterLayout2`",
+     "`StarterLayout3`",
+     "`StarterLayout4`",
+     "`StarterLayout5`",
+     "`BlankPage`",
+     "`BookMeetings`",
+     "`DefaultPortalTemplate`",
+     "`PowerPortals_ProgramRegistration`",
+     "`PowerPortals_BookMeeting`",
+     "`FAQ`",
+     "`ProgramRegistration`",
+     "`BuildingPermit`",
+     "`Community`",
+     "`EventPortal`",
+     "`CustomerSelfServicePortal`",
+     "`EmployeeSelfServicePortal`",
+     "`PartnerPortal`",
+     "`CustomerPortal`",
+     "`FieldService`"
+    ],
+    "type": "string"
    },
    "WhereClause": {
     "description": "Filters rows by comparing `FieldName` against `Values` with `Operator`.",

@@ -16,7 +16,7 @@ author: laneswenka
 ms.reviewer: ellenwehrle
 ms.component: pa-admin
 ms.topic: overview
-ms.date: 2026-08-12T00:00:00.0000000Z
+ms.date: 2026-09-30T00:00:00.0000000Z
 ms.author: laswenka
 search.audienceType:
 - admin
@@ -31,7 +31,7 @@ toc_rel: toc.json
 pdf_url_template: https://learn.microsoft.com/pdfstore/en-us/MSDN.power-platform/{branchName}{pdfName}
 feedback_help_link_type: ''
 feedback_help_link_url: ''
-word_count: 2384
+word_count: 2432
 asset_id: admin/programmability-whats-new-changed
 moniker_range_name: 
 monikers: []
@@ -49,6 +49,16 @@ platformId: 51f6c119-154a-6d16-47ef-2a1b8b694c0c
 # Programmability and extensibility - What's new or changed - Power Platform | Microsoft Learn
 
 Learn about the latest changes and new capabilities for Power Platform APIs and admin SDKs.
+
+## August 2026
+
+| Item | Type | Description |
+| --- | --- | --- |
+| Send Advisor Chat Message | API | New endpoint: [Send Advisor Chat Message](analytics/advisor-chat/send-advisor-chat-message.md) |
+| Get Affected Sites | API | New endpoint: [Get Affected Sites](powerpages/websites/get-affected-sites.md) |
+| Grant Exception | API | New endpoint: [Grant Exception](powerpages/websites/grant-exception.md) |
+| Get Exceptions | API | New endpoint: [Get Exceptions](powerpages/websites/get-exceptions.md) |
+| Revoke Exception | API | New endpoint: [Revoke Exception](powerpages/websites/revoke-exception.md) |
 
 ## July 2026
 
@@ -227,10 +237,10 @@ Learn about the latest changes and new capabilities for Power Platform APIs and 
 | Recover Environment | API | New endpoint: [Recover Environment](environmentmanagement/environment-recover/recover-environment.md) |
 | Perform Force Failover | API | New endpoint: [Perform Force Failover](environmentmanagement/failover/perform-force-failover.md) |
 | Enable Disaster Recovery | API | New endpoint: [Enable Disaster Recovery](environmentmanagement/failover/enable-disaster-recovery.md) |
-| Enable Environment | API | New endpoint: [Enable Environment](https://learn.microsoft.com/en-us/rest/api/power-platform/environmentmanagement/environment-state/enable-environment) |
+| Enable Environment [Deprecated] | API | New endpoint: Enable Environment |
 | Perform DR Drill | API | New endpoint: [Perform DR Drill](environmentmanagement/failover/perform-dr-drill.md) |
 | Disable Disaster Recovery | API | New endpoint: [Disable Disaster Recovery](environmentmanagement/failover/disable-disaster-recovery.md) |
-| Disable Environment | API | New endpoint: [Disable Environment](https://learn.microsoft.com/en-us/rest/api/power-platform/environmentmanagement/environment-state/disable-environment) |
+| Disable Environment [Deprecated] | API | New endpoint: Disable Environment |
 | Get Business Continuity State Full Snapshot | API | New endpoint: [Get Business Continuity State Full Snapshot](environmentmanagement/failover/get-business-continuity-state-full-snapshot.md) |
 | Delete Environment Backup | API | New endpoint: [Delete Environment Backup](environmentmanagement/environment-backup/delete-environment-backup.md) |
 | Get Environment Backups | API | New endpoint: [Get Environment Backups](environmentmanagement/environment-backup/get-environment-backups.md) |

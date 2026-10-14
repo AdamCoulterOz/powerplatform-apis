@@ -33,6 +33,10 @@ moniker_range_name:
 monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/licensing/Entitlement/Get-Many-Environment-Entitlements.yml
+cmProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
+spProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 platformId: 76e78492-8ed4-6e2d-fd0f-f522485258b4
 ---
 
@@ -329,7 +333,7 @@ An entitlement and its capacity/pay-as-you-go details scoped to a single environ
 | isManagedEnvironment | boolean | Indicates whether the environment is a managed environment. |
 | location | string | The geographic location of the environment. |
 | permissions | EnvironmentPermissionResponseModel[] | The BAP permissions on the environment. |
-| productCategories | ProductCategory[] | The entitlement product categories (e.g., D365Apps, Dataverse, Power Apps, Power Automate). |
+| productCategories | ProductCategory[] | The entitlement product categories (e.g., D365Apps, Dataverse, PowerApps, PowerAutomate). |
 | recommendationCount | integer (int32) | The number of active cleanup recommendations. |
 | scenario | EnvironmentScenario | The scenario of the environment. |
 

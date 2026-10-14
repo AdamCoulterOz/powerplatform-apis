@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get resource consumption by entitlement and user ID. '
+description: 'Learn more about Power Platform API service - Get resource consumption by entitlement and user ID (deprecated). '
 locale: en-us
 document_id: d77ac489-0ef0-085a-a504-6b1098afc83b
 document_version_independent_id: 194cdc7f-2d44-6d1d-dfef-acd4d93cabca
@@ -33,6 +33,10 @@ moniker_range_name:
 monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/licensing/Entitlement-Insight/Get-Tenant-Resource-Consumption-By-User.yml
+cmProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
+spProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 platformId: 6f4fe493-f861-ae9c-febf-8809b0a77281
 ---
 
@@ -44,7 +48,7 @@ platformId: 6f4fe493-f861-ae9c-febf-8809b0a77281
 - API Version:
     - 2024-10-01
 
-Get resource consumption by entitlement and user ID.
+Get resource consumption by entitlement and user ID (deprecated).
 
 ```http
 GET https://api.powerplatform.com/licensing/entitlements/{entitlementId}/users/{userId}/resources?fromDate={fromDate}&toDate={toDate}&api-version=2024-10-01

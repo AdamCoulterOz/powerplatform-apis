@@ -52,5 +52,5 @@ platformId: cdff4f2e-2d99-3cf2-7c40-30e6ab1a1f27
 
 ## Operations
 
-| [Send Advisor Chat Message](advisor-chat/send-advisor-chat-message.md) | Send an advisor chat message. |
+| [Send Advisor Chat Message](advisor-chat/send-advisor-chat-message.md) | Send an advisor chat message (preview). |
 | --- | --- |

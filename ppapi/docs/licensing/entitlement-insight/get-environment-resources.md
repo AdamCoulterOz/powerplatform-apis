@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get environment resource entitlement snapshots for an entitlement. '
+description: 'Learn more about Power Platform API service - Get environment resource entitlement snapshots for an entitlement (deprecated). '
 locale: en-us
 document_id: 9a0d4c58-0957-d900-7301-d8ec53afbc56
 document_version_independent_id: 08ac8e7b-4b66-93c1-47e7-4afcfc74aa7b
@@ -48,7 +48,7 @@ platformId: f3973f58-416c-ceac-6485-ff8b7f74f47b
 - API Version:
     - 2024-10-01
 
-Get environment resource entitlement snapshots for an entitlement.
+Get environment resource entitlement snapshots for an entitlement (deprecated).
 
 ```http
 GET https://api.powerplatform.com/licensing/entitlements/{entitlementId}/environments/{environmentId}/resources?fromDate={fromDate}&toDate={toDate}&api-version=2024-10-01

@@ -61,3 +61,5 @@ platformId: 554f28fe-a748-34ac-4972-2e57e480ba1b
 | [List Environment Role Assignments](role-based-access-control/list-environment-role-assignments.md) | List environment role assignments. |
 | [List Role Assignments](role-based-access-control/list-role-assignments.md) | List role assignments. |
 | [List Role Definitions](role-based-access-control/list-role-definitions.md) | List role definitions. |
+| [Search Environment Role Assignments](role-based-access-control/search-environment-role-assignments.md) | Search environment role assignments. |
+| [Search Role Assignments](role-based-access-control/search-role-assignments.md) | Search role assignments. |

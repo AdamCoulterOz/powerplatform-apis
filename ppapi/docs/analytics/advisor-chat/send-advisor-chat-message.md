@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: Send an advisor chat message. Sends a message to the advisor chat agent and returns the agent response.
+description: Send an advisor chat message (preview). Sends a message to the advisor chat agent and returns the agent response.
 locale: en-us
 document_id: a7b905aa-f0e8-93d2-26de-d7c31afbe66d
 document_version_independent_id: 46524c4b-ef4e-6733-3bb8-97173c2329f5
@@ -33,6 +33,10 @@ moniker_range_name:
 monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/analytics/Advisor-Chat/Send-Advisor-Chat-Message.yml
+cmProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/d9dfd2a0-aa13-46ef-a37d-ed697b490607
+spProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/06404839-4766-4799-8cab-c0e1c3b55e48
 platformId: 2e2bfe18-004a-90ca-6ba0-8e6d608fa810
 ---
 
@@ -44,7 +48,7 @@ platformId: 2e2bfe18-004a-90ca-6ba0-8e6d608fa810
 - API Version:
     - 2024-10-01
 
-Send an advisor chat message. Sends a message to the advisor chat agent and returns the agent response. Supply the conversation ID returned by a previous turn to continue a multi-turn conversation.
+Send an advisor chat message (preview). Sends a message to the advisor chat agent and returns the agent response. Supply the conversation ID returned by a previous turn to continue a multi-turn conversation.
 
 ```http
 POST https://api.powerplatform.com/analytics/advisor/chat/messages?api-version=2024-10-01

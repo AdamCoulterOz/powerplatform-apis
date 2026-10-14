@@ -54,18 +54,11 @@ Get recommendations. Gets the list of recommendations for the tenant.
 GET https://api.powerplatform.com/analytics/advisorRecommendations?api-version=2024-10-01
 ```
 
- With optional parameters: 
-
-```http
-GET https://api.powerplatform.com/analytics/advisorRecommendations?$skipToken={$skipToken}&api-version=2024-10-01
-```
-
 ## URI Parameters
 
 | Name | In | Required | Type | Description |
 | --- | --- | --- | --- | --- |
 | api-version | query | True | string | The API version. |
-| $skipToken | query |  | string | Skip token for the next page of recommendations. |
 
 ## Responses
 

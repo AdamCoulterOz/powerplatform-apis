@@ -108,5 +108,5 @@ Object
 | Name | Type | Description |
 | --- | --- | --- |
 | permissions | string[] |  |
-| roleDefinitionId | string | Role definition Id |
+| roleDefinitionId | string | Role definition ID |
 | roleDefinitionName | string | Role definition name |

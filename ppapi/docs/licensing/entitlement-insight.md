@@ -33,6 +33,10 @@ moniker_range_name:
 monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/licensing/Entitlement-Insight.yml
+cmProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
+spProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 platformId: 657f38f1-2b19-f900-6985-52c626965122
 ---
 
@@ -46,10 +50,10 @@ platformId: 657f38f1-2b19-f900-6985-52c626965122
 
 ## Operations
 
-| [Get Environment Resources](entitlement-insight/get-environment-resources.md) | Get environment resource entitlement snapshots for an entitlement. |
+| [Get Environment Resources](entitlement-insight/get-environment-resources.md) | Get environment resource entitlement snapshots for an entitlement (deprecated). |
 | --- | --- |
 | [Get Tenant License Trends](entitlement-insight/get-tenant-license-trends.md) | Get the license trends for the tenant for the specified entitlement. |
-| [Get Tenant Resource Consumption By User](entitlement-insight/get-tenant-resource-consumption-by-user.md) | Get resource consumption by entitlement and user ID. |
-| [Get Tenant Resources Across Environments](entitlement-insight/get-tenant-resources-across-environments.md) | Get tenant resources for an entitlement across all environments. |
-| [Get Tenant User Consumption By Resource](entitlement-insight/get-tenant-user-consumption-by-resource.md) | Get tenant user consumption by entitlement and resource ID. |
-| [Get Tenant Users](entitlement-insight/get-tenant-users.md) | Get the list of tenant users entitlement snapshot for the specified entitlement. |
+| [Get Tenant Resource Consumption By User](entitlement-insight/get-tenant-resource-consumption-by-user.md) | Get resource consumption by entitlement and user ID (deprecated). |
+| [Get Tenant Resources Across Environments](entitlement-insight/get-tenant-resources-across-environments.md) | Get tenant resources for an entitlement across all environments (deprecated). |
+| [Get Tenant User Consumption By Resource](entitlement-insight/get-tenant-user-consumption-by-resource.md) | Get tenant user consumption by entitlement and resource ID (deprecated). |
+| [Get Tenant Users](entitlement-insight/get-tenant-users.md) | Get tenant users' entitlement snapshots (deprecated). |

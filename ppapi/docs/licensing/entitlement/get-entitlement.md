@@ -33,6 +33,10 @@ moniker_range_name:
 monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/licensing/Entitlement/Get-Entitlement.yml
+cmProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
+spProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 platformId: 0bf561c3-a1a3-e44d-8e50-ac9cf8419d81
 ---
 
@@ -293,4 +297,4 @@ Represents an entitlement and its capacity, pay-as-you-go and licensed policy de
 | --- | --- | --- |
 | entitlement | TenantEntitlementDetailServiceModel |  |
 | entitlementId | string | The entitlement ID. |
-| productCategories | ProductCategory[] | The entitlement product categories (e.g., D365Apps, Dataverse, Power Apps, Power Automate). |
+| productCategories | ProductCategory[] | The entitlement product categories (e.g., D365Apps, Dataverse, PowerApps, PowerAutomate). |

@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get tenant resources for an entitlement across all environments. '
+description: 'Learn more about Power Platform API service - Get tenant resources for an entitlement across all environments (deprecated). '
 locale: en-us
 document_id: 4a10ebb1-9362-e71c-a0f5-01ed8c57ac76
 document_version_independent_id: 589394c5-0a92-23e0-2862-ab4f9600da8a
@@ -33,6 +33,10 @@ moniker_range_name:
 monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/licensing/Entitlement-Insight/Get-Tenant-Resources-Across-Environments.yml
+cmProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
+spProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 platformId: e1a492dd-28fd-b05e-58fd-c40d1c5a5803
 ---
 
@@ -44,7 +48,7 @@ platformId: e1a492dd-28fd-b05e-58fd-c40d1c5a5803
 - API Version:
     - 2024-10-01
 
-Get tenant resources for an entitlement across all environments.
+Get tenant resources for an entitlement across all environments (deprecated).
 
 ```http
 GET https://api.powerplatform.com/licensing/entitlements/{entitlementId}/resources?fromDate={fromDate}&toDate={toDate}&api-version=2024-10-01

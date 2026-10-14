@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get the list of tenant users entitlement snapshot for the specified entitlement. '
+description: "Get tenant users' entitlement snapshots (deprecated). Gets tenant users' entitlement snapshots for the specified entitlement. This operation is deprecated. "
 locale: en-us
 document_id: e399a84f-7281-0b1a-ba5a-f5a238491650
 document_version_independent_id: 63157621-3add-8562-d25f-264561667252
@@ -48,7 +48,7 @@ platformId: caee2c4b-9e71-5985-b1a1-00a44bfaba6d
 - API Version:
     - 2024-10-01
 
-Get the list of tenant users entitlement snapshot for the specified entitlement.
+Get tenant users' entitlement snapshots (deprecated). Gets tenant users' entitlement snapshots for the specified entitlement. This operation is deprecated.
 
 ```http
 GET https://api.powerplatform.com/licensing/entitlements/{entitlementId}/users?fromDate={fromDate}&toDate={toDate}&api-version=2024-10-01

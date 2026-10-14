@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get tenant user consumption by entitlement and resource ID. '
+description: 'Learn more about Power Platform API service - Get tenant user consumption by entitlement and resource ID (deprecated). '
 locale: en-us
 document_id: 69eefb15-0966-2758-67e0-b5a9a0f1f7fb
 document_version_independent_id: 197cefd7-dc99-b0b8-1334-4f6a31cfafd5
@@ -48,7 +48,7 @@ platformId: adca38c1-239d-f22f-2951-0a81cec9e832
 - API Version:
     - 2024-10-01
 
-Get tenant user consumption by entitlement and resource ID.
+Get tenant user consumption by entitlement and resource ID (deprecated).
 
 ```http
 GET https://api.powerplatform.com/licensing/entitlements/{entitlementId}/resources/{resourceId}/users?fromDate={fromDate}&toDate={toDate}&api-version=2024-10-01

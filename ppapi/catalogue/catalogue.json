@@ -7,11 +7,25 @@
   "method": "POST",
   "path": "/analytics/advisor/chat/messages",
   "api_version": "2024-10-01",
-  "preview": false,
+  "preview": true,
   "introduced": "",
   "namespace": "analytics",
   "group": "advisor-chat",
   "doc": "docs/analytics/advisor-chat/send-advisor-chat-message.md"
+ },
+ {
+  "logical_resource": "(unmapped)",
+  "facet": "monitoring-hub",
+  "operation": "On Alert Triggered",
+  "crud": "Read",
+  "method": "GET",
+  "path": "/monitoringhub/powerplatform/triggeredAlerts/poll",
+  "api_version": "",
+  "preview": true,
+  "introduced": "",
+  "namespace": "monitoringhub",
+  "group": "monitoring-hub",
+  "doc": "docs/monitoringhub/monitoring-hub/on-alert-triggered.md"
  },
  {
   "logical_resource": "Advisor Recommendation",
@@ -2658,6 +2672,34 @@
   "namespace": "authorization",
   "group": "role-based-access-control",
   "doc": "docs/authorization/role-based-access-control/create-role-assignment.md"
+ },
+ {
+  "logical_resource": "Role Based Access Control",
+  "facet": "Assignments and definitions; tenant, environment group and environment scopes",
+  "operation": "Search Environment Role Assignments",
+  "crud": "Action",
+  "method": "POST",
+  "path": "/authorization/environments/{environmentId}/listRoleAssignments",
+  "api_version": "2024-10-01",
+  "preview": false,
+  "introduced": "",
+  "namespace": "authorization",
+  "group": "role-based-access-control",
+  "doc": "docs/authorization/role-based-access-control/search-environment-role-assignments.md"
+ },
+ {
+  "logical_resource": "Role Based Access Control",
+  "facet": "Assignments and definitions; tenant, environment group and environment scopes",
+  "operation": "Search Role Assignments",
+  "crud": "Action",
+  "method": "POST",
+  "path": "/authorization/listRoleAssignments",
+  "api_version": "2024-10-01",
+  "preview": false,
+  "introduced": "",
+  "namespace": "authorization",
+  "group": "role-based-access-control",
+  "doc": "docs/authorization/role-based-access-control/search-role-assignments.md"
  },
  {
   "logical_resource": "Rule Set",

@@ -1190,7 +1190,7 @@
  "tags": [
   {
    "name": "(unmapped)",
-   "description": "advisor-chat"
+   "description": "advisor-chat; monitoring-hub"
   },
   {
    "name": "Advisor Chat",
@@ -1675,6 +1675,7 @@
      }
     },
     "x-ms-namespace": "analytics/advisor-chat",
+    "x-ms-preview": true,
     "requestBody": {
      "required": true,
      "content": {
@@ -1720,15 +1721,6 @@
        "default": "2024-10-01"
       },
       "description": "The API version."
-     },
-     {
-      "name": "$skipToken",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "type": "string"
-      },
-      "description": "Skip token for the next page of recommendations."
      }
     ],
     "responses": {
@@ -1973,15 +1965,6 @@
        "default": "2024-10-01"
       },
       "description": "The API version."
-     },
-     {
-      "name": "$skipToken",
-      "in": "query",
-      "required": false,
-      "schema": {
-       "type": "string"
-      },
-      "description": "Skip token for the next page of resources."
      }
     ],
     "responses": {
@@ -4413,6 +4396,128 @@
     "x-source": "provider"
    }
   },
+  "/authorization/environments/{environmentId}/listRoleAssignments": {
+   "post": {
+    "operationId": "authorization_searchEnvironmentRoleAssignments",
+    "tags": [
+     "Role Based Access Control"
+    ],
+    "summary": "Environment Role Assignments Search",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The unique identifier of the environment."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     },
+     {
+      "name": "continuationToken",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The continuation token from a previous response, used to retrieve the next page of results."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "A page of role assignments for the environment matching the search filters.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SearchRoleAssignmentsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad Request - The body is invalid."
+     },
+     "401": {
+      "description": "Unauthorized - Invalid credentials or missing authentication."
+     },
+     "404": {
+      "description": "Not Found - The specified resource does not exist."
+     },
+     "500": {
+      "description": "Internal Server Error - Unexpected server error."
+     }
+    },
+    "x-ms-namespace": "authorization/role-based-access-control",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "scope": {
+          "type": "string",
+          "description": "The scope to filter role assignments by"
+         },
+         "expandEnvironmentClusters": {
+          "type": "boolean",
+          "description": "Whether to include role assignments inherited from the environment cluster an environment belongs to"
+         },
+         "expandEnvironmentGroups": {
+          "type": "boolean",
+          "description": "Whether to include role assignments inherited from the environment groups an environment belongs to"
+         },
+         "expandSecurityGroups": {
+          "type": "boolean",
+          "description": "Whether to include role assignments inherited from the security groups the principal belongs to"
+         },
+         "includeNestedScopes": {
+          "type": "boolean",
+          "description": "Whether to include role assignments from scopes nested under the provided scope"
+         },
+         "includeParentScopes": {
+          "type": "boolean",
+          "description": "Whether to include role assignments from parent scopes up to the tenant"
+         },
+         "includeVirtualEntraRoleAssignments": {
+          "type": "boolean",
+          "description": "Whether to include virtual role assignments granted through an Entra directory role"
+         },
+         "permission": {
+          "type": "string",
+          "description": "The permission to filter by"
+         },
+         "principalObjectId": {
+          "type": "string",
+          "description": "The ID of the principal to filter by"
+         },
+         "principalType": {
+          "type": "string",
+          "description": "The type of the principal to filter by"
+         }
+        },
+        "required": [
+         "scope"
+        ]
+       }
+      }
+     }
+    },
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/authorization/role-based-access-control/search-environment-role-assignments"
+    }
+   }
+  },
   "/authorization/environments/{environmentId}/roleAssignments": {
    "post": {
     "operationId": "authorization_createEnvironmentRoleAssignment",
@@ -4649,39 +4754,115 @@
   },
   "/authorization/listRoleAssignments": {
    "post": {
-    "operationId": "roleAssignmentsListTenant_post",
+    "operationId": "authorization_searchRoleAssignments",
     "tags": [
-     "Authorization"
+     "Role Based Access Control"
     ],
-    "summary": "Role Assignments List (Tenant)",
-    "description": "Lists tenant role assignments. **A POST that reads** -- the filter travels in the body rather than the query string, which is how this API handles list criteria too large or too structured for a URL.",
+    "summary": "Role Assignments Search",
     "parameters": [
      {
       "name": "api-version",
       "in": "query",
       "required": true,
       "schema": {
-       "type": "string"
+       "type": "string",
+       "default": "2024-10-01"
       },
       "description": "The API version."
+     },
+     {
+      "name": "continuationToken",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The continuation token from a previous response, used to retrieve the next page of results."
      }
     ],
+    "responses": {
+     "200": {
+      "description": "A page of role assignments matching the search filters.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SearchRoleAssignmentsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad Request - The body is invalid."
+     },
+     "401": {
+      "description": "Unauthorized - Invalid credentials or missing authentication."
+     },
+     "404": {
+      "description": "Not Found - The specified resource does not exist."
+     },
+     "500": {
+      "description": "Internal Server Error - Unexpected server error."
+     }
+    },
+    "x-ms-namespace": "authorization/role-based-access-control",
     "requestBody": {
      "required": true,
      "content": {
       "application/json": {
        "schema": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+         "scope": {
+          "type": "string",
+          "description": "The scope to filter role assignments by"
+         },
+         "expandEnvironmentClusters": {
+          "type": "boolean",
+          "description": "Whether to include role assignments inherited from the environment cluster an environment belongs to"
+         },
+         "expandEnvironmentGroups": {
+          "type": "boolean",
+          "description": "Whether to include role assignments inherited from the environment groups an environment belongs to"
+         },
+         "expandSecurityGroups": {
+          "type": "boolean",
+          "description": "Whether to include role assignments inherited from the security groups the principal belongs to"
+         },
+         "includeNestedScopes": {
+          "type": "boolean",
+          "description": "Whether to include role assignments from scopes nested under the provided scope"
+         },
+         "includeParentScopes": {
+          "type": "boolean",
+          "description": "Whether to include role assignments from parent scopes up to the tenant"
+         },
+         "includeVirtualEntraRoleAssignments": {
+          "type": "boolean",
+          "description": "Whether to include virtual role assignments granted through an Entra directory role"
+         },
+         "permission": {
+          "type": "string",
+          "description": "The permission to filter by"
+         },
+         "principalObjectId": {
+          "type": "string",
+          "description": "The ID of the principal to filter by"
+         },
+         "principalType": {
+          "type": "string",
+          "description": "The type of the principal to filter by"
+         }
+        },
+        "required": [
+         "scope"
+        ]
        }
       }
      }
     },
-    "responses": {
-     "200": {
-      "description": "The result."
-     }
-    },
-    "x-source": "provider"
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/authorization/role-based-access-control/search-role-assignments"
+    }
    }
   },
   "/authorization/roleAssignments": {
@@ -19481,6 +19662,82 @@
     }
    }
   },
+  "/monitoringhub/powerplatform/triggeredAlerts/poll": {
+   "get": {
+    "operationId": "monitoringhub_onAlertTriggered",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "On Alert Triggered",
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "Successful request. The response contains one or more alert events.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MonitoringHubTriggeredAlertsPollResponse"
+        }
+       }
+      },
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        }
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "202": {
+      "description": "Accepted. No alert events are returned; there is no body and no flow run.",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        }
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request. One or more request parameters are invalid."
+     },
+     "401": {
+      "description": "Unauthorized. A valid access token is required."
+     },
+     "403": {
+      "description": "Forbidden. You don't have permission to read alerts in this tenant."
+     },
+     "429": {
+      "description": "Too many requests. Retry after the indicated delay.",
+      "headers": {
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "500": {
+      "description": "Internal server error."
+     }
+    },
+    "x-ms-namespace": "monitoringhub/monitoring-hub",
+    "x-ms-preview": true,
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/monitoringhub/monitoring-hub/on-alert-triggered"
+    }
+   }
+  },
   "/monitoringhub/tenants/{tenantId}/environments/{environmentId}/metrics/resourceType/{resourceType}/resourceSubType/{resourceSubType}/timeseries": {
    "post": {
     "operationId": "monitoringhubTenantsEnvironmentsMetricsResourceTypeResourceSubTypeTimeseries_post",
@@ -34018,7 +34275,7 @@
       "type": "array"
      },
      "productCategories": {
-      "description": "The entitlement product categories (e.g., D365Apps, Dataverse, Power Apps, Power Automate).",
+      "description": "The entitlement product categories (e.g., D365Apps, Dataverse, PowerApps, PowerAutomate).",
       "items": {
        "$ref": "#/components/schemas/ProductCategory"
       },
@@ -36819,6 +37076,221 @@
     },
     "x-source": "pac-cli"
    },
+   "MonitoringHubAffectedResource": {
+    "description": "The IDs of an affected resource and its environment, with the observed metric value when available.",
+    "properties": {
+     "environmentId": {
+      "description": "The environment ID: a GUID, or Default-{tenant GUID} for the default environment.",
+      "type": "string"
+     },
+     "metricValue": {
+      "description": "The observed value for this resource, expressed in the alert's Metric Unit. Omitted when unavailable.",
+      "format": "double",
+      "type": "number"
+     },
+     "resourceId": {
+      "description": "The ID of the affected resource.",
+      "format": "uuid",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubTriggeredAlert": {
+    "description": "A Power Platform Monitor alert with its rule, metric, and affected-resource details. Unknown indicates an unrecognized value. Optional details are omitted when unavailable.",
+    "properties": {
+     "affectedResourceCount": {
+      "description": "The total number of affected resources, including any resources omitted from the Affected Resources list.",
+      "format": "int32",
+      "minimum": 0,
+      "type": "integer"
+     },
+     "affectedResources": {
+      "description": "A list of affected resource and environment IDs, with observed metric values when available. The list can be limited. Check Affected Resource Count and Affected Resources Truncated to determine whether more resources were affected.",
+      "items": {
+       "$ref": "#/components/schemas/MonitoringHubAffectedResource"
+      },
+      "type": "array"
+     },
+     "affectedResourcesTruncated": {
+      "description": "True when the Affected Resources list omits one or more resources included in Affected Resource Count.",
+      "type": "boolean"
+     },
+     "alertId": {
+      "description": "The ID of the alert instance.",
+      "format": "uuid",
+      "type": "string"
+     },
+     "alertLink": {
+      "description": "A link to view the alert in Power Platform admin center. Sign in with an account that has access to the alert.",
+      "format": "uri",
+      "type": "string"
+     },
+     "alertRuleId": {
+      "description": "The ID of the alert rule in the Power Platform admin center.",
+      "format": "uuid",
+      "type": "string"
+     },
+     "dataReviewPeriod": {
+      "description": "The time period evaluated by the rule, as an ISO-8601 duration, such as PT1H for one hour or P1D for one day.",
+      "type": "string"
+     },
+     "firedDateTime": {
+      "description": "The time the alert fired, in UTC ISO-8601 format.",
+      "format": "date-time",
+      "type": "string"
+     },
+     "metric": {
+      "description": "The metric monitored by the alert rule, or Unknown when the metric isn't recognized.",
+      "enum": [
+       "AgentSuccessRate",
+       "CanvasAppAvailability",
+       "CanvasAppDataRequest",
+       "CanvasAppDataRequestLatency",
+       "CanvasAppRecentAppLaunches",
+       "CanvasAppTimeToFullLoad",
+       "CanvasAppTimeToInteract",
+       "CloudFlowDuration",
+       "CloudFlowRunCount",
+       "CloudFlowSuccessRate",
+       "CodeAppAvailability",
+       "CodeAppDataRequest",
+       "CodeAppDataRequestLatency",
+       "CodeAppRecentAppLaunches",
+       "CodeAppTimeToInteract",
+       "DesktopFlowDuration",
+       "DesktopFlowRunCount",
+       "DesktopFlowSuccessRate",
+       "DesktopFlowTimeInQueue",
+       "ModelAppAvailability",
+       "ModelDrivenAppRecentAppLaunches",
+       "PowerPagesAvailability",
+       "PowerPagesErrorRate",
+       "PowerPagesPageLoadTime",
+       "PowerPagesSessionTime",
+       "PowerPagesSessions",
+       "Unknown",
+       "WorkQueueBusinessException",
+       "WorkQueueGenericException",
+       "WorkQueueItException",
+       "WorkQueueOutOfSla"
+      ],
+      "type": "string"
+     },
+     "metricUnit": {
+      "description": "The unit for the threshold and observed metric values. Percent uses percentage points (95 means 95 percent), Seconds uses seconds, and Count uses item or event counts. Unknown indicates an unrecognized unit.",
+      "enum": [
+       "Count",
+       "Percent",
+       "Seconds",
+       "Unknown"
+      ],
+      "type": "string"
+     },
+     "monitorCondition": {
+      "description": "Whether the alert has fired or resolved. Daily alert rules currently report Fired only. Unknown indicates an unrecognized condition.",
+      "enum": [
+       "Fired",
+       "Resolved",
+       "Unknown"
+      ],
+      "type": "string"
+     },
+     "operator": {
+      "description": "How the metric is compared with the threshold. IsUnder and IsOver exclude equality; IsUnderOrEqual and IsOverOrEqual include equality. Unknown indicates an unrecognized comparison.",
+      "enum": [
+       "Equals",
+       "IsOver",
+       "IsOverOrEqual",
+       "IsUnder",
+       "IsUnderOrEqual",
+       "Unknown"
+      ],
+      "type": "string"
+     },
+     "productType": {
+      "description": "The Power Platform product associated with the alert, or Unknown when unrecognized.",
+      "enum": [
+       "CopilotStudio",
+       "PowerApps",
+       "PowerAutomate",
+       "PowerPages",
+       "Unknown"
+      ],
+      "type": "string"
+     },
+     "resolvedDateTime": {
+      "description": "The time the alert resolved, in UTC ISO-8601 format. Omitted when no resolution time is available.",
+      "format": "date-time",
+      "type": "string"
+     },
+     "scope": {
+      "description": "Whether the rule monitors a tenant, environment, or resource, or Unknown when unrecognized.",
+      "enum": [
+       "Environment",
+       "Resource",
+       "Tenant",
+       "Unknown"
+      ],
+      "type": "string"
+     },
+     "severity": {
+      "description": "The alert severity, or Unknown when the severity isn't recognized.",
+      "enum": [
+       "High",
+       "Low",
+       "Medium",
+       "Unknown"
+      ],
+      "type": "string"
+     },
+     "subProductType": {
+      "description": "The type of app, flow, or other resource associated with the alert, or Unknown when unrecognized.",
+      "enum": [
+       "Agent",
+       "CanvasApp",
+       "CloudFlow",
+       "CodeApp",
+       "DesktopFlow",
+       "ModelDrivenApp",
+       "PowerPages",
+       "Unknown",
+       "WorkQueue"
+      ],
+      "type": "string"
+     },
+     "tenantId": {
+      "description": "The ID of your Power Platform tenant.",
+      "format": "uuid",
+      "type": "string"
+     },
+     "threshold": {
+      "description": "The threshold configured for the rule, expressed in Metric Unit. For example, 95 with Percent means 95 percent.",
+      "format": "double",
+      "type": "number"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubTriggeredAlertsPollResponse": {
+    "description": "A batch of Power Platform Monitor alerts. Use the value array as the Split On target to start a separate flow run for each alert.",
+    "properties": {
+     "totalCount": {
+      "description": "The number of alerts in this response.",
+      "format": "int32",
+      "minimum": 0,
+      "type": "integer"
+     },
+     "value": {
+      "description": "The alerts returned by this poll.",
+      "items": {
+       "$ref": "#/components/schemas/MonitoringHubTriggeredAlert"
+      },
+      "type": "array"
+     }
+    },
+    "type": "object"
+   },
    "NeptuneOperationResult": {
     "description": "The result of a Neptune operation.",
     "properties": {
@@ -37294,7 +37766,7 @@
       "type": "string"
      },
      "resourceId": {
-      "description": "Resource Id ex. the environment group id.",
+      "description": "Resource ID, e.g., the environment group ID.",
       "type": "string"
      },
      "resourceType": {
@@ -38857,7 +39329,7 @@
       "type": "array"
      },
      "roleDefinitionId": {
-      "description": "Role definition Id",
+      "description": "Role definition ID",
       "type": "string"
      },
      "roleDefinitionName": {
@@ -39323,6 +39795,68 @@
      },
      "userId": {
       "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "SearchRoleAssignmentsRequest": {
+    "description": "Request to search role assignments using scope, principal, and permission filters.",
+    "properties": {
+     "expandEnvironmentClusters": {
+      "description": "Whether to include role assignments inherited from the environment cluster an environment belongs to",
+      "type": "boolean"
+     },
+     "expandEnvironmentGroups": {
+      "description": "Whether to include role assignments inherited from the environment groups an environment belongs to",
+      "type": "boolean"
+     },
+     "expandSecurityGroups": {
+      "description": "Whether to include role assignments inherited from the security groups the principal belongs to",
+      "type": "boolean"
+     },
+     "includeNestedScopes": {
+      "description": "Whether to include role assignments from scopes nested under the provided scope",
+      "type": "boolean"
+     },
+     "includeParentScopes": {
+      "description": "Whether to include role assignments from parent scopes up to the tenant",
+      "type": "boolean"
+     },
+     "includeVirtualEntraRoleAssignments": {
+      "description": "Whether to include virtual role assignments granted through an Entra directory role",
+      "type": "boolean"
+     },
+     "permission": {
+      "description": "The permission to filter by",
+      "type": "string"
+     },
+     "principalObjectId": {
+      "description": "The ID of the principal to filter by",
+      "type": "string"
+     },
+     "principalType": {
+      "description": "The type of the principal to filter by",
+      "type": "string"
+     },
+     "scope": {
+      "description": "The scope to filter role assignments by",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "SearchRoleAssignmentsResponse": {
+    "description": "A page of role assignments matching the search filters.",
+    "properties": {
+     "nextLink": {
+      "description": "The URL to retrieve the next page of results, or null if there are no more pages",
+      "type": "string"
+     },
+     "value": {
+      "items": {
+       "$ref": "#/components/schemas/RoleDefinition"
+      },
+      "type": "array"
      }
     },
     "type": "object"
@@ -40257,7 +40791,7 @@
       "type": "string"
      },
      "productCategories": {
-      "description": "The entitlement product categories (e.g., D365Apps, Dataverse, Power Apps, Power Automate).",
+      "description": "The entitlement product categories (e.g., D365Apps, Dataverse, PowerApps, PowerAutomate).",
       "items": {
        "$ref": "#/components/schemas/ProductCategory"
       },

@@ -16,7 +16,7 @@ author: laneswenka
 ms.reviewer: ellenwehrle
 ms.component: pa-admin
 ms.topic: overview
-ms.date: 2026-09-30T00:00:00.0000000Z
+ms.date: 2026-10-23T00:00:00.0000000Z
 ms.author: laswenka
 search.audienceType:
 - admin
@@ -31,7 +31,7 @@ toc_rel: toc.json
 pdf_url_template: https://learn.microsoft.com/pdfstore/en-us/MSDN.power-platform/{branchName}{pdfName}
 feedback_help_link_type: ''
 feedback_help_link_url: ''
-word_count: 2432
+word_count: 2450
 asset_id: admin/programmability-whats-new-changed
 moniker_range_name: 
 monikers: []
@@ -59,6 +59,9 @@ Learn about the latest changes and new capabilities for Power Platform APIs and 
 | Grant Exception | API | New endpoint: [Grant Exception](powerpages/websites/grant-exception.md) |
 | Get Exceptions | API | New endpoint: [Get Exceptions](powerpages/websites/get-exceptions.md) |
 | Revoke Exception | API | New endpoint: [Revoke Exception](powerpages/websites/revoke-exception.md) |
+| Powerplatform-Management (Python) | SDK | [Monthly Release](https://pypi.org/project/powerplatform-management/2.0.3578.333/) |
+| Microsoft.PowerPlatform.Management (C#) | SDK | [Monthly release](https://www.nuget.org/packages/Microsoft.PowerPlatform.Management/2.0.3578.333) |
+| Power Platform for Admins V2 | Connector | [Monthly release](https://learn.microsoft.com/en-us/connectors/powerplatformadminv2/) |
 
 ## July 2026
 

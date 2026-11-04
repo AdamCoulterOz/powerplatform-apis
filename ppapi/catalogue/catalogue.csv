@@ -1,5 +1,7 @@
 logical_resource,facet,operation,crud,method,path,api_version,preview,introduced,namespace,group,doc
-(unmapped),advisor-chat,Send Advisor Chat Message,Action,POST,/analytics/advisor/chat/messages,2024-10-01,True,,analytics,advisor-chat,docs/analytics/advisor-chat/send-advisor-chat-message.md
+(unmapped),licensing-reports,Download Licensing Report File,Read,GET,/copilotstudio/licensing/reports/{ReportName}/files/{FileName},2024-10-01,False,,copilotstudio,licensing-reports,docs/copilotstudio/licensing-reports/download-licensing-report-file.md
+(unmapped),licensing-reports,Get Licensing Report Operation,Read,GET,/copilotstudio/licensing/reports/{ReportName}/operations/{OperationId},2024-10-01,False,,copilotstudio,licensing-reports,docs/copilotstudio/licensing-reports/get-licensing-report-operation.md
+(unmapped),licensing-reports,Generate Licensing Report,Create,POST,/copilotstudio/licensing/reports/{ReportName},2024-10-01,False,,copilotstudio,licensing-reports,docs/copilotstudio/licensing-reports/generate-licensing-report.md
 (unmapped),monitoring-hub,On Alert Triggered,Read,GET,/monitoringhub/powerplatform/triggeredAlerts/poll,,True,,monitoringhub,monitoring-hub,docs/monitoringhub/monitoring-hub/on-alert-triggered.md
 Advisor Recommendation,Recommendations and actions,Get Action Schema,Read,GET,/analytics/advisorRecommendations/{scenario}/actionmetadata/{actionName},2024-10-01,False,,analytics,recommendations,docs/analytics/recommendations/get-action-schema.md
 Advisor Recommendation,Recommendations and actions,Get Recommendation Resources,Read,GET,/analytics/advisorRecommendations/{scenario}/resources,2024-10-01,False,,analytics,recommendations,docs/analytics/recommendations/get-recommendation-resources.md

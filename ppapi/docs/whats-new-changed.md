@@ -54,7 +54,7 @@ Learn about the latest changes and new capabilities for Power Platform APIs and 
 
 | Item | Type | Description |
 | --- | --- | --- |
-| Send Advisor Chat Message | API | New endpoint: [Send Advisor Chat Message](analytics/advisor-chat/send-advisor-chat-message.md) |
+| Send Advisor Chat Message | API | New endpoint: [Send Advisor Chat Message](https://learn.microsoft.com/en-us/rest/api/power-platform/analytics/advisor-chat/send-advisor-chat-message) |
 | Get Affected Sites | API | New endpoint: [Get Affected Sites](powerpages/websites/get-affected-sites.md) |
 | Grant Exception | API | New endpoint: [Grant Exception](powerpages/websites/grant-exception.md) |
 | Get Exceptions | API | New endpoint: [Get Exceptions](powerpages/websites/get-exceptions.md) |

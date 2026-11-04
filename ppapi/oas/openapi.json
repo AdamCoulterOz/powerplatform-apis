@@ -1190,7 +1190,7 @@
  "tags": [
   {
    "name": "(unmapped)",
-   "description": "advisor-chat; monitoring-hub"
+   "description": "licensing-reports; monitoring-hub"
   },
   {
    "name": "Advisor Chat",
@@ -1630,11 +1630,12 @@
   },
   "/analytics/advisor/chat/messages": {
    "post": {
-    "operationId": "analytics_sendAdvisorChatMessage",
+    "operationId": "analytics_askAdvisor",
     "tags": [
-     "(unmapped)"
+     "Advisor Chat"
     ],
-    "summary": "Send Advisor Chat Message",
+    "summary": "Message Send",
+    "description": "Asks the Power Platform advisor a question about the tenant and returns its answer. Omit `conversationId` to start a new conversation; the response carries the id the service assigned, and passing it back on the next request continues the same thread with its history intact. Answers are generated, so they take seconds to minutes rather than milliseconds — pac allows five minutes before giving up, and a client should budget similarly rather than using a default HTTP timeout.\n\nThis is not the solution-checker advisor at `advisor.powerapps.com`, and it is unrelated to the advisor recommendations elsewhere in this namespace: those return structured findings about resources, this returns prose.",
     "parameters": [
      {
       "name": "api-version",
@@ -1644,64 +1645,53 @@
        "type": "string",
        "default": "2024-10-01"
       },
-      "description": "The API version."
+      "description": "The API version. Send `2024-10-01` on this route."
      }
     ],
     "responses": {
      "200": {
-      "description": "Success",
+      "description": "The advisor's answer.",
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/AdvisorChatMessageResponse"
+         "$ref": "#/components/schemas/AdvisorChatMessage"
         }
        }
       }
-     },
-     "400": {
-      "description": "Bad Request"
-     },
-     "401": {
-      "description": "Unauthorized"
-     },
-     "403": {
-      "description": "Forbidden"
-     },
-     "404": {
-      "description": "Not Found"
-     },
-     "429": {
-      "description": "Too Many Requests"
      }
     },
     "x-ms-namespace": "analytics/advisor-chat",
-    "x-ms-preview": true,
+    "x-source": "pac-cli",
+    "servers": [
+     {
+      "url": "https://{tenantIdHead}.{tenantIdTail}.tenant.api.powerplatform.com",
+      "variables": {
+       "tenantIdHead": {
+        "default": "000000000000000000000000000000"
+       },
+       "tenantIdTail": {
+        "default": "ab"
+       }
+      }
+     }
+    ],
     "requestBody": {
      "required": true,
      "content": {
       "application/json": {
        "schema": {
-        "type": "object",
-        "properties": {
-         "message": {
-          "type": "string",
-          "description": "The user message to send to the advisor chat agent"
-         },
-         "conversationId": {
-          "type": "string",
-          "description": "The conversation ID for multi-turn chat. Omit to start a new conversation"
-         }
-        },
-        "required": [
-         "message"
-        ]
+        "$ref": "#/components/schemas/AdvisorChatRequest"
        }
       }
      }
     },
-    "externalDocs": {
-     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/analytics/advisor-chat/send-advisor-chat-message"
-    }
+    "x-ms-preview": true,
+    "x-notes": [
+     {
+      "note": "Gated behind the `ModuleAdvisor` feature flag, and absent from the published reference for this namespace. Treat it as preview surface that can change or disappear.",
+      "source": "pac-cli"
+     }
+    ]
    }
   },
   "/analytics/advisorRecommendations": {
@@ -8216,6 +8206,250 @@
     },
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/copilotstudio/bots/run-maker-evaluation-test-set"
+    }
+   }
+  },
+  "/copilotstudio/licensing/reports/{ReportName}": {
+   "post": {
+    "operationId": "copilotstudio_generateLicensingReport",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Licensing Report Generate",
+    "parameters": [
+     {
+      "name": "ReportName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The name of the report to generate."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Accepted. Report generation started.",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        }
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request. The request body or a date is missing or invalid, or the end date is before the start date."
+     },
+     "401": {
+      "description": "Unauthorized. A valid access token is required."
+     },
+     "403": {
+      "description": "Forbidden. The caller must be a Global, Dynamics 365, or Power Platform administrator of the tenant."
+     },
+     "404": {
+      "description": "Not found. The report isn't supported or licensing reports aren't available for the tenant."
+     }
+    },
+    "x-ms-namespace": "copilotstudio/licensing-reports",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "endDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The inclusive UTC end date of the report range. Must be on or after the start date."
+         },
+         "startDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The inclusive UTC start date of the report range."
+         },
+         "granularity": {
+          "allOf": [
+           {
+            "$ref": "#/components/schemas/CopilotStudioLicensingReportGranularity"
+           }
+          ],
+          "description": "The granularity of a licensing report. Daily returns one row per day in the date range, and Summary returns a single summarized row for the whole range."
+         }
+        },
+        "required": [
+         "endDate",
+         "startDate"
+        ]
+       }
+      }
+     }
+    },
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/copilotstudio/licensing-reports/generate-licensing-report"
+    }
+   }
+  },
+  "/copilotstudio/licensing/reports/{ReportName}/files/{FileName}": {
+   "get": {
+    "operationId": "copilotstudio_downloadLicensingReportFile",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Licensing Report File Download",
+    "parameters": [
+     {
+      "name": "FileName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The report file name, returned by a report operation with a Succeeded status."
+     },
+     {
+      "name": "ReportName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The name of the generated report."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The report file as a gzip-compressed CSV.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "headers": {
+       "Content-Disposition": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Unauthorized. A valid access token is required."
+     },
+     "403": {
+      "description": "Forbidden. The caller must be a Global, Dynamics 365, or Power Platform administrator of the tenant."
+     },
+     "404": {
+      "description": "Not found. The file doesn't exist, doesn't belong to your tenant, or licensing reports aren't available for the tenant."
+     }
+    },
+    "x-ms-namespace": "copilotstudio/licensing-reports",
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/copilotstudio/licensing-reports/download-licensing-report-file"
+    }
+   }
+  },
+  "/copilotstudio/licensing/reports/{ReportName}/operations/{OperationId}": {
+   "get": {
+    "operationId": "copilotstudio_getLicensingReportOperation",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Licensing Report Operation Get",
+    "parameters": [
+     {
+      "name": "OperationId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The report operation ID, returned in the Location header when report generation starts."
+     },
+     {
+      "name": "ReportName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The name of the report being generated."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful response. The body contains the current status of the operation.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CopilotStudioLicensingReportOperation"
+        }
+       }
+      },
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        }
+       },
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Unauthorized. A valid access token is required."
+     },
+     "403": {
+      "description": "Forbidden. The caller must be a Global, Dynamics 365, or Power Platform administrator of the tenant."
+     },
+     "404": {
+      "description": "Not found. The operation doesn't exist or licensing reports aren't available for the tenant."
+     }
+    },
+    "x-ms-namespace": "copilotstudio/licensing-reports",
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/copilotstudio/licensing-reports/get-licensing-report-operation"
     }
    }
   },
@@ -30643,43 +30877,6 @@
     },
     "x-source": "pac-cli"
    },
-   "AdvisorChatMessageRequest": {
-    "description": "The request to send a message to the advisor chat agent",
-    "properties": {
-     "conversationId": {
-      "description": "The conversation ID for multi-turn chat. Omit to start a new conversation",
-      "type": "string"
-     },
-     "message": {
-      "description": "The user message to send to the advisor chat agent",
-      "type": "string"
-     }
-    },
-    "type": "object"
-   },
-   "AdvisorChatMessageResponse": {
-    "description": "The response from the advisor chat agent",
-    "properties": {
-     "conversationId": {
-      "description": "The conversation ID to supply on the next turn to continue the conversation",
-      "type": "string"
-     },
-     "executionTimeMs": {
-      "description": "The time taken to produce the response, in milliseconds",
-      "format": "int64",
-      "type": "integer"
-     },
-     "message": {
-      "description": "The agent response message",
-      "type": "string"
-     },
-     "role": {
-      "description": "The role of the message author, always 'assistant'",
-      "type": "string"
-     }
-    },
-    "type": "object"
-   },
    "AdvisorChatRequest": {
     "type": "object",
     "description": "A question put to the advisor, optionally within an existing conversation.",
@@ -32994,6 +33191,69 @@
       "format": "uri"
      }
     }
+   },
+   "CopilotStudioLicensingReportGranularity": {
+    "description": "The granularity of a licensing report. Daily returns one row per day in the date range, and Summary returns a single summarized row for the whole range.",
+    "enum": [
+     "Daily",
+     "Summary"
+    ],
+    "type": "string"
+   },
+   "CopilotStudioLicensingReportOperation": {
+    "description": "The status of a licensing report generation operation.",
+    "properties": {
+     "error": {
+      "description": "A message describing why report generation failed. Returned only when the status is Failed.",
+      "type": "string"
+     },
+     "fileName": {
+      "description": "The generated report file name to use when downloading the report. Returned only when the status is Succeeded.",
+      "type": "string"
+     },
+     "status": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotStudioLicensingReportOperationStatus"
+       }
+      ],
+      "description": "The status of a licensing report generation operation."
+     }
+    },
+    "type": "object"
+   },
+   "CopilotStudioLicensingReportOperationStatus": {
+    "description": "The status of a licensing report generation operation.",
+    "enum": [
+     "Running",
+     "Succeeded",
+     "Failed"
+    ],
+    "type": "string"
+   },
+   "CopilotStudioLicensingReportRequest": {
+    "description": "The request body for generating a licensing report.",
+    "properties": {
+     "endDate": {
+      "description": "The inclusive UTC end date of the report range. Must be on or after the start date.",
+      "format": "date",
+      "type": "string"
+     },
+     "granularity": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotStudioLicensingReportGranularity"
+       }
+      ],
+      "description": "The granularity of a licensing report. Daily returns one row per day in the date range, and Summary returns a single summarized row for the whole range."
+     },
+     "startDate": {
+      "description": "The inclusive UTC start date of the report range.",
+      "format": "date",
+      "type": "string"
+     }
+    },
+    "type": "object"
    },
    "CopyRequest": {
     "description": "Request model for copying an environment.",

@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: When an alert triggers (preview) Triggers when a daily Power Platform Monitor alert rule fires in your tenant and its notification type is set to "Connector" or
+description: When an alert triggers (preview) Triggers when a daily Power Platform Monitor alert rule fires in your tenant and its notification type is Connector or Email an
 locale: en-us
 document_id: 348682f5-52b0-07a5-0dfa-bc8033482804
 document_version_independent_id: 2c00e432-52aa-bbd1-79a7-a15609254eea
@@ -52,7 +52,7 @@ platformId: 3e7761a3-0b80-be44-b653-0df7260363e5
 - API Version:
     - 2024-10-01
 
-When an alert triggers (preview) Triggers when a daily Power Platform Monitor alert rule fires in your tenant and its notification type is set to "Connector" or "Email and connector". This preview supports daily alert rules and returns alert IDs, metadata, affected resources, and a link to the Power Platform admin center. Each alert is returned as one item in the value array. To start a separate flow run for each alert, enable Split On for value.
+When an alert triggers (preview) Triggers when a daily Power Platform Monitor alert rule fires in your tenant and its notification type is Connector or Email and connector. This preview supports daily alert rules and returns alert IDs, metadata, affected resources, and a link to the alert in Power Platform admin center. Each alert is one item in the value array. When using this trigger in a flow, turn on Split On for value to run once per alert.
 
 ```http
 GET https://api.powerplatform.com/monitoringhub/powerplatform/triggeredAlerts/poll
@@ -117,7 +117,7 @@ A Power Platform Monitor alert with its rule, metric, and affected-resource deta
 | affectedResourcesTruncated | boolean | True when the Affected Resources list omits one or more resources included in Affected Resource Count. |
 | alertId | string (uuid) | The ID of the alert instance. |
 | alertLink | string (uri) | A link to view the alert in Power Platform admin center. Sign in with an account that has access to the alert. |
-| alertRuleId | string (uuid) | The ID of the alert rule in the Power Platform admin center. |
+| alertRuleId | string (uuid) | The ID of the alert rule in Power Platform admin center. |
 | dataReviewPeriod | string | The time period evaluated by the rule, as an ISO-8601 duration, such as PT1H for one hour or P1D for one day. |
 | firedDateTime | string (date-time) | The time the alert fired, in UTC ISO-8601 format. |
 | metric | enum:<br>- AgentSuccessRate<br>- CanvasAppAvailability<br>- CanvasAppDataRequest<br>- CanvasAppDataRequestLatency<br>- CanvasAppRecentAppLaunches<br>- CanvasAppTimeToFullLoad<br>- CanvasAppTimeToInteract<br>- CloudFlowDuration<br>- CloudFlowRunCount<br>- CloudFlowSuccessRate<br>- CodeAppAvailability<br>- CodeAppDataRequest<br>- CodeAppDataRequestLatency<br>- CodeAppRecentAppLaunches<br>- CodeAppTimeToInteract<br>- DesktopFlowDuration<br>- DesktopFlowRunCount<br>- DesktopFlowSuccessRate<br>- DesktopFlowTimeInQueue<br>- ModelAppAvailability<br>- ModelDrivenAppRecentAppLaunches<br>- PowerPagesAvailability<br>- PowerPagesErrorRate<br>- PowerPagesPageLoadTime<br>- PowerPagesSessionTime<br>- PowerPagesSessions<br>- Unknown<br>- WorkQueueBusinessException<br>- WorkQueueGenericException<br>- WorkQueueItException<br>- WorkQueueOutOfSla | The metric monitored by the alert rule, or Unknown when the metric isn't recognized. |

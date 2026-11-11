@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Creates the billing policy at tenant level. '
+description: 'Learn more about Power Platform API service - Create the billing policy at the tenant level. '
 locale: en-us
 document_id: b684cbbf-2a98-c0f8-c20b-c85ff22d53fd
 document_version_independent_id: 606c40d0-a9a8-7b1d-0581-6c9e949dd483
@@ -48,7 +48,7 @@ platformId: fa72c0ba-fbef-45d1-8bdb-abffbc7c6d01
 - API Version:
     - 2024-10-01
 
-Creates the billing policy at tenant level.
+Create the billing policy at the tenant level.
 
 ```http
 POST https://api.powerplatform.com/licensing/billingPolicies?api-version=2024-10-01

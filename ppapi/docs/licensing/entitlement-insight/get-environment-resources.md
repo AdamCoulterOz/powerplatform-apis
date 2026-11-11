@@ -70,7 +70,7 @@ GET https://api.powerplatform.com/licensing/entitlements/{entitlementId}/environ
 | fromDate | query | True | string | The start date (inclusive) of the query range. |
 | toDate | query | True | string | The end date (inclusive) of the query range. |
 | continuationToken | query |  | string | Continuation token for pagination. |
-| includeFields | query |  | string | Comma separated additional fields to include in the response. |
+| includeFields | query |  | string | Comma-separated additional fields to include in the response. |
 | orderbyConsumed | query |  | string | Order by consumed date time if specified. |
 | searchRequest | query |  | string | Search request for filtering the resources. |
 
@@ -150,6 +150,6 @@ Object
 | --- | --- | --- |
 | consumed | number (double) | The consumed value. |
 | lastRefreshedDate | string (date-time) | The last refreshed date. |
-| metadata | object | Additional metadata such as Feature, ProductName and nonBillableConsumed for MCSMessages. |
+| metadata | object | Additional metadata such as Feature, ProductName, and nonBillableConsumed for MCSMessages. |
 | resourceId | string | The resource ID. |
 | unit | EntitlementUnit | The unit of measure for an entitlement. |

@@ -99,7 +99,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | BillingPolicyConditionsApiModel |  |
 | BillingPolicyConditionsModel | The ISV Contract API filter conditions. |
 | BillingPolicyStatus | The desired ISV contract status. |
-| ConsumerIdentityModel | The consumer identity for ISV contract. |
+| ConsumerIdentityModel | The consumer identity for the ISV contract. |
 | IsvContractResponseModel |  |
 | IsvContractResponseModelResponseWithOdataContinuation |  |
 | LicensingPrincipal |  |
@@ -163,7 +163,7 @@ The desired ISV contract status.
 
 Object
 
-The consumer identity for ISV contract.
+The consumer identity for the ISV contract.
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -177,7 +177,7 @@ Object
 | --- | --- | --- |
 | billingInstrument | BillingInstrumentModel | The ISV billing instrument information. |
 | conditions | BillingPolicyConditionsModel | The ISV Contract API filter conditions. |
-| consumer | ConsumerIdentityModel | The consumer identity for ISV contract. |
+| consumer | ConsumerIdentityModel | The consumer identity for the ISV contract. |
 | createdBy | LicensingPrincipal |  |
 | createdOn | string (date-time) |  |
 | geo | string |  |

@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Create rule-based policy. Creates a rule-based policy with rule sets and metadata. '
+description: 'Learn more about Power Platform API service - Create a rule-based policy. Creates a rule-based policy with rule sets and metadata. '
 locale: en-us
 document_id: 8d9ed413-f17f-340f-d110-22bb1143ef53
 document_version_independent_id: 5adab4ed-17c0-70b0-5f48-165aac3ff567
@@ -48,7 +48,7 @@ platformId: 5a847e3f-5bba-c384-8a7d-4686d761432b
 - API Version:
     - 2024-10-01
 
-Create rule-based policy. Creates a rule-based policy with rule sets and metadata.
+Create a rule-based policy. Creates a rule-based policy with rule sets and metadata.
 
 ```http
 POST https://api.powerplatform.com/governance/ruleBasedPolicies?api-version=2024-10-01

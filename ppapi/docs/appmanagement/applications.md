@@ -52,6 +52,6 @@ platformId: ed4652dc-0f0d-7d38-ca8e-162a70de9fd0
 
 | [Get Application Package Install Status](applications/get-application-package-install-status.md) | Get the polling status for a previously triggered installation. |
 | --- | --- |
-| [Get Environment Application Package](applications/get-environment-application-package.md) | Get the list of application packages that are available for install. |
+| [Get Environment Application Package](applications/get-environment-application-package.md) | Get the list of application packages that are available for installation. |
 | [Get Tenant Application Package](applications/get-tenant-application-package.md) | List the installable application packages for a tenant. |
-| [Install Application Package](applications/install-application-package.md) | Start the install of application package in target environment. |
+| [Install Application Package](applications/install-application-package.md) | Start the installation of an application package in the target environment. |

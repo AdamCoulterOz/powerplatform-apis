@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get user per flow capacity source data with pagination and filtering options. '
+description: 'Learn more about Power Platform API service - Get user per-flow capacity source data with pagination and filtering options. '
 locale: en-us
 document_id: ea602d77-673e-9242-9379-4c4b79e00b73
 document_version_independent_id: beecfb31-02b7-f761-a68b-21a8c2fccb3a
@@ -50,7 +50,7 @@ platformId: 78c25442-a129-b8c2-7edb-abee2cfe3877
 - API Version:
     - 2024-10-01
 
-Get user per flow capacity source data with pagination and filtering options.
+Get user per-flow capacity source data with pagination and filtering options.
 
 ```http
 GET https://api.powerplatform.com/licensing/UserPerFlowCapacitySource?startDate={startDate}&api-version=2024-10-01
@@ -107,19 +107,19 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 
 | Name | Description |
 | --- | --- |
-| PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceRecord | Paginated result container for user per flow capacity source records. |
+| PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceRecord | Paginated result container for user per-flow capacity source records. |
 | UserPerFlowCapacitySourceRecord | Detailed capacity source record for a specific flow execution. |
 
 ### PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceRecord
 
 Object
 
-Paginated result container for user per flow capacity source records.
+Paginated result container for user per-flow capacity source records.
 
 | Name | Type | Description |
 | --- | --- | --- |
 | currentPage | integer (int32) | The current page number. |
-| records | UserPerFlowCapacitySourceRecord[] | Collection of user per flow capacity source records. |
+| records | UserPerFlowCapacitySourceRecord[] | Collection of user per-flow capacity source records. |
 
 ### UserPerFlowCapacitySourceRecord
 

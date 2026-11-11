@@ -99,7 +99,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | AllocationsByEnvironmentResponseModelV1 | The response body includes environment ID and allocated currencies. |
 | CurrencyAllocationRequestModelV1 |  |
 | CurrencyAllocationResponseModelV1 |  |
-| ExternalCurrencyType | Available currency type which can be allocated to environment. |
+| ExternalCurrencyType | The available currency type that can be allocated to an environment. |
 
 ### AllocationsByEnvironmentPatchRequestModelV1
 
@@ -117,7 +117,7 @@ The response body includes environment ID and allocated currencies.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| currencyAllocations | CurrencyAllocationResponseModelV1[] | The collection of currencies with allocation count. |
+| currencyAllocations | CurrencyAllocationResponseModelV1[] | The collection of currencies with allocation counts. |
 | environmentId | string | The environment ID for which the currency has been allocated. |
 
 ### CurrencyAllocationRequestModelV1
@@ -127,7 +127,7 @@ Object
 | Name | Type | Description |
 | --- | --- | --- |
 | allocated | integer (int32) | Specify the currency count. |
-| currencyType | ExternalCurrencyType | Available currency type which can be allocated to environment. |
+| currencyType | ExternalCurrencyType | The available currency type that can be allocated to an environment. |
 
 ### CurrencyAllocationResponseModelV1
 
@@ -136,13 +136,13 @@ Object
 | Name | Type | Description |
 | --- | --- | --- |
 | allocated | integer (int32) | The allocated count of currency type |
-| currencyType | ExternalCurrencyType | Available currency type which can be allocated to environment. |
+| currencyType | ExternalCurrencyType | The available currency type that can be allocated to an environment. |
 
 ### ExternalCurrencyType
 
 Enumeration
 
-Available currency type which can be allocated to environment.
+The available currency type that can be allocated to an environment.
 
 | Value | Description |
 | --- | --- |

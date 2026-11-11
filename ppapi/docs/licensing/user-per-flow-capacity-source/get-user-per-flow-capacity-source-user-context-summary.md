@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get the user per flow capacity source user context summary. '
+description: "Learn more about Power Platform API service - Get the user context summary for a user's per-flow capacity source. "
 locale: en-us
 document_id: f0d3458c-40a9-8667-4027-5575ce107331
 document_version_independent_id: 6737d442-3b0a-0eb5-caf5-ee0a12bc122e
@@ -50,7 +50,7 @@ platformId: f63d64e3-72f7-09c3-c154-1c95874dac31
 - API Version:
     - 2024-10-01
 
-Get the user per flow capacity source user context summary.
+Get the user context summary for a user's per-flow capacity source.
 
 ```http
 GET https://api.powerplatform.com/licensing/UserPerFlowCapacitySource/UserContextSummary?startDate={startDate}&api-version=2024-10-01
@@ -104,7 +104,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | Name | Description |
 | --- | --- |
 | PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceUserContextRecord | Paginated result container for user context summary records. |
-| UserPerFlowCapacitySourceUserContextRecord | User context summary for per flow capacity source. |
+| UserPerFlowCapacitySourceUserContextRecord | User context summary for a per-flow capacity source. |
 
 ### PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceUserContextRecord
 
@@ -121,7 +121,7 @@ Paginated result container for user context summary records.
 
 Object
 
-User context summary for per flow capacity source.
+User context summary for a per-flow capacity source.
 
 | Name | Type | Description |
 | --- | --- | --- |

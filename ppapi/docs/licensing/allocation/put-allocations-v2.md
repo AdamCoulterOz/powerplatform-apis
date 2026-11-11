@@ -33,6 +33,10 @@ moniker_range_name:
 monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/licensing/Allocation/Put-Allocations-V2.yml
+cmProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
+spProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 platformId: fc29988b-3f15-949d-076a-ea6533a2eee7
 ---
 
@@ -93,7 +97,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | AllocationEnforcementRule |  |
 | AllocationEnforcementRuleTypes | The type of an allocation enforcement rule. |
 | AllocationModel |  |
-| AllocationPutRequestModel | Allocation put request model. |
+| AllocationPutRequestModel | Allocation data for a scope, used in allocation requests and operation results. |
 | EntitlementAllocationModel |  |
 | EntitlementUnit | The unit of measure for an entitlement. |
 | NeptuneOperationResult | The result of a Neptune operation. |
@@ -106,6 +110,7 @@ Object
 | Name | Type | Description |
 | --- | --- | --- |
 | enabled | boolean |  |
+| ruleData | object | Optional rule-specific configuration data. |
 | ruleType | AllocationEnforcementRuleTypes | The type of an allocation enforcement rule. |
 
 ### AllocationEnforcementRuleTypes
@@ -137,7 +142,7 @@ Object
 
 Object
 
-Allocation put request model.
+Allocation data for a scope, used in allocation requests and operation results.
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -176,7 +181,8 @@ The result of a Neptune operation.
 | Name | Type | Description |
 | --- | --- | --- |
 | isErrorResult | boolean | Indicates whether the operation result represents an error. |
-| statusCode | integer (int32) | The HTTP status code of the operation result. |
+| statusCode | string | The symbolic HTTP status of the operation result, such as OK. |
+| value | AllocationPutRequestModel | Allocation data for a scope, used in allocation requests and operation results. |
 
 ### ScopeModel
 

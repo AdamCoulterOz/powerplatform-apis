@@ -127,7 +127,7 @@ Per-resource snapshot for a tenant-scoped, all-environments listing.
 | consumed | number (double) | The consumed value. |
 | environmentId | string | The environment this resource belongs to. |
 | lastRefreshedDate | string (date-time) | The last refreshed date. |
-| metadata | object | Additional metadata such as Feature, ProductName and nonBillableConsumed for MCSMessages. |
+| metadata | object | Additional metadata such as Feature, ProductName, and nonBillableConsumed for MCSMessages. |
 | resourceId | string | The resource ID. |
 | unit | EntitlementUnit | The unit of measure for an entitlement. |
 

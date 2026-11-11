@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Get the list of application packages that are available for install. Lists available app packages for a target environment with OData filtering. '
+description: 'Get the list of application packages that are available for installation. Lists available app packages for a target environment with OData filtering. '
 locale: en-us
 document_id: a26a0d31-3a85-a0db-7e3a-323e6d9a9551
 document_version_independent_id: e15c5be9-5a0a-8291-cad5-255c0c26a112
@@ -48,7 +48,7 @@ platformId: 959235d6-47ef-19e7-299a-c64a2a7efb36
 - API Version:
     - 2024-10-01
 
-Get the list of application packages that are available for install. Lists available app packages for a target environment with OData filtering.
+Get the list of application packages that are available for installation. Lists available app packages for a target environment with OData filtering.
 
 ```http
 GET https://api.powerplatform.com/appmanagement/environments/{environmentId}/applicationPackages?api-version=2024-10-01

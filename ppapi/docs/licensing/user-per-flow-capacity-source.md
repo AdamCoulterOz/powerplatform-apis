@@ -52,10 +52,10 @@ platformId: d5d42d1b-f0cb-02ed-1f22-0593c75487a7
 
 ## Operations
 
-| [Get User Per Flow Capacity Source](user-per-flow-capacity-source/get-user-per-flow-capacity-source.md) | Get user per flow capacity source data with pagination and filtering options. |
+| [Get User Per Flow Capacity Source](user-per-flow-capacity-source/get-user-per-flow-capacity-source.md) | Get user per-flow capacity source data with pagination and filtering options. |
 | --- | --- |
-| [Get User Per Flow Capacity Source Flow Context Summary](user-per-flow-capacity-source/get-user-per-flow-capacity-source-flow-context-summary.md) | Get flow context summary for user per flow capacity source. |
-| [Get User Per Flow Capacity Source Flow Context Summary For User Id](user-per-flow-capacity-source/get-user-per-flow-capacity-source-flow-context-summary-for-user-id.md) | Get flow context summary for a specific user's per flow capacity source. |
-| [Get User Per Flow Capacity Source Tenant Context Summary](user-per-flow-capacity-source/get-user-per-flow-capacity-source-tenant-context-summary.md) | Get tenant context summary for user per flow capacity source. |
-| [Get User Per Flow Capacity Source User Context Summary](user-per-flow-capacity-source/get-user-per-flow-capacity-source-user-context-summary.md) | Get the user per flow capacity source user context summary. |
-| [Get User Per Flow Capacity Source User Context Summary For User Id](user-per-flow-capacity-source/get-user-per-flow-capacity-source-user-context-summary-for-user-id.md) | Get user context summary for a specific user's per flow capacity source. |
+| [Get User Per Flow Capacity Source Flow Context Summary](user-per-flow-capacity-source/get-user-per-flow-capacity-source-flow-context-summary.md) | Get the flow context summary for a user's per-flow capacity source. |
+| [Get User Per Flow Capacity Source Flow Context Summary For User Id](user-per-flow-capacity-source/get-user-per-flow-capacity-source-flow-context-summary-for-user-id.md) | Get the flow context summary for a specific user's per-flow capacity source. |
+| [Get User Per Flow Capacity Source Tenant Context Summary](user-per-flow-capacity-source/get-user-per-flow-capacity-source-tenant-context-summary.md) | Get the tenant context summary for a user's per-flow capacity source. |
+| [Get User Per Flow Capacity Source User Context Summary](user-per-flow-capacity-source/get-user-per-flow-capacity-source-user-context-summary.md) | Get the user context summary for a user's per-flow capacity source. |
+| [Get User Per Flow Capacity Source User Context Summary For User Id](user-per-flow-capacity-source/get-user-per-flow-capacity-source-user-context-summary-for-user-id.md) | Get the user context summary for a specific user's per-flow capacity source. |

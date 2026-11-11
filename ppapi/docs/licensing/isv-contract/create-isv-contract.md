@@ -68,7 +68,7 @@ POST https://api.powerplatform.com/licensing/isvContracts?api-version=2024-10-01
 | --- | --- | --- | --- |
 | billingInstrument | True | BillingInstrumentModel | The ISV billing instrument information. |
 | conditions | True | BillingPolicyConditionsModel | The ISV Contract API filter conditions. |
-| consumer | True | ConsumerIdentityModel | The consumer identity for ISV contract. |
+| consumer | True | ConsumerIdentityModel | The consumer identity for the ISV contract. |
 | geo | True | Geo[] | Resource location for billing account creation. Immutable. |
 | name | True | string <br>minLength: 10maxLength: 64pattern: /^[a-zA-Z\d]+$/ |  |
 | powerAutomatePolicy | True | PowerAutomatePolicyModel | The Power Platform requests policies. |
@@ -106,7 +106,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | BillingPolicyConditionsApiModel |  |
 | BillingPolicyConditionsModel | The ISV Contract API filter conditions. |
 | BillingPolicyStatus | The desired ISV contract status. |
-| ConsumerIdentityModel | The consumer identity for ISV contract. |
+| ConsumerIdentityModel | The consumer identity for the ISV contract. |
 | IsvContractPostRequestModel | The ISV contract model for update operations. |
 | IsvContractResponseModel |  |
 | LicensingPrincipal |  |
@@ -170,7 +170,7 @@ The desired ISV contract status.
 
 Object
 
-The consumer identity for ISV contract.
+The consumer identity for the ISV contract.
 
 | Name | Type | Description |
 | --- | --- | --- |
@@ -186,7 +186,7 @@ The ISV contract model for update operations.
 | --- | --- | --- |
 | billingInstrument | BillingInstrumentModel | The ISV billing instrument information. |
 | conditions | BillingPolicyConditionsModel | The ISV Contract API filter conditions. |
-| consumer | ConsumerIdentityModel | The consumer identity for ISV contract. |
+| consumer | ConsumerIdentityModel | The consumer identity for the ISV contract. |
 | geo | Geo[] | Resource location for billing account creation. Immutable. |
 | name | string <br>minLength: 10maxLength: 64pattern: /^[a-zA-Z\d]+$/ |  |
 | powerAutomatePolicy | PowerAutomatePolicyModel | The Power Platform requests policies. |
@@ -200,7 +200,7 @@ Object
 | --- | --- | --- |
 | billingInstrument | BillingInstrumentModel | The ISV billing instrument information. |
 | conditions | BillingPolicyConditionsModel | The ISV Contract API filter conditions. |
-| consumer | ConsumerIdentityModel | The consumer identity for ISV contract. |
+| consumer | ConsumerIdentityModel | The consumer identity for the ISV contract. |
 | createdBy | LicensingPrincipal |  |
 | createdOn | string (date-time) |  |
 | geo | string |  |

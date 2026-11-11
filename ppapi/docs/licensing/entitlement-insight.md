@@ -56,4 +56,4 @@ platformId: 657f38f1-2b19-f900-6985-52c626965122
 | [Get Tenant Resource Consumption By User](entitlement-insight/get-tenant-resource-consumption-by-user.md) | Get resource consumption by entitlement and user ID (deprecated). |
 | [Get Tenant Resources Across Environments](entitlement-insight/get-tenant-resources-across-environments.md) | Get tenant resources for an entitlement across all environments (deprecated). |
 | [Get Tenant User Consumption By Resource](entitlement-insight/get-tenant-user-consumption-by-resource.md) | Get tenant user consumption by entitlement and resource ID (deprecated). |
-| [Get Tenant Users](entitlement-insight/get-tenant-users.md) | Get tenant users' entitlement snapshots (deprecated). |
+| [Get Tenant Users](entitlement-insight/get-tenant-users.md) | Get tenant user entitlement snapshots (deprecated). |

@@ -1190,7 +1190,7 @@
  "tags": [
   {
    "name": "(unmapped)",
-   "description": "licensing-reports; monitoring-hub"
+   "description": "copilot-settings; known-issues; licensing-reports; metrics-export; monitoring-hub"
   },
   {
    "name": "Advisor Chat",
@@ -6994,6 +6994,340 @@
      }
     },
     "x-source": "ppac-spa"
+   }
+  },
+  "/copilotgovernance/environments/{environmentId}/settings": {
+   "get": {
+    "operationId": "copilotgovernance_listCopilotSettings",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Copilot Settings List",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The ID of the environment that contains the settings."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The settings available for the environment.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CopilotGovernanceSettingsResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "The environment ID is invalid."
+     },
+     "401": {
+      "description": "A valid access token is required."
+     },
+     "403": {
+      "description": "The caller doesn't have permission to read settings."
+     },
+     "500": {
+      "description": "An unexpected error occurred while retrieving settings."
+     }
+    },
+    "x-ms-namespace": "copilotgovernance/copilot-settings",
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/copilotgovernance/copilot-settings/list-copilot-settings"
+    }
+   },
+   "put": {
+    "operationId": "copilotgovernance_updateCopilotSettingsBatch",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Copilot Settings Batch Update",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The ID of the environment that contains the settings."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "The settings were updated. No response body is returned."
+     },
+     "400": {
+      "description": "The environment ID, request body, settings dictionary, or a setting value is invalid."
+     },
+     "401": {
+      "description": "A valid access token is required."
+     },
+     "403": {
+      "description": "The caller doesn't have write permission or isn't using a user API context."
+     },
+     "404": {
+      "description": "A setting wasn't found or isn't available to the caller."
+     },
+     "500": {
+      "description": "An unexpected error occurred while updating settings."
+     }
+    },
+    "x-ms-namespace": "copilotgovernance/copilot-settings",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "settings": {
+          "type": "object",
+          "additionalProperties": {
+           "$ref": "#/components/schemas/CopilotGovernanceSettingUpdate"
+          },
+          "description": "Setting updates keyed by setting name. Each update object must be non-null."
+         }
+        },
+        "required": [
+         "settings"
+        ]
+       }
+      }
+     }
+    },
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/copilotgovernance/copilot-settings/update-copilot-settings-batch"
+    }
+   }
+  },
+  "/copilotgovernance/environments/{environmentId}/settings/{settingName}": {
+   "get": {
+    "operationId": "copilotgovernance_getCopilotSetting",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Copilot Setting Get",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The ID of the environment that contains the settings."
+     },
+     {
+      "name": "settingName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "minLength": 1
+      },
+      "description": "The non-empty name of the setting, as returned by the settings collection."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The setting value and metadata.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CopilotGovernanceSetting"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "The request contains an invalid environment ID or an empty setting name."
+     },
+     "401": {
+      "description": "A valid access token is required."
+     },
+     "403": {
+      "description": "The caller doesn't have permission to read the setting."
+     },
+     "404": {
+      "description": "The setting wasn't found or isn't available to the caller."
+     },
+     "500": {
+      "description": "An unexpected error occurred while retrieving the setting."
+     }
+    },
+    "x-ms-namespace": "copilotgovernance/copilot-settings",
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/copilotgovernance/copilot-settings/get-copilot-setting"
+    }
+   },
+   "put": {
+    "operationId": "copilotgovernance_updateCopilotSetting",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Copilot Setting Update",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The ID of the environment that contains the settings."
+     },
+     {
+      "name": "settingName",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "minLength": 1
+      },
+      "description": "The non-empty name of the setting, as returned by the settings collection."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "The setting was updated. No response body is returned."
+     },
+     "400": {
+      "description": "The request body, environment ID, setting name, or setting value is invalid."
+     },
+     "401": {
+      "description": "A valid access token is required."
+     },
+     "403": {
+      "description": "The caller doesn't have write permission or isn't using a user API context."
+     },
+     "404": {
+      "description": "The setting wasn't found or isn't available to the caller."
+     },
+     "500": {
+      "description": "An unexpected error occurred while updating the setting."
+     }
+    },
+    "x-ms-namespace": "copilotgovernance/copilot-settings",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "value": {
+          "allOf": [
+           {
+            "$ref": "#/components/schemas/CopilotGovernanceSettingValue"
+           }
+          ],
+          "description": "A setting value whose JSON type is determined by valueType. Values can be strings, integers, numbers, booleans, arrays, or numeric enum options. Null values are preserved when returned by the service."
+         }
+        }
+       }
+      }
+     }
+    },
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/copilotgovernance/copilot-settings/update-copilot-setting"
+    }
+   }
+  },
+  "/copilotgovernance/settings/fetchSummary": {
+   "post": {
+    "operationId": "copilotgovernance_fetchCopilotSettingsSummary",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Fetch Copilot Settings Summary",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The tenant's setting summaries.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CopilotGovernanceSettingsSummaryResponse"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "The authenticated tenant context is invalid."
+     },
+     "401": {
+      "description": "A valid access token is required."
+     },
+     "403": {
+      "description": "The caller doesn't have permission to read setting summaries."
+     },
+     "500": {
+      "description": "An unexpected error occurred while retrieving setting summaries."
+     }
+    },
+    "x-ms-namespace": "copilotgovernance/copilot-settings",
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/copilotgovernance/copilot-settings/fetch-copilot-settings-summary"
+    }
    }
   },
   "/copilotgovernance/settings/{settingName}": {
@@ -18032,7 +18366,7 @@
       "schema": {
        "type": "string"
       },
-      "description": "Comma separated additional fields to include in the response."
+      "description": "Comma-separated additional fields to include in the response."
      },
      {
       "name": "orderbyConsumed",
@@ -19256,7 +19590,7 @@
             "$ref": "#/components/schemas/ConsumerIdentityModel"
            }
           ],
-          "description": "The consumer identity for ISV contract."
+          "description": "The consumer identity for the ISV contract."
          },
          "geo": {
           "type": "array",
@@ -19863,7 +20197,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "Flag indicating to include allocations."
+      "description": "Flag indicating whether to include allocations."
      },
      {
       "name": "includeConsumptions",
@@ -19872,7 +20206,7 @@
       "schema": {
        "type": "boolean"
       },
-      "description": "Flag indicating to include consumptions."
+      "description": "Flag indicating whether to include consumption data."
      }
     ],
     "responses": {
@@ -19893,6 +20227,193 @@
     "x-ms-namespace": "licensing/currency-reports",
     "externalDocs": {
      "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/licensing/currency-reports/list-currency-reports"
+    }
+   }
+  },
+  "/monitoringhub/environments/{environmentId}/resourceType/{resourceType}/resourceSubType/{resourceSubType}/exports/metrics": {
+   "post": {
+    "operationId": "monitoringhub_exportMetrics",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Export Metrics",
+    "parameters": [
+     {
+      "name": "environmentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 100,
+       "pattern": "^[A-Za-z0-9](../metrics-export.md)?$"
+      },
+      "description": "The ID of the environment containing the resources. Use 1 to 100 ASCII letters, digits, or hyphens, starting and ending with a letter or digit."
+     },
+     {
+      "name": "resourceSubType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The resource subtype for the selected resource type, matched without regard to case. MicrosoftApp requires App and uses the Managed App export action."
+     },
+     {
+      "name": "resourceType",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The resource type, matched without regard to case. Supported pairs are PowerApp with CanvasApp, CodeApp, or ModelApp (also accepted as ModelDrivenApp); PowerAutomate with CloudFlow or DesktopFlow; CopilotStudio with Agent; and MicrosoftApp with App."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "One OTLP JSON page, including an empty resourceMetrics array when no eligible data matches.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MonitoringHubMetricsExportPage"
+        }
+       }
+      },
+      "headers": {
+       "x-ms-continuation": {
+        "schema": {
+         "type": "string"
+        }
+       },
+       "x-ms-available-through": {
+        "schema": {
+         "type": "string"
+        }
+       },
+       "x-ms-record-count": {
+        "schema": {
+         "type": "integer"
+        }
+       },
+       "x-ms-request-id": {
+        "schema": {
+         "type": "string"
+        }
+       },
+       "x-ms-client-request-id": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "BadRequest indicates an unsupported route pair or metric, invalid resource ID, invalid date range, or invalid or expired continuation token. InvalidRequestContent indicates an invalid JSON body, missing required property, or unknown property.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MonitoringHubErrorResponse"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "A valid authenticated user token is required."
+     },
+     "403": {
+      "description": "Required authorization is missing, or the routing tenant doesn't match the authenticated tenant.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MonitoringHubErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "ApiResourceNotFound indicates that the authenticated tenant isn't admitted to the preview.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MonitoringHubErrorResponse"
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "The gateway throttled the request. Retry after the indicated delay, if supplied.",
+      "headers": {
+       "Retry-After": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "500": {
+      "description": "InternalServerError indicates that the export couldn't produce a valid page.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MonitoringHubErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "x-ms-namespace": "monitoringhub/metrics-export",
+    "x-ms-preview": true,
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "resourceIds": {
+          "type": "array",
+          "items": {
+           "type": "string",
+           "format": "uuid"
+          },
+          "description": "The IDs of 1 to 10 resources of the route's resource type and subtype in the environment. Each ID must be a non-empty, non-zero GUID in hyphenated format. Duplicate GUIDs are rejected, including case variants."
+         },
+         "timeRange": {
+          "allOf": [
+           {
+            "$ref": "#/components/schemas/MonitoringHubMetricsExportTimeRange"
+           }
+          ],
+          "description": "A UTC date range of at most 30 days, with an inclusive start and exclusive end."
+         },
+         "metricNames": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          },
+          "description": "Up to 20 distinct supported metric names for the selected route pair. Omit this property or supply null to export all mapped metrics for that pair. An empty array or unsupported name is rejected. Names are trimmed and matched without regard to case; duplicates are consolidated and output names are canonical."
+         }
+        },
+        "required": [
+         "resourceIds",
+         "timeRange"
+        ]
+       }
+      }
+     }
+    },
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/monitoringhub/metrics-export/export-metrics"
     }
    }
   },
@@ -22529,7 +23050,7 @@
        "type": "string",
        "format": "date"
       },
-      "description": "Filter for created on or before this date."
+      "description": "Filter for flows created on or before this date."
      },
      {
       "name": "createdOnStartDate",
@@ -22539,7 +23060,7 @@
        "type": "string",
        "format": "date"
       },
-      "description": "Filter for created on or after this date."
+      "description": "Filter for flows created on or after this date."
      },
      {
       "name": "modifiedOnEndDate",
@@ -22549,7 +23070,7 @@
        "type": "string",
        "format": "date"
       },
-      "description": "Filter for modified on or before this date."
+      "description": "Filter for flows modified on or before this date."
      },
      {
       "name": "modifiedOnStartDate",
@@ -22559,7 +23080,7 @@
        "type": "string",
        "format": "date"
       },
-      "description": "Filter for modified on or after this date."
+      "description": "Filter for flows modified on or after this date."
      },
      {
       "name": "ownerId",
@@ -28763,6 +29284,189 @@
     }
    }
   },
+  "/support/KnownIssue/search": {
+   "post": {
+    "operationId": "support_searchKnownIssues",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Known Issues Search",
+    "parameters": [
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The matching known issues as a JSON array.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/SupportKnownIssue"
+         }
+        }
+       }
+      }
+     },
+     "204": {
+      "description": "The productIds array was empty. No response body is returned."
+     },
+     "400": {
+      "description": "The request or a product ID is invalid, the search text is empty, or the search failed."
+     },
+     "401": {
+      "description": "A valid Power Platform API access token is required."
+     },
+     "403": {
+      "description": "Access to the known-issue endpoint is forbidden."
+     },
+     "500": {
+      "description": "An unexpected error occurred before the search could complete."
+     }
+    },
+    "x-ms-namespace": "support/known-issues",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "productIds": {
+          "type": "array",
+          "items": {
+           "type": "string",
+           "format": "uuid"
+          },
+          "description": "Product IDs to search. Each ID must be a GUID. An empty array returns 204."
+         },
+         "searchText": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The search text. Use an asterisk to search without a text filter."
+         },
+         "issueStatus": {
+          "allOf": [
+           {
+            "$ref": "#/components/schemas/SupportKnownIssueStatusint32"
+           }
+          ],
+          "description": "The numeric status selector: 0 Unknown, 1 New, 2 Active, 3 Resolved, or 4 Closed."
+         },
+         "locale": {
+          "type": "string",
+          "description": "The preferred locale for translated search content, when available."
+         },
+         "maxIssueCount": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The requested result count. Values from 1 to 200 are used; otherwise the service uses 25."
+         },
+         "minMatchingScore": {
+          "type": "number",
+          "format": "double",
+          "description": "The minimum matching score. A value of zero lets the service select a threshold for the search mode."
+         },
+         "skip": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The number of results to skip in the search."
+         },
+         "source": {
+          "type": "string",
+          "description": "An optional caller context label used by the search service."
+         }
+        },
+        "required": [
+         "productIds",
+         "searchText"
+        ]
+       }
+      }
+     }
+    },
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/support/known-issues/search-known-issues"
+    }
+   }
+  },
+  "/support/KnownIssue/{issueId}": {
+   "get": {
+    "operationId": "support_getKnownIssue",
+    "tags": [
+     "(unmapped)"
+    ],
+    "summary": "Known Issue Get",
+    "parameters": [
+     {
+      "name": "issueId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "minLength": 1
+      },
+      "description": "The numeric work item ID of the known issue."
+     },
+     {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "default": "2024-10-01"
+      },
+      "description": "The API version."
+     },
+     {
+      "name": "locale",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "The preferred locale for translated issue content, when available."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The known issue, including its state and resolution guidance.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SupportKnownIssue"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "The issue ID isn't a valid signed 64-bit integer, the issue doesn't exist, or the lookup failed."
+     },
+     "401": {
+      "description": "A valid Power Platform API access token is required."
+     },
+     "403": {
+      "description": "Access to the known-issue endpoint is forbidden."
+     },
+     "500": {
+      "description": "An unexpected error occurred before the lookup could complete."
+     }
+    },
+    "x-ms-namespace": "support/known-issues",
+    "externalDocs": {
+     "url": "https://learn.microsoft.com/en-us/rest/api/power-platform/support/known-issues/get-known-issue"
+    }
+   }
+  },
   "/support/tenants/{tenantId}/supporttickets/iseligibleforsupport": {
    "get": {
     "operationId": "supportTenantsSupportticketsIseligibleforsupport_get",
@@ -31185,6 +31889,10 @@
      "enabled": {
       "type": "boolean"
      },
+     "ruleData": {
+      "description": "Optional rule-specific configuration data.",
+      "type": "object"
+     },
      "ruleType": {
       "allOf": [
        {
@@ -31230,7 +31938,7 @@
     "type": "object"
    },
    "AllocationPutRequestModel": {
-    "description": "Allocation put request model.",
+    "description": "Allocation data for a scope, used in allocation requests and operation results.",
     "properties": {
      "allocatedEntitlements": {
       "description": "Allocated entitlements.",
@@ -31261,7 +31969,7 @@
     "description": "The response body includes environment ID and allocated currencies.",
     "properties": {
      "currencyAllocations": {
-      "description": "The collection of currencies with allocation count.",
+      "description": "The collection of currencies with allocation counts.",
       "items": {
        "$ref": "#/components/schemas/CurrencyAllocationResponseModelV1"
       },
@@ -32734,7 +33442,7 @@
     "type": "object"
    },
    "ConsumerIdentityModel": {
-    "description": "The consumer identity for ISV contract.",
+    "description": "The consumer identity for the ISV contract.",
     "properties": {
      "tenantId": {
       "description": "The ID of the customer tenant.",
@@ -33033,6 +33741,69 @@
     },
     "type": "object"
    },
+   "CopilotGovernanceAudienceType": {
+    "description": "The audience that can use the setting.",
+    "enum": [
+     "Admins",
+     "Makers",
+     "EndUsers"
+    ],
+    "type": "string"
+   },
+   "CopilotGovernanceCategoryType": {
+    "description": "The category of the setting.",
+    "enum": [
+     "None",
+     "DataEntryAgent",
+     "DataExplorationAgent",
+     "SummaryAgent",
+     "ChatAgent",
+     "ExternalModels"
+    ],
+    "type": "string"
+   },
+   "CopilotGovernanceEnabledStatus": {
+    "description": "Whether the setting is enabled for no users, all users, or a restricted set of users.",
+    "enum": [
+     "EnabledForNone",
+     "EnabledForAll",
+     "EnabledForSome"
+    ],
+    "type": "string"
+   },
+   "CopilotGovernanceEnumOption": {
+    "description": "A numeric option and its display name for an EnumValue setting.",
+    "properties": {
+     "name": {
+      "description": "The display name of the option.",
+      "type": "string"
+     },
+     "value": {
+      "description": "The numeric option value.",
+      "format": "int32",
+      "type": "integer"
+     }
+    },
+    "type": "object"
+   },
+   "CopilotGovernancePlatformProductType": {
+    "description": "The Power Platform product associated with the setting.",
+    "enum": [
+     "PowerPlatform",
+     "PowerApps",
+     "PowerAutomate",
+     "PowerPages",
+     "CopilotStudio",
+     "Agent365",
+     "D365Marketing",
+     "D365Sales",
+     "D365CustomerService",
+     "D365ProjectOperations",
+     "MicrosoftDataverse",
+     "ManagedApps"
+    ],
+    "type": "string"
+   },
    "CopilotGovernanceRuleInput": {
     "type": "object",
     "description": "Binds one rule input to the setting it drives.",
@@ -33170,6 +33941,249 @@
     },
     "x-probe-verified": true
    },
+   "CopilotGovernanceSettingState": {
+    "description": "The release state of the setting.",
+    "enum": [
+     "PrivatePreview",
+     "PublicPreview",
+     "GenerallyAvailable",
+     "Beta"
+    ],
+    "type": "string"
+   },
+   "CopilotGovernanceSettingSummary": {
+    "description": "A Copilot governance setting and its aggregate enabled percentage across environments.",
+    "properties": {
+     "audiences": {
+      "description": "The audiences for the setting.",
+      "items": {
+       "$ref": "#/components/schemas/CopilotGovernanceAudienceType"
+      },
+      "type": "array"
+     },
+     "category": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotGovernanceCategoryType"
+       }
+      ],
+      "description": "The category of the setting."
+     },
+     "checkboxLabel": {
+      "description": "The checkbox label shown instead of On in the setting update panel.",
+      "type": "string"
+     },
+     "defaultValue": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotGovernanceSettingValue"
+       }
+      ],
+      "description": "A setting value whose JSON type is determined by valueType. Values can be strings, integers, numbers, booleans, arrays, or numeric enum options. Null values are preserved when returned by the service."
+     },
+     "description": {
+      "description": "The setting description.",
+      "type": "string"
+     },
+     "displayName": {
+      "description": "The display name of the setting.",
+      "type": "string"
+     },
+     "enabledPercentage": {
+      "description": "The rounded percentage of environments where the setting is enabled.",
+      "format": "int32",
+      "type": "integer"
+     },
+     "enabledStatus": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotGovernanceEnabledStatus"
+       }
+      ],
+      "description": "Whether the setting is enabled for no users, all users, or a restricted set of users."
+     },
+     "environmentId": {
+      "description": "The ID of the environment that owns the setting.",
+      "type": "string"
+     },
+     "hideWhenNull": {
+      "description": "Whether a NullableBooleanValue setting should be hidden when its value is null.",
+      "type": "boolean"
+     },
+     "invertValue": {
+      "description": "Whether the displayed setting value should be inverted.",
+      "type": "boolean"
+     },
+     "isDisabled": {
+      "description": "Whether the setting is disabled for editing.",
+      "type": "boolean"
+     },
+     "isManagedEnvironmentProperty": {
+      "description": "Whether the setting is a Managed Environment property.",
+      "type": "boolean"
+     },
+     "learnDocLink": {
+      "description": "The documentation link for the setting.",
+      "type": "string"
+     },
+     "options": {
+      "description": "The allowed numeric options for an EnumValue setting, when available.",
+      "items": {
+       "$ref": "#/components/schemas/CopilotGovernanceEnumOption"
+      },
+      "type": "array"
+     },
+     "platformProduct": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotGovernancePlatformProductType"
+       }
+      ],
+      "description": "The Power Platform product associated with the setting."
+     },
+     "resourceId": {
+      "description": "The setting resource ID.",
+      "type": "string"
+     },
+     "rule": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotGovernanceSettingRule"
+       }
+      ],
+      "description": "The environment-group rule associated with a setting."
+     },
+     "settingName": {
+      "description": "The setting name.",
+      "type": "string"
+     },
+     "settingState": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotGovernanceSettingState"
+       }
+      ],
+      "description": "The release state of the setting."
+     },
+     "statusMessage": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotGovernanceStatusMessage"
+       }
+      ],
+      "description": "The localized badge and tooltip messages for a setting."
+     },
+     "storeResource": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotGovernanceStoreResourceType"
+       }
+      ],
+      "description": "The backing resource used to store the setting."
+     },
+     "tenantId": {
+      "description": "The ID of the tenant that owns the setting.",
+      "type": "string"
+     },
+     "valueType": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotGovernanceSettingValueType"
+       }
+      ],
+      "description": "The JSON value type of the setting."
+     }
+    },
+    "type": "object"
+   },
+   "CopilotGovernanceSettingUpdate": {
+    "description": "A setting value to update. The value's JSON type must match the setting. A missing value is treated as null. Null is accepted only for NullableBooleanValue settings. For EnumValue settings with defined options, supply a numeric option value from options.",
+    "properties": {
+     "value": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/CopilotGovernanceSettingValue"
+       }
+      ],
+      "description": "A setting value whose JSON type is determined by valueType. Values can be strings, integers, numbers, booleans, arrays, or numeric enum options. Null values are preserved when returned by the service."
+     }
+    },
+    "type": "object"
+   },
+   "CopilotGovernanceSettingValue": {
+    "type": "object",
+    "x-stub": true
+   },
+   "CopilotGovernanceSettingValueType": {
+    "description": "The JSON value type of the setting.",
+    "enum": [
+     "StringValue",
+     "IntegerValue",
+     "NumberValue",
+     "BooleanValue",
+     "ArrayValue",
+     "EnumValue",
+     "NullableBooleanValue"
+    ],
+    "type": "string"
+   },
+   "CopilotGovernanceSettingsBatchUpdate": {
+    "description": "A non-empty dictionary of setting names and their update objects.",
+    "properties": {
+     "settings": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/CopilotGovernanceSettingUpdate"
+      },
+      "description": "Setting updates keyed by setting name. Each update object must be non-null.",
+      "type": "object"
+     }
+    },
+    "type": "object"
+   },
+   "CopilotGovernanceSettingsResponse": {
+    "description": "A collection of environment settings in the service's OData response shape.",
+    "properties": {
+     "@odata.count": {
+      "description": "The optional collection count. The current implementation doesn't populate it.",
+      "format": "int32",
+      "type": "integer"
+     },
+     "@odata.nextLink": {
+      "description": "The next-page URL. The current implementation doesn't issue continuation tokens.",
+      "type": "string"
+     },
+     "results": {
+      "description": "The settings returned for the environment.",
+      "items": {
+       "$ref": "#/components/schemas/CopilotGovernanceSetting"
+      },
+      "type": "array"
+     }
+    },
+    "type": "object"
+   },
+   "CopilotGovernanceSettingsSummaryResponse": {
+    "description": "A collection of tenant setting summaries in the service's OData response shape.",
+    "properties": {
+     "@odata.count": {
+      "description": "The optional collection count. The current implementation doesn't populate it.",
+      "format": "int32",
+      "type": "integer"
+     },
+     "@odata.nextLink": {
+      "description": "The next-page URL. The current implementation doesn't issue continuation tokens.",
+      "type": "string"
+     },
+     "results": {
+      "description": "The setting summaries returned for the tenant.",
+      "items": {
+       "$ref": "#/components/schemas/CopilotGovernanceSettingSummary"
+      },
+      "type": "array"
+     }
+    },
+    "type": "object"
+   },
    "CopilotGovernanceStatusMessage": {
     "type": "object",
     "description": "Admin-centre copy for each state the setting can be in, including where to send an admin whose tenant has blocked the capability outright.",
@@ -33191,6 +34205,17 @@
       "format": "uri"
      }
     }
+   },
+   "CopilotGovernanceStoreResourceType": {
+    "description": "The backing resource used to store the setting.",
+    "enum": [
+     "BAPRPTenant",
+     "BAPRPEnvironment",
+     "DataverseOrganization",
+     "OMSEnvironment",
+     "OMSEnvironmentV2"
+    ],
+    "type": "string"
    },
    "CopilotStudioLicensingReportGranularity": {
     "description": "The granularity of a licensing report. Daily returns one row per day in the date range, and Summary returns a single summarized row for the whole range.",
@@ -33728,7 +34753,7 @@
         "$ref": "#/components/schemas/ExternalCurrencyType"
        }
       ],
-      "description": "Available currency type which can be allocated to environment."
+      "description": "The available currency type that can be allocated to an environment."
      },
      "enforcementRules": {
       "items": {
@@ -33752,7 +34777,7 @@
         "$ref": "#/components/schemas/ExternalCurrencyType"
        }
       ],
-      "description": "Available currency type which can be allocated to environment."
+      "description": "The available currency type that can be allocated to an environment."
      }
     },
     "type": "object"
@@ -33770,7 +34795,7 @@
         "$ref": "#/components/schemas/ExternalCurrencyType"
        }
       ],
-      "description": "Available currency type which can be allocated to environment."
+      "description": "The available currency type that can be allocated to an environment."
      }
     },
     "type": "object"
@@ -33803,7 +34828,7 @@
         "$ref": "#/components/schemas/ExternalCurrencyType"
        }
       ],
-      "description": "Available currency type which can be allocated to environment."
+      "description": "The available currency type that can be allocated to an environment."
      },
      "purchased": {
       "format": "int64",
@@ -34950,7 +35975,7 @@
       "type": "string"
      },
      "metadata": {
-      "description": "Additional metadata such as Feature, ProductName and nonBillableConsumed for MCSMessages.",
+      "description": "Additional metadata such as Feature, ProductName, and nonBillableConsumed for MCSMessages.",
       "type": "object"
      },
      "resourceId": {
@@ -35438,7 +36463,7 @@
     "x-source": "pac-cli"
    },
    "ExternalCurrencyType": {
-    "description": "Available currency type which can be allocated to environment.",
+    "description": "The available currency type that can be allocated to an environment.",
     "enum": [
      "AI",
      "AppPass",
@@ -36329,7 +37354,7 @@
         "$ref": "#/components/schemas/ConsumerIdentityModel"
        }
       ],
-      "description": "The consumer identity for ISV contract."
+      "description": "The consumer identity for the ISV contract."
      },
      "geo": {
       "description": "Resource location for billing account creation. Immutable.",
@@ -36419,7 +37444,7 @@
         "$ref": "#/components/schemas/ConsumerIdentityModel"
        }
       ],
-      "description": "The consumer identity for ISV contract."
+      "description": "The consumer identity for the ISV contract."
      },
      "createdBy": {
       "$ref": "#/components/schemas/LicensingPrincipal"
@@ -37356,6 +38381,282 @@
     },
     "type": "object"
    },
+   "MonitoringHubError": {
+    "description": "The error code and message.",
+    "properties": {
+     "code": {
+      "description": "A stable error code, such as BadRequest, InvalidRequestContent, or ServiceUnavailable.",
+      "type": "string"
+     },
+     "message": {
+      "description": "A message describing the failure.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubErrorResponse": {
+    "description": "The error response returned when an export fails.",
+    "properties": {
+     "error": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/MonitoringHubError"
+       }
+      ],
+      "description": "The error code and message."
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubMetricsExportPage": {
+    "description": "An OTLP JSON ExportMetricsServiceRequest with no proprietary wrapper.",
+    "properties": {
+     "resourceMetrics": {
+      "description": "The metrics grouped by Power Platform resource, or an empty array.",
+      "items": {
+       "$ref": "#/components/schemas/MonitoringHubOtlpResourceMetrics"
+      },
+      "type": "array"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubMetricsExportRequest": {
+    "description": "The export selection. Unknown properties, including scope, lookbackDays, and maxRecords, are rejected.",
+    "properties": {
+     "metricNames": {
+      "description": "Up to 20 distinct supported metric names for the selected route pair. Omit this property or supply null to export all mapped metrics for that pair. An empty array or unsupported name is rejected. Names are trimmed and matched without regard to case; duplicates are consolidated and output names are canonical.",
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "resourceIds": {
+      "description": "The IDs of 1 to 10 resources of the route's resource type and subtype in the environment. Each ID must be a non-empty, non-zero GUID in hyphenated format. Duplicate GUIDs are rejected, including case variants.",
+      "items": {
+       "format": "uuid",
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "timeRange": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/MonitoringHubMetricsExportTimeRange"
+       }
+      ],
+      "description": "A UTC date range of at most 30 days, with an inclusive start and exclusive end."
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubMetricsExportTimeRange": {
+    "description": "A UTC date range of at most 30 days, with an inclusive start and exclusive end.",
+    "properties": {
+     "endDate": {
+      "description": "The UTC day after the last requested day, in YYYY-MM-DD format. It must be later than startDate. The effective end is capped at today's UTC midnight.",
+      "format": "date",
+      "type": "string"
+     },
+     "startDate": {
+      "description": "The first UTC day to export, in YYYY-MM-DD format.",
+      "format": "date",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubOtlpGauge": {
+    "description": "The data points of a gauge metric.",
+    "properties": {
+     "dataPoints": {
+      "description": "The data points.",
+      "items": {
+       "$ref": "#/components/schemas/MonitoringHubOtlpNumberDataPoint"
+      },
+      "type": "array"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubOtlpInstrumentationScope": {
+    "description": "The instrumentation scope producing the metrics.",
+    "properties": {
+     "name": {
+      "description": "The instrumentation scope name.",
+      "type": "string"
+     },
+     "version": {
+      "description": "The instrumentation scope version.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubOtlpKeyValue": {
+    "description": "An attribute key and string value.",
+    "properties": {
+     "key": {
+      "description": "The attribute key.",
+      "type": "string"
+     },
+     "value": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/MonitoringHubOtlpStringValue"
+       }
+      ],
+      "description": "An OTLP string attribute value."
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubOtlpMetric": {
+    "description": "A metric and its daily values. Counts use delta monotonic sums. Ratios and timings use gauges. Non-Managed App timings are P75; Managed App timings are daily averages. Only gauge or sum is emitted for a metric.",
+    "properties": {
+     "gauge": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/MonitoringHubOtlpGauge"
+       }
+      ],
+      "description": "The data points of a gauge metric."
+     },
+     "name": {
+      "description": "The canonical metric name.",
+      "type": "string"
+     },
+     "sum": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/MonitoringHubOtlpSum"
+       }
+      ],
+      "description": "The data points of a delta monotonic sum metric."
+     },
+     "unit": {
+      "description": "The unit, using 1 for ratios, {count} for counts, and s for seconds.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubOtlpNumberDataPoint": {
+    "description": "A daily metric value, with either asInt or asDouble.",
+    "properties": {
+     "asDouble": {
+      "description": "The floating-point value, when present.",
+      "format": "double",
+      "type": "number"
+     },
+     "asInt": {
+      "description": "The integer count, encoded as a decimal string, when present.",
+      "type": "string"
+     },
+     "attributes": {
+      "description": "The public data-point dimensions, when present.",
+      "items": {
+       "$ref": "#/components/schemas/MonitoringHubOtlpKeyValue"
+      },
+      "type": "array"
+     },
+     "timeUnixNano": {
+      "description": "The value's time in nanoseconds since the Unix epoch, encoded as a decimal string.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubOtlpResource": {
+    "description": "Resource attributes identifying the service, tenant, environment, resource type, subtype, and resource ID. Resource display names aren't emitted.",
+    "properties": {
+     "attributes": {
+      "description": "The resource attributes.",
+      "items": {
+       "$ref": "#/components/schemas/MonitoringHubOtlpKeyValue"
+      },
+      "type": "array"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubOtlpResourceMetrics": {
+    "description": "The metrics for one Power Platform resource.",
+    "properties": {
+     "resource": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/MonitoringHubOtlpResource"
+       }
+      ],
+      "description": "Resource attributes identifying the service, tenant, environment, resource type, subtype, and resource ID. Resource display names aren't emitted."
+     },
+     "scopeMetrics": {
+      "description": "The metrics grouped by instrumentation scope.",
+      "items": {
+       "$ref": "#/components/schemas/MonitoringHubOtlpScopeMetrics"
+      },
+      "type": "array"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubOtlpScopeMetrics": {
+    "description": "The metrics from one instrumentation scope.",
+    "properties": {
+     "metrics": {
+      "description": "The metrics.",
+      "items": {
+       "$ref": "#/components/schemas/MonitoringHubOtlpMetric"
+      },
+      "type": "array"
+     },
+     "scope": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/MonitoringHubOtlpInstrumentationScope"
+       }
+      ],
+      "description": "The instrumentation scope producing the metrics."
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubOtlpStringValue": {
+    "description": "An OTLP string attribute value.",
+    "properties": {
+     "stringValue": {
+      "description": "The attribute value.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "MonitoringHubOtlpSum": {
+    "description": "The data points of a delta monotonic sum metric.",
+    "properties": {
+     "aggregationTemporality": {
+      "description": "The aggregation temporality. The service emits 1 for delta.",
+      "enum": [
+       "1 (int32)"
+      ],
+      "type": "string"
+     },
+     "dataPoints": {
+      "description": "The data points.",
+      "items": {
+       "$ref": "#/components/schemas/MonitoringHubOtlpNumberDataPoint"
+      },
+      "type": "array"
+     },
+     "isMonotonic": {
+      "description": "Whether the sum only increases.",
+      "type": "boolean"
+     }
+    },
+    "type": "object"
+   },
    "MonitoringHubTriggeredAlert": {
     "description": "A Power Platform Monitor alert with its rule, metric, and affected-resource details. Unknown indicates an unrecognized value. Optional details are omitted when unavailable.",
     "properties": {
@@ -37387,7 +38688,7 @@
       "type": "string"
      },
      "alertRuleId": {
-      "description": "The ID of the alert rule in the Power Platform admin center.",
+      "description": "The ID of the alert rule in Power Platform admin center.",
       "format": "uuid",
       "type": "string"
      },
@@ -37559,9 +38860,16 @@
       "type": "boolean"
      },
      "statusCode": {
-      "description": "The HTTP status code of the operation result.",
-      "format": "int32",
-      "type": "integer"
+      "description": "The symbolic HTTP status of the operation result, such as OK.",
+      "type": "string"
+     },
+     "value": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/AllocationPutRequestModel"
+       }
+      ],
+      "description": "Allocation data for a scope, used in allocation requests and operation results."
      }
     },
     "type": "object"
@@ -38026,7 +39334,7 @@
       "type": "string"
      },
      "resourceId": {
-      "description": "Resource ID, e.g., the environment group ID.",
+      "description": "Resource ID, for example, the environment group ID.",
       "type": "string"
      },
      "resourceType": {
@@ -38650,7 +39958,7 @@
     "type": "object"
    },
    "PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceRecord": {
-    "description": "Paginated result container for user per flow capacity source records.",
+    "description": "Paginated result container for user per-flow capacity source records.",
     "properties": {
      "currentPage": {
       "description": "The current page number.",
@@ -38658,7 +39966,7 @@
       "type": "integer"
      },
      "records": {
-      "description": "Collection of user per flow capacity source records.",
+      "description": "Collection of user per-flow capacity source records.",
       "items": {
        "$ref": "#/components/schemas/UserPerFlowCapacitySourceRecord"
       },
@@ -39400,7 +40708,7 @@
       "type": "boolean"
      },
      "stopResource": {
-      "description": "Indicates whether the user has selected to stop the resource explicitly or not. If 'true' the resource is in a disabled state.",
+      "description": "Indicates whether the user has explicitly selected to stop the resource. If 'true', the resource is in a disabled state.",
       "type": "boolean"
      }
     },
@@ -40619,6 +41927,149 @@
     "description": "The aggregation to apply. `count` tallies the rows in each group; `argmax` returns the row holding the maximum of `OperatorFieldName`.",
     "x-source": "pac-cli"
    },
+   "SupportKnownIssue": {
+    "description": "A known issue and its product, status, content, and search metadata.",
+    "properties": {
+     "@search.rerankerScore": {
+      "description": "The semantic reranker score returned by the service.",
+      "format": "double",
+      "type": "number"
+     },
+     "@search.score": {
+      "description": "The search relevance score returned by the service.",
+      "format": "double",
+      "type": "number"
+     },
+     "changedDate": {
+      "description": "The latest change timestamp as returned by the service.",
+      "type": "string"
+     },
+     "createdDate": {
+      "description": "The creation timestamp as returned by the service.",
+      "type": "string"
+     },
+     "description": {
+      "description": "The issue description, which can contain HTML.",
+      "type": "string"
+     },
+     "impactedProducts": {
+      "description": "The IDs of products impacted by the issue.",
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "isSearchable": {
+      "description": "Whether the issue is eligible for search results. Retired issues can remain retrievable by ID.",
+      "type": "boolean"
+     },
+     "parentUrl": {
+      "description": "The parent work item URL provided by the service.",
+      "type": "string"
+     },
+     "product": {
+      "description": "The primary product's display name.",
+      "type": "string"
+     },
+     "productFamilyTags": {
+      "description": "The product family tags associated with the issue.",
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "productId": {
+      "description": "The primary product ID.",
+      "type": "string"
+     },
+     "solution": {
+      "description": "The resolution or workaround guidance, which can contain HTML.",
+      "type": "string"
+     },
+     "state": {
+      "description": "The issue state returned by the service.",
+      "type": "string"
+     },
+     "title": {
+      "description": "The known issue title.",
+      "type": "string"
+     },
+     "version": {
+      "description": "Version information associated with the issue.",
+      "type": "string"
+     },
+     "workItemId": {
+      "description": "The known issue work item ID.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "SupportKnownIssueSearchRequest": {
+    "description": "The public request fields for searching known issues.",
+    "properties": {
+     "issueStatus": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/SupportKnownIssueStatusint32"
+       }
+      ],
+      "description": "The numeric status selector: 0 Unknown, 1 New, 2 Active, 3 Resolved, or 4 Closed."
+     },
+     "locale": {
+      "description": "The preferred locale for translated search content, when available.",
+      "type": "string"
+     },
+     "maxIssueCount": {
+      "description": "The requested result count. Values from 1 to 200 are used; otherwise the service uses 25.",
+      "format": "int32",
+      "type": "integer"
+     },
+     "minMatchingScore": {
+      "description": "The minimum matching score. A value of zero lets the service select a threshold for the search mode.",
+      "format": "double",
+      "type": "number"
+     },
+     "productIds": {
+      "description": "Product IDs to search. Each ID must be a GUID. An empty array returns 204.",
+      "items": {
+       "format": "uuid",
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "searchText": {
+      "description": "The search text. Use an asterisk to search without a text filter.",
+      "minLength": 1,
+      "type": "string"
+     },
+     "skip": {
+      "description": "The number of results to skip in the search.",
+      "format": "int32",
+      "type": "integer"
+     },
+     "source": {
+      "description": "An optional caller context label used by the search service.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "SupportKnownIssueStatus": {
+    "description": "The numeric status selector: 0 Unknown, 1 New, 2 Active, 3 Resolved, or 4 Closed.",
+    "enum": [
+     "0",
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "type": "string"
+   },
+   "SupportKnownIssueStatusint32": {
+    "type": "object",
+    "x-stub": true
+   },
    "Tags": {
     "description": "tags",
     "properties": {
@@ -41041,7 +42492,7 @@
     "type": "object"
    },
    "TenantEntitlementResponseModel": {
-    "description": "Represents an entitlement and its capacity, pay-as-you-go and licensed policy details for a tenant.",
+    "description": "Represents an entitlement and its capacity, pay-as-you-go, and licensed policy details for a tenant.",
     "properties": {
      "entitlement": {
       "$ref": "#/components/schemas/TenantEntitlementDetailServiceModel"
@@ -41078,7 +42529,7 @@
       "type": "string"
      },
      "metadata": {
-      "description": "Additional metadata such as Feature, ProductName and nonBillableConsumed for MCSMessages.",
+      "description": "Additional metadata such as Feature, ProductName, and nonBillableConsumed for MCSMessages.",
       "type": "object"
      },
      "resourceId": {
@@ -41518,7 +42969,7 @@
     "type": "object"
    },
    "UserPerFlowCapacitySourceFlowContextRecord": {
-    "description": "Flow context summary for per flow capacity source.",
+    "description": "Flow context summary for a per-flow capacity source.",
     "properties": {
      "consumptionDate": {
       "description": "The date of consumption.",
@@ -41602,7 +43053,7 @@
     "type": "object"
    },
    "UserPerFlowCapacitySourceTenantContextSummaryRecord": {
-    "description": "Tenant-level context summary for per flow capacity source.",
+    "description": "Tenant-level context summary for a per-flow capacity source.",
     "properties": {
      "countOfUsersExceedingCapacity": {
       "description": "Number of users who have exceeded their capacity limits.",
@@ -41637,7 +43088,7 @@
     "type": "object"
    },
    "UserPerFlowCapacitySourceUserContextRecord": {
-    "description": "User context summary for per flow capacity source.",
+    "description": "User context summary for a per-flow capacity source.",
     "properties": {
      "consumptionDate": {
       "description": "The date of consumption.",

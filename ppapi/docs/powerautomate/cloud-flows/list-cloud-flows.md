@@ -69,10 +69,10 @@ GET https://api.powerplatform.com/powerautomate/environments/{environmentId}/clo
 | environmentId | path | True | string | The environment ID. |
 | api-version | query | True | string | The API version. |
 | createdBy | query |  | string (uuid) | The creator Dataverse ID. |
-| createdOnEndDate | query |  | string (date) | Filter for created on or before this date. |
-| createdOnStartDate | query |  | string (date) | Filter for created on or after this date. |
-| modifiedOnEndDate | query |  | string (date) | Filter for modified on or before this date. |
-| modifiedOnStartDate | query |  | string (date) | Filter for modified on or after this date. |
+| createdOnEndDate | query |  | string (date) | Filter for flows created on or before this date. |
+| createdOnStartDate | query |  | string (date) | Filter for flows created on or after this date. |
+| modifiedOnEndDate | query |  | string (date) | Filter for flows modified on or before this date. |
+| modifiedOnStartDate | query |  | string (date) | Filter for flows modified on or after this date. |
 | ownerId | query |  | string (uuid) | The owner Dataverse ID. |
 | resourceId | query |  | string (uuid) | The resource ID. |
 | workflowId | query |  | string (uuid) | The workflow ID. |

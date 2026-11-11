@@ -104,7 +104,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | OverageStatus | The overage status of an entitled capacity. |
 | ProductCategory | The product category associated with an entitlement. |
 | TenantEntitlementDetailServiceModel |  |
-| TenantEntitlementResponseModel | Represents an entitlement and its capacity, pay-as-you-go and licensed policy details for a tenant. |
+| TenantEntitlementResponseModel | Represents an entitlement and its capacity, pay-as-you-go, and licensed policy details for a tenant. |
 
 ### CapacityEntitlementModel
 
@@ -291,7 +291,7 @@ Object
 
 Object
 
-Represents an entitlement and its capacity, pay-as-you-go and licensed policy details for a tenant.
+Represents an entitlement and its capacity, pay-as-you-go, and licensed policy details for a tenant.
 
 | Name | Type | Description |
 | --- | --- | --- |

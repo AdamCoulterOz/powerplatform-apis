@@ -50,10 +50,10 @@ platformId: 2ddd5d32-766b-cd12-6ff1-62e7179cbd2f
 
 ## Operations
 
-| [Create Billing Policy](billing-policy/create-billing-policy.md) | Creates the billing policy at tenant level. |
+| [Create Billing Policy](billing-policy/create-billing-policy.md) | Create the billing policy at the tenant level. |
 | --- | --- |
 | [Delete Billing Policy](billing-policy/delete-billing-policy.md) | Delete billing policy. |
-| [Get Billing Policy](billing-policy/get-billing-policy.md) | Get the billing policy at tenant level by policy ID. |
+| [Get Billing Policy](billing-policy/get-billing-policy.md) | Get the billing policy at the tenant level by policy ID. |
 | [List Billing Policies](billing-policy/list-billing-policies.md) | Get the list of billing policies for the tenant. |
 | [Refresh Provisioning Status](billing-policy/refresh-provisioning-status.md) | Refresh the billing policy provisioning status. |
-| [Update Billing Policy](billing-policy/update-billing-policy.md) | Updates the billing policy at tenant level. |
+| [Update Billing Policy](billing-policy/update-billing-policy.md) | Update the billing policy at the tenant level. |

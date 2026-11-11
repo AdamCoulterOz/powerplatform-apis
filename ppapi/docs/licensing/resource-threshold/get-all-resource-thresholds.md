@@ -33,6 +33,10 @@ moniker_range_name:
 monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/licensing/Resource-Threshold/Get-All-Resource-Thresholds.yml
+cmProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
+spProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 platformId: 6d93e097-b274-c4d8-f2a0-967df719dcf5
 ---
 
@@ -97,4 +101,4 @@ Object
 | resourceConsumption | number (double) | Current consumption of the resource. |
 | resourceId | string | Unique identifier for the resource. |
 | stopIfOverCapacity | boolean | Indicates whether to stop consuming the capacity if the resource exceeds its limit. |
-| stopResource | boolean | Indicates whether the user has selected to stop the resource explicitly or not. If 'true' the resource is in a disabled state. |
+| stopResource | boolean | Indicates whether the user has explicitly selected to stop the resource. If 'true', the resource is in a disabled state. |

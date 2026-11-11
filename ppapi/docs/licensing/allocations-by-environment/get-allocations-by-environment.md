@@ -93,7 +93,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | CurrencyAllocationModel |  |
 | EnforcementRule |  |
 | EnforcementRuleTypes |  |
-| ExternalCurrencyType | Available currency type which can be allocated to environment. |
+| ExternalCurrencyType | The available currency type that can be allocated to an environment. |
 
 ### AllocationByEnvironmentModel
 
@@ -114,7 +114,7 @@ Object
 | --- | --- | --- |
 | allocated | integer (int32) |  |
 | autoAllocated | number (double) |  |
-| currencyType | ExternalCurrencyType | Available currency type which can be allocated to environment. |
+| currencyType | ExternalCurrencyType | The available currency type that can be allocated to an environment. |
 | enforcementRules | EnforcementRule[] |  |
 
 ### EnforcementRule
@@ -141,7 +141,7 @@ Enumeration
 
 Enumeration
 
-Available currency type which can be allocated to environment.
+The available currency type that can be allocated to an environment.
 
 | Value | Description |
 | --- | --- |

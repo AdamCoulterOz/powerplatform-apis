@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get rule-based policy by ID. Gets policy details by ID including rule sets and metadata. '
+description: 'Learn more about Power Platform API service - Get a rule-based policy by ID. Gets policy details by ID including rule sets and metadata. '
 locale: en-us
 document_id: c4afd481-bd73-eeaf-4130-b0f4b5a1254a
 document_version_independent_id: 3f4bd928-acde-b529-fb65-15ee71e5c8d1
@@ -48,7 +48,7 @@ platformId: 98ef034f-cb8b-a701-7f6f-74baf5f95ffa
 - API Version:
     - 2024-10-01
 
-Get rule-based policy by ID. Gets policy details by ID including rule sets and metadata.
+Get a rule-based policy by ID. Gets policy details by ID including rule sets and metadata.
 
 ```http
 GET https://api.powerplatform.com/governance/ruleBasedPolicies/{policyId}?api-version=2024-10-01

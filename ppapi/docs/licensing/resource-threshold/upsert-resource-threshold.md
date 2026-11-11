@@ -119,7 +119,7 @@ Object
 | resourceConsumption | number (double) | Current consumption of the resource. |
 | resourceId | string | Unique identifier for the resource. |
 | stopIfOverCapacity | boolean | Indicates whether to stop consuming the capacity if the resource exceeds its limit. |
-| stopResource | boolean | Indicates whether the user has selected to stop the resource explicitly or not. If 'true' the resource is in a disabled state. |
+| stopResource | boolean | Indicates whether the user has explicitly selected to stop the resource. If 'true', the resource is in a disabled state. |
 
 ### ResourceThresholdRequestModel
 

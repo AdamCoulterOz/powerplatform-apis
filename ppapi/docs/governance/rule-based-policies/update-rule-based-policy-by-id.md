@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Update rule-based policy by ID. Updates a policy by ID including rule sets and metadata. '
+description: 'Learn more about Power Platform API service - Update a rule-based policy by ID. Updates a policy by ID including rule sets and metadata. '
 locale: en-us
 document_id: 5b851566-51cf-0d5c-92cb-455b02a8a68f
 document_version_independent_id: f786e5e5-49a4-7950-a71b-5b32b0b6fcd5
@@ -48,7 +48,7 @@ platformId: c9a5aa30-ec8a-28c0-8aa7-997d8cd51584
 - API Version:
     - 2024-10-01
 
-Update rule-based policy by ID. Updates a policy by ID including rule sets and metadata.
+Update a rule-based policy by ID. Updates a policy by ID including rule sets and metadata.
 
 ```http
 PUT https://api.powerplatform.com/governance/ruleBasedPolicies/{policyId}?api-version=2024-10-01

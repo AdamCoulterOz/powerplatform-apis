@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get the billing policy at tenant level by policy ID. '
+description: 'Learn more about Power Platform API service - Get the billing policy at the tenant level by policy ID. '
 locale: en-us
 document_id: f10762be-3be9-7259-182c-5ce9926c8a74
 document_version_independent_id: 7096038a-31b7-1eed-f84e-6addcf843050
@@ -48,7 +48,7 @@ platformId: 66db3a7b-19df-fe5c-59c1-35f31dff5d36
 - API Version:
     - 2024-10-01
 
-Get the billing policy at tenant level by policy ID.
+Get the billing policy at the tenant level by policy ID.
 
 ```http
 GET https://api.powerplatform.com/licensing/billingPolicies/{billingPolicyId}?api-version=2024-10-01

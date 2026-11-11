@@ -125,6 +125,7 @@ Object
 | Name | Type | Description |
 | --- | --- | --- |
 | enabled | boolean |  |
+| ruleData | object | Optional rule-specific configuration data. |
 | ruleType | AllocationEnforcementRuleTypes | The type of an allocation enforcement rule. |
 
 ### AllocationEnforcementRuleTypes

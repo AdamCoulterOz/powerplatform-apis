@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - List rule-based policies available in the tenant. '
+description: 'Learn more about Power Platform API service - List rule-based policies. Lists rule-based policies available in the tenant. '
 locale: en-us
 document_id: 2d6d88d3-62c3-a132-2829-4e43453a2034
 document_version_independent_id: ce4889f0-bf9d-0613-6882-25366c52cb66
@@ -48,7 +48,7 @@ platformId: d7cb93e5-3463-074f-798f-0b4f179ff6ab
 - API Version:
     - 2024-10-01
 
-List rule-based policies available in the tenant.
+List rule-based policies. Lists rule-based policies available in the tenant.
 
 ```http
 GET https://api.powerplatform.com/governance/ruleBasedPolicies?api-version=2024-10-01

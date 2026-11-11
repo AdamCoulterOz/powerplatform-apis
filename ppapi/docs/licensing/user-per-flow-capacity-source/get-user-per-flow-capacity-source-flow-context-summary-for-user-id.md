@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: "Learn more about Power Platform API service - Get flow context summary for a specific user's per flow capacity source. "
+description: "Learn more about Power Platform API service - Get the flow context summary for a specific user's per-flow capacity source. "
 locale: en-us
 document_id: d780d51e-6930-cc2c-e58c-99dc0a226943
 document_version_independent_id: 122edfda-ba60-0c2f-557c-ea3ff5e69aa3
@@ -35,8 +35,10 @@ item_type: Content
 source_path: docs-ref-autogen/power-platform/licensing/User-Per-Flow-Capacity-Source/Get-User-Per-Flow-Capacity-Source-Flow-Context-Summary-For-User-Id.yml
 cmProducts:
 - https://authoring-docs-microsoft.poolparty.biz/devrel/1ae5c491-970a-4062-8301-6336e69f9026
+- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
 spProducts:
 - https://authoring-docs-microsoft.poolparty.biz/devrel/f2c3e52e-3667-4e8a-bf11-20b9eaccdc8c
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 platformId: 534c17eb-87fa-a322-a237-ecb0bcb67962
 ---
 
@@ -48,7 +50,7 @@ platformId: 534c17eb-87fa-a322-a237-ecb0bcb67962
 - API Version:
     - 2024-10-01
 
-Get flow context summary for a specific user's per flow capacity source.
+Get the flow context summary for a specific user's per-flow capacity source.
 
 ```http
 GET https://api.powerplatform.com/licensing/UserPerFlowCapacitySource/FlowContextSummary/{userId}?startDate={startDate}&api-version=2024-10-01
@@ -103,7 +105,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | Name | Description |
 | --- | --- |
 | PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceFlowContextRecord | Paginated result container for flow context summary records. |
-| UserPerFlowCapacitySourceFlowContextRecord | Flow context summary for per flow capacity source. |
+| UserPerFlowCapacitySourceFlowContextRecord | Flow context summary for a per-flow capacity source. |
 
 ### PowerPlatformRequestSnapshotResultWithoutPagesUserPerFlowCapacitySourceFlowContextRecord
 
@@ -120,7 +122,7 @@ Paginated result container for flow context summary records.
 
 Object
 
-Flow context summary for per flow capacity source.
+Flow context summary for a per-flow capacity source.
 
 | Name | Type | Description |
 | --- | --- | --- |

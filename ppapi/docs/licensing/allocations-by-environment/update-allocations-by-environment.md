@@ -33,6 +33,10 @@ moniker_range_name:
 monikers: []
 item_type: Content
 source_path: docs-ref-autogen/power-platform/licensing/Allocations-By-Environment/Update-Allocations-By-Environment.yml
+cmProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
+spProducts:
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
 platformId: a7c0520b-8129-e844-bec5-7f3729a91946
 ---
 
@@ -95,7 +99,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | CurrencyAllocationModel |  |
 | EnforcementRule |  |
 | EnforcementRuleTypes |  |
-| ExternalCurrencyType | Available currency type which can be allocated to environment. |
+| ExternalCurrencyType | The available currency type that can be allocated to an environment. |
 
 ### AllocationByEnvironmentModel
 
@@ -116,7 +120,7 @@ Object
 | --- | --- | --- |
 | allocated | integer (int32) |  |
 | autoAllocated | number (double) |  |
-| currencyType | ExternalCurrencyType | Available currency type which can be allocated to environment. |
+| currencyType | ExternalCurrencyType | The available currency type that can be allocated to an environment. |
 | enforcementRules | EnforcementRule[] |  |
 
 ### EnforcementRule
@@ -143,7 +147,7 @@ Enumeration
 
 Enumeration
 
-Available currency type which can be allocated to environment.
+The available currency type that can be allocated to an environment.
 
 | Value | Description |
 | --- | --- |

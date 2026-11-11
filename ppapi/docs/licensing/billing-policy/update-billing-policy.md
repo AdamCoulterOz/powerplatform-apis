@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Updates the billing policy at tenant level. '
+description: 'Learn more about Power Platform API service - Update the billing policy at the tenant level. '
 locale: en-us
 document_id: d804991e-3e12-b4db-aa61-a7863099065a
 document_version_independent_id: d9f5f354-6116-5866-b3ee-bc9c64a03d58
@@ -48,7 +48,7 @@ platformId: c50ad430-a3ac-9b98-9c11-d67e6c0bffda
 - API Version:
     - 2024-10-01
 
-Updates the billing policy at tenant level.
+Update the billing policy at the tenant level.
 
 ```http
 PUT https://api.powerplatform.com/licensing/billingPolicies/{billingPolicyId}?api-version=2024-10-01

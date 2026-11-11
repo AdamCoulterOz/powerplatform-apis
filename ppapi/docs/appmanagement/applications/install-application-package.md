@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Start the install of application package in target environment. Installs an app package by unique name into a target environment. '
+description: 'Start the installation of an application package in the target environment. Installs an app package by unique name into a target environment. '
 locale: en-us
 document_id: 56eadfc0-4b42-fbf8-b16b-74ba1e9bd3e9
 document_version_independent_id: acf35d02-85f6-80f6-5ac2-0c7510368cb8
@@ -48,7 +48,7 @@ platformId: 21993001-cff0-7b68-e732-921d7eb3b34e
 - API Version:
     - 2024-10-01
 
-Start the install of application package in target environment. Installs an app package by unique name into a target environment.
+Start the installation of an application package in the target environment. Installs an app package by unique name into a target environment.
 
 ```http
 POST https://api.powerplatform.com/appmanagement/environments/{environmentId}/applicationPackages/{uniqueName}/install?api-version=2024-10-01

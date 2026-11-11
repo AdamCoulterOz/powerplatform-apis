@@ -65,8 +65,8 @@ GET https://api.powerplatform.com/licensing/tenantCapacity/currencyReports?inclu
 | Name | In | Required | Type | Description |
 | --- | --- | --- | --- | --- |
 | api-version | query | True | string | The API version. |
-| includeAllocations | query |  | boolean | Flag indicating to include allocations. |
-| includeConsumptions | query |  | boolean | Flag indicating to include consumptions. |
+| includeAllocations | query |  | boolean | Flag indicating whether to include allocations. |
+| includeConsumptions | query |  | boolean | Flag indicating whether to include consumption data. |
 
 ## Responses
 
@@ -94,7 +94,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 | --- | --- |
 | CurrencyConsumption |  |
 | CurrencyReportV2 |  |
-| ExternalCurrencyType | Available currency type which can be allocated to environment. |
+| ExternalCurrencyType | The available currency type that can be allocated to an environment. |
 
 ### CurrencyConsumption
 
@@ -113,14 +113,14 @@ Object
 | --- | --- | --- |
 | allocated | integer (int64) |  |
 | consumed | CurrencyConsumption |  |
-| currencyType | ExternalCurrencyType | Available currency type which can be allocated to environment. |
+| currencyType | ExternalCurrencyType | The available currency type that can be allocated to an environment. |
 | purchased | integer (int64) |  |
 
 ### ExternalCurrencyType
 
 Enumeration
 
-Available currency type which can be allocated to environment.
+The available currency type that can be allocated to an environment.
 
 | Value | Description |
 | --- | --- |

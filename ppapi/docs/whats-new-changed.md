@@ -16,7 +16,7 @@ author: laneswenka
 ms.reviewer: ellenwehrle
 ms.component: pa-admin
 ms.topic: overview
-ms.date: 2026-10-23T00:00:00.0000000Z
+ms.date: 2026-11-11T00:00:00.0000000Z
 ms.author: laswenka
 search.audienceType:
 - admin
@@ -31,24 +31,36 @@ toc_rel: toc.json
 pdf_url_template: https://learn.microsoft.com/pdfstore/en-us/MSDN.power-platform/{branchName}{pdfName}
 feedback_help_link_type: ''
 feedback_help_link_url: ''
-word_count: 2450
+word_count: 2530
 asset_id: admin/programmability-whats-new-changed
 moniker_range_name: 
 monikers: []
 item_type: Content
 source_path: power-platform/admin/programmability-whats-new-changed.md
 cmProducts:
-- https://authoring-docs-microsoft.poolparty.biz/devrel/1ae5c491-970a-4062-8301-6336e69f9026
 - https://authoring-docs-microsoft.poolparty.biz/devrel/e6f942e8-55a7-4c86-b8e3-7456508ea850
+- https://authoring-docs-microsoft.poolparty.biz/devrel/1ae5c491-970a-4062-8301-6336e69f9026
 spProducts:
-- https://authoring-docs-microsoft.poolparty.biz/devrel/f2c3e52e-3667-4e8a-bf11-20b9eaccdc8c
 - https://authoring-docs-microsoft.poolparty.biz/devrel/f1834696-48d6-470d-966b-6ee418881596
+- https://authoring-docs-microsoft.poolparty.biz/devrel/f2c3e52e-3667-4e8a-bf11-20b9eaccdc8c
 platformId: 51f6c119-154a-6d16-47ef-2a1b8b694c0c
 ---
 
 # Programmability and extensibility - What's new or changed - Power Platform | Microsoft Learn
 
 Learn about the latest changes and new capabilities for Power Platform APIs and admin SDKs.
+
+## September 2026
+
+| Item | Type | Description |
+| --- | --- | --- |
+| Search Environment Role Assignments | API | New endpoint: [Search Environment Role Assignments (Preview)](authorization/role-based-access-control/search-environment-role-assignments.md) |
+| Search Role Assignments | API | New endpoint: [Search Role Assignments (Preview)](authorization/role-based-access-control/search-role-assignments.md) |
+| On Alert Triggered | API | New endpoint: [On Alert Triggered (Preview)](monitoringhub/monitoring-hub/on-alert-triggered.md) |
+| Power Platform CLI | SDK | [Initial Release](https://www.nuget.org/packages/Microsoft.PowerApps.CLI.Tool/2.14.1) of generated Power Platform API command groups (public preview). Read the [Power Platform CLI and Power Platform API announcement](https://devblogs.microsoft.com/powerplatform/power-platform-cli-%e2%9d%a4%ef%b8%8f-power-platform-api/). |
+| Powerplatform-Management (Python) | SDK | [Monthly Release](https://pypi.org/project/powerplatform-management/2.0.3578.333/) |
+| Microsoft.PowerPlatform.Management (C#) | SDK | [Monthly release](https://www.nuget.org/packages/Microsoft.PowerPlatform.Management/2.0.3578.333) |
+| Power Platform for Admins V2 | Connector | [Monthly release](https://learn.microsoft.com/en-us/connectors/powerplatformadminv2/) |
 
 ## August 2026
 

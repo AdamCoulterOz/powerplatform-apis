@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Get tenant context summary for user per flow capacity source. '
+description: "Learn more about Power Platform API service - Get the tenant context summary for a user's per-flow capacity source. "
 locale: en-us
 document_id: a0a915e3-3147-964a-b71a-8998ca615fb9
 document_version_independent_id: f6122109-52f9-974d-d621-4966d09a71c5
@@ -50,7 +50,7 @@ platformId: 854e2f3c-e242-ae43-964d-4b473ddee7ab
 - API Version:
     - 2024-10-01
 
-Get tenant context summary for user per flow capacity source.
+Get the tenant context summary for a user's per-flow capacity source.
 
 ```http
 GET https://api.powerplatform.com/licensing/UserPerFlowCapacitySource/TenantContextSummary?startDate={startDate}&api-version=2024-10-01
@@ -103,7 +103,7 @@ Type:  oauth2Flow:  implicitAuthorization URL:  https://login.microsoftonline.co
 
 Object
 
-Tenant-level context summary for per flow capacity source.
+Tenant-level context summary for a per-flow capacity source.
 
 | Name | Type | Description |
 | --- | --- | --- |

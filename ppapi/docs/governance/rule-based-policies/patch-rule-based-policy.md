@@ -15,7 +15,7 @@ ms.date: 2023-06-13T00:00:00.0000000Z
 ms.service: power-platform
 ms.subservice: developer
 feedback_system: None
-description: 'Learn more about Power Platform API service - Patch rule-based policy. Allows adding or updating one or more rule sets to an existing policy. '
+description: 'Patch a rule-based policy. Allows adding one or more rule sets to an existing policy or updating its rule sets. '
 locale: en-us
 document_id: 42d9b053-ba17-1c3e-ea89-139cffebeb97
 document_version_independent_id: ca9f815e-8b24-8515-5d48-f8dff7a2f468
@@ -48,7 +48,7 @@ platformId: 22da61a3-4464-ea05-d7ba-25a26dbe7615
 - API Version:
     - 2024-10-01
 
-Patch rule-based policy. Allows adding or updating one or more rule sets to an existing policy.
+Patch a rule-based policy. Allows adding one or more rule sets to an existing policy or updating its rule sets.
 
 ```http
 PATCH https://api.powerplatform.com/governance/ruleBasedPolicies/{policyId}?api-version=2024-10-01

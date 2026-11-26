@@ -62,6 +62,7 @@ for a in arts:
         if not s.get('path') or s['http_method'].startswith('$'):
             uncat[key][uncatalogued_reason(s)] += 1
             continue
+        resolved = []
         for p in paths:
             sp, oid, note = r.resolve(s['boundary'], s['http_method'], p)
             if not oid:
@@ -69,11 +70,19 @@ for a in arts:
                 # code spells it so the failure stays visible
                 sp = sp or s['boundary']
                 oid = None
+            resolved.append((p, sp, oid))
+        # A call site whose path variants name different operations runs exactly
+        # one of them each time, so none of them is reached on every run, even
+        # when the call site itself is unconditional.
+        alternative = len({(sp, oid or p) for p, sp, oid in resolved}) > 1
+        for p, sp, oid in resolved:
             k = (key, o['entrypoint'], sp, oid or f"{s['http_method'].lower()} {p}")
+            full = not o['conditional'] and not alternative
             row = rows.get(k)
             if row is None:
                 row = {'spec': sp, 'entrypoint': o['entrypoint'],
-                       'conditional': o['conditional'], 'approximate': bool(s.get('approximate')),
+                       'conditional': not full, 'alternatives': len(resolved) if alternative else 0,
+                       'routed': o['conditional'], 'approximate': bool(s.get('approximate')),
                        'via': readable(o['call_path'][-1]), 'apiVersion': s.get('api_version') or None}
                 if oid:
                     row['operation'] = oid
@@ -82,8 +91,11 @@ for a in arts:
                     row['path'] = tidy_path(p)
                 rows[k] = row
             else:
-                # any unconditional route wins
-                row['conditional'] = row['conditional'] and o['conditional']
+                # any route that always reaches the operation wins
+                row['conditional'] = row['conditional'] and not full
+                row['routed'] = row['routed'] or o['conditional']
+                if alternative:
+                    row['alternatives'] = max(row['alternatives'], len(resolved))
                 row['approximate'] = row['approximate'] and bool(s.get('approximate'))
             if oid and s.get('api_version'):
                 version_use[(sp, oid)].add(s['api_version'])
@@ -109,7 +121,12 @@ for (key, ep, sp, oid), row in rows.items():
     if row['apiVersion'] and len(version_use.get((sp, oid), ())) > 1:
         call['apiVersion'] = row['apiVersion']
     if row['conditional']:
-        call['note'] = f"Reached only through {row['via']}."
+        notes = []
+        if row['routed']:
+            notes.append(f"Reached only through {row['via']}.")
+        if row['alternatives']:
+            notes.append(f"One of {row['alternatives']} alternative paths at its call site; which one runs depends on configuration.")
+        call['note'] = ' '.join(notes)
     if row['approximate']:
         call['approximate'] = True
         call['note'] = (call.get('note', '') + ' Path assembled by conditional reassignment; not resolved to a branch.').strip()

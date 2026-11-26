@@ -471,22 +471,25 @@
           "spec": "ppapi",
           "operation": "authorization_listEnvironmentGroupRoleAssignments",
           "entrypoint": "Read",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
           "operation": "authorization_listEnvironmentRoleAssignments",
           "entrypoint": "Read",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
           "operation": "authorization_listRoleAssignments",
           "entrypoint": "Read",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 3 alternative paths at its call site; which one runs depends on configuration."
         }
       ]
     },
@@ -2639,15 +2642,17 @@
           "spec": "dataverse",
           "operation": "solutionImport_start",
           "entrypoint": "Create",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 2 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "dataverse",
           "operation": "solutionImport_startUpgrade",
           "entrypoint": "Create",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 2 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "dataverse",
@@ -2743,15 +2748,17 @@
           "spec": "dataverse",
           "operation": "solutionImport_start",
           "entrypoint": "Update",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 2 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "dataverse",
           "operation": "solutionImport_startUpgrade",
           "entrypoint": "Update",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 2 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "dataverse",
@@ -2912,7 +2919,7 @@
           "entrypoint": "Create",
           "coverage": "partial",
           "grade": "derived",
-          "note": "Reached only through postRoleAssignment."
+          "note": "Reached only through postRoleAssignment. One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
@@ -2920,7 +2927,7 @@
           "entrypoint": "Create",
           "coverage": "partial",
           "grade": "derived",
-          "note": "Reached only through postRoleAssignment."
+          "note": "Reached only through postRoleAssignment. One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
@@ -2928,7 +2935,7 @@
           "entrypoint": "Create",
           "coverage": "partial",
           "grade": "derived",
-          "note": "Reached only through postRoleAssignment."
+          "note": "Reached only through postRoleAssignment. One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
@@ -2936,7 +2943,7 @@
           "entrypoint": "Create",
           "coverage": "partial",
           "grade": "derived",
-          "note": "Reached only through ListRoleAssignments."
+          "note": "Reached only through ListRoleAssignments. One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
@@ -2944,7 +2951,7 @@
           "entrypoint": "Create",
           "coverage": "partial",
           "grade": "derived",
-          "note": "Reached only through ListRoleAssignments."
+          "note": "Reached only through ListRoleAssignments. One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
@@ -2952,7 +2959,7 @@
           "entrypoint": "Create",
           "coverage": "partial",
           "grade": "derived",
-          "note": "Reached only through ListRoleAssignments."
+          "note": "Reached only through ListRoleAssignments. One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
@@ -2960,7 +2967,7 @@
           "entrypoint": "Create",
           "coverage": "partial",
           "grade": "derived",
-          "note": "Reached only through DeleteRoleAssignment."
+          "note": "Reached only through DeleteRoleAssignment. One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
@@ -2968,7 +2975,7 @@
           "entrypoint": "Create",
           "coverage": "partial",
           "grade": "derived",
-          "note": "Reached only through DeleteRoleAssignment."
+          "note": "Reached only through DeleteRoleAssignment. One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
@@ -2976,7 +2983,7 @@
           "entrypoint": "Create",
           "coverage": "partial",
           "grade": "derived",
-          "note": "Reached only through DeleteRoleAssignment."
+          "note": "Reached only through DeleteRoleAssignment. One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
@@ -2998,43 +3005,49 @@
           "spec": "ppapi",
           "operation": "authorization_deleteEnvironmentGroupRoleAssignment",
           "entrypoint": "Delete",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
           "operation": "authorization_deleteEnvironmentRoleAssignment",
           "entrypoint": "Delete",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
           "operation": "authorization_deleteRoleAssignment",
           "entrypoint": "Delete",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
           "operation": "authorization_listEnvironmentGroupRoleAssignments",
           "entrypoint": "Read",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
           "operation": "authorization_listEnvironmentRoleAssignments",
           "entrypoint": "Read",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",
           "operation": "authorization_listRoleAssignments",
           "entrypoint": "Read",
-          "coverage": "full",
-          "grade": "derived"
+          "coverage": "partial",
+          "grade": "derived",
+          "note": "One of 3 alternative paths at its call site; which one runs depends on configuration."
         },
         {
           "spec": "ppapi",

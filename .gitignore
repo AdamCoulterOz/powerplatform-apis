@@ -6,3 +6,9 @@ captures/
 app/dist/
 bin/
 obj/
+
+# Intermediate output from the terraform provider coverage tools
+coverage/terraform-provider-power-platform/sites.json
+coverage/terraform-provider-power-platform/artifacts.json
+coverage/terraform-provider-power-platform/findings.txt
+coverage/terraform-provider-power-platform/actual-findings.txt

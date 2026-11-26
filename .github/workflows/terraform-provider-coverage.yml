@@ -1,0 +1,136 @@
+name: terraform-provider-coverage
+
+# Regenerates coverage/terraform-provider-power-platform.json, the mapping of
+# which Terraform provider resources and data sources call which operations in
+# this corpus. The browser loads it because specs.json names it as `coverage`.
+#
+# The mapping is a join between two repositories, so it goes stale when either
+# side moves: a provider merge changes which operations are called, and a spec
+# change here changes which operationIds those calls resolve to. It runs daily to
+# catch the first and on spec changes to catch the second.
+#
+# On a pull request it only regenerates and checks. On main and on the schedule
+# it commits the result, naming the provider commit the mapping describes.
+
+on:
+  schedule:
+    - cron: "41 20 * * *"
+  push:
+    branches: [main]
+    paths:
+      - '*/oas/**'
+      - 'coverage/terraform-provider-power-platform/**'
+      - '.github/workflows/terraform-provider-coverage.yml'
+  pull_request:
+    paths:
+      - '*/oas/**'
+      - 'coverage/terraform-provider-power-platform/**'
+      - '.github/workflows/terraform-provider-coverage.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-provider-coverage-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write       # to start the pages deploy after committing
+    defaults:
+      run:
+        working-directory: coverage/terraform-provider-power-platform
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out the provider
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/terraform-provider-power-platform
+          path: .provider
+          persist-credentials: false
+
+      - name: Check out the coverage validator
+        # The format belongs to the browser, so its checker is run from there
+        # rather than copied here.
+        uses: actions/checkout@v4
+        with:
+          repository: AdamCoulterOz/oas-browser
+          path: .oas-browser
+          sparse-checkout: tools/validate_coverage.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - uses: actions/setup-go@v5
+        with:
+          # The tools type-check the provider, so they need the Go it asks for.
+          go-version-file: .provider/go.mod
+          cache-dependency-path: |
+            .provider/go.sum
+            coverage/terraform-provider-power-platform/go.sum
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Regenerate
+        env:
+          TERRAFORM_PROVIDER: ${{ github.workspace }}/.provider
+        run: |
+          go run ./callsites > sites.json
+          go run ./callgraph > artifacts.json
+          python3 serialise.py sites.json artifacts.json
+
+      - name: Check it against the browser's contract
+        # The validator fails on every finding, and some findings are correct:
+        # calls the analysis marks approximate, or that name an operation the
+        # spec does not describe. Those are written down in expected-findings.txt
+        # and this fails only when the set changes, in either direction.
+        run: |
+          set +e
+          python3 "$GITHUB_WORKSPACE/.oas-browser/tools/validate_coverage.py" \
+            ../terraform-provider-power-platform.json \
+            --catalogue "$GITHUB_WORKSPACE/specs.json" 2> findings.txt
+          code=$?
+          set -e
+          cat findings.txt
+          if [ "$code" -gt 1 ]; then
+            echo "the validator could not run its checks (exit $code)"; exit 1
+          fi
+          grep 'items\[' findings.txt \
+            | sed -E 's/^[^:]*: //; s/items\[[0-9]+\]\.calls\[[0-9]+\]/items[].calls[]/' \
+            | sort > actual-findings.txt || true
+          if ! diff -u expected-findings.txt actual-findings.txt; then
+            echo
+            echo "The findings changed. If the change is right, update expected-findings.txt."
+            exit 1
+          fi
+
+      - name: Show what changed
+        working-directory: .
+        run: git diff --stat -- coverage/terraform-provider-power-platform.json
+
+      - name: Commit
+        if: github.event_name != 'pull_request'
+        working-directory: .
+        run: |
+          git add coverage/terraform-provider-power-platform.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          provider=$(git -C .provider rev-parse --short HEAD)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Terraform provider coverage update against microsoft/terraform-provider-power-platform@$provider"
+          git pull --rebase
+          git push
+          # A push made with the workflow token starts no other workflow, so
+          # pages would not redeploy on its own. Starting it directly is allowed.
+          gh workflow run pages.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -22,6 +22,7 @@ on:
       - '*/docs/**'
       - '*/catalogue/**'
       - '*/README.md'
+      - 'coverage/*.json'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -57,6 +58,12 @@ jobs:
               [ -e "$api/$part" ] && cp -R "$api/$part" "_site/$api/"
             done
           done
+          # Coverage mappings the catalogue names, served beside it so the
+          # catalogue-relative url in specs.json resolves.
+          if ls coverage/*.json >/dev/null 2>&1; then
+            mkdir -p _site/coverage
+            cp coverage/*.json _site/coverage/
+          fi
           touch _site/.nojekyll
 
       - name: Check the site serves what the browser will ask for
@@ -76,6 +83,8 @@ jobs:
                      if not pathlib.Path('_site', e['url']).is_file()]
           if isinstance(raw, dict) and raw.get('index') and not pathlib.Path('_site', raw['index']).is_file():
               missing.append(raw['index'])
+          if isinstance(raw, dict) and raw.get('coverage') and not pathlib.Path('_site', raw['coverage']).is_file():
+              missing.append(raw['coverage'])
           if missing:
               sys.exit('listed but not deployed: ' + ', '.join(missing))
           print(f'all {len(entries)} specs and the index are present')

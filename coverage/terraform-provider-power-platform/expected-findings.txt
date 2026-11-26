@@ -1,0 +1,3 @@
+items[].calls[].method: expected a method spec "dataverse" declares on "/api/data/{apiVersion}/{entitySetName}", one of "get", "post"; found "patch" (matched against "/api/data/{apiVersion}/{entitySetName}")
+items[].calls[].method: expected a method spec "dataverse" declares on "/api/data/{apiVersion}/{entitySetName}", one of "get", "post"; found "patch" (matched against "/api/data/{apiVersion}/{entitySetName}")
+items[].calls[].method: expected a method spec "dataverse" declares on "/api/data/{apiVersion}/{entitySetName}", one of "get", "post"; found "patch" (matched against "/api/data/{apiVersion}/{entitySetName}")

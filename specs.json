@@ -1,6 +1,7 @@
 {
  "default": "ppapi",
  "index": "index.json",
+ "coverage": "coverage/terraform-provider-power-platform.json",
  "brand": {
   "long": "Power Platform APIs",
   "short": "PP APIs",
